@@ -16,8 +16,7 @@
 package com.datastax.oss.driver.examples.basic;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.cql.ResultSet;
-import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.cql.*;
 
 /**
  * Connects to a Cassandra cluster and extracts basic information from it.

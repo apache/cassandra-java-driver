@@ -37,6 +37,11 @@ public enum DefaultBatchType implements BatchType {
    * it can only contain these.
    */
   COUNTER(ProtocolConstants.BatchType.COUNTER),
+
+  /** UNKNOW BATCH TYPE when user do not set at BatchStatement builder */
+  // TODO should we set the number 3 be a constant at some where or ProtocolConstants.BatchType add
+  // a unknow type ?
+  UNKNOW((byte) 3),
   ;
   // Note that, for the sake of convenience, we also expose shortcuts to these constants on the
   // BatchType interface. If you add a new enum constant, remember to update the interface as

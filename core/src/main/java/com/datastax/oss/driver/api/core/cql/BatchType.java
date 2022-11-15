@@ -28,6 +28,7 @@ public interface BatchType {
   BatchType UNLOGGED = DefaultBatchType.UNLOGGED;
   BatchType COUNTER = DefaultBatchType.COUNTER;
 
+  BatchType UNKNOW = DefaultBatchType.UNKNOW;
   /** The numerical value that the batch type is encoded to. */
   byte getProtocolCode();
 

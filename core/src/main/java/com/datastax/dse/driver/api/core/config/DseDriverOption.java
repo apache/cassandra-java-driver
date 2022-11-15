@@ -288,6 +288,13 @@ public enum DseDriverOption implements DriverOption {
    * <p>Value-type: {@link java.time.Duration Duration}
    */
   METRICS_NODE_GRAPH_MESSAGES_SLO("advanced.metrics.node.graph-messages.slo"),
+
+  /**
+   * The batch type that is set in the configuration file
+   *
+   * <p>Value-type: {@link String}
+   */
+  BATCH_TYPE_CONFIGURATION("advanced.batch-type-configuration"),
   ;
 
   private final String path;

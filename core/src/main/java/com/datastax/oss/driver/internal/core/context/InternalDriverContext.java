@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
+import com.datastax.oss.driver.internal.core.BatchTypeRegistry;
 import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
@@ -75,6 +76,9 @@ public interface InternalDriverContext extends DriverContext {
 
   @NonNull
   ConsistencyLevelRegistry getConsistencyLevelRegistry();
+
+  @NonNull
+  BatchTypeRegistry getBatchTypeRegistry();
 
   @NonNull
   WriteTypeRegistry getWriteTypeRegistry();

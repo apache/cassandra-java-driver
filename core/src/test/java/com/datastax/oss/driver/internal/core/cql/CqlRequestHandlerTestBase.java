@@ -63,6 +63,8 @@ public abstract class CqlRequestHandlerTestBase {
       BatchStatement.newInstance(BatchType.LOGGED, IDEMPOTENT_STATEMENT).setIdempotent(true);
   protected static final BatchStatement NON_IDEMPOTENT_BATCH_STATEMENT =
       BatchStatement.newInstance(BatchType.LOGGED, NON_IDEMPOTENT_STATEMENT).setIdempotent(false);
+  protected static final BatchStatement BATCH_STATEMENT_WITHOUT_BATCH_TYPE =
+      BatchStatement.newInstance(NON_IDEMPOTENT_STATEMENT);
 
   @Mock protected DefaultNode node1;
   @Mock protected DefaultNode node2;
