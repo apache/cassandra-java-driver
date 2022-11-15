@@ -239,6 +239,74 @@ public class RequestLogFormatterTest {
                 + "[v=0xab...<truncated>, k=1]");
   }
 
+  @Test
+  public void should_format_batch_statement_by_default() {
+    SimpleStatement statement1 =
+        SimpleStatement.builder("UPDATE foo SET v=? WHERE k=?")
+            .addNamedValue("v", Bytes.fromHexString("0xdeadbeef"))
+            .addNamedValue("k", 0)
+            .build();
+
+    PreparedStatement preparedStatement =
+        mockPreparedStatement(
+            "UPDATE foo SET v=? WHERE k=?",
+            ImmutableMap.of("v", DataTypes.BLOB, "k", DataTypes.INT));
+    BoundStatement statement2 = preparedStatement.bind(Bytes.fromHexString("0xabcdef"), 1);
+
+    BatchStatement batch = BatchStatement.builder().addStatements(statement1, statement2).build();
+
+    assertThat(formatRequest(batch, Integer.MAX_VALUE, false, Integer.MAX_VALUE, Integer.MAX_VALUE))
+        .isEqualTo(
+            "[2 statements, 4 values] "
+                + "BEGIN BATCH "
+                + "UPDATE foo SET v=? WHERE k=?; "
+                + "UPDATE foo SET v=? WHERE k=?; "
+                + "APPLY BATCH");
+
+    assertThat(formatRequest(batch, 20, false, Integer.MAX_VALUE, Integer.MAX_VALUE))
+        .isEqualTo("[2 statements, 4 values] BEGIN BATCH UPDATE f...<truncated>");
+
+    assertThat(formatRequest(batch, Integer.MAX_VALUE, true, Integer.MAX_VALUE, Integer.MAX_VALUE))
+        .isEqualTo(
+            "[2 statements, 4 values] "
+                + "BEGIN BATCH "
+                + "UPDATE foo SET v=? WHERE k=?; "
+                + "UPDATE foo SET v=? WHERE k=?; "
+                + "APPLY BATCH "
+                + "[v=0xdeadbeef, k=0]"
+                + "[v=0xabcdef, k=1]");
+
+    assertThat(formatRequest(batch, Integer.MAX_VALUE, true, 3, Integer.MAX_VALUE))
+        .isEqualTo(
+            "[2 statements, 4 values] "
+                + "BEGIN BATCH "
+                + "UPDATE foo SET v=? WHERE k=?; "
+                + "UPDATE foo SET v=? WHERE k=?; "
+                + "APPLY BATCH "
+                + "[v=0xdeadbeef, k=0]"
+                + "[v=0xabcdef, ...<further values truncated>]");
+
+    assertThat(formatRequest(batch, Integer.MAX_VALUE, true, 2, Integer.MAX_VALUE))
+        .isEqualTo(
+            "[2 statements, 4 values] "
+                + "BEGIN BATCH "
+                + "UPDATE foo SET v=? WHERE k=?; "
+                + "UPDATE foo SET v=? WHERE k=?; "
+                + "APPLY BATCH "
+                + "[v=0xdeadbeef, k=0]"
+                + "[...<further values truncated>]");
+
+    assertThat(formatRequest(batch, Integer.MAX_VALUE, true, Integer.MAX_VALUE, 4))
+        .isEqualTo(
+            "[2 statements, 4 values] "
+                + "BEGIN BATCH "
+                + "UPDATE foo SET v=? WHERE k=?; "
+                + "UPDATE foo SET v=? WHERE k=?; "
+                + "APPLY BATCH "
+                + "[v=0xde...<truncated>, k=0]"
+                + "[v=0xab...<truncated>, k=1]");
+  }
+
   private String formatRequest(
       Request request, int maxQueryLength, boolean showValues, int maxValues, int maxValueLength) {
     StringBuilder builder = new StringBuilder();

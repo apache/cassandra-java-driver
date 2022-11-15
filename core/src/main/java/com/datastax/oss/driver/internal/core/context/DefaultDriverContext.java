@@ -46,7 +46,9 @@ import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
+import com.datastax.oss.driver.internal.core.BatchTypeRegistry;
 import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
+import com.datastax.oss.driver.internal.core.DefaultBatchTypeRegistry;
 import com.datastax.oss.driver.internal.core.DefaultConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.DefaultProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
@@ -175,6 +177,8 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final LazyReference<ConsistencyLevelRegistry> consistencyLevelRegistryRef =
       new LazyReference<>(
           "consistencyLevelRegistry", this::buildConsistencyLevelRegistry, cycleDetector);
+  private final LazyReference<BatchTypeRegistry> batchTypeRegistryRef =
+      new LazyReference<>("batchTypeRegistry", this::buildBatchTypeRegistry, cycleDetector);
   private final LazyReference<WriteTypeRegistry> writeTypeRegistryRef =
       new LazyReference<>("writeTypeRegistry", this::buildWriteTypeRegistry, cycleDetector);
   private final LazyReference<NettyOptions> nettyOptionsRef =
@@ -462,6 +466,10 @@ public class DefaultDriverContext implements InternalDriverContext {
 
   protected ConsistencyLevelRegistry buildConsistencyLevelRegistry() {
     return new DefaultConsistencyLevelRegistry();
+  }
+
+  protected BatchTypeRegistry buildBatchTypeRegistry() {
+    return new DefaultBatchTypeRegistry();
   }
 
   protected WriteTypeRegistry buildWriteTypeRegistry() {
@@ -837,6 +845,12 @@ public class DefaultDriverContext implements InternalDriverContext {
   @Override
   public ConsistencyLevelRegistry getConsistencyLevelRegistry() {
     return consistencyLevelRegistryRef.get();
+  }
+
+  @NonNull
+  @Override
+  public BatchTypeRegistry getBatchTypeRegistry() {
+    return batchTypeRegistryRef.get();
   }
 
   @NonNull

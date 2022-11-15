@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
+import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -25,6 +26,7 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
+import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.core.cql.BatchableStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
@@ -531,6 +533,33 @@ public class Conversions {
       default:
         return new ProtocolError(node, "Unknown error code: " + errorMessage.code);
     }
+  }
+
+  /**
+   * get the statement if the statement is a BatchStatement and the batch type is not setted, the
+   * configuration 's batch type will be used.
+   */
+  public static Statement<?> resolveStatement(
+      Statement<?> statement, InternalDriverContext context) {
+    if (statement instanceof BatchStatement) {
+      BatchStatement batchStatement = (BatchStatement) statement;
+      if (batchStatement.getBatchType() == BatchType.UNKNOW) {
+        DriverExecutionProfile driverExecutionProfile = resolveExecutionProfile(statement, context);
+        BatchType batchType;
+        try {
+          batchType = context.getBatchTypeRegistry()
+              .fromName(driverExecutionProfile.getString(DseDriverOption.BATCH_TYPE_CONFIGURATION));
+        } catch (Throwable throwable) {
+          throw new IllegalArgumentException(
+              "IllegalArgumentException occurs for batch type option "
+                  + DseDriverOption.BATCH_TYPE_CONFIGURATION.getPath()
+                  + "'s value in configuration file is illegal when use do not set BATCH TYPE at BatchStatement build stage. ",
+              throwable);
+        }
+        return batchStatement.setBatchType(batchType);
+      }
+    }
+    return statement;
   }
 
   public static boolean resolveIdempotence(Request request, InternalDriverContext context) {

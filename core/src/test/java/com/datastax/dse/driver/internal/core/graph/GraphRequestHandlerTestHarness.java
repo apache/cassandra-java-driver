@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.internal.core.DefaultBatchTypeRegistry;
 import com.datastax.oss.driver.internal.core.DefaultConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.cql.RequestHandlerTestHarness;
@@ -141,6 +142,7 @@ public class GraphRequestHandlerTestHarness extends RequestHandlerTestHarness {
     when(dseDriverContext.getProtocolVersionRegistry()).thenReturn(protocolVersionRegistry);
     when(dseDriverContext.getConsistencyLevelRegistry())
         .thenReturn(new DefaultConsistencyLevelRegistry());
+    when(dseDriverContext.getBatchTypeRegistry()).thenReturn(new DefaultBatchTypeRegistry());
     when(dseDriverContext.getWriteTypeRegistry()).thenReturn(new DefaultWriteTypeRegistry());
     when(dseDriverContext.getRequestThrottler())
         .thenReturn(new PassThroughRequestThrottler(dseDriverContext));

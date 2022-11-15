@@ -41,6 +41,94 @@ import java.util.Collections;
 public interface BatchStatement extends Statement<BatchStatement>, Iterable<BatchableStatement<?>> {
 
   /**
+   * Creates an instance of the default implementation with null batch type.
+   *
+   * <p>Note that the returned object is <b>immutable</b>.
+   */
+  static BatchStatement newInstance() {
+    return new DefaultBatchStatement(
+        BatchType.UNKNOW,
+        new ArrayList<>(),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        Collections.emptyMap(),
+        null,
+        false,
+        Statement.NO_DEFAULT_TIMESTAMP,
+        null,
+        Integer.MIN_VALUE,
+        null,
+        null,
+        null,
+        null,
+        Statement.NO_NOW_IN_SECONDS);
+  }
+
+  /**
+   * Creates an instance of the default implementation for the null batch type, containing the given
+   * statements.
+   *
+   * <p>Note that the returned object is <b>immutable</b>.
+   */
+  @NonNull
+  static BatchStatement newInstance(@NonNull Iterable<BatchableStatement<?>> statements) {
+    return new DefaultBatchStatement(
+        BatchType.UNKNOW,
+        ImmutableList.copyOf(statements),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        Collections.emptyMap(),
+        null,
+        false,
+        Statement.NO_DEFAULT_TIMESTAMP,
+        null,
+        Integer.MIN_VALUE,
+        null,
+        null,
+        null,
+        null,
+        Statement.NO_NOW_IN_SECONDS);
+  }
+
+  /**
+   * Creates an instance of the default implementation for the null batch type, containing the given
+   * statements.
+   *
+   * <p>Note that the returned object is <b>immutable</b>.
+   */
+  @NonNull
+  static BatchStatement newInstance(@NonNull BatchableStatement<?>... statements) {
+    return new DefaultBatchStatement(
+        BatchType.UNKNOW,
+        ImmutableList.copyOf(statements),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        Collections.emptyMap(),
+        null,
+        false,
+        Statement.NO_DEFAULT_TIMESTAMP,
+        null,
+        Integer.MIN_VALUE,
+        null,
+        null,
+        null,
+        null,
+        Statement.NO_NOW_IN_SECONDS);
+  }
+
+  /**
    * Creates an instance of the default implementation for the given batch type.
    *
    * <p>Note that the returned object is <b>immutable</b>.
@@ -129,6 +217,15 @@ public interface BatchStatement extends Statement<BatchStatement>, Iterable<Batc
         null,
         null,
         Statement.NO_NOW_IN_SECONDS);
+  }
+
+  /**
+   * Returns a builder to create an instance of the default implementation.
+   *
+   * <p>Note that this builder is mutable and not thread-safe.
+   */
+  static BatchStatementBuilder builder() {
+    return new BatchStatementBuilder(BatchType.UNKNOW);
   }
 
   /**
