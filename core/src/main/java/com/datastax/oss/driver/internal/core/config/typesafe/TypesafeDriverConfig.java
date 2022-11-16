@@ -32,6 +32,7 @@ import com.typesafe.config.ConfigValueFactory;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.URL;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -147,12 +148,11 @@ public class TypesafeDriverConfig implements DriverConfig {
   @NonNull
   @Override
   public DriverExecutionProfile getProfile(@NonNull String profileName) {
-    TypesafeDriverExecutionProfile.Base profile = profiles.get(profileName);
-    Preconditions.checkArgument(
-        profile != null,
-        "Unknown profile '%s'. Check your configuration.",
-        profileName);
-    return profile;
+    if (profileName.equals(DriverExecutionProfile.DEFAULT_NAME)) {
+      return defaultProfile;
+    }
+    return Optional.ofNullable(profiles.get(profileName))
+      .orElseThrow(() -> new IllegalArgumentException(String.format("Unknown profile '%s'. Check your configuration.", profileName)));
   }
 
   @NonNull
