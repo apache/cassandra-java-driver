@@ -20,8 +20,9 @@ import com.datastax.oss.driver.api.core.data.AccessibleByName;
 import com.datastax.oss.driver.api.core.data.GettableById;
 import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.internal.core.util.Strings;
-import com.datastax.oss.driver.shaded.guava.common.collect.LinkedListMultimap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableListMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ListMultimap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import net.jcip.annotations.Immutable;
@@ -40,9 +41,11 @@ public class IdentifierIndex {
   private final ListMultimap<String, Integer> byCaseInsensitiveName;
 
   public IdentifierIndex(List<CqlIdentifier> ids) {
-    this.byId = LinkedListMultimap.create(ids.size());
-    this.byCaseSensitiveName = LinkedListMultimap.create(ids.size());
-    this.byCaseInsensitiveName = LinkedListMultimap.create(ids.size());
+    ImmutableListMultimap.Builder<CqlIdentifier, Integer> byId = ImmutableListMultimap.builder();
+    ImmutableListMultimap.Builder<String, Integer> byCaseSensitiveName =
+        ImmutableListMultimap.builder();
+    ImmutableListMultimap.Builder<String, Integer> byCaseInsensitiveName =
+        ImmutableListMultimap.builder();
 
     int i = 0;
     for (CqlIdentifier id : ids) {
@@ -51,6 +54,10 @@ public class IdentifierIndex {
       byCaseInsensitiveName.put(id.asInternal().toLowerCase(Locale.ROOT), i);
       i += 1;
     }
+
+    this.byId = byId.build();
+    this.byCaseSensitiveName = byCaseSensitiveName.build();
+    this.byCaseInsensitiveName = byCaseInsensitiveName.build();
   }
 
   /**
@@ -68,8 +75,8 @@ public class IdentifierIndex {
    * AccessibleByName}, or -1 if it's not in the list.
    */
   public int firstIndexOf(String name) {
-    List<Integer> indices = allIndicesOf(name);
-    return indices.isEmpty() ? -1 : indices.get(0);
+    Iterator<Integer> indices = allIndicesOf(name).iterator();
+    return indices.hasNext() ? -1 : indices.next();
   }
 
   /** Returns all occurrences of a given identifier. */
@@ -79,7 +86,7 @@ public class IdentifierIndex {
 
   /** Returns the first occurrence of a given identifier, or -1 if it's not in the list. */
   public int firstIndexOf(CqlIdentifier id) {
-    List<Integer> indices = allIndicesOf(id);
-    return indices.isEmpty() ? -1 : indices.get(0);
+    Iterator<Integer> indices = allIndicesOf(id).iterator();
+    return indices.hasNext() ? -1 : indices.next();
   }
 }
