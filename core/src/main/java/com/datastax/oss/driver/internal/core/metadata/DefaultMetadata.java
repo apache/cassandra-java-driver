@@ -138,7 +138,7 @@ public class DefaultMetadata implements Metadata {
         rebuildTokenMap(
             newNodes, keyspaces, tokenMapEnabled, forceFullRebuild, tokenFactory, context),
         context.getChannelFactory().getClusterName(),
-        rebuildPartitionMap(context));
+        rebuildPartitionMap(newNodes, context));
   }
 
   public DefaultMetadata withSchema(
@@ -150,7 +150,7 @@ public class DefaultMetadata implements Metadata {
         ImmutableMap.copyOf(newKeyspaces),
         rebuildTokenMap(nodes, newKeyspaces, tokenMapEnabled, false, null, context),
         context.getChannelFactory().getClusterName(),
-        rebuildPartitionMap(context));
+        rebuildPartitionMap(this.nodes, context));
   }
 
   @Nullable
@@ -215,7 +215,8 @@ public class DefaultMetadata implements Metadata {
   }
 
   @Nullable
-  protected DefaultPartitionMetadata rebuildPartitionMap(InternalDriverContext context) {
+  protected DefaultPartitionMetadata rebuildPartitionMap(
+      Map<UUID, Node> nodes, InternalDriverContext context) {
 
     return new DefaultPartitionMetadata(
         context.getSessionName(),
@@ -228,6 +229,6 @@ public class DefaultMetadata implements Metadata {
             .getConfig()
             .getDefaultProfile()
             .getBoolean(DefaultDriverOption.METADATA_PARTITION_METADATA_ENABLED),
-        this.getNodes());
+        nodes);
   }
 }
