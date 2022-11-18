@@ -21,7 +21,6 @@ import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.internal.core.util.Loggers;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
@@ -152,7 +151,10 @@ public class TypesafeDriverConfig implements DriverConfig {
       return defaultProfile;
     }
     return Optional.ofNullable(profiles.get(profileName))
-      .orElseThrow(() -> new IllegalArgumentException(String.format("Unknown profile '%s'. Check your configuration.", profileName)));
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format("Unknown profile '%s'. Check your configuration.", profileName)));
   }
 
   @NonNull

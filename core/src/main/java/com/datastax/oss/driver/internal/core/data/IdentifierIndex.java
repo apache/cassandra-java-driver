@@ -76,7 +76,7 @@ public class IdentifierIndex {
    */
   public int firstIndexOf(String name) {
     Iterator<Integer> indices = allIndicesOf(name).iterator();
-    return indices.hasNext() ? -1 : indices.next();
+    return indices.hasNext() ? indices.next() : -1;
   }
 
   /** Returns all occurrences of a given identifier. */
@@ -87,6 +87,6 @@ public class IdentifierIndex {
   /** Returns the first occurrence of a given identifier, or -1 if it's not in the list. */
   public int firstIndexOf(CqlIdentifier id) {
     Iterator<Integer> indices = allIndicesOf(id).iterator();
-    return indices.hasNext() ? -1 : indices.next();
+    return indices.hasNext() ? indices.next() : -1;
   }
 }
