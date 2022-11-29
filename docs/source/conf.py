@@ -9,7 +9,7 @@ from docutils import nodes
 from recommonmark.transform import AutoStructify
 from recommonmark.parser import CommonMarkParser, splitext, urlparse
 from sphinx_scylladb_theme.utils import multiversion_regex_builder
-
+from redirects_cli import cli as redirects_cli
 
 # -- General configuration ------------------------------------------------
 
@@ -45,50 +45,6 @@ source_suffix = {
     '.md': 'markdown',
 }
 autosectionlabel_prefix_document = True
-
-class CustomCommonMarkParser(CommonMarkParser):
-    
-    def visit_document(self, node):
-        pass
-    
-    def visit_link(self, mdnode):
-        # Override to avoid checking if relative links exists
-        ref_node = nodes.reference()
-        destination = mdnode.destination
-        _, ext = splitext(destination)
-
-        url_check = urlparse(destination)
-        scheme_known = bool(url_check.scheme)
-
-        if not scheme_known and ext.replace('.', '') in self.supported:
-            destination = destination.replace(ext, '')
-        ref_node['refuri'] = destination
-        ref_node.line = self._get_line(mdnode)
-        if mdnode.title:
-            ref_node['title'] = mdnode.title
-        next_node = ref_node
-
-        self.current_node.append(next_node)
-        self.current_node = ref_node
-
-def replace_relative_links(app, docname, source):
-    result = source[0]
-    for key in app.config.replacements:
-        result = re.sub(key, app.config.replacements[key], result)
-    source[0] = result
-
-def setup(app):
-    app.add_source_parser(CustomCommonMarkParser)
-    app.add_config_value('recommonmark_config', {
-        'enable_eval_rst': True,
-        'enable_auto_toc_tree': False,
-    }, True)
-    app.add_transform(AutoStructify)
-
-    # Replace DataStax links
-    replacements = {r'https://docs.datastax.com/en/drivers/java\/(.*?)\/': "https://java-driver.docs.scylladb.com/stable/api/"}
-    app.add_config_value('replacements', replacements, True)
-    app.connect('source-read', replace_relative_links)
 
 # The master toctree document.
 master_doc = 'contents'
@@ -178,3 +134,61 @@ html_baseurl = 'https://java-driver.docs.scylladb.com'
 
 # Dictionary of values to pass into the template engine’s context for all pages
 html_context = {'html_baseurl': html_baseurl}
+
+# -- Initialize Sphinx ----------------------------------------------
+
+class CustomCommonMarkParser(CommonMarkParser):
+    
+    def visit_document(self, node):
+        pass
+    
+    def visit_link(self, mdnode):
+        # Override MarkDownParser to avoid checking if relative links exists
+        ref_node = nodes.reference()
+        destination = mdnode.destination
+        _, ext = splitext(destination)
+
+        url_check = urlparse(destination)
+        scheme_known = bool(url_check.scheme)
+
+        if not scheme_known and ext.replace('.', '') in self.supported:
+            destination = destination.replace(ext, '')
+        ref_node['refuri'] = destination
+        ref_node.line = self._get_line(mdnode)
+        if mdnode.title:
+            ref_node['title'] = mdnode.title
+        next_node = ref_node
+
+        self.current_node.append(next_node)
+        self.current_node = ref_node
+
+def replace_relative_links(app, docname, source):
+    result = source[0]
+    for key in app.config.replacements:
+        result = re.sub(key, app.config.replacements[key], result)
+    source[0] = result
+
+def build_finished(app, exception):
+    version_name = os.getenv("SPHINX_MULTIVERSION_NAME", "")
+    version_name = "/" + version_name if version_name else ""
+    redirect_to = version_name +'/api/index.html'
+    out_file = app.outdir +'/api.html'
+    redirects_cli.create(redirect_to=redirect_to,out_file=out_file)
+
+def setup(app):
+    # Setup Markdown parser
+    app.add_source_parser(CustomCommonMarkParser)
+    app.add_config_value('recommonmark_config', {
+        'enable_eval_rst': True,
+        'enable_auto_toc_tree': False,
+    }, True)
+    app.add_transform(AutoStructify)
+
+    # Replace DataStax links
+    current_slug = os.getenv("SPHINX_MULTIVERSION_NAME", "stable")
+    replacements = {r'docs.datastax.com/en/drivers/java\/(.*?)\/': "java-driver.docs.scylladb.com/" + current_slug + "/api/"}
+    app.add_config_value('replacements', replacements, True)
+    app.connect('source-read', replace_relative_links)
+
+    # Create redirect to JavaDoc API
+    app.connect('build-finished', build_finished)

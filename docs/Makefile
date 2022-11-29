@@ -18,9 +18,6 @@ ifeq ($(OS),Windows_NT)
     POETRY = $(APPDATA)\Python\Scripts\poetry
 endif
 
-define javadoc
-    cd .. && ./docs/_utils/javadoc.sh
-endef
 
 .PHONY: all
 all: dirhtml
@@ -55,10 +52,9 @@ dirhtml: setup
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/dirhtml."
 
-.PHONY: singlehtml
-singlehtml: setup
-	@$(javadoc)
-	$(SPHINXBUILD) -b singlehtml $(ALLSPHINXOPTS) $(BUILDDIR)/singlehtml
+.PHONY: javadoc
+javadoc: setup
+	cd .. && ./docs/_utils/javadoc.sh
 	@echo
 	@echo "Build finished. The HTML page is in $(BUILDDIR)/singlehtml."
 
