@@ -22,6 +22,7 @@ import com.datastax.oss.driver.internal.core.util.ByteBufs;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.Unpooled;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -339,6 +340,62 @@ public class ByteBufPrimitiveCodecTest {
     ByteBuf dest = allocate(4);
     codec.writeBytes((ByteBuffer) null, dest);
     assertThat(dest).containsExactly("0xFFFFFFFF");
+  }
+
+  @Test
+  public void should_return_consistent_buffers_from_readbytes() {
+
+    byte[] bytes =
+        new byte[] {
+          // length
+          0x00,
+          0x00,
+          0x00,
+          0x05,
+          // UTF-8 contents
+          0x68,
+          0x65,
+          0x6c,
+          0x6c,
+          0x6f
+        };
+    final int availableBytes = 5;
+
+    ByteBuf source1 = Unpooled.wrappedBuffer(bytes);
+    // Unpooled ByteBufs will be based entirely on the input byte array so we should be able to
+    // optimize by
+    // re-using the underlying array
+    assertThat(source1.hasArray()).isTrue();
+    assertThat(source1.readableBytes()).isEqualTo(source1.array().length);
+    ByteBuffer unpooledBuffer = codec.readBytes(source1);
+    assertThat(source1.array()).isSameAs(unpooledBuffer.array());
+    assertThat(unpooledBuffer.array().length).isEqualTo(bytes.length);
+    assertThat(unpooledBuffer.arrayOffset()).isEqualTo(4);
+    assertThat(unpooledBuffer.remaining()).isEqualTo(availableBytes);
+    unpooledBuffer.rewind();
+    assertThat(unpooledBuffer.array().length).isEqualTo(bytes.length);
+    assertThat(unpooledBuffer.arrayOffset()).isEqualTo(4);
+    assertThat(unpooledBuffer.remaining()).isEqualTo(availableBytes);
+
+    ByteBuf source2 = ByteBufAllocator.DEFAULT.heapBuffer(bytes.length);
+    // HeapBuffers should have much larger backing arrays so we won't be able to re-use them... they
+    // wind up being copied
+    assertThat(source2.hasArray()).isTrue();
+    assertThat(source2.array().length).isGreaterThan(bytes.length);
+    source2.writeBytes(bytes);
+    ByteBuffer heapBuffer = codec.readBytes(source2);
+    assertThat(heapBuffer.remaining()).isEqualTo(availableBytes);
+    heapBuffer.rewind();
+    assertThat(heapBuffer.remaining()).isEqualTo(availableBytes);
+
+    ByteBuf source3 = ByteBufAllocator.DEFAULT.directBuffer(bytes.length);
+    // No backing array for DirectBuffers so we're forced to copy
+    source3.writeBytes(bytes);
+    assertThat(source3.hasArray()).isFalse();
+    ByteBuffer directBuffer = codec.readBytes(source3);
+    assertThat(directBuffer.remaining()).isEqualTo(availableBytes);
+    directBuffer.rewind();
+    assertThat(directBuffer.remaining()).isEqualTo(availableBytes);
   }
 
   private static ByteBuf allocate(int length) {

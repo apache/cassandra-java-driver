@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.protocol;
 
+import com.datastax.dse.driver.internal.core.graph.ByteBufUtil;
 import com.datastax.oss.protocol.internal.PrimitiveCodec;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -112,10 +113,28 @@ public class ByteBufPrimitiveCodec implements PrimitiveCodec<ByteBuf> {
 
   @Override
   public ByteBuffer readBytes(ByteBuf source) {
-    int length = readInt(source);
-    if (length < 0) return null;
-    ByteBuf slice = source.readSlice(length);
-    return ByteBuffer.wrap(readRawBytes(slice));
+
+    // If we have an underlying array of the right size re-use it.  If a ByteBuf that uses a backing
+    // array was
+    // created in some way other than wrapping an existing byte array it'll start with an array of
+    // some large
+    // initial size.  A slice built from such an array would be a problem so we only optimize if we
+    // _only_
+    // have readable bytes in our array.
+    if (source.hasArray() && source.readableBytes() == source.array().length) {
+      ByteBuffer buffer = ByteBuffer.wrap(source.array());
+
+      // Note that this operation matters for side effects as well.  We want to advance the read
+      // position
+      // before creating the slice but we also need the reported size in order to return null in the
+      // size
+      // zero case.
+      if (buffer.getInt() < 0) return null;
+      return buffer.slice();
+    }
+
+    if (source.readInt() < 0) return null;
+    return ByteBufUtil.toByteBuffer(source);
   }
 
   @Override
@@ -218,22 +237,6 @@ public class ByteBufPrimitiveCodec implements PrimitiveCodec<ByteBuf> {
   public void writeShortBytes(byte[] bytes, ByteBuf dest) {
     writeUnsignedShort(bytes.length, dest);
     dest.writeBytes(bytes);
-  }
-
-  // Reads *all* readable bytes from a buffer and return them.
-  // If the buffer is backed by an array, this will return the underlying array directly, without
-  // copy.
-  private static byte[] readRawBytes(ByteBuf buffer) {
-    if (buffer.hasArray() && buffer.readableBytes() == buffer.array().length) {
-      // Move the readerIndex just so we consistently consume the input
-      buffer.readerIndex(buffer.writerIndex());
-      return buffer.array();
-    }
-
-    // Otherwise, just read the bytes in a new array
-    byte[] bytes = new byte[buffer.readableBytes()];
-    buffer.readBytes(bytes);
-    return bytes;
   }
 
   private static String readString(ByteBuf source, int length) {
