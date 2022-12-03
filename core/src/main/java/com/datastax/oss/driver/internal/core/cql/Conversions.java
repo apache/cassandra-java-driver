@@ -535,17 +535,18 @@ public class Conversions {
 
   public static boolean resolveIdempotence(Request request, InternalDriverContext context) {
     Boolean requestIsIdempotent = request.isIdempotent();
-    DriverExecutionProfile executionProfile = resolveExecutionProfile(request, context);
     return (requestIsIdempotent == null)
-        ? executionProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
+        ? resolveExecutionProfile(request, context)
+            .getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
         : requestIsIdempotent;
   }
 
   public static Duration resolveRequestTimeout(Request request, InternalDriverContext context) {
-    DriverExecutionProfile executionProfile = resolveExecutionProfile(request, context);
-    return request.getTimeout() != null
-        ? request.getTimeout()
-        : executionProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
+    Duration timeout = request.getTimeout();
+    return timeout != null
+        ? timeout
+        : resolveExecutionProfile(request, context)
+            .getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
   }
 
   public static RetryPolicy resolveRetryPolicy(Request request, InternalDriverContext context) {
