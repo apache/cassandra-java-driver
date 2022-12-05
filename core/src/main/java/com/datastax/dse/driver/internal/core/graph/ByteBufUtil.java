@@ -21,14 +21,19 @@ import java.nio.ByteBuffer;
 
 public class ByteBufUtil {
 
+  public static byte[] copyBytes(ByteBuf buffer, int length) {
+
+    final byte[] bytes = new byte[length];
+    buffer.getBytes(buffer.readerIndex(), bytes, 0, length);
+    return bytes;
+  }
+
   // Does not move the reader index of the ByteBuf parameter
   public static ByteBuffer toByteBuffer(ByteBuf buffer) {
     if (buffer.isDirect()) {
       return buffer.nioBuffer();
     }
-    final byte[] bytes = new byte[buffer.readableBytes()];
-    buffer.getBytes(buffer.readerIndex(), bytes);
-    return ByteBuffer.wrap(bytes);
+    return ByteBuffer.wrap(copyBytes(buffer, buffer.readableBytes()));
   }
 
   static ByteBuf toByteBuf(ByteBuffer buffer) {

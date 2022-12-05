@@ -115,26 +115,15 @@ public class ByteBufPrimitiveCodec implements PrimitiveCodec<ByteBuf> {
   public ByteBuffer readBytes(ByteBuf source) {
 
     // If we have an underlying array of the right size re-use it.  If a ByteBuf that uses a backing
-    // array was
-    // created in some way other than wrapping an existing byte array it'll start with an array of
-    // some large
-    // initial size.  A slice built from such an array would be a problem so we only optimize if we
-    // _only_
-    // have readable bytes in our array.
-    if (source.hasArray() && source.readableBytes() == source.array().length) {
-      ByteBuffer buffer = ByteBuffer.wrap(source.array());
+    // array was created in some way other than wrapping an existing byte array it'll start with an
+    // array of some large initial size.  A slice built from such an array would be a problem so we
+    // only optimize if we _only_ have readable bytes in our array.
+    int sourceLength = source.readInt();
+    if (sourceLength < 0) return null;
 
-      // Note that this operation matters for side effects as well.  We want to advance the read
-      // position
-      // before creating the slice but we also need the reported size in order to return null in the
-      // size
-      // zero case.
-      if (buffer.getInt() < 0) return null;
-      return buffer.slice();
-    }
-
-    if (source.readInt() < 0) return null;
-    return ByteBufUtil.toByteBuffer(source);
+    if (source.hasArray() && (source.readableBytes() + 4) == source.array().length)
+      return ByteBuffer.wrap(source.array(), 4, sourceLength).slice();
+    return ByteBuffer.wrap(ByteBufUtil.copyBytes(source, sourceLength));
   }
 
   @Override
