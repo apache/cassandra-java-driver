@@ -302,12 +302,20 @@ public class CcmBridge implements AutoCloseable {
           Arrays.stream(nodes).mapToObj(n -> "" + n).collect(Collectors.joining(":")),
           createOptions.stream().collect(Collectors.joining(" ")));
 
+      // Collect all cassandraConfiguration (and others) into a single "ccm updateconf" call.
+      // Works around the behavior introduced in https://github.com/scylladb/scylla-ccm/pull/410
+      StringBuilder updateConfArguments = new StringBuilder();
+
       for (Map.Entry<String, Object> conf : cassandraConfiguration.entrySet()) {
-        execute("updateconf", String.format("%s:%s", conf.getKey(), conf.getValue()));
+        updateConfArguments.append(conf.getKey()).append(':').append(conf.getValue()).append(' ');
       }
       if (getCassandraVersion().compareTo(Version.V2_2_0) >= 0 && !SCYLLA_ENABLEMENT) {
         // @IntegrationTestDisabledScyllaJVMArgs @IntegrationTestDisabledScyllaUDF
-        execute("updateconf", "enable_user_defined_functions:true");
+        updateConfArguments.append("enable_user_defined_functions:true").append(' ');
+      }
+
+      if (updateConfArguments.length() > 0) {
+        execute("updateconf", updateConfArguments.toString());
       }
       if (DSE_ENABLEMENT) {
         for (Map.Entry<String, Object> conf : dseConfiguration.entrySet()) {
