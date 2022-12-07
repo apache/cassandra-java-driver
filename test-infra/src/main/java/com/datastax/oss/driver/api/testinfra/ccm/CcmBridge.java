@@ -94,14 +94,26 @@ public class CcmBridge implements AutoCloseable {
   public static final String DEFAULT_SERVER_TRUSTSTORE_PASSWORD = "scylla1sfun";
   public static final String DEFAULT_SERVER_TRUSTSTORE_PATH = "/server.truststore";
 
+  public static final String DEFAULT_SERVER_TRUSTSTORE_PEM_PATH = "/server.truststore.pem";
+
   private static final File DEFAULT_SERVER_TRUSTSTORE_FILE =
       createTempStore(DEFAULT_SERVER_TRUSTSTORE_PATH);
+  private static final File DEFAULT_SERVER_TRUSTSTORE_PEM_FILE =
+      createTempStore(DEFAULT_SERVER_TRUSTSTORE_PEM_PATH);
 
   public static final String DEFAULT_SERVER_KEYSTORE_PASSWORD = "scylla1sfun";
   public static final String DEFAULT_SERVER_KEYSTORE_PATH = "/server.keystore";
 
+  // Contain the same keypair as the server keystore, but in format usable by Scylla
+  public static final String DEFAULT_SERVER_PRIVATE_KEY_PATH = "/server.key";
+  public static final String DEFAULT_SERVER_CERT_CHAIN_PATH = "/server.crt";
+
   private static final File DEFAULT_SERVER_KEYSTORE_FILE =
       createTempStore(DEFAULT_SERVER_KEYSTORE_PATH);
+  private static final File DEFAULT_SERVER_PRIVATE_KEY_FILE =
+      createTempStore(DEFAULT_SERVER_PRIVATE_KEY_PATH);
+  private static final File DEFAULT_SERVER_CERT_CHAIN_FILE =
+      createTempStore(DEFAULT_SERVER_CERT_CHAIN_PATH);
 
   // A separate keystore where the certificate has a CN of localhost, used for hostname
   // validation testing.
@@ -550,15 +562,25 @@ public class CcmBridge implements AutoCloseable {
     /** Enables SSL encryption. */
     public Builder withSsl() {
       cassandraConfiguration.put("client_encryption_options.enabled", "true");
-      cassandraConfiguration.put("client_encryption_options.optional", "false");
-      cassandraConfiguration.put(
-          "client_encryption_options.keystore", DEFAULT_SERVER_KEYSTORE_FILE.getAbsolutePath());
-      cassandraConfiguration.put(
-          "client_encryption_options.keystore_password", DEFAULT_SERVER_KEYSTORE_PASSWORD);
+      if (SCYLLA_ENABLEMENT) {
+        cassandraConfiguration.put(
+            "client_encryption_options.certificate",
+            DEFAULT_SERVER_CERT_CHAIN_FILE.getAbsolutePath());
+        cassandraConfiguration.put(
+            "client_encryption_options.keyfile", DEFAULT_SERVER_PRIVATE_KEY_FILE.getAbsolutePath());
+      } else {
+        cassandraConfiguration.put("client_encryption_options.optional", "false");
+        cassandraConfiguration.put(
+            "client_encryption_options.keystore", DEFAULT_SERVER_KEYSTORE_FILE.getAbsolutePath());
+        cassandraConfiguration.put(
+            "client_encryption_options.keystore_password", DEFAULT_SERVER_KEYSTORE_PASSWORD);
+      }
       return this;
     }
 
     public Builder withSslLocalhostCn() {
+      // FIXME: Add Scylla support.
+      // @IntegrationTestDisabledCassandra3Failure @IntegrationTestDisabledSSL
       cassandraConfiguration.put("client_encryption_options.enabled", "true");
       cassandraConfiguration.put("client_encryption_options.optional", "false");
       cassandraConfiguration.put(
@@ -573,10 +595,17 @@ public class CcmBridge implements AutoCloseable {
     public Builder withSslAuth() {
       withSsl();
       cassandraConfiguration.put("client_encryption_options.require_client_auth", "true");
-      cassandraConfiguration.put(
-          "client_encryption_options.truststore", DEFAULT_SERVER_TRUSTSTORE_FILE.getAbsolutePath());
-      cassandraConfiguration.put(
-          "client_encryption_options.truststore_password", DEFAULT_SERVER_TRUSTSTORE_PASSWORD);
+      if (SCYLLA_ENABLEMENT) {
+        cassandraConfiguration.put(
+            "client_encryption_options.truststore",
+            DEFAULT_SERVER_TRUSTSTORE_PEM_FILE.getAbsolutePath());
+      } else {
+        cassandraConfiguration.put(
+            "client_encryption_options.truststore",
+            DEFAULT_SERVER_TRUSTSTORE_FILE.getAbsolutePath());
+        cassandraConfiguration.put(
+            "client_encryption_options.truststore_password", DEFAULT_SERVER_TRUSTSTORE_PASSWORD);
+      }
       return this;
     }
 
