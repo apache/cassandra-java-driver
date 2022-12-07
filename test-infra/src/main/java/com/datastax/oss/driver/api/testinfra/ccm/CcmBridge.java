@@ -244,15 +244,19 @@ public class CcmBridge implements AutoCloseable {
 
   private String getCcmVersionString(Version version) {
     if (SCYLLA_ENABLEMENT) {
-      // It seems that Scylla versions like 5.0-rc2 cannot be passed to CCM create options as
-      // 5.0.0-rc2,
-      // so we remove patch number from here.
-      // Likewise, 2022.1.0-rc8 will be returned as 2022.1.rc8
+      // Scylla OSS versions before 5.1 had RC versioning scheme of 5.0.rc3.
+      // Scylla OSS versions after (and including 5.1) have RC versioning of 5.1.0-rc3.
+      // A similar situation occurs with Scylla Enterprise after 2022.2.
+      //
+      // CcmBridge parses the version numbers to a newer format (5.1.0-rc3), so a replacement
+      // must be performed for older Scylla version numbers.
       String versionString = version.toString();
-      if (String.valueOf(version.getMajor()).matches("\\d{4}")) {
+
+      boolean shouldReplace =
+          (SCYLLA_ENTERPRISE && version.compareTo(Version.parse("2022.2.0-rc0")) < 0)
+              || (!SCYLLA_ENTERPRISE && version.compareTo(Version.parse("5.1.0-rc0")) < 0);
+      if (shouldReplace) {
         versionString = versionString.replace(".0-", ".");
-      } else {
-        versionString = versionString.replace(".0-", "-");
       }
       return "release:" + versionString;
     }
