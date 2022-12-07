@@ -416,32 +416,19 @@ public class CcmBridge implements AutoCloseable {
     execute(cli);
   }
 
-  private void execute(CommandLine cli) {
-    execute(cli, false);
-  }
-
   private void executeCheckLogError() {
     String command = "ccm checklogerror --config-dir=" + configDirectory.toFile().getAbsolutePath();
-    // force all logs to be error logs
-    execute(CommandLine.parse(command), true);
+    execute(CommandLine.parse(command));
   }
 
-  private void execute(CommandLine cli, boolean forceErrorLogging) {
-    if (forceErrorLogging) {
-      LOG.error("Executing: " + cli);
-    } else {
-      LOG.debug("Executing: " + cli);
-    }
+  private void execute(CommandLine cli) {
+    LOG.info("Executing: " + cli);
     ExecuteWatchdog watchDog = new ExecuteWatchdog(TimeUnit.MINUTES.toMillis(10));
     try (LogOutputStream outStream =
             new LogOutputStream() {
               @Override
               protected void processLine(String line, int logLevel) {
-                if (forceErrorLogging) {
-                  LOG.error("ccmout> {}", line);
-                } else {
-                  LOG.debug("ccmout> {}", line);
-                }
+                LOG.info("ccmout> {}", line);
               }
             };
         LogOutputStream errStream =
