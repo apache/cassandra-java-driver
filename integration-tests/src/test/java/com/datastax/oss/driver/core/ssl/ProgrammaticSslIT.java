@@ -36,7 +36,6 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class ProgrammaticSslIT {
@@ -44,7 +43,6 @@ public class ProgrammaticSslIT {
   @ClassRule public static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().withSsl().build();
 
   @Test
-  @Ignore("@IntegrationTestDisabledCassandra3Failure @IntegrationTestDisabledSSL")
   public void should_connect_with_programmatic_factory() {
     SslEngineFactory factory = new ProgrammaticSslEngineFactory(createSslContext());
     try (CqlSession session =
@@ -58,7 +56,6 @@ public class ProgrammaticSslIT {
   }
 
   @Test
-  @Ignore("@IntegrationTestDisabledCassandra3Failure @IntegrationTestDisabledSSL")
   public void should_connect_with_programmatic_ssl_context() {
     SSLContext sslContext = createSslContext();
     try (CqlSession session =
