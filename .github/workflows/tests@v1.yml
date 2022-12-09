@@ -160,7 +160,7 @@ jobs:
         if: ${{ failure() }}
         with:
           name: ccm-logs-cassandra-${{ matrix.cassandra-version }}
-          path: /tmp/*-0/ccm*/node*/logs/*
+          path: /tmp/ccm*/ccm*/node*/logs/*
 
   scylla-integration-tests:
     name: Scylla ITs
