@@ -213,4 +213,4 @@ jobs:
         if: ${{ failure() }}
         with:
           name: ccm-logs-scylla-${{ matrix.scylla-version }}
-          path: /tmp/*-0/ccm*/node*/logs/*
+          path: /tmp/ccm*/ccm*/node*/logs/*
