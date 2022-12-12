@@ -175,7 +175,7 @@ def describeAdhocAndScheduledTestingStage() {
 
 // branch pattern for cron
 // should match 3.x, 4.x, 4.5.x, etc
-def branchPatternCron() = {
+def branchPatternCron() {
   ~"((\\d+(\\.[\\dx]+)+))"
 }
 
