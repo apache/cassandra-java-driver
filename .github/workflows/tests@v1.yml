@@ -183,6 +183,11 @@ jobs:
           java-version: '8'
           distribution: 'adopt'
 
+      - name: Setup Python 2
+        uses: actions/setup-python@v2
+        with:
+          python-version: '2.x'
+
       - name: Setup Python 3
         uses: actions/setup-python@v2
         with:
