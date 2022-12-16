@@ -140,25 +140,6 @@ ${status} after ${currentBuild.durationString - ' and counting'}"""
   }
 }
 
-def submitCIMetrics(buildType) {
-  long durationMs = currentBuild.duration
-  long durationSec = durationMs / 1000
-  long nowSec = (currentBuild.startTimeInMillis + durationMs) / 1000
-  def branchNameNoPeriods = env.BRANCH_NAME.replaceAll('\\.', '_')
-  def durationMetric = "okr.ci.java.${env.DRIVER_METRIC_TYPE}.${buildType}.${branchNameNoPeriods} ${durationSec} ${nowSec}"
-
-  timeout(time: 1, unit: 'MINUTES') {
-    withCredentials([string(credentialsId: 'lab-grafana-address', variable: 'LAB_GRAFANA_ADDRESS'),
-                     string(credentialsId: 'lab-grafana-port', variable: 'LAB_GRAFANA_PORT')]) {
-      withEnv(["DURATION_METRIC=${durationMetric}"]) {
-        sh label: 'Send runtime metrics to labgrafana', script: '''#!/bin/bash -le
-          echo "${DURATION_METRIC}" | nc -q 5 ${LAB_GRAFANA_ADDRESS} ${LAB_GRAFANA_PORT}
-        '''
-      }
-    }
-  }
-}
-
 def describePerCommitStage() {
   script {
     currentBuild.displayName = "Per-Commit build"
@@ -182,7 +163,9 @@ def describeAdhocAndScheduledTestingStage() {
 
 // branch pattern for cron
 // should match 3.x, 4.x, 4.5.x, etc
-def branchPatternCron = ~"((\\d+(\\.[\\dx]+)+))"
+def branchPatternCron() {
+  ~"((\\d+(\\.[\\dx]+)+))"
+}
 
 pipeline {
   agent none
@@ -327,7 +310,7 @@ pipeline {
 
   triggers {
     // schedules only run against release branches (i.e. 3.x, 4.x, 4.5.x, etc.)
-    parameterizedCron(branchPatternCron.matcher(env.BRANCH_NAME).matches() ? """
+    parameterizedCron(branchPatternCron().matcher(env.BRANCH_NAME).matches() ? """
       # Every weeknight (Monday - Friday) around 3:00 AM
       ### JDK8 tests against 2.1, 3.0, 3.11 and 4.0
       H 3 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=2.1 3.0 3.11 4.0;CI_SCHEDULE_JABBA_VERSION=1.8;CI_SCHEDULE_TEST_PROFILE=long
@@ -428,11 +411,6 @@ pipeline {
         }
       }
       post {
-        always {
-          node('master') {
-            submitCIMetrics('commit')
-          }
-        }
         aborted {
           notifySlack('aborted')
         }
