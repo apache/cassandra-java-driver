@@ -204,6 +204,13 @@ public class CcmBridge implements AutoCloseable {
     this.rawDseYaml = dseConfigurationRawYaml;
     this.createOptions = createOptions;
 
+    if ((getCassandraVersion().nextStable().compareTo(Version.V4_1_0) >= 0)
+        && !jvmArgs.contains("-Dcassandra.allow_new_old_config_keys=false")
+        && !jvmArgs.contains("-Dcassandra.allow_new_old_config_keys=true")) {
+      // FIXME: This should not be needed as soon as Scylla CCM adjusts to new names
+      jvmArgs.add("-Dcassandra.allow_new_old_config_keys=true");
+      jvmArgs.add("-Dcassandra.allow_duplicate_config_keys=false");
+    }
     StringBuilder allJvmArgs = new StringBuilder("");
     String quote = isWindows() ? "\"" : "";
     for (String jvmArg : jvmArgs) {
@@ -324,7 +331,12 @@ public class CcmBridge implements AutoCloseable {
       }
       if (getCassandraVersion().compareTo(Version.V2_2_0) >= 0 && !SCYLLA_ENABLEMENT) {
         // @IntegrationTestDisabledScyllaJVMArgs @IntegrationTestDisabledScyllaUDF
-        updateConfArguments.append("enable_user_defined_functions:true").append(' ');
+        if (getCassandraVersion().compareTo(Version.V4_1_0) >= 0) {
+          updateConfArguments.append("user_defined_functions_enabled:true").append(' ');
+
+        } else {
+          updateConfArguments.append("enable_user_defined_functions:true").append(' ');
+        }
       }
 
       if (updateConfArguments.length() > 0) {
@@ -387,7 +399,16 @@ public class CcmBridge implements AutoCloseable {
   }
 
   public void start(int n) {
-    execute("node" + n, "start");
+    // FIXME: This should not be needed as soon as Scylla CCM adjusts to new names
+    if (getCassandraVersion().compareTo(Version.V4_1_0) >= 0) {
+      execute(
+          "node" + n,
+          "start",
+          "--jvm_arg=-Dcassandra.allow_new_old_config_keys=true",
+          "--jvm_arg=-Dcassandra.allow_duplicate_config_keys=false");
+    } else {
+      execute("node" + n, "start");
+    }
   }
 
   public void stop(int n) {

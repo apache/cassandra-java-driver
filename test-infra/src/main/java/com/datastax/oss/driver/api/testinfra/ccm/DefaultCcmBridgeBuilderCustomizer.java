@@ -30,8 +30,13 @@ public class DefaultCcmBridgeBuilderCustomizer {
   public static CcmBridge.Builder configureBuilder(CcmBridge.Builder builder) {
     if (!CcmBridge.DSE_ENABLEMENT
         && CcmBridge.VERSION.nextStable().compareTo(Version.V4_0_0) >= 0) {
-      builder.withCassandraConfiguration("enable_materialized_views", true);
-      builder.withCassandraConfiguration("enable_sasi_indexes", true);
+      if (CcmBridge.VERSION.nextStable().compareTo(Version.V4_1_0) >= 0) {
+        builder.withCassandraConfiguration("materialized_views_enabled", true);
+        builder.withCassandraConfiguration("sasi_indexes_enabled", true);
+      } else {
+        builder.withCassandraConfiguration("enable_materialized_views", true);
+        builder.withCassandraConfiguration("enable_sasi_indexes", true);
+      }
     }
     if (CcmBridge.VERSION.nextStable().compareTo(Version.V3_0_0) >= 0) {
       if (!CcmBridge.SCYLLA_ENABLEMENT) {
