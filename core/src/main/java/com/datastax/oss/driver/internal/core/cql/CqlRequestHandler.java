@@ -126,6 +126,7 @@ public class CqlRequestHandler implements Throttled {
   private final RequestThrottler throttler;
   private final RequestTracker requestTracker;
   private final SessionMetricUpdater sessionMetricUpdater;
+  private final DriverExecutionProfile executionProfile;
 
   // The errors on the nodes that were already tried (lazily initialized on the first error).
   // We don't use a map because nodes can appear multiple times.
@@ -167,7 +168,8 @@ public class CqlRequestHandler implements Throttled {
     this.sessionMetricUpdater = session.getMetricUpdater();
 
     this.timer = context.getNettyOptions().getTimer();
-    Duration timeout = Conversions.resolveRequestTimeout(statement, context);
+    this.executionProfile = Conversions.resolveExecutionProfile(initialStatement, context);
+    Duration timeout = Conversions.resolveRequestTimeout(statement, executionProfile);
     this.scheduledTimeout = scheduleTimeout(timeout);
 
     this.throttler = context.getRequestThrottler();
@@ -176,8 +178,6 @@ public class CqlRequestHandler implements Throttled {
 
   @Override
   public void onThrottleReady(boolean wasDelayed) {
-    DriverExecutionProfile executionProfile =
-        Conversions.resolveExecutionProfile(initialStatement, context);
     if (wasDelayed
         // avoid call to nanoTime() if metric is disabled:
         && sessionMetricUpdater.isEnabled(
@@ -276,8 +276,6 @@ public class CqlRequestHandler implements Throttled {
               retryCount,
               scheduleNextExecution,
               logPrefix);
-      DriverExecutionProfile executionProfile =
-          Conversions.resolveExecutionProfile(statement, context);
       Message message = Conversions.toMessage(statement, executionProfile, context);
       channel
           .write(message, statement.isTracing(), statement.getCustomPayload(), nodeResponseCallback)
@@ -336,37 +334,28 @@ public class CqlRequestHandler implements Throttled {
           totalLatencyNanos = completionTimeNanos - startTimeNanos;
           long nodeLatencyNanos = completionTimeNanos - callback.nodeStartTimeNanos;
           requestTracker.onNodeSuccess(
-              callback.statement,
-              nodeLatencyNanos,
-              callback.executionProfile,
-              callback.node,
-              logPrefix);
+              callback.statement, nodeLatencyNanos, executionProfile, callback.node, logPrefix);
           requestTracker.onSuccess(
-              callback.statement,
-              totalLatencyNanos,
-              callback.executionProfile,
-              callback.node,
-              logPrefix);
+              callback.statement, totalLatencyNanos, executionProfile, callback.node, logPrefix);
         }
         if (sessionMetricUpdater.isEnabled(
-            DefaultSessionMetric.CQL_REQUESTS, callback.executionProfile.getName())) {
+            DefaultSessionMetric.CQL_REQUESTS, executionProfile.getName())) {
           if (completionTimeNanos == NANOTIME_NOT_MEASURED_YET) {
             completionTimeNanos = System.nanoTime();
             totalLatencyNanos = completionTimeNanos - startTimeNanos;
           }
           sessionMetricUpdater.updateTimer(
               DefaultSessionMetric.CQL_REQUESTS,
-              callback.executionProfile.getName(),
+              executionProfile.getName(),
               totalLatencyNanos,
               TimeUnit.NANOSECONDS);
         }
       }
       // log the warnings if they have NOT been disabled
       if (!executionInfo.getWarnings().isEmpty()
-          && callback.executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOG_WARNINGS)
+          && executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOG_WARNINGS)
           && LOG.isWarnEnabled()) {
-        logServerWarnings(
-            callback.statement, callback.executionProfile, executionInfo.getWarnings());
+        logServerWarnings(callback.statement, executionProfile, executionInfo.getWarnings());
       }
     } catch (Throwable error) {
       setFinalError(callback.statement, error, callback.node, -1);
@@ -418,21 +407,17 @@ public class CqlRequestHandler implements Throttled {
         schemaInAgreement,
         session,
         context,
-        callback.executionProfile);
+        executionProfile);
   }
 
   @Override
   public void onThrottleFailure(@NonNull RequestThrottlingException error) {
-    DriverExecutionProfile executionProfile =
-        Conversions.resolveExecutionProfile(initialStatement, context);
     sessionMetricUpdater.incrementCounter(
         DefaultSessionMetric.THROTTLING_ERRORS, executionProfile.getName());
     setFinalError(initialStatement, error, null, -1);
   }
 
   private void setFinalError(Statement<?> statement, Throwable error, Node node, int execution) {
-    DriverExecutionProfile executionProfile =
-        Conversions.resolveExecutionProfile(statement, context);
     if (error instanceof DriverException) {
       ((DriverException) error)
           .setExecutionInfo(
@@ -475,7 +460,6 @@ public class CqlRequestHandler implements Throttled {
 
     private final long nodeStartTimeNanos = System.nanoTime();
     private final Statement<?> statement;
-    private final DriverExecutionProfile executionProfile;
     private final Node node;
     private final Queue<Node> queryPlan;
     private final DriverChannel channel;
@@ -505,7 +489,6 @@ public class CqlRequestHandler implements Throttled {
       this.retryCount = retryCount;
       this.scheduleNextExecution = scheduleNextExecution;
       this.logPrefix = logPrefix + "|" + execution;
-      this.executionProfile = Conversions.resolveExecutionProfile(statement, context);
     }
 
     // this gets invoked once the write completes.
@@ -544,12 +527,13 @@ public class CqlRequestHandler implements Throttled {
           cancel();
         } else {
           inFlightCallbacks.add(this);
-          if (scheduleNextExecution && Conversions.resolveIdempotence(statement, context)) {
+          if (scheduleNextExecution
+              && Conversions.resolveIdempotence(statement, executionProfile)) {
             int nextExecution = execution + 1;
             long nextDelay;
             try {
               nextDelay =
-                  Conversions.resolveSpeculativeExecutionPolicy(statement, context)
+                  Conversions.resolveSpeculativeExecutionPolicy(context, executionProfile)
                       .nextExecution(node, keyspace, statement, nextExecution);
             } catch (Throwable cause) {
               // This is a bug in the policy, but not fatal since we have at least one other
@@ -697,7 +681,7 @@ public class CqlRequestHandler implements Throttled {
                 true,
                 reprepareMessage,
                 repreparePayload.customPayload,
-                Conversions.resolveRequestTimeout(statement, context),
+                Conversions.resolveRequestTimeout(statement, executionProfile),
                 throttler,
                 sessionMetricUpdater,
                 logPrefix);
@@ -767,7 +751,7 @@ public class CqlRequestHandler implements Throttled {
         trackNodeError(node, error, NANOTIME_NOT_MEASURED_YET);
         setFinalError(statement, error, node, execution);
       } else {
-        RetryPolicy retryPolicy = Conversions.resolveRetryPolicy(statement, context);
+        RetryPolicy retryPolicy = Conversions.resolveRetryPolicy(context, executionProfile);
         RetryVerdict verdict;
         if (error instanceof ReadTimeoutException) {
           ReadTimeoutException readTimeout = (ReadTimeoutException) error;
@@ -788,7 +772,7 @@ public class CqlRequestHandler implements Throttled {
         } else if (error instanceof WriteTimeoutException) {
           WriteTimeoutException writeTimeout = (WriteTimeoutException) error;
           verdict =
-              Conversions.resolveIdempotence(statement, context)
+              Conversions.resolveIdempotence(statement, executionProfile)
                   ? retryPolicy.onWriteTimeoutVerdict(
                       statement,
                       writeTimeout.getConsistencyLevel(),
@@ -820,7 +804,7 @@ public class CqlRequestHandler implements Throttled {
               DefaultNodeMetric.IGNORES_ON_UNAVAILABLE);
         } else {
           verdict =
-              Conversions.resolveIdempotence(statement, context)
+              Conversions.resolveIdempotence(statement, executionProfile)
                   ? retryPolicy.onErrorResponseVerdict(statement, error, retryCount)
                   : RetryVerdict.RETHROW;
           updateErrorMetrics(
@@ -899,12 +883,12 @@ public class CqlRequestHandler implements Throttled {
       }
       LOG.trace("[{}] Request failure, processing: {}", logPrefix, error);
       RetryVerdict verdict;
-      if (!Conversions.resolveIdempotence(statement, context)
+      if (!Conversions.resolveIdempotence(statement, executionProfile)
           || error instanceof FrameTooLongException) {
         verdict = RetryVerdict.RETHROW;
       } else {
         try {
-          RetryPolicy retryPolicy = Conversions.resolveRetryPolicy(statement, context);
+          RetryPolicy retryPolicy = Conversions.resolveRetryPolicy(context, executionProfile);
           verdict = retryPolicy.onRequestAbortedVerdict(statement, error, retryCount);
         } catch (Throwable cause) {
           setFinalError(
