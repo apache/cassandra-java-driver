@@ -177,8 +177,8 @@ public class ChannelPoolInitTest extends ChannelPoolTestBase {
     // A reconnection should have been scheduled
     verify(reconnectionSchedule, VERIFY_TIMEOUT).nextDelay();
     inOrder.verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.reconnectionStarted(node));
-    assertThat(pool.channels[0]).containsOnly(channel1);
     inOrder.verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.channelOpened(node));
+    assertThat(pool.channels[0]).containsOnly(channel1);
 
     channel2Future.complete(channel2);
     factoryHelper.waitForCalls(node, 1);
