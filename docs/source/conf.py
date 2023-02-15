@@ -191,7 +191,7 @@ def setup(app):
     current_slug = os.getenv("SPHINX_MULTIVERSION_NAME", "stable")
     replacements = {
         r'docs.datastax.com/en/drivers/java\/(.*?)\/': "java-driver.docs.scylladb.com/" + current_slug + "/api/",
-        r'java-driver.docs.scylladb.com\/(.*?)\/': "java-driver.docs.scylladb.com/" + current_slug + "/api/"
+        r'java-driver.docs.scylladb.com\/(.*?)\/': "java-driver.docs.scylladb.com/" + current_slug + "/"
     }
     app.add_config_value('replacements', replacements, True)
     app.connect('source-read', replace_relative_links)
