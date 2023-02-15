@@ -35,7 +35,7 @@ public class DefaultLineStringTest {
   private final String wkt = "LINESTRING (30 10, 10 30, 40 40)";
 
   private final String json =
-      "{\"type\":\"LineString\",\"coordinates\":[[30.0,10.0],[10.0,30.0],[40.0,40.0]]}";
+      "{\"type\":\"LineString\",\"coordinates\":[[30,10],[10,30],[40,40]],\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"EPSG:4326\"}}}";
 
   @Test
   public void should_parse_valid_well_known_text() {

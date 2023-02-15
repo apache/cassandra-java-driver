@@ -48,7 +48,7 @@
     <hdrhistogram.version>2.1.12</hdrhistogram.version>
     <metrics.version>4.1.18</metrics.version>
     <netty.version>4.1.77.Final</netty.version>
-    <esri.version>1.2.1</esri.version>
+    <esri.version>2.2.4</esri.version>
     <!--
     When upgrading TinkerPop please upgrade the version matrix in
     manual/core/integration/README.md
@@ -56,7 +56,6 @@
     <tinkerpop.version>3.5.3</tinkerpop.version>
     <slf4j.version>1.7.26</slf4j.version>
     <reactive-streams.version>1.0.3</reactive-streams.version>
-    <json.version>20210307</json.version>
     <jackson.version>2.13.2</jackson.version>
     <jackson-databind.version>2.13.2.2</jackson-databind.version>
     <legacy-jackson.version>1.9.12</legacy-jackson.version>
@@ -148,11 +147,6 @@
         <groupId>com.esri.geometry</groupId>
         <artifactId>esri-geometry-api</artifactId>
         <version>${esri.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.json</groupId>
-        <artifactId>json</artifactId>
-        <version>${json.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.tinkerpop</groupId>

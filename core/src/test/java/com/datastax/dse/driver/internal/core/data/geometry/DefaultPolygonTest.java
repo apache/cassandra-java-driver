@@ -38,7 +38,7 @@ public class DefaultPolygonTest {
   private String wkt = "POLYGON ((30 10, 40 40, 20 40, 10 20, 30 10))";
 
   private String json =
-      "{\"type\":\"Polygon\",\"coordinates\":[[[30.0,10.0],[10.0,20.0],[20.0,40.0],[40.0,40.0],[30.0,10.0]]]}";
+      "{\"type\":\"Polygon\",\"coordinates\":[[[30,10],[40,40],[20,40],[10,20],[30,10]]],\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"EPSG:4326\"}}}";
 
   @Test
   public void should_parse_valid_well_known_text() {

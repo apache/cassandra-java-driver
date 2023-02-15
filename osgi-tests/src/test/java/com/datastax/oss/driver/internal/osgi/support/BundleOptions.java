@@ -175,11 +175,10 @@ public class BundleOptions {
             CoreOptions.wrappedBundle(
                     mavenBundle("com.esri.geometry", "esri-geometry-api").versionAsInProject())
                 .exports("com.esri.core.geometry.*")
-                .imports("org.json", "org.codehaus.jackson")
+                .imports("com.fasterxml.jackson.core")
                 .bundleSymbolicName("com.esri.core.geometry")
                 .overwriteManifest(WrappedUrlProvisionOption.OverwriteMode.FULL),
-            mavenBundle("org.json", "json").versionAsInProject(),
-            mavenBundle("org.codehaus.jackson", "jackson-core-asl").versionAsInProject(),
+            mavenBundle("com.fasterxml.jackson.core", "jackson-core").versionAsInProject(),
             systemProperty("cassandra.geo").value("true"));
   }
 

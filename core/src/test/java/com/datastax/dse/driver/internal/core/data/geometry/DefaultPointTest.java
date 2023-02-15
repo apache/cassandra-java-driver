@@ -30,7 +30,8 @@ public class DefaultPointTest {
 
   private final String wkt = "POINT (1.1 2.2)";
 
-  private final String json = "{\"type\":\"Point\",\"coordinates\":[1.1,2.2]}";
+  private final String json =
+      "{\"type\":\"Point\",\"coordinates\":[1.1,2.2],\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"EPSG:4326\"}}}";
 
   @Test
   public void should_parse_valid_well_known_text() {
