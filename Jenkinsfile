@@ -31,6 +31,21 @@ def initializeEnvironment() {
     . ${CCM_ENVIRONMENT_SHELL} ${SERVER_VERSION}
   '''
 
+  if (env.SERVER_VERSION.split('-')[0] == 'dse') {
+    env.DSE_FIXED_VERSION = env.SERVER_VERSION.split('-')[1]
+    sh label: 'Update environment for DataStax Enterprise', script: '''#!/bin/bash -le
+        cat >> ${HOME}/environment.txt << ENVIRONMENT_EOF
+CCM_CASSANDRA_VERSION=${DSE_FIXED_VERSION} # maintain for backwards compatibility
+CCM_VERSION=${DSE_FIXED_VERSION}
+CCM_SERVER_TYPE=dse
+DSE_VERSION=${DSE_FIXED_VERSION}
+CCM_IS_DSE=true
+CCM_BRANCH=${DSE_FIXED_VERSION}
+DSE_BRANCH=${DSE_FIXED_VERSION}
+ENVIRONMENT_EOF
+      '''
+  }
+
   sh label: 'Display Java and environment information',script: '''#!/bin/bash -le
     # Load CCM environment variables
     set -o allexport
@@ -205,10 +220,10 @@ pipeline {
                 '3.0',       // Previous Apache CassandraⓇ
                 '3.11',      // Current Apache CassandraⓇ
                 '4.0',       // Development Apache CassandraⓇ
-                'dse-5.1',   // Legacy DataStax Enterprise
-                'dse-6.0',   // Previous DataStax Enterprise
-                'dse-6.7',   // Previous DataStax Enterprise
-                'dse-6.8.0', // Current DataStax Enterprise
+                'dse-5.1.35',   // Legacy DataStax Enterprise
+                'dse-6.0.18',   // Previous DataStax Enterprise
+                'dse-6.7.17',   // Previous DataStax Enterprise
+                'dse-6.8.30',   // Current DataStax Enterprise
                 'ALL'],
       description: '''Apache Cassandra&reg; or DataStax Enterprise server version to use for adhoc <b>BUILD-AND-EXECUTE-TESTS</b> builds
                       <table style="width:100%">
@@ -239,20 +254,28 @@ pipeline {
                           <td>Apache Cassandra&reg; v4.x (<b>CURRENTLY UNDER DEVELOPMENT</b>)</td>
                         </tr>
                         <tr>
-                          <td><strong>dse-5.1</strong></td>
+                          <td><strong>dse-4.8.16</strong></td>
+                          <td>DataStax Enterprise v4.8.x (<b>END OF SERVICE LIFE</b>)</td>
+                        </tr>
+                        <tr>
+                          <td><strong>dse-5.0.15</strong></td>
+                          <td>DataStax Enterprise v5.0.x (<b>Long Term Support</b>)</td>
+                        </tr>
+                        <tr>
+                          <td><strong>dse-5.1.35</strong></td>
                           <td>DataStax Enterprise v5.1.x</td>
                         </tr>
                         <tr>
-                          <td><strong>dse-6.0</strong></td>
+                          <td><strong>dse-6.0.18</strong></td>
                           <td>DataStax Enterprise v6.0.x</td>
                         </tr>
                         <tr>
-                          <td><strong>dse-6.7</strong></td>
+                          <td><strong>dse-6.7.17</strong></td>
                           <td>DataStax Enterprise v6.7.x</td>
                         </tr>
                         <tr>
-                          <td><strong>dse-6.8.0</strong></td>
-                          <td>DataStax Enterprise v6.8.0</td>
+                          <td><strong>dse-6.8.30</strong></td>
+                          <td>DataStax Enterprise v6.8.x</td>
                         </tr>
                       </table>''')
     choice(
@@ -347,8 +370,9 @@ pipeline {
         axes {
           axis {
             name 'SERVER_VERSION'
-            values '3.11',      // Current Apache CassandraⓇ
-                   '4.0'        // Development Apache CassandraⓇ
+            values '3.11',     // Latest stable Apache CassandraⓇ
+                   '4.0',      // Development Apache CassandraⓇ
+                   'dse-6.8.30' // Current DataStax Enterprise
           }
         }
 
@@ -458,10 +482,10 @@ pipeline {
                    '3.0',       // Previous Apache CassandraⓇ
                    '3.11',      // Current Apache CassandraⓇ
                    '4.0',       // Development Apache CassandraⓇ
-                   'dse-5.1',   // Legacy DataStax Enterprise
-                   'dse-6.0',   // Previous DataStax Enterprise
-                   'dse-6.7',   // Previous DataStax Enterprise
-                   'dse-6.8.0'  // Current DataStax Enterprise
+                   'dse-5.1.35',   // Legacy DataStax Enterprise
+                   'dse-6.0.18',   // Previous DataStax Enterprise
+                   'dse-6.7.17',   // Previous DataStax Enterprise
+                   'dse-6.8.30'    // Current DataStax Enterprise
           }
         }
         when {
