@@ -371,7 +371,7 @@ pipeline {
           axis {
             name 'SERVER_VERSION'
             values '3.11',     // Latest stable Apache CassandraⓇ
-                   '4.0',      // Development Apache CassandraⓇ
+                   '4.0'      // Development Apache CassandraⓇ
           }
         }
 
