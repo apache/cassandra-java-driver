@@ -372,7 +372,6 @@ pipeline {
             name 'SERVER_VERSION'
             values '3.11',     // Latest stable Apache CassandraⓇ
                    '4.0',      // Development Apache CassandraⓇ
-                   'dse-6.8.30' // Current DataStax Enterprise
           }
         }
 
