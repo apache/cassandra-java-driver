@@ -96,7 +96,9 @@ def executeTests() {
       -DfailIfNoTests=false \
       -Dmaven.test.failure.ignore=true \
       -Dmaven.javadoc.skip=true \
-      -Dproxy.path=${HOME}/proxy
+      -Dproxy.path=${HOME}/proxy \
+      -Dorg.ops4j.pax.url.mvn.useFallbackRepositories=false \
+      -Dorg.ops4j.pax.url.mvn.repositories=https://repo1.maven.org/maven2@id=central
 
     # run isolated tests
     mvn -B -V verify \
@@ -110,7 +112,9 @@ def executeTests() {
       -Dccm.maxNumberOfNodes=3 \
       -DfailIfNoTests=false \
       -Dmaven.test.failure.ignore=true \
-      -Dmaven.javadoc.skip=true
+      -Dmaven.javadoc.skip=true \
+      -Dorg.ops4j.pax.url.mvn.useFallbackRepositories=false \
+      -Dorg.ops4j.pax.url.mvn.repositories=https://repo1.maven.org/maven2@id=central
   '''
 }
 
