@@ -84,6 +84,7 @@
     <graalapi.version>22.0.0.2</graalapi.version>
     <skipTests>false</skipTests>
     <skipUnitTests>${skipTests}</skipUnitTests>
+  	<closeTestReports>true</closeTestReports>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -714,6 +715,9 @@ limitations under the License.]]></inlineHeader>
             </property>
           </properties>
           <skip>${skipUnitTests}</skip>
+          <parallel>classes</parallel>
+          <useUnlimitedThreads>true</useUnlimitedThreads>
+          <disableXmlReport>${closeTestReports}</disableXmlReport>
         </configuration>
       </plugin>
       <plugin>
