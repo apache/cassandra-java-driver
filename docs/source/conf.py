@@ -5,6 +5,7 @@ import sys
 from datetime import date
 import yaml
 import re
+import warnings
 from docutils import nodes
 from recommonmark.transform import AutoStructify
 from recommonmark.parser import CommonMarkParser, splitext, urlparse
@@ -171,6 +172,13 @@ def replace_relative_links(app, docname, source):
         result = re.sub(key, app.config.replacements[key], result)
     source[0] = result
 
+
+def build_inited(app):
+    warnings.filterwarnings(
+        action="ignore",
+        message=r".*Document name contains underscores:.*",
+    )
+
 def build_finished(app, exception):
     version_name = os.getenv("SPHINX_MULTIVERSION_NAME", "")
     version_name = "/" + version_name if version_name else ""
@@ -179,6 +187,9 @@ def build_finished(app, exception):
     redirects_cli.create(redirect_to=redirect_to,out_file=out_file)
 
 def setup(app):
+    # Filter warnings
+    app.connect('builder-inited', build_inited)
+
     # Setup Markdown parser
     app.add_source_parser(CustomCommonMarkParser)
     app.add_config_value('recommonmark_config', {
@@ -198,3 +209,4 @@ def setup(app):
 
     # Create redirect to JavaDoc API
     app.connect('build-finished', build_finished)
+    
