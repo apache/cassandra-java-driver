@@ -1,16 +1,19 @@
 language: java
-dist: trusty
+dist: jammy
 sudo: false
-# see https://sormuras.github.io/blog/2018-03-20-jdk-matrix.html
 matrix:
   include:
     # 8
     - env: JDK='OpenJDK 8'
       jdk: openjdk8
+      before_script: jdk_switcher use openjdk8
+    # OpenJDK 11 & 17 are both installed by default for jammy images
     # 11
     - env: JDK='OpenJDK 11'
-      # switch to JDK 11 before running tests
-      before_script: . $TRAVIS_BUILD_DIR/ci/install-jdk.sh -F 11 -L GPL
+      before_script: jdk_switcher use openjdk11
+    # 17
+    - env: JDK='OpenJDK 17'
+      before_script: jdk_switcher use openjdk17
 before_install:
   # Require JDK8 for compiling
   - jdk_switcher use openjdk8
