@@ -281,7 +281,8 @@ pipeline {
                 'openjdk@1.11',  // OpenJDK version 11
                 'openjdk@1.12',  // OpenJDK version 12
                 'openjdk@1.13',  // OpenJDK version 13
-                'openjdk@1.14'], // OpenJDK version 14
+                'openjdk@1.14',  // OpenJDK version 14
+                'openjdk@1.17'], // OpenJDK version 17
       description: '''JDK version to use for <b>TESTING</b> when running adhoc <b>BUILD-AND-EXECUTE-TESTS</b> builds. <i>All builds will use JDK8 for building the driver</i>
                       <table style="width:100%">
                         <col width="15%">
@@ -317,6 +318,10 @@ pipeline {
                         <tr>
                           <td><strong>openjdk@1.14</strong></td>
                           <td>OpenJDK version 14</td>
+                        </tr>
+                        <tr>
+                          <td><strong>openjdk@1.17</strong></td>
+                          <td>OpenJDK version 17</td>
                         </tr>
                       </table>''')
     booleanParam(
