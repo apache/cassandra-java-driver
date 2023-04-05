@@ -71,6 +71,10 @@ remain unchanged, and the new API will look very familiar to 2.x and 3.x users.
 
 See the [upgrade guide](upgrade_guide/) for details.
 
+## Error Handling
+
+See the [Cassandra error handling done right blog](https://www.datastax.com/blog/cassandra-error-handling-done-right) for error handling with the DataStax Java Driver for Apache Cassandra&trade;.
+
 ## Useful links
 
 * [Manual](manual/)
