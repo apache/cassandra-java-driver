@@ -56,7 +56,7 @@
     <tinkerpop.version>3.5.3</tinkerpop.version>
     <slf4j.version>1.7.26</slf4j.version>
     <reactive-streams.version>1.0.3</reactive-streams.version>
-    <json.version>20210307</json.version>
+    <json.version>20230227</json.version>
     <jackson.version>2.13.2</jackson.version>
     <jackson-databind.version>2.13.2.2</jackson-databind.version>
     <legacy-jackson.version>1.9.12</legacy-jackson.version>
