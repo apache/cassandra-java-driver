@@ -136,18 +136,18 @@ public class UdtCodecTest extends CodecTestBase<UdtValue> {
   }
 
   @Test
-  public void should_fail_to_decode_udt_when_too_many_fields() {
-    assertThatThrownBy(
-            () ->
-                decode(
-                    "0x"
-                        + ("00000004" + "00000001")
-                        + "ffffffff"
-                        + ("00000001" + "61")
-                        // extra contents
-                        + "ffffffff"))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Too many fields in encoded UDT value, expected 3");
+  public void should_decode_udt_when_too_many_fields() {
+    UdtValue udt =
+        decode(
+            "0x"
+                + ("00000004" + "00000001")
+                + "ffffffff"
+                + ("00000001" + "61")
+                // extra contents
+                + "ffffffff");
+    assertThat(udt.getInt(0)).isEqualTo(1);
+    assertThat(udt.isNull(1)).isTrue();
+    assertThat(udt.getString(2)).isEqualTo("a");
   }
 
   /** Test for JAVA-2557. Ensures that the codec can decode null fields with any negative length. */
