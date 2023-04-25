@@ -6814,6 +6814,13 @@
         "new": "method void com.fasterxml.jackson.databind.type.TypeBase::serialize(com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.SerializerProvider) throws java.io.IOException",
         "exception": "com.fasterxml.jackson.core.JsonProcessingException",
         "justification": "Upgrade deps around JAVA-2977 to address outstanding CVEs"
+      },
+      {
+        "code": "java.class.nonFinalClassInheritsFromNewClass",
+        "old": "class com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException",
+        "new": "class com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException",
+        "superClass": "com.datastax.oss.driver.api.core.DriverException",
+        "justification": "Make CodecNotFoundException to extend DriverException as all other driver exceptions do"
       }
     ]
   }

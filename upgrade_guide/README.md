@@ -1,5 +1,45 @@
 ## Upgrade guide
 
+### 4.15.0
+
+#### CodecNotFoundException now extends DriverException
+
+Before [JAVA-2995](https://datastax-oss.atlassian.net/browse/JAVA-2995), `CodecNotFoundException`
+was extending `RuntimeException`. This is a discrepancy as all other exceptions extend
+`DriverException`, which in turn extends `RuntimeException`.
+
+This was causing integrators to do workarounds in order to react on all exceptions correctly.
+
+The change introduced by JAVA-2995 shouldn't be a problem for most users. But if your code was using
+a logic such as below, it won't compile anymore:
+
+```java
+try {
+  doSomethingWithDriver();
+} catch(DriverException e) {
+} catch(CodecNotFoundException e) { 
+}
+```
+
+You need to either reverse the catch order and catch `CodecNotFoundException` first:
+
+```java
+try {
+  doSomethingWithDriver();
+} catch(CodecNotFoundException e) { 
+} catch(DriverException e) {
+}
+```
+
+Or catch only `DriverException`:
+
+```java
+try {
+  doSomethingWithDriver();
+} catch(DriverException e) { 
+}
+```
+
 ### 4.14.0
 
 #### AllNodesFailedException instead of NoNodeAvailableException in certain cases
