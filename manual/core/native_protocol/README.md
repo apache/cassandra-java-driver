@@ -62,7 +62,8 @@ the [configuration](../configuration/):
 ```
 datastax-java-driver {
   advanced.protocol {
-    version = v3
+    # The V in the version parameter must be capitalized
+    version = V3
   }
 }
 ```
