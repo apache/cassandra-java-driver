@@ -72,8 +72,6 @@ public class CqlPrepareAsyncProcessor
   }
 
   private void onTypeChanged(TypeChangeEvent event) {
-    LOG.info("newType from event: " + event.newType);
-    LOG.info("oldType from event: " + event.oldType);
     for (Map.Entry<PrepareRequest, CompletableFuture<PreparedStatement>> entry :
         this.cache.asMap().entrySet()) {
 
