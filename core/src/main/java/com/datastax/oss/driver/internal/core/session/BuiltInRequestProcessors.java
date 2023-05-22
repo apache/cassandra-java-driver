@@ -43,7 +43,7 @@ public class BuiltInRequestProcessors {
 
   public static List<RequestProcessor<?, ?>> createDefaultProcessors(DefaultDriverContext context) {
     List<RequestProcessor<?, ?>> processors = new ArrayList<>();
-    addBasicProcessors(processors);
+    addBasicProcessors(processors, context);
     if (DefaultDependencyChecker.isPresent(TINKERPOP)) {
       addGraphProcessors(context, processors);
     } else {
@@ -62,7 +62,8 @@ public class BuiltInRequestProcessors {
     return processors;
   }
 
-  public static void addBasicProcessors(List<RequestProcessor<?, ?>> processors) {
+  public static void addBasicProcessors(
+      List<RequestProcessor<?, ?>> processors, DefaultDriverContext context) {
     // regular requests (sync and async)
     CqlRequestAsyncProcessor cqlRequestAsyncProcessor = new CqlRequestAsyncProcessor();
     CqlRequestSyncProcessor cqlRequestSyncProcessor =
@@ -71,7 +72,7 @@ public class BuiltInRequestProcessors {
     processors.add(cqlRequestSyncProcessor);
 
     // prepare requests (sync and async)
-    CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor = new CqlPrepareAsyncProcessor();
+    CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor = new CqlPrepareAsyncProcessor(context);
     CqlPrepareSyncProcessor cqlPrepareSyncProcessor =
         new CqlPrepareSyncProcessor(cqlPrepareAsyncProcessor);
     processors.add(cqlPrepareAsyncProcessor);

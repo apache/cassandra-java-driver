@@ -44,7 +44,7 @@ public class GuavaDriverContext extends DefaultDriverContext {
     // use GuavaRequestAsyncProcessor to return ListenableFutures in async methods.
 
     CqlRequestAsyncProcessor cqlRequestAsyncProcessor = new CqlRequestAsyncProcessor();
-    CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor = new CqlPrepareAsyncProcessor();
+    CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor = new CqlPrepareAsyncProcessor(this);
     CqlRequestSyncProcessor cqlRequestSyncProcessor =
         new CqlRequestSyncProcessor(cqlRequestAsyncProcessor);
 
