@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.api.core.type.codec;
 
 import com.datastax.oss.driver.api.core.data.CqlDuration;
+import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.type.CustomType;
@@ -28,6 +29,7 @@ import com.datastax.oss.driver.internal.core.type.codec.BlobCodec;
 import com.datastax.oss.driver.internal.core.type.codec.BooleanCodec;
 import com.datastax.oss.driver.internal.core.type.codec.CounterCodec;
 import com.datastax.oss.driver.internal.core.type.codec.CqlDurationCodec;
+import com.datastax.oss.driver.internal.core.type.codec.CqlVectorCodec;
 import com.datastax.oss.driver.internal.core.type.codec.CustomCodec;
 import com.datastax.oss.driver.internal.core.type.codec.DateCodec;
 import com.datastax.oss.driver.internal.core.type.codec.DecimalCodec;
@@ -152,6 +154,8 @@ public class TypeCodecs {
   public static final TypeCodec<InetAddress> INET = new InetCodec();
   /** The default codec that maps CQL type {@code duration} to the driver's {@link CqlDuration}. */
   public static final TypeCodec<CqlDuration> DURATION = new CqlDurationCodec();
+  /** The default codec that maps the custom "vedtor" type to the driver's {@link CqlVector}. */
+  public static final TypeCodec<CqlVector> VECTOR = new CqlVectorCodec();
 
   /**
    * Builds a new codec that maps a CQL custom type to Java's {@link ByteBuffer}.

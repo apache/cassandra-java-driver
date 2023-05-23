@@ -26,6 +26,8 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /** Constants and factory methods to obtain data type instances. */
 public class DataTypes {
@@ -51,13 +53,20 @@ public class DataTypes {
   public static final DataType TINYINT = new PrimitiveType(ProtocolConstants.DataType.TINYINT);
   public static final DataType DURATION = new PrimitiveType(ProtocolConstants.DataType.DURATION);
 
+  private static final Pattern VECTOR_PATTERN =
+      Pattern.compile(CqlVectorType.CQLVECTOR_CLASS_NAME + "(\\d+)");
+
   @NonNull
   public static DataType custom(@NonNull String className) {
     // In protocol v4, duration is implemented as a custom type
     if ("org.apache.cassandra.db.marshal.DurationType".equals(className)) {
       return DURATION;
     } else {
-      return new DefaultCustomType(className);
+
+      Matcher m = VECTOR_PATTERN.matcher(className);
+      return m.matches()
+          ? new CqlVectorType(Integer.parseInt(m.group(0)))
+          : new DefaultCustomType(className);
     }
   }
 
