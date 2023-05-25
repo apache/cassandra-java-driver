@@ -20,14 +20,14 @@ import java.util.Arrays;
 /** An n-dimensional vector defined in CQL */
 public class CqlVector {
 
-  private final float[] dimensions;
+  private final float[] values;
 
-  public CqlVector(float... dimensions) {
-    this.dimensions = dimensions;
+  public CqlVector(float... values) {
+    this.values = values;
   }
 
-  public float[] getDimensions() {
-    return Arrays.copyOf(this.dimensions, this.dimensions.length);
+  public float[] getValues() {
+    return Arrays.copyOf(this.values, this.values.length);
   }
 
   @Override
@@ -36,7 +36,7 @@ public class CqlVector {
       return true;
     } else if (o instanceof CqlVector) {
       CqlVector that = (CqlVector) o;
-      return Arrays.equals(that.dimensions, this.dimensions);
+      return Arrays.equals(that.values, this.values);
     } else {
       return false;
     }
@@ -44,11 +44,11 @@ public class CqlVector {
 
   @Override
   public int hashCode() {
-    return Arrays.hashCode(dimensions);
+    return Arrays.hashCode(values);
   }
 
   @Override
   public String toString() {
-    return "CqlVector{" + Arrays.toString(dimensions) + '}';
+    return "CqlVector{" + Arrays.toString(values) + '}';
   }
 }

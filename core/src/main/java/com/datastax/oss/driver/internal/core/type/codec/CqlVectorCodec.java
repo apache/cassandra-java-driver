@@ -22,9 +22,12 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
+import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class CqlVectorCodec implements TypeCodec<CqlVector> {
 
@@ -51,9 +54,12 @@ public class CqlVectorCodec implements TypeCodec<CqlVector> {
   @Nullable
   @Override
   public ByteBuffer encode(@Nullable CqlVector value, @NonNull ProtocolVersion protocolVersion) {
-    float[] dimensions = value.getDimensions();
-    ByteBuffer bytes = ByteBuffer.allocate(4 * dimensions.length);
-    for (int i = 0; i < dimensions.length; ++i) bytes.putFloat(dimensions[i]);
+    if (value == null) {
+      return null;
+    }
+    float[] values = value.getValues();
+    ByteBuffer bytes = ByteBuffer.allocate(4 * values.length);
+    for (int i = 0; i < values.length; ++i) bytes.putFloat(values[i]);
     bytes.rewind();
     return bytes;
   }
@@ -61,26 +67,39 @@ public class CqlVectorCodec implements TypeCodec<CqlVector> {
   @Nullable
   @Override
   public CqlVector decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+    if (bytes == null || bytes.remaining() == 0) {
+      return null;
+    }
     int length = bytes.limit();
     if (length % 4 != 0)
       throw new IllegalArgumentException("Expected CqlVector to consist of a multiple of 4 bytes");
-    int floatCnt = length / 4;
-    float[] rv = new float[floatCnt];
-    for (int i = 0; i < floatCnt; ++i) {
-      rv[i] = bytes.getFloat();
+    int valuesCnt = length / 4;
+    float[] values = new float[valuesCnt];
+    for (int i = 0; i < valuesCnt; ++i) {
+      values[i] = bytes.getFloat();
     }
-    return new CqlVector(rv);
+    /* Restore the input ByteBuffer to its original state */
+    bytes.rewind();
+    return new CqlVector(values);
   }
 
   @NonNull
   @Override
   public String format(@Nullable CqlVector value) {
-    return null;
+    return value == null ? "NULL" : Arrays.toString(value.getValues());
   }
 
   @Nullable
   @Override
   public CqlVector parse(@Nullable String value) {
-    return null;
+    if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) return null;
+    String[] values =
+        Iterables.toArray(
+            Splitter.on(", ").split(value.substring(1, value.length() - 1)), String.class);
+    float[] rv = new float[values.length];
+    for (int i = 0; i < values.length; ++i) {
+      rv[i] = Float.parseFloat(values[i]);
+    }
+    return new CqlVector(rv);
   }
 }
