@@ -53,19 +53,20 @@ public class CqlVectorCodec implements TypeCodec<CqlVector> {
   public ByteBuffer encode(@Nullable CqlVector value, @NonNull ProtocolVersion protocolVersion) {
     float[] dimensions = value.getDimensions();
     ByteBuffer bytes = ByteBuffer.allocate(4 * dimensions.length);
-    for (int i = 0; i < dimensions.length; ++i) bytes.putFloat(0, dimensions[i]);
+    for (int i = 0; i < dimensions.length; ++i) bytes.putFloat(dimensions[i]);
+    bytes.rewind();
     return bytes;
   }
 
   @Nullable
   @Override
   public CqlVector decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
-    int length = bytes.capacity();
+    int length = bytes.limit();
     if (length % 4 != 0)
       throw new IllegalArgumentException("Expected CqlVector to consist of a multiple of 4 bytes");
-    int byteCnt = length / 4;
-    float[] rv = new float[byteCnt];
-    for (int i = 0; i < byteCnt; ++i) {
+    int floatCnt = length / 4;
+    float[] rv = new float[floatCnt];
+    for (int i = 0; i < floatCnt; ++i) {
       rv[i] = bytes.getFloat();
     }
     return new CqlVector(rv);
