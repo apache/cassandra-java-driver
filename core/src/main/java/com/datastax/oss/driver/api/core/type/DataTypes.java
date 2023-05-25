@@ -53,6 +53,10 @@ public class DataTypes {
   public static final DataType TINYINT = new PrimitiveType(ProtocolConstants.DataType.TINYINT);
   public static final DataType DURATION = new PrimitiveType(ProtocolConstants.DataType.DURATION);
 
+  /* Vector types are currently expressed as a custom type but the class name in that custom type
+   * if followed by the number of dimensions for this specific type of vector enclosed by parentheses.
+   * A vector with M dimensions is of a different type than a vector with N dimensions (M != N) so
+   * we include the number of dimensions as part of the type.  */
   private static final Pattern VECTOR_PATTERN =
       Pattern.compile(CqlVectorType.CQLVECTOR_CLASS_NAME + "(\\d+)");
 

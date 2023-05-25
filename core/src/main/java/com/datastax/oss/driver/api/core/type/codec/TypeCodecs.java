@@ -154,7 +154,7 @@ public class TypeCodecs {
   public static final TypeCodec<InetAddress> INET = new InetCodec();
   /** The default codec that maps CQL type {@code duration} to the driver's {@link CqlDuration}. */
   public static final TypeCodec<CqlDuration> DURATION = new CqlDurationCodec();
-  /** The default codec that maps the custom "vedtor" type to the driver's {@link CqlVector}. */
+  /** The default codec that maps the custom "vector" type to the driver's {@link CqlVector}. */
   public static final TypeCodec<CqlVector> VECTOR = new CqlVectorCodec();
 
   /**
