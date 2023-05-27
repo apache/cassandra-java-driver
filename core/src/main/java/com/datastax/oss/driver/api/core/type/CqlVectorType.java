@@ -23,14 +23,21 @@ public class CqlVectorType implements CustomType {
 
   public static final String CQLVECTOR_CLASS_NAME = "org.apache.cassandra.db.marshal.VectorType";
 
+  private final DataType subtype;
   private final int dimensions;
 
-  public CqlVectorType(int dimensions) {
+  public CqlVectorType(DataType subtype, int dimensions) {
+
     this.dimensions = dimensions;
+    this.subtype = subtype;
   }
 
   public int getDimensions() {
     return this.dimensions;
+  }
+
+  public DataType getSubtype() {
+    return this.subtype;
   }
 
   @NonNull
@@ -51,7 +58,7 @@ public class CqlVectorType implements CustomType {
       return true;
     } else if (o instanceof CqlVectorType) {
       CqlVectorType that = (CqlVectorType) o;
-      return that.dimensions == this.dimensions;
+      return that.subtype.equals(this.subtype) && that.dimensions == this.dimensions;
     } else {
       return false;
     }
@@ -59,12 +66,12 @@ public class CqlVectorType implements CustomType {
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), dimensions);
+    return Objects.hash(super.hashCode(), subtype, dimensions);
   }
 
   @Override
   public String toString() {
-    return "CqlVector(" + getDimensions() + ")";
+    return String.format("CqlVector(%s, %d)", getSubtype(), getDimensions());
   }
 
   @Override

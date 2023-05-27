@@ -15,19 +15,21 @@
  */
 package com.datastax.oss.driver.api.core.type;
 
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.detach.Detachable;
+import com.datastax.oss.driver.internal.core.metadata.schema.parsing.DataTypeClassNameParser;
 import com.datastax.oss.driver.internal.core.type.DefaultCustomType;
 import com.datastax.oss.driver.internal.core.type.DefaultListType;
 import com.datastax.oss.driver.internal.core.type.DefaultMapType;
 import com.datastax.oss.driver.internal.core.type.DefaultSetType;
 import com.datastax.oss.driver.internal.core.type.DefaultTupleType;
 import com.datastax.oss.driver.internal.core.type.PrimitiveType;
+import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
 
 /** Constants and factory methods to obtain data type instances. */
 public class DataTypes {
@@ -53,25 +55,26 @@ public class DataTypes {
   public static final DataType TINYINT = new PrimitiveType(ProtocolConstants.DataType.TINYINT);
   public static final DataType DURATION = new PrimitiveType(ProtocolConstants.DataType.DURATION);
 
-  /* Vector types are currently expressed as a custom type but the class name in that custom type
-   * if followed by the number of dimensions for this specific type of vector enclosed by parentheses.
-   * A vector with M dimensions is of a different type than a vector with N dimensions (M != N) so
-   * we include the number of dimensions as part of the type.  */
-  private static final Pattern VECTOR_PATTERN =
-      Pattern.compile(CqlVectorType.CQLVECTOR_CLASS_NAME + "(\\d+)");
+  private static final DataTypeClassNameParser classNameParser = new DataTypeClassNameParser();
+  private static final Splitter paramSplitter = Splitter.on(',').trimResults();
 
   @NonNull
   public static DataType custom(@NonNull String className) {
-    // In protocol v4, duration is implemented as a custom type
-    if ("org.apache.cassandra.db.marshal.DurationType".equals(className)) {
-      return DURATION;
-    } else {
 
-      Matcher m = VECTOR_PATTERN.matcher(className);
-      return m.matches()
-          ? new CqlVectorType(Integer.parseInt(m.group(0)))
-          : new DefaultCustomType(className);
+    // In protocol v4, duration is implemented as a custom type
+    if (className.equals("org.apache.cassandra.db.marshal.DurationType")) return DURATION;
+
+    /* Vector support is currently implemented as a custom type but is also parameterized */
+    if (className.startsWith(CqlVectorType.CQLVECTOR_CLASS_NAME)) {
+      List<String> params =
+          paramSplitter.splitToList(
+              className.substring(
+                  CqlVectorType.CQLVECTOR_CLASS_NAME.length() + 1, className.length() - 1));
+      DataType subType = classNameParser.parse(params.get(0), AttachmentPoint.NONE);
+      int dimensions = Integer.parseInt(params.get(1));
+      return new CqlVectorType(subType, dimensions);
     }
+    return new DefaultCustomType(className);
   }
 
   @NonNull
@@ -130,5 +133,9 @@ public class DataTypes {
   @NonNull
   public static TupleType tupleOf(@NonNull DataType... componentTypes) {
     return new DefaultTupleType(ImmutableList.copyOf(Arrays.asList(componentTypes)));
+  }
+
+  public static CqlVectorType vectorOf(DataType subtype, int dimensions) {
+    return new CqlVectorType(subtype, dimensions);
   }
 }

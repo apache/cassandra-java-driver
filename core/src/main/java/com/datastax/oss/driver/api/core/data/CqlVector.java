@@ -15,19 +15,26 @@
  */
 package com.datastax.oss.driver.api.core.data;
 
+import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
 import java.util.Arrays;
 
 /** An n-dimensional vector defined in CQL */
-public class CqlVector {
+public class CqlVector<T> {
 
-  private final float[] values;
+  private final ImmutableList<T> values;
 
-  public CqlVector(float... values) {
+  private CqlVector(ImmutableList<T> values) {
     this.values = values;
   }
 
-  public float[] getValues() {
-    return Arrays.copyOf(this.values, this.values.length);
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public Iterable<T> getValues() {
+    return values;
   }
 
   @Override
@@ -36,7 +43,7 @@ public class CqlVector {
       return true;
     } else if (o instanceof CqlVector) {
       CqlVector that = (CqlVector) o;
-      return Arrays.equals(that.values, this.values);
+      return this.values.equals(that.values);
     } else {
       return false;
     }
@@ -44,11 +51,41 @@ public class CqlVector {
 
   @Override
   public int hashCode() {
-    return Arrays.hashCode(values);
+    return Arrays.hashCode(values.toArray());
   }
 
   @Override
   public String toString() {
-    return "CqlVector{" + Arrays.toString(values) + '}';
+
+    String contents = Joiner.on(", ").join(this.values);
+    return "CqlVector{" + contents + '}';
+  }
+
+  public static class Builder<T> {
+
+    private ImmutableList.Builder<T> listBuilder;
+
+    private Builder() {
+      listBuilder = new ImmutableList.Builder<T>();
+    }
+
+    public Builder add(T element) {
+      listBuilder.add(element);
+      return this;
+    }
+
+    public Builder add(T... elements) {
+      listBuilder.addAll(Iterators.forArray(elements));
+      return this;
+    }
+
+    public Builder addAll(Iterable<T> iter) {
+      listBuilder.addAll(iter);
+      return this;
+    }
+
+    public CqlVector<T> build() {
+      return new CqlVector<T>(listBuilder.build());
+    }
   }
 }

@@ -53,7 +53,6 @@ public class CodecRegistryConstants {
         TypeCodecs.TIME,
         TypeCodecs.DURATION,
         TypeCodecs.COUNTER,
-        TypeCodecs.ASCII,
-        TypeCodecs.VECTOR
+        TypeCodecs.ASCII
       };
 }

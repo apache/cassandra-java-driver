@@ -21,85 +21,115 @@ import com.datastax.oss.driver.api.core.type.CqlVectorType;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
+import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.util.Iterator;
 
-public class CqlVectorCodec implements TypeCodec<CqlVector> {
+public class CqlVectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
+
+  private final CqlVectorType cqlType;
+  private final GenericType<CqlVector<SubtypeT>> javaType;
+  private final TypeCodec<SubtypeT> subtypeCodec;
+
+  public CqlVectorCodec(CqlVectorType cqlType, TypeCodec<SubtypeT> subtypeCodec) {
+    this.cqlType = cqlType;
+    this.subtypeCodec = subtypeCodec;
+    this.javaType = GenericType.vectorOf(subtypeCodec.getJavaType());
+  }
 
   @NonNull
   @Override
-  public GenericType<CqlVector> getJavaType() {
-    return GenericType.of(CqlVector.class);
+  public GenericType<CqlVector<SubtypeT>> getJavaType() {
+    return this.javaType;
   }
 
-  /* Since we've overridden accepts() this shouldn't ever actually be used */
   @NonNull
   @Override
   public DataType getCqlType() {
-    return new CqlVectorType(0);
-  }
-
-  @NonNull
-  @Override
-  public boolean accepts(@NonNull DataType cqlType) {
-    Preconditions.checkNotNull(cqlType);
-    return cqlType.getClass().equals(CqlVectorType.class);
+    return this.cqlType;
   }
 
   @Nullable
   @Override
-  public ByteBuffer encode(@Nullable CqlVector value, @NonNull ProtocolVersion protocolVersion) {
-    if (value == null) {
+  public ByteBuffer encode(
+      @Nullable CqlVector<SubtypeT> value, @NonNull ProtocolVersion protocolVersion) {
+    if (value == null || cqlType.getDimensions() <= 0) {
       return null;
     }
-    float[] values = value.getValues();
-    ByteBuffer bytes = ByteBuffer.allocate(4 * values.length);
-    for (int i = 0; i < values.length; ++i) bytes.putFloat(values[i]);
-    bytes.rewind();
-    return bytes;
+    ByteBuffer[] valueBuffs = new ByteBuffer[cqlType.getDimensions()];
+    Iterator<SubtypeT> values = value.getValues().iterator();
+    int allValueBuffsSize = 0;
+    for (int i = 0; i < cqlType.getDimensions(); ++i) {
+      ByteBuffer valueBuff = this.subtypeCodec.encode(values.next(), protocolVersion);
+      allValueBuffsSize += valueBuff.limit();
+      valueBuff.rewind();
+      valueBuffs[i] = valueBuff;
+    }
+    /* Since we already did an early return for <= 0 dimensions above */
+    assert valueBuffs.length > 0;
+    ByteBuffer rv = ByteBuffer.allocate(allValueBuffsSize);
+    for (int i = 0; i < cqlType.getDimensions(); ++i) {
+      rv.put(valueBuffs[i]);
+    }
+    rv.flip();
+    return rv;
   }
 
   @Nullable
   @Override
-  public CqlVector decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public CqlVector<SubtypeT> decode(
+      @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return null;
     }
-    int length = bytes.limit();
-    if (length % 4 != 0)
-      throw new IllegalArgumentException("Expected CqlVector to consist of a multiple of 4 bytes");
-    int valuesCnt = length / 4;
-    float[] values = new float[valuesCnt];
-    for (int i = 0; i < valuesCnt; ++i) {
-      values[i] = bytes.getFloat();
+
+    /* Determine element size by dividing count of remaining bytes by number of elements.  This should have a remainder
+    of zero if we assume all elements are of uniform size (which is really a terrible assumption).
+
+    TODO: We should probably tweak serialization format for vectors if we're going to allow them for arbitrary subtypes.
+     Elements should at least precede themselves with their size (along the lines of what lists do). */
+    int elementSize = Math.floorDiv(bytes.remaining(), cqlType.getDimensions());
+    if (!(bytes.remaining() % cqlType.getDimensions() == 0)) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Expected elements of uniform size, observed %d elements with total bytes %d",
+              cqlType.getDimensions(), bytes.remaining()));
     }
+
+    ImmutableList.Builder<SubtypeT> builder = ImmutableList.builder();
+    for (int i = 0; i < cqlType.getDimensions(); ++i) {
+      ByteBuffer slice = bytes.slice();
+      slice.limit(elementSize);
+      builder.add(this.subtypeCodec.decode(slice, protocolVersion));
+      bytes.position(bytes.position() + elementSize);
+    }
+
     /* Restore the input ByteBuffer to its original state */
     bytes.rewind();
-    return new CqlVector(values);
+
+    return CqlVector.builder().addAll(builder.build()).build();
   }
 
   @NonNull
   @Override
-  public String format(@Nullable CqlVector value) {
-    return value == null ? "NULL" : Arrays.toString(value.getValues());
+  public String format(@Nullable CqlVector<SubtypeT> value) {
+    return value == null ? "NULL" : Iterables.toString(value.getValues());
   }
 
   @Nullable
   @Override
-  public CqlVector parse(@Nullable String value) {
+  public CqlVector<SubtypeT> parse(@Nullable String value) {
     if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) return null;
-    String[] values =
-        Iterables.toArray(
-            Splitter.on(", ").split(value.substring(1, value.length() - 1)), String.class);
-    float[] rv = new float[values.length];
-    for (int i = 0; i < values.length; ++i) {
-      rv[i] = Float.parseFloat(values[i]);
-    }
-    return new CqlVector(rv);
+
+    ImmutableList<SubtypeT> values =
+        Streams.stream(Splitter.on(", ").split(value.substring(1, value.length() - 1)))
+            .map(subtypeCodec::parse)
+            .collect(ImmutableList.toImmutableList());
+    return CqlVector.builder().addAll(values).build();
   }
 }

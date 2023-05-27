@@ -25,16 +25,17 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import org.junit.Test;
 
-public class CqlVectorCodecTest extends CodecTestBase<CqlVector> {
+public class CqlVectorCodecTest extends CodecTestBase<CqlVector<Float>> {
 
-  private static final CqlVector VECTOR = new CqlVector(1.0f, 2.5f);
+  private static final CqlVector VECTOR = CqlVector.builder().add(1.0f, 2.5f).build();
 
   private static final String VECTOR_HEX_STRING = "0x" + "3f800000" + "40200000";
 
   private static final String FORMATTED_VECTOR = "[1.0, 2.5]";
 
   public CqlVectorCodecTest() {
-    this.codec = TypeCodecs.VECTOR;
+    CqlVectorType vectorType = DataTypes.vectorOf(DataTypes.FLOAT, 2);
+    this.codec = TypeCodecs.vectorOf(vectorType, TypeCodecs.FLOAT);
   }
 
   @Test
@@ -79,20 +80,24 @@ public class CqlVectorCodecTest extends CodecTestBase<CqlVector> {
 
   @Test
   public void should_accept_data_type() {
-    assertThat(codec.accepts(new CqlVectorType(0))).isTrue();
+    assertThat(codec.accepts(new CqlVectorType(DataTypes.FLOAT, 2))).isTrue();
     assertThat(codec.accepts(DataTypes.INT)).isFalse();
   }
 
   @Test
-  public void should_accept_vector_type_any_dimension() {
-    for (int i = 0; i < 1000; ++i) {
-      assertThat(codec.accepts(new CqlVectorType(i))).isTrue();
+  public void should_accept_vector_type_correct_dimension_only() {
+    assertThat(codec.accepts(new CqlVectorType(DataTypes.FLOAT, 0))).isFalse();
+    assertThat(codec.accepts(new CqlVectorType(DataTypes.FLOAT, 1))).isFalse();
+    assertThat(codec.accepts(new CqlVectorType(DataTypes.FLOAT, 2))).isTrue();
+    for (int i = 3; i < 1000; ++i) {
+      assertThat(codec.accepts(new CqlVectorType(DataTypes.FLOAT, i))).isFalse();
     }
   }
 
   @Test
   public void should_accept_generic_type() {
-    assertThat(codec.accepts(GenericType.of(CqlVector.class))).isTrue();
+    assertThat(codec.accepts(GenericType.vectorOf(GenericType.FLOAT))).isTrue();
+    assertThat(codec.accepts(GenericType.vectorOf(GenericType.INTEGER))).isFalse();
     assertThat(codec.accepts(GenericType.of(Integer.class))).isFalse();
   }
 
