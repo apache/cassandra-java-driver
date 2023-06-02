@@ -445,6 +445,48 @@ public class PreparedStatementIT {
   }
 
   @Test
+  public void should_invalidate_cache_entry_on_udt_change_result_set() {
+    try (CqlSession session = sessionWithCacheSizeMetric()) {
+
+      assertThat(getPreparedCacheSize(session)).isEqualTo(0);
+      session.execute("CREATE TYPE test_type_1 (a text, b int)");
+      session.execute("CREATE TYPE test_type_2 (c int, d text)");
+      session.execute("CREATE TABLE test_table_1 (e int primary key, f test_type_1)");
+      session.execute("CREATE TABLE test_table_2 (g int primary key, h test_type_2)");
+
+      session.prepare("select f from test_table_1 where e = ?");
+      session.prepare("select h from test_table_2 where g = ?");
+
+      assertThat(getPreparedCacheSize(session)).isEqualTo(2);
+
+      session.execute("ALTER TYPE test_type_2 add h blob");
+
+      assertThat(getPreparedCacheSize(session)).isEqualTo(1);
+    }
+  }
+
+  @Test
+  public void should_invalidate_cache_entry_on_udt_change_variable_defs() {
+    try (CqlSession session = sessionWithCacheSizeMetric()) {
+
+      assertThat(getPreparedCacheSize(session)).isEqualTo(0);
+      session.execute("CREATE TYPE test_type_1 (a text, b int)");
+      session.execute("CREATE TYPE test_type_2 (c int, d text)");
+      session.execute("CREATE TABLE test_table_1 (e int primary key, f frozen<test_type_1>)");
+      session.execute("CREATE TABLE test_table_2 (g int primary key, h frozen<test_type_2>)");
+
+      session.prepare("select e from test_table_1 where f = ? allow filtering");
+      session.prepare("select g from test_table_2 where h = ? allow filtering");
+
+      assertThat(getPreparedCacheSize(session)).isEqualTo(2);
+
+      session.execute("ALTER TYPE test_type_2 add h blob");
+
+      assertThat(getPreparedCacheSize(session)).isEqualTo(1);
+    }
+  }
+
+  @Test
   public void should_infer_routing_information_when_partition_key_is_bound() {
     should_infer_routing_information_when_partition_key_is_bound(
         "SELECT a FROM prepared_statement_test WHERE a = ?");
