@@ -32,8 +32,10 @@ import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
 import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
 import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -49,20 +51,27 @@ public class CqlPrepareAsyncProcessor
 
   protected final Cache<PrepareRequest, CompletableFuture<PreparedStatement>> cache;
 
-  public CqlPrepareAsyncProcessor(DefaultDriverContext context) {
+  public CqlPrepareAsyncProcessor() {
+    this(Optional.empty());
+  }
+
+  public CqlPrepareAsyncProcessor(@NonNull Optional<? extends DefaultDriverContext> context) {
     this(CacheBuilder.newBuilder().weakValues().build(), context);
   }
 
   protected CqlPrepareAsyncProcessor(
       Cache<PrepareRequest, CompletableFuture<PreparedStatement>> cache,
-      DefaultDriverContext context) {
+      Optional<? extends DefaultDriverContext> context) {
 
     this.cache = cache;
-
-    EventExecutor adminExecutor = context.getNettyOptions().adminEventExecutorGroup().next();
-    context
-        .getEventBus()
-        .register(TypeChangeEvent.class, RunOrSchedule.on(adminExecutor, this::onTypeChanged));
+    context.ifPresent(
+        (ctx) -> {
+          LOG.info("Adding handler to invalidate cached prepared statements on type changes");
+          EventExecutor adminExecutor = ctx.getNettyOptions().adminEventExecutorGroup().next();
+          ctx.getEventBus()
+              .register(
+                  TypeChangeEvent.class, RunOrSchedule.on(adminExecutor, this::onTypeChanged));
+        });
   }
 
   private static boolean typeMatches(UserDefinedType oldType, ColumnDefinition def) {

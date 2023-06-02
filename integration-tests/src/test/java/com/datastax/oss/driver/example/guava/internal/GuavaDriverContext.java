@@ -26,6 +26,7 @@ import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestAsyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
+import java.util.Optional;
 
 /**
  * A Custom {@link DefaultDriverContext} that overrides {@link #getRequestProcessorRegistry()} to
@@ -44,7 +45,8 @@ public class GuavaDriverContext extends DefaultDriverContext {
     // use GuavaRequestAsyncProcessor to return ListenableFutures in async methods.
 
     CqlRequestAsyncProcessor cqlRequestAsyncProcessor = new CqlRequestAsyncProcessor();
-    CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor = new CqlPrepareAsyncProcessor(this);
+    CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor =
+        new CqlPrepareAsyncProcessor(Optional.of(this));
     CqlRequestSyncProcessor cqlRequestSyncProcessor =
         new CqlRequestSyncProcessor(cqlRequestAsyncProcessor);
 

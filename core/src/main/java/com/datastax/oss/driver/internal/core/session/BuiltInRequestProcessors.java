@@ -34,6 +34,7 @@ import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
 import com.datastax.oss.driver.internal.core.util.DefaultDependencyChecker;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +73,8 @@ public class BuiltInRequestProcessors {
     processors.add(cqlRequestSyncProcessor);
 
     // prepare requests (sync and async)
-    CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor = new CqlPrepareAsyncProcessor(context);
+    CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor =
+        new CqlPrepareAsyncProcessor(Optional.of(context));
     CqlPrepareSyncProcessor cqlPrepareSyncProcessor =
         new CqlPrepareSyncProcessor(cqlPrepareAsyncProcessor);
     processors.add(cqlPrepareAsyncProcessor);
