@@ -95,7 +95,7 @@ smv_outputdir_format = '{ref.name}'
 
 # -- Options for sitemap extension ---------------------------------------
 
-sitemap_url_scheme = 'stable/{link}'
+sitemap_url_scheme = "/stable/{link}"
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -114,6 +114,7 @@ html_theme_options = {
     'github_repository': 'scylladb/java-driver',
     'github_issues_repository': 'scylladb/java-driver',
     'hide_edit_this_page_button': 'false',
+    'hide_feedback_buttons': 'false',
     'versions_unstable': UNSTABLE_VERSIONS,
     'versions_deprecated': DEPRECATED_VERSIONS,
     'hide_version_dropdown': ['scylla-3.x'],
