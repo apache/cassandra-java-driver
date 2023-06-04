@@ -15,10 +15,14 @@
  */
 package com.datastax.oss.driver.internal.core.cql;
 
-import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.type.DataType;
+import com.datastax.oss.driver.api.core.type.ListType;
+import com.datastax.oss.driver.api.core.type.MapType;
+import com.datastax.oss.driver.api.core.type.SetType;
+import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
@@ -30,7 +34,7 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
 import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
-import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
+import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
@@ -74,10 +78,31 @@ public class CqlPrepareAsyncProcessor
         });
   }
 
-  private static boolean typeMatches(UserDefinedType oldType, ColumnDefinition def) {
-    if (def.getType().getProtocolCode() != ProtocolConstants.DataType.UDT) return false;
-    UserDefinedType defType = (UserDefinedType) def.getType();
-    return defType.equals(oldType);
+  private static boolean typeMatches(UserDefinedType oldType, DataType typeToCheck) {
+
+    switch (typeToCheck.getProtocolCode()) {
+      case ProtocolConstants.DataType.UDT:
+        UserDefinedType udtType = (UserDefinedType) typeToCheck;
+        return udtType.equals(oldType)
+            ? true
+            : Iterables.any(udtType.getFieldTypes(), (testType) -> typeMatches(oldType, testType));
+      case ProtocolConstants.DataType.LIST:
+        ListType listType = (ListType) typeToCheck;
+        return typeMatches(oldType, listType.getElementType());
+      case ProtocolConstants.DataType.SET:
+        SetType setType = (SetType) typeToCheck;
+        return typeMatches(oldType, setType.getElementType());
+      case ProtocolConstants.DataType.MAP:
+        MapType mapType = (MapType) typeToCheck;
+        return typeMatches(oldType, mapType.getKeyType())
+            || typeMatches(oldType, mapType.getValueType());
+      case ProtocolConstants.DataType.TUPLE:
+        TupleType tupleType = (TupleType) typeToCheck;
+        return Iterables.any(
+            tupleType.getComponentTypes(), (testType) -> typeMatches(oldType, testType));
+      default:
+        return false;
+    }
   }
 
   private void onTypeChanged(TypeChangeEvent event) {
@@ -86,12 +111,11 @@ public class CqlPrepareAsyncProcessor
 
       try {
         PreparedStatement stmt = entry.getValue().get();
-        if (Streams.stream(stmt.getResultSetDefinitions())
-                .anyMatch(def -> typeMatches(event.oldType, def))
-            || Streams.stream(stmt.getVariableDefinitions())
-                .anyMatch(def -> typeMatches(event.oldType, def))) {
+        if (Iterables.any(
+                stmt.getResultSetDefinitions(), (def) -> typeMatches(event.oldType, def.getType()))
+            || Iterables.any(
+                stmt.getVariableDefinitions(), (def) -> typeMatches(event.oldType, def.getType())))
           this.cache.invalidate(entry.getKey());
-        }
       } catch (Exception e) {
         LOG.info("Exception while invalidating prepared statement cache due to UDT change", e);
       }
