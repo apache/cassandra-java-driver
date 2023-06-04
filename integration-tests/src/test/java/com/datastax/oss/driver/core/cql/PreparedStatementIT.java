@@ -47,6 +47,7 @@ import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Consumer;
 import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Rule;
@@ -444,46 +445,116 @@ public class PreparedStatementIT {
     }
   }
 
-  @Test
-  public void should_invalidate_cache_entry_on_udt_change_result_set() {
+  private void invalidationResultSetTest(Consumer<CqlSession> createFn) {
+
     try (CqlSession session = sessionWithCacheSizeMetric()) {
 
       assertThat(getPreparedCacheSize(session)).isEqualTo(0);
-      session.execute("CREATE TYPE test_type_1 (a text, b int)");
-      session.execute("CREATE TYPE test_type_2 (c int, d text)");
-      session.execute("CREATE TABLE test_table_1 (e int primary key, f test_type_1)");
-      session.execute("CREATE TABLE test_table_2 (g int primary key, h test_type_2)");
+      createFn.accept(session);
 
       session.prepare("select f from test_table_1 where e = ?");
       session.prepare("select h from test_table_2 where g = ?");
-
       assertThat(getPreparedCacheSize(session)).isEqualTo(2);
 
-      session.execute("ALTER TYPE test_type_2 add h blob");
-
+      session.execute("ALTER TYPE test_type_2 add i blob");
       assertThat(getPreparedCacheSize(session)).isEqualTo(1);
     }
   }
 
-  @Test
-  public void should_invalidate_cache_entry_on_udt_change_variable_defs() {
+  private void invalidationVariableDefsTest(Consumer<CqlSession> createFn, boolean isCollection) {
+
     try (CqlSession session = sessionWithCacheSizeMetric()) {
 
       assertThat(getPreparedCacheSize(session)).isEqualTo(0);
-      session.execute("CREATE TYPE test_type_1 (a text, b int)");
-      session.execute("CREATE TYPE test_type_2 (c int, d text)");
-      session.execute("CREATE TABLE test_table_1 (e int primary key, f frozen<test_type_1>)");
-      session.execute("CREATE TABLE test_table_2 (g int primary key, h frozen<test_type_2>)");
+      createFn.accept(session);
 
-      session.prepare("select e from test_table_1 where f = ? allow filtering");
-      session.prepare("select g from test_table_2 where h = ? allow filtering");
-
+      String fStr = isCollection ? "f contains ?" : "f = ?";
+      session.prepare(String.format("select e from test_table_1 where %s allow filtering", fStr));
+      String hStr = isCollection ? "h contains ?" : "h = ?";
+      session.prepare(String.format("select g from test_table_2 where %s allow filtering", hStr));
       assertThat(getPreparedCacheSize(session)).isEqualTo(2);
 
-      session.execute("ALTER TYPE test_type_2 add h blob");
-
+      session.execute("ALTER TYPE test_type_2 add i blob");
       assertThat(getPreparedCacheSize(session)).isEqualTo(1);
     }
+  }
+
+  Consumer<CqlSession> setupCacheEntryTestBasic =
+      (session) -> {
+        session.execute("CREATE TYPE test_type_1 (a text, b int)");
+        session.execute("CREATE TYPE test_type_2 (c int, d text)");
+        session.execute("CREATE TABLE test_table_1 (e int primary key, f frozen<test_type_1>)");
+        session.execute("CREATE TABLE test_table_2 (g int primary key, h frozen<test_type_2>)");
+      };
+
+  @Test
+  public void should_invalidate_cache_entry_on_basic_udt_change_result_set() {
+    invalidationResultSetTest(setupCacheEntryTestBasic);
+  }
+
+  @Test
+  public void should_invalidate_cache_entry_on_basic_udt_change_variable_defs() {
+    invalidationVariableDefsTest(setupCacheEntryTestBasic, false);
+  }
+
+  Consumer<CqlSession> setupCacheEntryTestCollection =
+      (session) -> {
+        session.execute("CREATE TYPE test_type_1 (a text, b int)");
+        session.execute("CREATE TYPE test_type_2 (c int, d text)");
+        session.execute(
+            "CREATE TABLE test_table_1 (e int primary key, f list<frozen<test_type_1>>)");
+        session.execute(
+            "CREATE TABLE test_table_2 (g int primary key, h list<frozen<test_type_2>>)");
+      };
+
+  @Test
+  public void should_invalidate_cache_entry_on_collection_udt_change_result_set() {
+    invalidationResultSetTest(setupCacheEntryTestCollection);
+  }
+
+  @Test
+  public void should_invalidate_cache_entry_on_collection_udt_change_variable_defs() {
+    invalidationVariableDefsTest(setupCacheEntryTestCollection, true);
+  }
+
+  Consumer<CqlSession> setupCacheEntryTestTuple =
+      (session) -> {
+        session.execute("CREATE TYPE test_type_1 (a text, b int)");
+        session.execute("CREATE TYPE test_type_2 (c int, d text)");
+        session.execute(
+            "CREATE TABLE test_table_1 (e int primary key, f tuple<int, test_type_1, text>)");
+        session.execute(
+            "CREATE TABLE test_table_2 (g int primary key, h tuple<text, test_type_2, int>)");
+      };
+
+  @Test
+  public void should_invalidate_cache_entry_on_tuple_udt_change_result_set() {
+    invalidationResultSetTest(setupCacheEntryTestTuple);
+  }
+
+  @Test
+  public void should_invalidate_cache_entry_on_tuple_udt_change_variable_defs() {
+    invalidationVariableDefsTest(setupCacheEntryTestTuple, false);
+  }
+
+  Consumer<CqlSession> setupCacheEntryTestNested =
+      (session) -> {
+        session.execute("CREATE TYPE test_type_1 (a text, b int)");
+        session.execute("CREATE TYPE test_type_2 (c int, d text)");
+        session.execute("CREATE TYPE test_type_3 (e frozen<test_type_1>, f int)");
+        session.execute("CREATE TYPE test_type_4 (g int, h frozen<test_type_2>)");
+        session.execute("CREATE TABLE test_table_1 (e int primary key, f frozen<test_type_3>)");
+        session.execute("CREATE TABLE test_table_2 (g int primary key, h frozen<test_type_4>)");
+      };
+
+  @Test
+  public void should_invalidate_cache_entry_on_nested_udt_change_result_set() {
+    invalidationResultSetTest(setupCacheEntryTestNested);
+  }
+
+  @Test
+  public void should_invalidate_cache_entry_on_nested_udt_change_variable_defs() {
+    invalidationVariableDefsTest(setupCacheEntryTestNested, false);
   }
 
   @Test
