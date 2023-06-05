@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.15.1-SNAPSHOT</version>
+    <version>4.16.0</version>
   </parent>
   <artifactId>java-driver-test-infra</artifactId>
   <packaging>bundle</packaging>
