@@ -660,13 +660,13 @@ private static String formatRow(Row row) {
 }
 ```
 
-[CodecRegistry]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html
-[GenericType]:   https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
-[TypeCodec]:     https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html
-[format()]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html#format-JavaTypeT-
-[parse()]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html#parse-java.lang.String-
-[MappingCodec]:     https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/MappingCodec.html
-[SessionBuilder.addTypeCodecs]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addTypeCodecs-com.datastax.oss.driver.api.core.type.codec.TypeCodec...-
+[CodecRegistry]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html
+[GenericType]:   https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
+[TypeCodec]:     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html
+[format()]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html#format-JavaTypeT-
+[parse()]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html#parse-java.lang.String-
+[MappingCodec]:     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/MappingCodec.html
+[SessionBuilder.addTypeCodecs]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addTypeCodecs-com.datastax.oss.driver.api.core.type.codec.TypeCodec...-
 
 [Enums]: https://docs.oracle.com/javase/8/docs/api/java/lang/Enum.html
 [Enum.name()]: https://docs.oracle.com/javase/8/docs/api/java/lang/Enum.html#name--
@@ -680,36 +680,36 @@ private static String formatRow(Row row) {
 [java.time.LocalDateTime]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalDateTime.html
 [java.time.ZoneId]: https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html
 
-[ExtraTypeCodecs]:                           https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html
-[ExtraTypeCodecs.BLOB_TO_ARRAY]:             https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#BLOB_TO_ARRAY
-[ExtraTypeCodecs.BOOLEAN_LIST_TO_ARRAY]:     https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#BOOLEAN_LIST_TO_ARRAY
-[ExtraTypeCodecs.BYTE_LIST_TO_ARRAY]:        https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#BYTE_LIST_TO_ARRAY
-[ExtraTypeCodecs.SHORT_LIST_TO_ARRAY]:       https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#SHORT_LIST_TO_ARRAY
-[ExtraTypeCodecs.INT_LIST_TO_ARRAY]:         https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#INT_LIST_TO_ARRAY
-[ExtraTypeCodecs.LONG_LIST_TO_ARRAY]:        https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#LONG_LIST_TO_ARRAY
-[ExtraTypeCodecs.FLOAT_LIST_TO_ARRAY]:       https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#FLOAT_LIST_TO_ARRAY
-[ExtraTypeCodecs.DOUBLE_LIST_TO_ARRAY]:      https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#DOUBLE_LIST_TO_ARRAY
-[ExtraTypeCodecs.listToArrayOf(TypeCodec)]:  https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#listToArrayOf-com.datastax.oss.driver.api.core.type.codec.TypeCodec-
-[ExtraTypeCodecs.TIMESTAMP_UTC]:             https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#TIMESTAMP_UTC
-[ExtraTypeCodecs.timestampAt(ZoneId)]:       https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#timestampAt-java.time.ZoneId-
-[ExtraTypeCodecs.TIMESTAMP_MILLIS_SYSTEM]:   https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#TIMESTAMP_MILLIS_SYSTEM
-[ExtraTypeCodecs.TIMESTAMP_MILLIS_UTC]:      https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#TIMESTAMP_MILLIS_UTC
-[ExtraTypeCodecs.timestampMillisAt(ZoneId)]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#timestampMillisAt-java.time.ZoneId-
-[ExtraTypeCodecs.ZONED_TIMESTAMP_SYSTEM]:    https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#ZONED_TIMESTAMP_SYSTEM
-[ExtraTypeCodecs.ZONED_TIMESTAMP_UTC]:       https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#ZONED_TIMESTAMP_UTC
-[ExtraTypeCodecs.zonedTimestampAt(ZoneId)]:  https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#zonedTimestampAt-java.time.ZoneId-
-[ExtraTypeCodecs.LOCAL_TIMESTAMP_SYSTEM]:    https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#LOCAL_TIMESTAMP_SYSTEM
-[ExtraTypeCodecs.LOCAL_TIMESTAMP_UTC]:       https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#LOCAL_TIMESTAMP_UTC
-[ExtraTypeCodecs.localTimestampAt(ZoneId)]:  https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#localTimestampAt-java.time.ZoneId-
-[ExtraTypeCodecs.ZONED_TIMESTAMP_PERSISTED]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#ZONED_TIMESTAMP_PERSISTED
-[ExtraTypeCodecs.optionalOf(TypeCodec)]:     https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#optionalOf-com.datastax.oss.driver.api.core.type.codec.TypeCodec-
-[ExtraTypeCodecs.enumNamesOf(Class)]:        https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#enumNamesOf-java.lang.Class-
-[ExtraTypeCodecs.enumOrdinalsOf(Class)]:     https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#enumOrdinalsOf-java.lang.Class-
-[ExtraTypeCodecs.json(Class)]:               https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#json-java.lang.Class-
-[ExtraTypeCodecs.json(Class, ObjectMapper)]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#json-java.lang.Class-com.fasterxml.jackson.databind.ObjectMapper-
+[ExtraTypeCodecs]:                           https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html
+[ExtraTypeCodecs.BLOB_TO_ARRAY]:             https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#BLOB_TO_ARRAY
+[ExtraTypeCodecs.BOOLEAN_LIST_TO_ARRAY]:     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#BOOLEAN_LIST_TO_ARRAY
+[ExtraTypeCodecs.BYTE_LIST_TO_ARRAY]:        https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#BYTE_LIST_TO_ARRAY
+[ExtraTypeCodecs.SHORT_LIST_TO_ARRAY]:       https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#SHORT_LIST_TO_ARRAY
+[ExtraTypeCodecs.INT_LIST_TO_ARRAY]:         https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#INT_LIST_TO_ARRAY
+[ExtraTypeCodecs.LONG_LIST_TO_ARRAY]:        https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#LONG_LIST_TO_ARRAY
+[ExtraTypeCodecs.FLOAT_LIST_TO_ARRAY]:       https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#FLOAT_LIST_TO_ARRAY
+[ExtraTypeCodecs.DOUBLE_LIST_TO_ARRAY]:      https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#DOUBLE_LIST_TO_ARRAY
+[ExtraTypeCodecs.listToArrayOf(TypeCodec)]:  https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#listToArrayOf-com.datastax.oss.driver.api.core.type.codec.TypeCodec-
+[ExtraTypeCodecs.TIMESTAMP_UTC]:             https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#TIMESTAMP_UTC
+[ExtraTypeCodecs.timestampAt(ZoneId)]:       https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#timestampAt-java.time.ZoneId-
+[ExtraTypeCodecs.TIMESTAMP_MILLIS_SYSTEM]:   https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#TIMESTAMP_MILLIS_SYSTEM
+[ExtraTypeCodecs.TIMESTAMP_MILLIS_UTC]:      https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#TIMESTAMP_MILLIS_UTC
+[ExtraTypeCodecs.timestampMillisAt(ZoneId)]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#timestampMillisAt-java.time.ZoneId-
+[ExtraTypeCodecs.ZONED_TIMESTAMP_SYSTEM]:    https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#ZONED_TIMESTAMP_SYSTEM
+[ExtraTypeCodecs.ZONED_TIMESTAMP_UTC]:       https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#ZONED_TIMESTAMP_UTC
+[ExtraTypeCodecs.zonedTimestampAt(ZoneId)]:  https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#zonedTimestampAt-java.time.ZoneId-
+[ExtraTypeCodecs.LOCAL_TIMESTAMP_SYSTEM]:    https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#LOCAL_TIMESTAMP_SYSTEM
+[ExtraTypeCodecs.LOCAL_TIMESTAMP_UTC]:       https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#LOCAL_TIMESTAMP_UTC
+[ExtraTypeCodecs.localTimestampAt(ZoneId)]:  https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#localTimestampAt-java.time.ZoneId-
+[ExtraTypeCodecs.ZONED_TIMESTAMP_PERSISTED]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#ZONED_TIMESTAMP_PERSISTED
+[ExtraTypeCodecs.optionalOf(TypeCodec)]:     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#optionalOf-com.datastax.oss.driver.api.core.type.codec.TypeCodec-
+[ExtraTypeCodecs.enumNamesOf(Class)]:        https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#enumNamesOf-java.lang.Class-
+[ExtraTypeCodecs.enumOrdinalsOf(Class)]:     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#enumOrdinalsOf-java.lang.Class-
+[ExtraTypeCodecs.json(Class)]:               https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#json-java.lang.Class-
+[ExtraTypeCodecs.json(Class, ObjectMapper)]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#json-java.lang.Class-com.fasterxml.jackson.databind.ObjectMapper-
 
-[TypeCodecs.BLOB]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#BLOB
-[TypeCodecs.TIMESTAMP]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#TIMESTAMP
+[TypeCodecs.BLOB]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#BLOB
+[TypeCodecs.TIMESTAMP]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#TIMESTAMP
 
 
 [ObjectMapper]: http://fasterxml.github.io/jackson-databind/javadoc/2.10/com/fasterxml/jackson/databind/ObjectMapper.html

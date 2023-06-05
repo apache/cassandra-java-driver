@@ -124,7 +124,7 @@ Cassandra node:
 domain name of the target instance. Then it performs a forward DNS lookup of the domain name; the EC2 DNS does the
 private/public switch automatically based on location).
 
-[AddressTranslator]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/addresstranslation/AddressTranslator.html
+[AddressTranslator]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/addresstranslation/AddressTranslator.html
 
 [cassandra.yaml]:        https://docs.datastax.com/en/cassandra/3.x/cassandra/configuration/configCassandra_yaml.html
 [rpc_address]:           https://docs.datastax.com/en/cassandra/3.x/cassandra/configuration/configCassandra_yaml.html?scroll=configCassandra_yaml__rpc_address

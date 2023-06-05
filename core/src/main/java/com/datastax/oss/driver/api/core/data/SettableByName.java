@@ -559,6 +559,27 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
   }
 
   /**
+   * Sets the value for all occurrences of {@code name} to the provided duration.
+   *
+   * <p>By default, this works with CQL type {@code vector}.
+   *
+   * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
+   * AccessibleByName}.
+   *
+   * @throws IllegalArgumentException if the name is invalid.
+   */
+  @NonNull
+  @CheckReturnValue
+  default SelfT setCqlVector(@NonNull String name, @Nullable CqlVector<?> v) {
+    SelfT result = null;
+    for (Integer i : allIndicesOf(name)) {
+      result = (result == null ? this : result).setCqlVector(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
+  }
+
+  /**
    * Sets the value for all occurrences of {@code name} to the provided token.
    *
    * <p>This works with the CQL type matching the partitioner in use for this cluster: {@code

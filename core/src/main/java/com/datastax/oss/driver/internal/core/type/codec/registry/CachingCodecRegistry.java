@@ -16,8 +16,10 @@
 package com.datastax.oss.driver.internal.core.type.codec.registry;
 
 import com.datastax.oss.driver.api.core.data.CqlDuration;
+import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.driver.api.core.type.CqlVectorType;
 import com.datastax.oss.driver.api.core.type.CustomType;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
@@ -602,6 +604,11 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
       } else if (cqlType instanceof UserDefinedType
           && UdtValue.class.isAssignableFrom(token.getRawType())) {
         return TypeCodecs.udtOf((UserDefinedType) cqlType);
+      } else if (cqlType instanceof CqlVectorType
+          && CqlVector.class.isAssignableFrom(token.getRawType())) {
+        CqlVectorType vectorType = (CqlVectorType) cqlType;
+        TypeCodec<Object> subtypeCodec = codecFor(vectorType.getSubtype());
+        return TypeCodecs.vectorOf((CqlVectorType) cqlType, subtypeCodec);
       } else if (cqlType instanceof CustomType
           && ByteBuffer.class.isAssignableFrom(token.getRawType())) {
         return TypeCodecs.custom(cqlType);

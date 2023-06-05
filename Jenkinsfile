@@ -31,6 +31,21 @@ def initializeEnvironment() {
     . ${CCM_ENVIRONMENT_SHELL} ${SERVER_VERSION}
   '''
 
+  if (env.SERVER_VERSION.split('-')[0] == 'dse') {
+    env.DSE_FIXED_VERSION = env.SERVER_VERSION.split('-')[1]
+    sh label: 'Update environment for DataStax Enterprise', script: '''#!/bin/bash -le
+        cat >> ${HOME}/environment.txt << ENVIRONMENT_EOF
+CCM_CASSANDRA_VERSION=${DSE_FIXED_VERSION} # maintain for backwards compatibility
+CCM_VERSION=${DSE_FIXED_VERSION}
+CCM_SERVER_TYPE=dse
+DSE_VERSION=${DSE_FIXED_VERSION}
+CCM_IS_DSE=true
+CCM_BRANCH=${DSE_FIXED_VERSION}
+DSE_BRANCH=${DSE_FIXED_VERSION}
+ENVIRONMENT_EOF
+      '''
+  }
+
   sh label: 'Display Java and environment information',script: '''#!/bin/bash -le
     # Load CCM environment variables
     set -o allexport
@@ -133,25 +148,6 @@ ${status} after ${currentBuild.durationString - ' and counting'}"""
   }
 }
 
-def submitCIMetrics(buildType) {
-  long durationMs = currentBuild.duration
-  long durationSec = durationMs / 1000
-  long nowSec = (currentBuild.startTimeInMillis + durationMs) / 1000
-  def branchNameNoPeriods = env.BRANCH_NAME.replaceAll('\\.', '_')
-  def durationMetric = "okr.ci.java.${env.DRIVER_METRIC_TYPE}.${buildType}.${branchNameNoPeriods} ${durationSec} ${nowSec}"
-
-  timeout(time: 1, unit: 'MINUTES') {
-    withCredentials([string(credentialsId: 'lab-grafana-address', variable: 'LAB_GRAFANA_ADDRESS'),
-                     string(credentialsId: 'lab-grafana-port', variable: 'LAB_GRAFANA_PORT')]) {
-      withEnv(["DURATION_METRIC=${durationMetric}"]) {
-        sh label: 'Send runtime metrics to labgrafana', script: '''#!/bin/bash -le
-          echo "${DURATION_METRIC}" | nc -q 5 ${LAB_GRAFANA_ADDRESS} ${LAB_GRAFANA_PORT}
-        '''
-      }
-    }
-  }
-}
-
 def describePerCommitStage() {
   script {
     currentBuild.displayName = "Per-Commit build"
@@ -175,7 +171,9 @@ def describeAdhocAndScheduledTestingStage() {
 
 // branch pattern for cron
 // should match 3.x, 4.x, 4.5.x, etc
-def branchPatternCron = ~"((\\d+(\\.[\\dx]+)+))"
+def branchPatternCron() {
+  ~"((\\d+(\\.[\\dx]+)+))"
+}
 
 pipeline {
   agent none
@@ -215,12 +213,12 @@ pipeline {
                 '3.0',       // Previous Apache CassandraⓇ
                 '3.11',      // Current Apache CassandraⓇ
                 '4.0',       // Development Apache CassandraⓇ
-                'dse-4.8',   // Previous EOSL DataStax Enterprise
-                'dse-5.0',   // Long Term Support DataStax Enterprise
-                'dse-5.1',   // Legacy DataStax Enterprise
-                'dse-6.0',   // Previous DataStax Enterprise
-                'dse-6.7',   // Previous DataStax Enterprise
-                'dse-6.8',   // Current DataStax Enterprise
+                'dse-4.8.16',   // Previous EOSL DataStax Enterprise
+                'dse-5.0.15',   // Long Term Support DataStax Enterprise
+                'dse-5.1.35',   // Legacy DataStax Enterprise
+                'dse-6.0.18',   // Previous DataStax Enterprise
+                'dse-6.7.17',   // Previous DataStax Enterprise
+                'dse-6.8.30',   // Current DataStax Enterprise
                 'ALL'],
       description: '''Apache Cassandra&reg; and DataStax Enterprise server version to use for adhoc <b>BUILD-AND-EXECUTE-TESTS</b> builds
                       <table style="width:100%">
@@ -251,27 +249,27 @@ pipeline {
                           <td>Apache Cassandra&reg; v4.x (<b>CURRENTLY UNDER DEVELOPMENT</b>)</td>
                         </tr>
                         <tr>
-                          <td><strong>dse-4.8</strong></td>
+                          <td><strong>dse-4.8.16</strong></td>
                           <td>DataStax Enterprise v4.8.x (<b>END OF SERVICE LIFE</b>)</td>
                         </tr>
                         <tr>
-                          <td><strong>dse-5.0</strong></td>
+                          <td><strong>dse-5.0.15</strong></td>
                           <td>DataStax Enterprise v5.0.x (<b>Long Term Support</b>)</td>
                         </tr>
                         <tr>
-                          <td><strong>dse-5.1</strong></td>
+                          <td><strong>dse-5.1.35</strong></td>
                           <td>DataStax Enterprise v5.1.x</td>
                         </tr>
                         <tr>
-                          <td><strong>dse-6.0</strong></td>
+                          <td><strong>dse-6.0.18</strong></td>
                           <td>DataStax Enterprise v6.0.x</td>
                         </tr>
                         <tr>
-                          <td><strong>dse-6.7</strong></td>
+                          <td><strong>dse-6.7.17</strong></td>
                           <td>DataStax Enterprise v6.7.x</td>
                         </tr>
                         <tr>
-                          <td><strong>dse-6.8</strong></td>
+                          <td><strong>dse-6.8.30</strong></td>
                           <td>DataStax Enterprise v6.8.x</td>
                         </tr>
                       </table>''')
@@ -283,7 +281,8 @@ pipeline {
                 'openjdk@1.11',  // OpenJDK version 11
                 'openjdk@1.12',  // OpenJDK version 12
                 'openjdk@1.13',  // OpenJDK version 13
-                'openjdk@1.14'], // OpenJDK version 14
+                'openjdk@1.14',  // OpenJDK version 14
+                'openjdk@1.17'], // OpenJDK version 17
       description: '''JDK version to use for <b>TESTING</b> when running adhoc <b>BUILD-AND-EXECUTE-TESTS</b> builds. <i>All builds will use JDK8 for building the driver</i>
                       <table style="width:100%">
                         <col width="15%">
@@ -320,6 +319,10 @@ pipeline {
                           <td><strong>openjdk@1.14</strong></td>
                           <td>OpenJDK version 14</td>
                         </tr>
+                        <tr>
+                          <td><strong>openjdk@1.17</strong></td>
+                          <td>OpenJDK version 17</td>
+                        </tr>
                       </table>''')
     booleanParam(
       name: 'SKIP_SERIAL_ITS',
@@ -354,15 +357,15 @@ pipeline {
 
   triggers {
     // schedules only run against release branches (i.e. 3.x, 4.x, 4.5.x, etc.)
-    parameterizedCron(branchPatternCron.matcher(env.BRANCH_NAME).matches() ? """
+    parameterizedCron(branchPatternCron().matcher(env.BRANCH_NAME).matches() ? """
       # Every weeknight (Monday - Friday) around 2:00 AM
-      ### JDK8 tests against 2.1, 3.0, DSE 4.8, DSE 5.0, DSE 5.1, DSE-6.0 and DSE 6.7
-      H 2 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=2.1 3.0 dse-4.8 dse-5.0 dse-5.1 dse-6.0 dse-6.7;CI_SCHEDULE_JABBA_VERSION=1.8
+      ### JDK8 tests against 2.1, 3.0, DSE 4.8, DSE 5.0, DSE 5.1, dse-6.0.18 and DSE 6.7
+      H 2 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=2.1 3.0 dse-4.8.16 dse-5.0.15 dse-5.1.35 dse-6.0.18 dse-6.7.17;CI_SCHEDULE_JABBA_VERSION=1.8
       ### JDK11 tests against 3.11, 4.0 and DSE 6.8
-      H 2 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=3.11 4.0 dse-6.8;CI_SCHEDULE_JABBA_VERSION=openjdk@1.11
+      H 2 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=3.11 4.0 dse-6.8.30;CI_SCHEDULE_JABBA_VERSION=openjdk@1.11
       # Every weekend (Sunday) around 12:00 PM noon
       ### JDK14 tests against 3.11, 4.0 and DSE 6.8
-      H 12 * * 0 %CI_SCHEDULE=WEEKENDS;CI_SCHEDULE_SERVER_VERSIONS=3.11 4.0 dse-6.8;CI_SCHEDULE_JABBA_VERSION=openjdk@1.14
+      H 12 * * 0 %CI_SCHEDULE=WEEKENDS;CI_SCHEDULE_SERVER_VERSIONS=3.11 4.0 dse-6.8.30;CI_SCHEDULE_JABBA_VERSION=openjdk@1.14
     """ : "")
   }
 
@@ -398,7 +401,7 @@ pipeline {
             name 'SERVER_VERSION'
             values '3.11',     // Latest stable Apache CassandraⓇ
                    '4.0',      // Development Apache CassandraⓇ
-                   'dse-6.8' // Current DataStax Enterprise
+                   'dse-6.8.30' // Current DataStax Enterprise
           }
         }
 
@@ -460,11 +463,6 @@ pipeline {
         }
       }
       post {
-        always {
-          node('master') {
-            submitCIMetrics('commit')
-          }
-        }
         aborted {
           notifySlack('aborted')
         }
@@ -511,12 +509,12 @@ pipeline {
                    '3.0',       // Previous Apache CassandraⓇ
                    '3.11',      // Current Apache CassandraⓇ
                    '4.0',       // Development Apache CassandraⓇ
-                   'dse-4.8',   // Previous EOSL DataStax Enterprise
-                   'dse-5.0',   // Last EOSL DataStax Enterprise
-                   'dse-5.1',   // Legacy DataStax Enterprise
-                   'dse-6.0',   // Previous DataStax Enterprise
-                   'dse-6.7',   // Previous DataStax Enterprise
-                   'dse-6.8'    // Current DataStax Enterprise
+                   'dse-4.8.16',   // Previous EOSL DataStax Enterprise
+                   'dse-5.0.15',   // Last EOSL DataStax Enterprise
+                   'dse-5.1.35',   // Legacy DataStax Enterprise
+                   'dse-6.0.18',   // Previous DataStax Enterprise
+                   'dse-6.7.17',   // Previous DataStax Enterprise
+                   'dse-6.8.30'    // Current DataStax Enterprise
           }
         }
         when {

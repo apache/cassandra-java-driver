@@ -204,6 +204,6 @@ the box, but with a bit of custom development it is fairly easy to add. See
 [dsClientToNode]: https://docs.datastax.com/en/cassandra/3.0/cassandra/configuration/secureSSLClientToNode.html
 [pickle]: http://thelastpickle.com/blog/2015/09/30/hardening-cassandra-step-by-step-part-1-server-to-server.html
 [JSSE system properties]: http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html#Customization
-[SessionBuilder.withSslEngineFactory]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withSslEngineFactory-com.datastax.oss.driver.api.core.ssl.SslEngineFactory-
-[SessionBuilder.withSslContext]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withSslContext-javax.net.ssl.SSLContext-
-[ProgrammaticSslEngineFactory]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/ssl/ProgrammaticSslEngineFactory.html
+[SessionBuilder.withSslEngineFactory]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withSslEngineFactory-com.datastax.oss.driver.api.core.ssl.SslEngineFactory-
+[SessionBuilder.withSslContext]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withSslContext-javax.net.ssl.SSLContext-
+[ProgrammaticSslEngineFactory]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/ssl/ProgrammaticSslEngineFactory.html

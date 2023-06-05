@@ -1,5 +1,45 @@
 ## Upgrade guide
 
+### 4.15.0
+
+#### CodecNotFoundException now extends DriverException
+
+Before [JAVA-2995](https://datastax-oss.atlassian.net/browse/JAVA-2995), `CodecNotFoundException`
+was extending `RuntimeException`. This is a discrepancy as all other exceptions extend
+`DriverException`, which in turn extends `RuntimeException`.
+
+This was causing integrators to do workarounds in order to react on all exceptions correctly.
+
+The change introduced by JAVA-2995 shouldn't be a problem for most users. But if your code was using
+a logic such as below, it won't compile anymore:
+
+```java
+try {
+  doSomethingWithDriver();
+} catch(DriverException e) {
+} catch(CodecNotFoundException e) { 
+}
+```
+
+You need to either reverse the catch order and catch `CodecNotFoundException` first:
+
+```java
+try {
+  doSomethingWithDriver();
+} catch(CodecNotFoundException e) { 
+} catch(DriverException e) {
+}
+```
+
+Or catch only `DriverException`:
+
+```java
+try {
+  doSomethingWithDriver();
+} catch(DriverException e) { 
+}
+```
+
 ### 4.14.0
 
 #### AllNodesFailedException instead of NoNodeAvailableException in certain cases
@@ -8,6 +48,26 @@
 request cannot be executed because all nodes tried were busy. Previously you would get back a
 `NoNodeAvailableException` but you will now get back an `AllNodesFailedException` where the
 `getAllErrors` map contains a `NodeUnavailableException` for that node.
+
+#### Esri Geometry dependency now optional
+
+Previous versions of the Java driver defined a mandatory dependency on the Esri geometry library.
+This library offered support for primitive geometric types supported by DSE.  As of driver 4.14.0
+this dependency is now optional.
+
+If you do not use DSE (or if you do but do not use the support for geometric types within DSE) you
+should experience no disruption.  If you are using geometric types with DSE you'll now need to
+explicitly declare a dependency on the Esri library:
+
+```xml
+<dependency>
+  <groupId>com.esri.geometry</groupId>
+  <artifactId>esri-geometry-api</artifactId>
+  <version>${esri.version}</version>
+</dependency>
+```
+
+See the [integration](../manual/core/integration/#esri) section in the manual for more details.
 
 ### 4.13.0
 
@@ -312,7 +372,7 @@ least 4.6.1.
 
 ### 4.4.0
 
-Datastax Enterprise support is now available directly in the main driver. There is no longer a
+DataStax Enterprise support is now available directly in the main driver. There is no longer a
 separate DSE driver.
 
 #### For Apache Cassandra® users
@@ -328,7 +388,7 @@ Apart from that, the only visible change is that DSE-specific features are now e
   lean, you can exclude some dependencies when you don't use the corresponding DSE features; see the 
   [Integration>Driver dependencies](../manual/core/integration/#driver-dependencies) section.
 
-#### For Datastax Enterprise users
+#### For DataStax Enterprise users
 
 Adjust your Maven coordinates to use the unified artifact:
 
@@ -454,7 +514,7 @@ We have dropped support for legacy protocol versions v1 and v2. As a result, the
 compatible with:
 
 * **Apache Cassandra®: 2.1 and above**;
-* **Datastax Enterprise: 4.7 and above**.
+* **DataStax Enterprise: 4.7 and above**.
 
 #### Packages
 

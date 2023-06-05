@@ -106,11 +106,11 @@ For "consuming" methods, string overloads are also provided for convenience, for
 * in other cases, the string is always assumed to be in CQL form, and converted on the fly with
   `CqlIdentifier.fromCql`. 
 
-[CqlIdentifier]:    https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/CqlIdentifier.html
-[Row]:              https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/Row.html
-[UdtValue]:         https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/data/UdtValue.html
-[BoundStatement]:   https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/cql/BoundStatement.html
-[AccessibleByName]: https://docs.datastax.com/en/drivers/java/4.13/com/datastax/oss/driver/api/core/data/AccessibleByName.html
+[CqlIdentifier]:    https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/CqlIdentifier.html
+[Row]:              https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/Row.html
+[UdtValue]:         https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/UdtValue.html
+[BoundStatement]:   https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/BoundStatement.html
+[AccessibleByName]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/AccessibleByName.html
 
 ### Good practices
 

@@ -40,6 +40,8 @@ import com.datastax.oss.driver.api.core.metadata.schema.RelationMetadata;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.servererrors.AlreadyExistsException;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
+import com.datastax.oss.driver.api.core.servererrors.CASWriteUnknownException;
+import com.datastax.oss.driver.api.core.servererrors.CDCWriteFailureException;
 import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
 import com.datastax.oss.driver.api.core.servererrors.FunctionFailureException;
 import com.datastax.oss.driver.api.core.servererrors.InvalidConfigurationInQueryException;
@@ -75,6 +77,7 @@ import com.datastax.oss.protocol.internal.request.query.QueryOptions;
 import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.Result;
 import com.datastax.oss.protocol.internal.response.error.AlreadyExists;
+import com.datastax.oss.protocol.internal.response.error.CASWriteUnknown;
 import com.datastax.oss.protocol.internal.response.error.ReadFailure;
 import com.datastax.oss.protocol.internal.response.error.ReadTimeout;
 import com.datastax.oss.protocol.internal.response.error.Unavailable;
@@ -505,6 +508,15 @@ public class Conversions {
             context.getWriteTypeRegistry().fromName(writeFailure.writeType),
             writeFailure.numFailures,
             writeFailure.reasonMap);
+      case ProtocolConstants.ErrorCode.CDC_WRITE_FAILURE:
+        return new CDCWriteFailureException(node, errorMessage.message);
+      case ProtocolConstants.ErrorCode.CAS_WRITE_UNKNOWN:
+        CASWriteUnknown casFailure = (CASWriteUnknown) errorMessage;
+        return new CASWriteUnknownException(
+            node,
+            context.getConsistencyLevelRegistry().codeToLevel(casFailure.consistencyLevel),
+            casFailure.received,
+            casFailure.blockFor);
       case ProtocolConstants.ErrorCode.SYNTAX_ERROR:
         return new SyntaxError(node, errorMessage.message);
       case ProtocolConstants.ErrorCode.UNAUTHORIZED:
