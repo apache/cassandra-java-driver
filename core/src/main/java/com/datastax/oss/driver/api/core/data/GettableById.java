@@ -516,6 +516,24 @@ public interface GettableById extends GettableByIndex, AccessibleById {
   }
 
   /**
+   * Returns the value for the first occurrence of {@code id} as a vector.
+   *
+   * <p>By default, this works with CQL type {@code vector}.
+   *
+   * <p>If an identifier appears multiple times, this can only be used to access the first value.
+   * For the other ones, use positional getters.
+   *
+   * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
+   * this method that takes a string argument.
+   *
+   * @throws IllegalArgumentException if the id is invalid.
+   */
+  @Nullable
+  default CqlVector<?> getCqlVector(@NonNull CqlIdentifier id) {
+    return getCqlVector(firstIndexOf(id));
+  }
+
+  /**
    * Returns the value for the first occurrence of {@code id} as a token.
    *
    * <p>Note that, for simplicity, this method relies on the CQL type of the column to pick the

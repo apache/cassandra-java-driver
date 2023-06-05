@@ -98,7 +98,7 @@ public class PersistentZonedTimestampCodec extends MappingCodec<TupleValue, Zone
     } else {
       Instant instant = value.toInstant();
       String zoneId = value.getZone().toString();
-      return getCqlType().newValue(instant, zoneId);
+      return this.getCqlType().newValue(instant, zoneId);
     }
   }
 }
