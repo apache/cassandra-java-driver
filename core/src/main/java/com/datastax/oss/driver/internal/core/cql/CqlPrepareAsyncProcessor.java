@@ -114,8 +114,12 @@ public class CqlPrepareAsyncProcessor
         if (Iterables.any(
                 stmt.getResultSetDefinitions(), (def) -> typeMatches(event.oldType, def.getType()))
             || Iterables.any(
-                stmt.getVariableDefinitions(), (def) -> typeMatches(event.oldType, def.getType())))
+                stmt.getVariableDefinitions(),
+                (def) -> typeMatches(event.oldType, def.getType()))) {
+
           this.cache.invalidate(entry.getKey());
+          this.cache.cleanUp();
+        }
       } catch (Exception e) {
         LOG.info("Exception while invalidating prepared statement cache due to UDT change", e);
       }

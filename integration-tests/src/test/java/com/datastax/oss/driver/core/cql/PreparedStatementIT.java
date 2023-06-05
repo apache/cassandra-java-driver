@@ -39,6 +39,8 @@ import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.schema.events.TypeChangeEvent;
 import com.datastax.oss.driver.internal.core.metadata.token.DefaultTokenMap;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -48,6 +50,7 @@ import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import junit.framework.TestCase;
@@ -458,10 +461,18 @@ public class PreparedStatementIT {
       session.prepare("select h from test_table_2 where g = ?");
       assertThat(getPreparedCacheSize(session)).isEqualTo(2);
 
-      session.execute("ALTER TYPE test_type_2 add i blob");
+      CountDownLatch latch = new CountDownLatch(1);
+      DefaultDriverContext ctx = (DefaultDriverContext) session.getContext();
+      ctx.getEventBus()
+          .register(
+              TypeChangeEvent.class,
+              (e) -> {
+                assertThat(e.oldType.getName().toString()).isEqualTo("test_type_2");
+                latch.countDown();
+              });
 
-      /* Hack to give type change vent time to propagate on the event bus */
-      Uninterruptibles.sleepUninterruptibly(500, TimeUnit.MILLISECONDS);
+      session.execute("ALTER TYPE test_type_2 add i blob");
+      Uninterruptibles.awaitUninterruptibly(latch, 2, TimeUnit.SECONDS);
 
       assertThat(getPreparedCacheSize(session)).isEqualTo(1);
     }
@@ -480,10 +491,18 @@ public class PreparedStatementIT {
       session.prepare(String.format("select g from test_table_2 where %s allow filtering", hStr));
       assertThat(getPreparedCacheSize(session)).isEqualTo(2);
 
-      session.execute("ALTER TYPE test_type_2 add i blob");
+      CountDownLatch latch = new CountDownLatch(1);
+      DefaultDriverContext ctx = (DefaultDriverContext) session.getContext();
+      ctx.getEventBus()
+          .register(
+              TypeChangeEvent.class,
+              (e) -> {
+                assertThat(e.oldType.getName().toString()).isEqualTo("test_type_2");
+                latch.countDown();
+              });
 
-      /* Hack to give type change vent time to propagate on the event bus */
-      Uninterruptibles.sleepUninterruptibly(500, TimeUnit.MILLISECONDS);
+      session.execute("ALTER TYPE test_type_2 add i blob");
+      Uninterruptibles.awaitUninterruptibly(latch, 2, TimeUnit.SECONDS);
 
       assertThat(getPreparedCacheSize(session)).isEqualTo(1);
     }
