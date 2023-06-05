@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.tracker;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
@@ -80,9 +81,12 @@ public class MultiplexingRequestTracker implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix) {
+      @NonNull String logPrefix,
+      @NonNull ExecutionInfo executionInfo) {
     invokeTrackers(
-        tracker -> tracker.onSuccess(request, latencyNanos, executionProfile, node, logPrefix),
+        tracker ->
+            tracker.onSuccess(
+                request, latencyNanos, executionProfile, node, logPrefix, executionInfo),
         logPrefix,
         "onSuccess");
   }
@@ -94,9 +98,12 @@ public class MultiplexingRequestTracker implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @Nullable Node node,
-      @NonNull String logPrefix) {
+      @NonNull String logPrefix,
+      @NonNull ExecutionInfo executionInfo) {
     invokeTrackers(
-        tracker -> tracker.onError(request, error, latencyNanos, executionProfile, node, logPrefix),
+        tracker ->
+            tracker.onError(
+                request, error, latencyNanos, executionProfile, node, logPrefix, executionInfo),
         logPrefix,
         "onError");
   }
@@ -107,9 +114,12 @@ public class MultiplexingRequestTracker implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix) {
+      @NonNull String logPrefix,
+      @NonNull ExecutionInfo executionInfo) {
     invokeTrackers(
-        tracker -> tracker.onNodeSuccess(request, latencyNanos, executionProfile, node, logPrefix),
+        tracker ->
+            tracker.onNodeSuccess(
+                request, latencyNanos, executionProfile, node, logPrefix, executionInfo),
         logPrefix,
         "onNodeSuccess");
   }

@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.tracker;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
@@ -84,7 +85,8 @@ public class RequestLogger implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix) {
+      @NonNull String logPrefix,
+      @NonNull ExecutionInfo executionInfo) {
 
     boolean successEnabled =
         executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, false);
@@ -137,7 +139,8 @@ public class RequestLogger implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       Node node,
-      @NonNull String logPrefix) {
+      @NonNull String logPrefix,
+      @NonNull ExecutionInfo executionInfo) {
 
     if (!executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, false)) {
       return;
@@ -191,7 +194,8 @@ public class RequestLogger implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix) {
+      @NonNull String logPrefix,
+      @NonNull ExecutionInfo executionInfo) {
     // Nothing to do
   }
 

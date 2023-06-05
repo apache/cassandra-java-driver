@@ -338,13 +338,15 @@ public class CqlRequestHandler implements Throttled {
               nodeLatencyNanos,
               callback.executionProfile,
               callback.node,
-              logPrefix);
+              logPrefix,
+              executionInfo);
           requestTracker.onSuccess(
               callback.statement,
               totalLatencyNanos,
               callback.executionProfile,
               callback.node,
-              logPrefix);
+              logPrefix,
+              executionInfo);
         }
         if (sessionMetricUpdater.isEnabled(
             DefaultSessionMetric.CQL_REQUESTS, callback.executionProfile.getName())) {
@@ -431,27 +433,29 @@ public class CqlRequestHandler implements Throttled {
   private void setFinalError(Statement<?> statement, Throwable error, Node node, int execution) {
     DriverExecutionProfile executionProfile =
         Conversions.resolveExecutionProfile(statement, context);
+    ExecutionInfo executionInfo = null;
     if (error instanceof DriverException) {
-      ((DriverException) error)
-          .setExecutionInfo(
-              new DefaultExecutionInfo(
-                  statement,
-                  node,
-                  startedSpeculativeExecutionsCount.get(),
-                  execution,
-                  errors,
-                  null,
-                  null,
-                  true,
-                  session,
-                  context,
-                  executionProfile));
+      executionInfo =
+          new DefaultExecutionInfo(
+              statement,
+              node,
+              startedSpeculativeExecutionsCount.get(),
+              execution,
+              errors,
+              null,
+              null,
+              true,
+              session,
+              context,
+              executionProfile);
+      ((DriverException) error).setExecutionInfo(executionInfo);
     }
     if (result.completeExceptionally(error)) {
       cancelScheduledTasks();
       if (!(requestTracker instanceof NoopRequestTracker)) {
         long latencyNanos = System.nanoTime() - startTimeNanos;
-        requestTracker.onError(statement, error, latencyNanos, executionProfile, node, logPrefix);
+        requestTracker.onError(
+            statement, error, latencyNanos, executionProfile, node, logPrefix, executionInfo);
       }
       if (error instanceof DriverTimeoutException) {
         throttler.signalTimeout(this);

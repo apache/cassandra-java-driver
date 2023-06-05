@@ -20,6 +20,7 @@ import static com.datastax.oss.driver.api.core.config.DriverExecutionProfile.DEF
 import static org.mockito.BDDMockito.given;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
@@ -32,6 +33,7 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
 
   @Mock Request request;
   @Mock DriverExecutionProfile profile;
+  @Mock ExecutionInfo executionInfo;
   final String logPrefix = "lbp-test-log-prefix";
 
   private DefaultLoadBalancingPolicy policy;
@@ -63,7 +65,7 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     nextNanoTime = 123;
 
     // When
-    policy.onNodeSuccess(request, 0, profile, node1, logPrefix);
+    policy.onNodeSuccess(request, 0, profile, node1, logPrefix, executionInfo);
 
     // Then
     assertThat(policy.responseTimes)
@@ -81,7 +83,7 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     nextNanoTime = 456;
 
     // When
-    policy.onNodeSuccess(request, 0, profile, node1, logPrefix);
+    policy.onNodeSuccess(request, 0, profile, node1, logPrefix, executionInfo);
 
     // Then
     assertThat(policy.responseTimes)
@@ -105,8 +107,8 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     nextNanoTime = 789;
 
     // When
-    policy.onNodeSuccess(request, 0, profile, node1, logPrefix);
-    policy.onNodeSuccess(request, 0, profile, node2, logPrefix);
+    policy.onNodeSuccess(request, 0, profile, node1, logPrefix, executionInfo);
+    policy.onNodeSuccess(request, 0, profile, node2, logPrefix, executionInfo);
 
     // Then
     assertThat(policy.responseTimes)

@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
@@ -36,7 +37,6 @@ import java.util.concurrent.CompletionStage;
 import org.junit.Test;
 
 public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
-
   @Test
   public void should_invoke_request_tracker() {
     try (RequestHandlerTestHarness harness =
@@ -77,14 +77,16 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node2),
-                        any(String.class));
+                        any(String.class),
+                        any(ExecutionInfo.class));
                 verify(requestTracker)
                     .onSuccess(
                         eq(UNDEFINED_IDEMPOTENCE_STATEMENT),
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node2),
-                        any(String.class));
+                        any(String.class),
+                        any(ExecutionInfo.class));
                 verifyNoMoreInteractions(requestTracker);
               });
     }

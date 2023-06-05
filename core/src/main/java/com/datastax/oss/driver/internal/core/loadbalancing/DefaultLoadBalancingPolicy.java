@@ -21,6 +21,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
@@ -238,7 +239,8 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix) {
+      @NonNull String logPrefix,
+      @NonNull ExecutionInfo executionInfo) {
     updateResponseTimes(node);
   }
 
