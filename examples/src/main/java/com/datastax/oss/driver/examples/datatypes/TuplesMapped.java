@@ -119,7 +119,9 @@ public class TuplesMapped {
     @Nullable
     @Override
     protected TupleValue outerToInner(@Nullable Coordinates value) {
-      return value == null ? null : getCqlType().newValue().setInt(0, value.x).setInt(1, value.y);
+      return value == null
+          ? null
+          : this.getCqlType().newValue().setInt(0, value.x).setInt(1, value.y);
     }
   }
 

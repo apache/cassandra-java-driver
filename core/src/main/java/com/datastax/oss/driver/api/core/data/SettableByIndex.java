@@ -415,6 +415,19 @@ public interface SettableByIndex<SelfT extends SettableByIndex<SelfT>> extends A
   }
 
   /**
+   * Sets the {@code i}th value to the provided duration.
+   *
+   * <p>By default, this works with CQL type {@code vector}.
+   *
+   * @throws IndexOutOfBoundsException if the index is invalid.
+   */
+  @NonNull
+  @CheckReturnValue
+  default SelfT setCqlVector(int i, @Nullable CqlVector<?> v) {
+    return set(i, v, CqlVector.class);
+  }
+
+  /**
    * Sets the {@code i}th value to the provided token.
    *
    * <p>This works with the CQL type matching the partitioner in use for this cluster: {@code
