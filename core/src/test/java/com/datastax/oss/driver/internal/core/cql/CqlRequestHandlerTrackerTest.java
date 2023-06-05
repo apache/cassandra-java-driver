@@ -21,6 +21,7 @@ import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -29,6 +30,7 @@ import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
@@ -38,7 +40,6 @@ import java.util.concurrent.CompletionStage;
 import org.junit.Test;
 
 public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
-
   @Test
   public void should_invoke_request_tracker() {
     try (RequestHandlerTestHarness harness =
@@ -72,6 +73,7 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node1),
+                        nullable(ExecutionInfo.class),
                         any(String.class));
                 verify(requestTracker)
                     .onNodeSuccess(
@@ -79,6 +81,7 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node2),
+                        any(ExecutionInfo.class),
                         any(String.class));
                 verify(requestTracker)
                     .onSuccess(
@@ -86,6 +89,7 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node2),
+                        any(ExecutionInfo.class),
                         any(String.class));
                 verifyNoMoreInteractions(requestTracker);
               });
