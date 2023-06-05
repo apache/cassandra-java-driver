@@ -42,11 +42,13 @@ import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.metadata.token.DefaultTokenMap;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
+import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import junit.framework.TestCase;
 import org.junit.Before;
@@ -457,6 +459,10 @@ public class PreparedStatementIT {
       assertThat(getPreparedCacheSize(session)).isEqualTo(2);
 
       session.execute("ALTER TYPE test_type_2 add i blob");
+
+      /* Hack to give type change vent time to propagate on the event bus */
+      Uninterruptibles.sleepUninterruptibly(500, TimeUnit.MILLISECONDS);
+
       assertThat(getPreparedCacheSize(session)).isEqualTo(1);
     }
   }
@@ -475,6 +481,10 @@ public class PreparedStatementIT {
       assertThat(getPreparedCacheSize(session)).isEqualTo(2);
 
       session.execute("ALTER TYPE test_type_2 add i blob");
+
+      /* Hack to give type change vent time to propagate on the event bus */
+      Uninterruptibles.sleepUninterruptibly(500, TimeUnit.MILLISECONDS);
+
       assertThat(getPreparedCacheSize(session)).isEqualTo(1);
     }
   }
