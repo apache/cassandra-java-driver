@@ -36,7 +36,7 @@ public class BuiltInRequestProcessorsSubstitutions {
     public static List<RequestProcessor<?, ?>> createDefaultProcessors(
         DefaultDriverContext context) {
       List<RequestProcessor<?, ?>> processors = new ArrayList<>();
-      BuiltInRequestProcessors.addBasicProcessors(processors);
+      BuiltInRequestProcessors.addBasicProcessors(processors, context);
       return processors;
     }
   }
@@ -48,7 +48,7 @@ public class BuiltInRequestProcessorsSubstitutions {
     public static List<RequestProcessor<?, ?>> createDefaultProcessors(
         DefaultDriverContext context) {
       List<RequestProcessor<?, ?>> processors = new ArrayList<>();
-      BuiltInRequestProcessors.addBasicProcessors(processors);
+      BuiltInRequestProcessors.addBasicProcessors(processors, context);
       BuiltInRequestProcessors.addReactiveProcessors(processors);
       return processors;
     }
@@ -61,7 +61,7 @@ public class BuiltInRequestProcessorsSubstitutions {
     public static List<RequestProcessor<?, ?>> createDefaultProcessors(
         DefaultDriverContext context) {
       List<RequestProcessor<?, ?>> processors = new ArrayList<>();
-      BuiltInRequestProcessors.addBasicProcessors(processors);
+      BuiltInRequestProcessors.addBasicProcessors(processors, context);
       BuiltInRequestProcessors.addGraphProcessors(context, processors);
       return processors;
     }
