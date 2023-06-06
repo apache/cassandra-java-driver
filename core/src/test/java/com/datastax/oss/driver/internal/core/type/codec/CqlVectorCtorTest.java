@@ -15,12 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core.type.codec;
 
-import com.datastax.oss.driver.api.core.data.CqlVector;
-import org.junit.Test;
-
-import java.util.ArrayList;
-
 import static org.assertj.core.api.Assertions.assertThat;
+
+import com.datastax.oss.driver.api.core.data.CqlVector;
+import java.util.ArrayList;
+import org.junit.Test;
 
 /**
  * These tests are here simply to demonstrate the disambiguation on the CqlVector constructors,
