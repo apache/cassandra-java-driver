@@ -67,6 +67,7 @@ public class CqlVector<T> implements Iterable<T> {
       builder.append(value).append(", ");
     }
     builder.setLength(builder.length() - ", ".length());
+    builder.append("}");
     return builder.toString();
   }
 

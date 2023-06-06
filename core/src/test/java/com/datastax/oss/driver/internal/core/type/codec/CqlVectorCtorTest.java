@@ -40,11 +40,22 @@ public class CqlVectorCtorTest {
     unqualifiedGenericType.add(2.5f);
     CqlVector withInferredType = new CqlVector(unqualifiedGenericType);
 
+    CqlVector.Builder builder = CqlVector.builder();
+    builder.add(1.0f);
+    builder.add(2.5f);
+    CqlVector fromBuilder = builder.build();
+
     assertThat(withVarargsStatic.getValues()).containsExactly(1.0f, 2.5f);
     assertThat(withParameterizedList.getValues()).containsExactly(1.0f, 2.5f);
     assertThat(withInferredType.getValues()).containsExactly(1.0f, 2.5f);
+    assertThat(fromBuilder.getValues()).containsExactly(1.0f, 2.5f);
 
     assertThat(withVarargsStatic).isEqualTo(withParameterizedList);
     assertThat(withVarargsStatic).isEqualTo(withInferredType);
+    assertThat(fromBuilder).isEqualTo(withInferredType);
+
+    assertThat(withVarargsStatic.toString()).isEqualTo(
+            "CqlVector{1.0, 2.5}"
+    );
   }
 }
