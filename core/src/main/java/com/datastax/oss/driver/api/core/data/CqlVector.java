@@ -15,25 +15,31 @@
  */
 package com.datastax.oss.driver.api.core.data;
 
-import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
-import java.util.Arrays;
+import java.util.*;
 
-/** An n-dimensional vector defined in CQL */
-public class CqlVector<T> {
+/**
+ * An n-dimensional vector defined in CQL. You can use either {@link CqlVector#builder()} for an
+ * iterable interface or {@link #CqlVector(List)} directly. Once created, a CqlVector is immutable.
+ */
+public class CqlVector<T> implements Iterable<T> {
 
-  private final ImmutableList<T> values;
+  private final List<T> values;
 
-  private CqlVector(ImmutableList<T> values) {
-    this.values = values;
+  /**
+   * Create a CqlVector from a list of values.
+   *
+   * @param values
+   */
+  public CqlVector(List<T> values) {
+    this.values = Collections.unmodifiableList(values);
   }
 
-  public static Builder builder() {
-    return new Builder();
+  public static <T> CqlVector of(T... values) {
+    return new CqlVector(Collections.unmodifiableList(Arrays.asList(values)));
   }
 
-  public Iterable<T> getValues() {
+  /** @return the (immutable) list of values in the vector */
+  public List<T> getValues() {
     return values;
   }
 
@@ -56,36 +62,47 @@ public class CqlVector<T> {
 
   @Override
   public String toString() {
+    StringBuilder builder = new StringBuilder("CqlVector{");
+    for (T value : values) {
+      builder.append(value).append(", ");
+    }
+    builder.setLength(builder.length() - ", ".length());
+    return builder.toString();
+  }
 
-    String contents = Joiner.on(", ").join(this.values);
-    return "CqlVector{" + contents + '}';
+  @Override
+  public Iterator<T> iterator() {
+    return values.iterator();
+  }
+
+  public static Builder builder() {
+    return new Builder();
   }
 
   public static class Builder<T> {
-
-    private ImmutableList.Builder<T> listBuilder;
+    private List<T> vector;
 
     private Builder() {
-      listBuilder = new ImmutableList.Builder<T>();
+      this.vector = new ArrayList<>();
     }
 
     public Builder add(T element) {
-      listBuilder.add(element);
+      vector.add(element);
       return this;
     }
 
     public Builder add(T... elements) {
-      listBuilder.addAll(Iterators.forArray(elements));
+      vector.addAll(Arrays.asList(elements));
       return this;
     }
 
     public Builder addAll(Iterable<T> iter) {
-      listBuilder.addAll(iter);
+      iter.forEach(vector::add);
       return this;
     }
 
     public CqlVector<T> build() {
-      return new CqlVector<T>(listBuilder.build());
+      return new CqlVector<>(vector);
     }
   }
 }
