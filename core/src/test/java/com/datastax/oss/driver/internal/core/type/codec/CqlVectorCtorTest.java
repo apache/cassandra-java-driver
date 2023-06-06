@@ -17,7 +17,9 @@ package com.datastax.oss.driver.internal.core.type.codec;
 
 import com.datastax.oss.driver.api.core.data.CqlVector;
 import org.junit.Test;
+
 import java.util.ArrayList;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -54,8 +56,6 @@ public class CqlVectorCtorTest {
     assertThat(withVarargsStatic).isEqualTo(withInferredType);
     assertThat(fromBuilder).isEqualTo(withInferredType);
 
-    assertThat(withVarargsStatic.toString()).isEqualTo(
-            "CqlVector{1.0, 2.5}"
-    );
+    assertThat(withVarargsStatic.toString()).isEqualTo("CqlVector{1.0, 2.5}");
   }
 }
