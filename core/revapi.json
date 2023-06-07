@@ -17,6 +17,12 @@
     },
     "ignore": [
       {
+        "code": "java.method.returnTypeChangedCovariantly",
+        "old": "method java.lang.Iterable<T> com.datastax.oss.driver.api.core.data.CqlVector<T>::getValues()",
+        "new": "method java.util.List<T> com.datastax.oss.driver.api.core.data.CqlVector<T>::getValues()",
+        "justification": "Simplification of new API with no observable impact"
+      },
+      {
         "code": "java.method.removed",
         "old": "method com.datastax.oss.driver.api.core.cql.BatchStatementBuilder com.datastax.oss.driver.api.core.cql.BatchStatementBuilder::withKeyspace(com.datastax.oss.driver.api.core.CqlIdentifier)",
         "justification": "JAVA-2164: Rename statement builder methods to setXxx"
