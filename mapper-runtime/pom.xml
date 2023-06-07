@@ -122,6 +122,7 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <jvm>${testing.jvm}/bin/java</jvm>
           <threadCount>1</threadCount>
           <properties>
             <!-- tell TestNG not to run jUnit tests -->

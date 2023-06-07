@@ -433,12 +433,12 @@
       <dependency>
         <groupId>io.projectreactor.tools</groupId>
         <artifactId>blockhound</artifactId>
-        <version>1.0.4.RELEASE</version>
+        <version>1.0.8.RELEASE</version>
       </dependency>
       <dependency>
         <groupId>io.projectreactor.tools</groupId>
         <artifactId>blockhound-junit-platform</artifactId>
-        <version>1.0.4.RELEASE</version>
+        <version>1.0.8.RELEASE</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -533,12 +533,12 @@
         <plugin>
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.8.5</version>
+          <version>0.8.10</version>
         </plugin>
         <plugin>
           <groupId>org.apache.felix</groupId>
           <artifactId>maven-bundle-plugin</artifactId>
-          <version>4.2.1</version>
+          <version>5.1.1</version>
         </plugin>
         <plugin>
           <groupId>org.revapi</groupId>
@@ -934,6 +934,69 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <maven.source.skip>true</maven.source.skip>
         <revapi.skip>true</revapi.skip>
+      </properties>
+    </profile>
+    <!-- macOS-specific build workarounds -->
+    <profile>
+      <id>build-macos</id>
+      <activation>
+        <os>
+          <name>mac os x</name>
+        </os>
+      </activation>
+      <properties>
+        <snappy.version>1.1.8.4</snappy.version>
+      </properties>
+    </profile>
+    <!-- Use $JAVA_HOME as the default JDK to run surefire/failsafe to maintain portability -->
+    <profile>
+      <id>test-jdk-environment</id>
+      <activation>
+        <property>
+          <name>!testJavaHome</name>
+        </property>
+      </activation>
+      <properties>
+        <testing.jvm>${env.JAVA_HOME}</testing.jvm>
+      </properties>
+    </profile>
+    <!-- set -DtestJavaHome=/path/to/jdk/home to use a different JDK for surefire/failsafe -->
+    <profile>
+      <id>test-jdk-specified</id>
+      <activation>
+        <property>
+          <name>testJavaHome</name>
+        </property>
+      </activation>
+      <properties>
+        <testing.jvm>${testJavaHome}</testing.jvm>
+      </properties>
+    </profile>
+    <profile>
+      <!-- workarounds for running tests with JDK1.8 -->
+      <id>test-jdk-8</id>
+      <activation>
+        <jdk>[8,)</jdk>
+      </activation>
+    </profile>
+    <profile>
+      <!-- workarounds for running tests with JDK11 -->
+      <id>test-jdk-11</id>
+      <activation>
+        <jdk>[11,)</jdk>
+      </activation>
+    </profile>
+    <profile>
+      <!-- workarounds for running tests with JDK17 -->
+      <id>test-jdk-17</id>
+      <activation>
+        <jdk>[17,)</jdk>
+      </activation>
+      <properties>
+        <!-- for DriverBlockHoundIntegrationIT when using JDK 13+, see https://github.com/reactor/BlockHound/issues/33 -->
+        <blockhound.argline>-XX:+AllowRedefinitionToAddDeleteMethods</blockhound.argline>
+        <!-- allow deep reflection for mockito when using JDK 17+, see https://stackoverflow.com/questions/70993863/mockito-can-not-mock-random-in-java-17 -->
+        <mockitoopens.argline>--add-opens java.base/jdk.internal.util.random=ALL-UNNAMED</mockitoopens.argline>
       </properties>
     </profile>
   </profiles>
