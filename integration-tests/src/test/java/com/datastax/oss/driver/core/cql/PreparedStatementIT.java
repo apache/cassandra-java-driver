@@ -369,8 +369,13 @@ public class PreparedStatementIT {
       String query = "SELECT * FROM prepared_statement_test WHERE a = ?";
 
       // When
-      PreparedStatement preparedStatement1 = session.prepare(query);
-      PreparedStatement preparedStatement2 = session.prepare(query);
+      CompletionStage<PreparedStatement> preparedStatement1Future = session.prepareAsync(query);
+      CompletionStage<PreparedStatement> preparedStatement2Future = session.prepareAsync(query);
+
+      PreparedStatement preparedStatement1 =
+          CompletableFutures.getUninterruptibly(preparedStatement1Future);
+      PreparedStatement preparedStatement2 =
+          CompletableFutures.getUninterruptibly(preparedStatement2Future);
 
       // Then
       assertThat(preparedStatement1).isSameAs(preparedStatement2);
@@ -386,10 +391,15 @@ public class PreparedStatementIT {
       assertThat(getPreparedCacheSize(session)).isEqualTo(0);
 
       // When
+      CompletionStage<PreparedStatement> preparedStatement1Future =
+          session.prepareAsync("SELECT * FROM prepared_statement_test WHERE a = ?");
+      CompletionStage<PreparedStatement> preparedStatement2Future =
+          session.prepareAsync("select * from prepared_statement_test where a = ?");
+
       PreparedStatement preparedStatement1 =
-          session.prepare("SELECT * FROM prepared_statement_test WHERE a = ?");
+          CompletableFutures.getUninterruptibly(preparedStatement1Future);
       PreparedStatement preparedStatement2 =
-          session.prepare("select * from prepared_statement_test where a = ?");
+          CompletableFutures.getUninterruptibly(preparedStatement2Future);
 
       // Then
       assertThat(preparedStatement1).isNotSameAs(preparedStatement2);
@@ -406,8 +416,15 @@ public class PreparedStatementIT {
           SimpleStatement.newInstance("SELECT * FROM prepared_statement_test");
 
       // When
-      PreparedStatement preparedStatement1 = session.prepare(statement.setPageSize(1));
-      PreparedStatement preparedStatement2 = session.prepare(statement.setPageSize(4));
+      CompletionStage<PreparedStatement> preparedStatement1Future =
+          session.prepareAsync(statement.setPageSize(1));
+      CompletionStage<PreparedStatement> preparedStatement2Future =
+          session.prepareAsync(statement.setPageSize(4));
+
+      PreparedStatement preparedStatement1 =
+          CompletableFutures.getUninterruptibly(preparedStatement1Future);
+      PreparedStatement preparedStatement2 =
+          CompletableFutures.getUninterruptibly(preparedStatement2Future);
 
       // Then
       assertThat(preparedStatement1).isNotSameAs(preparedStatement2);
@@ -415,6 +432,53 @@ public class PreparedStatementIT {
       // Each bound statement uses the page size it was prepared with
       assertThat(firstPageOf(session.executeAsync(preparedStatement1.bind()))).hasSize(1);
       assertThat(firstPageOf(session.executeAsync(preparedStatement2.bind()))).hasSize(4);
+    }
+  }
+
+  @Test
+  public void gc_drops_unreachable_cache_items() {
+    try (CqlSession session = sessionWithCacheSizeMetric()) {
+      // Given
+      assertThat(getPreparedCacheSize(session)).isEqualTo(0);
+      String query = "SELECT * FROM prepared_statement_test WHERE a = ?";
+
+      // When
+      PreparedStatement preparedStatement1 =
+          CompletableFutures.getUninterruptibly(session.prepareAsync(query));
+
+      // run GC to invalidate any unreachable prepared statement cache items
+      System.gc();
+
+      PreparedStatement preparedStatement2 =
+          CompletableFutures.getUninterruptibly(session.prepareAsync(query));
+
+      // Then
+      assertThat(preparedStatement1).isNotSameAs(preparedStatement2);
+      assertThat(getPreparedCacheSize(session)).isEqualTo(1);
+    }
+  }
+
+  @Test
+  public void gc_keeps_reachable_cache_items() {
+    try (CqlSession session = sessionWithCacheSizeMetric()) {
+      // Given
+      assertThat(getPreparedCacheSize(session)).isEqualTo(0);
+      String query = "SELECT * FROM prepared_statement_test WHERE a = ?";
+
+      // When
+      CompletionStage<PreparedStatement> preparedStatement1Future = session.prepareAsync(query);
+      PreparedStatement preparedStatement1 =
+          CompletableFutures.getUninterruptibly(preparedStatement1Future);
+
+      // run GC to invalidate any unreachable prepared statement cache items
+      System.gc();
+
+      PreparedStatement preparedStatement2 =
+          CompletableFutures.getUninterruptibly(session.prepareAsync(query));
+
+      // Then
+      assertThat(preparedStatement1).isSameAs(preparedStatement2);
+      assertThat(getPreparedCacheSize(session)).isEqualTo(1);
     }
   }
 
