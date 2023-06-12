@@ -668,6 +668,9 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
       return TypeCodecs.tupleOf((TupleType) cqlType);
     } else if (cqlType instanceof UserDefinedType) {
       return TypeCodecs.udtOf((UserDefinedType) cqlType);
+    } else if (cqlType instanceof CqlVectorType) {
+      CqlVectorType vectorType = (CqlVectorType) cqlType;
+      return TypeCodecs.vectorOf(vectorType, codecFor(vectorType.getSubtype()));
     } else if (cqlType instanceof CustomType) {
       return TypeCodecs.custom(cqlType);
     }
