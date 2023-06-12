@@ -368,9 +368,14 @@ public class PreparedStatementIT {
       assertThat(getPreparedCacheSize(session)).isEqualTo(0);
       String query = "SELECT * FROM prepared_statement_test WHERE a = ?";
 
-      // When
-      PreparedStatement preparedStatement1 = session.prepare(query);
-      PreparedStatement preparedStatement2 = session.prepare(query);
+      // Send prepare requests, keep hold of CompletionStage objects to prevent them being removed from CqlPrepareAsyncProcessor#cache, see JAVA-3062
+      CompletionStage<PreparedStatement> preparedStatement1Future = session.prepareAsync(query);
+      CompletionStage<PreparedStatement> preparedStatement2Future = session.prepareAsync(query);
+
+      PreparedStatement preparedStatement1 =
+          CompletableFutures.getUninterruptibly(preparedStatement1Future);
+      PreparedStatement preparedStatement2 =
+          CompletableFutures.getUninterruptibly(preparedStatement2Future);
 
       // Then
       assertThat(preparedStatement1).isSameAs(preparedStatement2);
@@ -385,11 +390,16 @@ public class PreparedStatementIT {
       // Given
       assertThat(getPreparedCacheSize(session)).isEqualTo(0);
 
-      // When
+      // Send prepare requests, keep hold of CompletionStage objects to prevent them being removed from CqlPrepareAsyncProcessor#cache, see JAVA-3062
+      CompletionStage<PreparedStatement> preparedStatement1Future =
+          session.prepareAsync("SELECT * FROM prepared_statement_test WHERE a = ?");
+      CompletionStage<PreparedStatement> preparedStatement2Future =
+          session.prepareAsync("select * from prepared_statement_test where a = ?");
+
       PreparedStatement preparedStatement1 =
-          session.prepare("SELECT * FROM prepared_statement_test WHERE a = ?");
+          CompletableFutures.getUninterruptibly(preparedStatement1Future);
       PreparedStatement preparedStatement2 =
-          session.prepare("select * from prepared_statement_test where a = ?");
+          CompletableFutures.getUninterruptibly(preparedStatement2Future);
 
       // Then
       assertThat(preparedStatement1).isNotSameAs(preparedStatement2);
@@ -405,9 +415,16 @@ public class PreparedStatementIT {
       SimpleStatement statement =
           SimpleStatement.newInstance("SELECT * FROM prepared_statement_test");
 
-      // When
-      PreparedStatement preparedStatement1 = session.prepare(statement.setPageSize(1));
-      PreparedStatement preparedStatement2 = session.prepare(statement.setPageSize(4));
+      // Send prepare requests, keep hold of CompletionStage objects to prevent them being removed from CqlPrepareAsyncProcessor#cache, see JAVA-3062
+      CompletionStage<PreparedStatement> preparedStatement1Future =
+          session.prepareAsync(statement.setPageSize(1));
+      CompletionStage<PreparedStatement> preparedStatement2Future =
+          session.prepareAsync(statement.setPageSize(4));
+
+      PreparedStatement preparedStatement1 =
+          CompletableFutures.getUninterruptibly(preparedStatement1Future);
+      PreparedStatement preparedStatement2 =
+          CompletableFutures.getUninterruptibly(preparedStatement2Future);
 
       // Then
       assertThat(preparedStatement1).isNotSameAs(preparedStatement2);

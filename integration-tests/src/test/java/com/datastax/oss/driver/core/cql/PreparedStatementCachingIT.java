@@ -27,10 +27,10 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.session.ProgrammaticArguments;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
-import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
-import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.categories.IsolatedTests;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
@@ -38,22 +38,25 @@ import com.datastax.oss.driver.internal.core.metadata.schema.events.TypeChangeEv
 import com.datastax.oss.driver.internal.core.session.BuiltInRequestProcessors;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
-import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
 import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
+import com.datastax.oss.driver.shaded.guava.common.cache.RemovalListener;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -64,12 +67,11 @@ import org.junit.rules.TestRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Category(ParallelizableTests.class)
+// These tests must be isolated because setup modifies SessionUtils.SESSION_BUILDER_CLASS_PROPERTY
+@Category(IsolatedTests.class)
 public class PreparedStatementCachingIT {
 
-  private static final Logger LOG = LoggerFactory.getLogger(PreparedStatementCachingIT.class);
-
-  private CcmRule ccmRule = CcmRule.getInstance();
+  private CustomCcmRule ccmRule = CustomCcmRule.builder().build();
 
   private SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccmRule)
@@ -93,7 +95,7 @@ public class PreparedStatementCachingIT {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (o == null || !(o instanceof PreparedStatementRemovalEvent)) return false;
       PreparedStatementRemovalEvent that = (PreparedStatementRemovalEvent) o;
       return Objects.equals(queryId, that.queryId);
     }
@@ -114,42 +116,30 @@ public class PreparedStatementCachingIT {
     private static final Logger LOG =
         LoggerFactory.getLogger(PreparedStatementCachingIT.TestCqlPrepareAsyncProcessor.class);
 
-    private static Function<
-            Optional<? extends DefaultDriverContext>,
-            Cache<PrepareRequest, CompletableFuture<PreparedStatement>>>
-        buildCache =
-            (contextOption) -> {
+    private static RemovalListener<PrepareRequest, CompletableFuture<PreparedStatement>>
+        buildCacheRemoveCallback(@NonNull Optional<DefaultDriverContext> context) {
+      return (evt) -> {
+        try {
+          CompletableFuture<PreparedStatement> future = evt.getValue();
+          ByteBuffer queryId = Uninterruptibles.getUninterruptibly(future).getId();
+          context.ifPresent(
+              ctx -> ctx.getEventBus().fire(new PreparedStatementRemovalEvent(queryId)));
+        } catch (Exception e) {
+          LOG.error("Unable to register removal handler", e);
+        }
+      };
+    }
 
-              // Default CqlPrepareAsyncProcessor uses weak values here as well.  We avoid doing so
-              // to prevent cache
-              // entries from unexpectedly disappearing mid-test.
-              CacheBuilder builder = CacheBuilder.newBuilder();
-              contextOption.ifPresent(
-                  (ctx) -> {
-                    builder.removalListener(
-                        (evt) -> {
-                          try {
-
-                            CompletableFuture<PreparedStatement> future =
-                                (CompletableFuture<PreparedStatement>) evt.getValue();
-                            ByteBuffer queryId =
-                                Uninterruptibles.getUninterruptibly(future).getId();
-                            ctx.getEventBus().fire(new PreparedStatementRemovalEvent(queryId));
-                          } catch (Exception e) {
-                            LOG.error("Unable to register removal handler", e);
-                          }
-                        });
-                  });
-              return builder.build();
-            };
-
-    public TestCqlPrepareAsyncProcessor(@NonNull Optional<? extends DefaultDriverContext> context) {
-      super(TestCqlPrepareAsyncProcessor.buildCache.apply(context), context);
+    public TestCqlPrepareAsyncProcessor(@NonNull Optional<DefaultDriverContext> context) {
+      // Default CqlPrepareAsyncProcessor uses weak values here as well.  We avoid doing so
+      // to prevent cache entries from unexpectedly disappearing mid-test.
+      super(
+          CacheBuilder.newBuilder().removalListener(buildCacheRemoveCallback(context)).build(),
+          context);
     }
   }
 
   private static class TestDefaultDriverContext extends DefaultDriverContext {
-
     public TestDefaultDriverContext(
         DriverConfigLoader configLoader, ProgrammaticArguments programmaticArguments) {
       super(configLoader, programmaticArguments);
@@ -157,6 +147,7 @@ public class PreparedStatementCachingIT {
 
     @Override
     protected RequestProcessorRegistry buildRequestProcessorRegistry() {
+      // Re-create the processor cache to insert the TestCqlPrepareAsyncProcessor with it's strong prepared statement cache, see JAVA-3062
       List<RequestProcessor<?, ?>> processors =
           BuiltInRequestProcessors.createDefaultProcessors(this);
       processors.removeIf((processor) -> processor instanceof CqlPrepareAsyncProcessor);
@@ -170,8 +161,6 @@ public class PreparedStatementCachingIT {
   }
 
   private static class TestSessionBuilder extends SessionBuilder {
-
-    private final Logger LOG = LoggerFactory.getLogger(TestSessionBuilder.class);
 
     @Override
     protected Object wrap(@NonNull CqlSession defaultSession) {
@@ -200,116 +189,106 @@ public class PreparedStatementCachingIT {
     return new TestSessionBuilder();
   }
 
-  private void invalidationResultSetTest(Consumer<CqlSession> createFn) {
-
-    try (CqlSession session = sessionWithCacheSizeMetric()) {
-
-      assertThat(getPreparedCacheSize(session)).isEqualTo(0);
-      createFn.accept(session);
-
-      session.prepare("select f from test_table_1 where e = ?");
-      ByteBuffer queryId2 = session.prepare("select h from test_table_2 where g = ?").getId();
-      assertThat(getPreparedCacheSize(session)).isEqualTo(2);
-
-      CountDownLatch latch = new CountDownLatch(1);
-      DefaultDriverContext ctx = (DefaultDriverContext) session.getContext();
-      AtomicReference<Optional<String>> changeRef = new AtomicReference<>(Optional.empty());
-      AtomicReference<Optional<ByteBuffer>> idRef = new AtomicReference<>(Optional.empty());
-      ctx.getEventBus()
-          .register(
-              TypeChangeEvent.class,
-              (e) -> {
-                if (!changeRef.compareAndSet(
-                    Optional.empty(), Optional.of(e.oldType.getName().toString())))
-                  // TODO: Note that we actually do see this error for tests around nested UDTs.
-                  // What's happening is that
-                  // we see an event for the changed type itself and then we get an event for the
-                  // nesting type that contains
-                  // it.  Upshot is that this logic is dependent on the order of event delivery; as
-                  // long as the event for the
-                  // type itself is first this test will behave as expected.
-                  //
-                  // We probably want something more robust here.
-                  LOG.error("Unable to set reference for type change event " + e);
-              });
-      ctx.getEventBus()
-          .register(
-              PreparedStatementRemovalEvent.class,
-              (e) -> {
-                if (!idRef.compareAndSet(Optional.empty(), Optional.of(e.queryId)))
-                  LOG.error("Unable to set reference for PS removal event");
-                latch.countDown();
-              });
-
-      session.execute("ALTER TYPE test_type_2 add i blob");
-      Uninterruptibles.awaitUninterruptibly(latch, 2, TimeUnit.SECONDS);
-
-      /* Okay, the latch triggered so cache processing should now be done.  Let's validate :allthethings: */
-      assertThat(changeRef.get()).isNotEmpty();
-      assertThat(changeRef.get().get()).isEqualTo("test_type_2");
-      assertThat(idRef.get()).isNotEmpty();
-      assertThat(idRef.get().get()).isEqualTo(queryId2);
-      assertThat(getPreparedCacheSize(session)).isEqualTo(1);
-    }
+  private void invalidationResultSetTest(
+      Consumer<CqlSession> setupTestSchema, Set<String> expectedChangedTypes) {
+    invalidationTestInner(
+        setupTestSchema,
+        "select f from test_table_1 where e = ?",
+        "select h from test_table_2 where g = ?",
+        expectedChangedTypes);
   }
 
-  private void invalidationVariableDefsTest(Consumer<CqlSession> createFn, boolean isCollection) {
+  private void invalidationVariableDefsTest(
+      Consumer<CqlSession> setupTestSchema,
+      boolean isCollection,
+      Set<String> expectedChangedTypes) {
+    String condition = isCollection ? "contains ?" : "= ?";
+    invalidationTestInner(
+        setupTestSchema,
+        String.format("select e from test_table_1 where f %s allow filtering", condition),
+        String.format("select g from test_table_2 where h %s allow filtering", condition),
+        expectedChangedTypes);
+  }
 
-    /* TODO: There's a lot more infrastructure in this test now, which means we're duplicating a lot of setup with
-     *   the ResultSet test above.  Probably worth while to see if we can merge the two. */
+  private void invalidationTestInner(
+      Consumer<CqlSession> setupTestSchema,
+      String preparedStmtQueryType1,
+      String preparedStmtQueryType2,
+      Set<String> expectedChangedTypes) {
+
     try (CqlSession session = sessionWithCacheSizeMetric()) {
 
       assertThat(getPreparedCacheSize(session)).isEqualTo(0);
-      createFn.accept(session);
+      setupTestSchema.accept(session);
 
-      String fStr = isCollection ? "f contains ?" : "f = ?";
-      session.prepare(String.format("select e from test_table_1 where %s allow filtering", fStr));
-      String hStr = isCollection ? "h contains ?" : "h = ?";
-      ByteBuffer queryId2 =
-          session
-              .prepare(String.format("select g from test_table_2 where %s allow filtering", hStr))
-              .getId();
+      session.prepare(preparedStmtQueryType1);
+      ByteBuffer queryId2 = session.prepare(preparedStmtQueryType2).getId();
       assertThat(getPreparedCacheSize(session)).isEqualTo(2);
 
-      CountDownLatch latch = new CountDownLatch(1);
+      CountDownLatch preparedStmtCacheRemoveLatch = new CountDownLatch(1);
+      CountDownLatch typeChangeEventLatch = new CountDownLatch(expectedChangedTypes.size());
+
       DefaultDriverContext ctx = (DefaultDriverContext) session.getContext();
-      AtomicReference<Optional<String>> changeRef = new AtomicReference<>(Optional.empty());
-      AtomicReference<Optional<ByteBuffer>> idRef = new AtomicReference<>(Optional.empty());
+      Map<String, Boolean> changedTypes = new ConcurrentHashMap<>();
+      AtomicReference<Optional<ByteBuffer>> removedQueryIds =
+          new AtomicReference<>(Optional.empty());
+      AtomicReference<Optional<String>> typeChangeEventError =
+          new AtomicReference<>(Optional.empty());
+      AtomicReference<Optional<String>> removedQueryEventError =
+          new AtomicReference<>(Optional.empty());
       ctx.getEventBus()
           .register(
               TypeChangeEvent.class,
               (e) -> {
-                if (!changeRef.compareAndSet(
-                    Optional.empty(), Optional.of(e.oldType.getName().toString())))
-                  // TODO: Note that we actually do see this error for tests around nested UDTs.
-                  // What's happening is that
-                  // we see an event for the changed type itself and then we get an event for the
-                  // nesting type that contains
-                  // it.  Upshot is that this logic is dependent on the order of event delivery; as
-                  // long as the event for the
-                  // type itself is first this test will behave as expected.
-                  //
-                  // We probably want something more robust here.
-                  LOG.error("Unable to set reference for type change event " + e);
+                // expect one event per type changed and for every parent type that nests it
+                if (Boolean.TRUE.equals(
+                    changedTypes.putIfAbsent(e.oldType.getName().toString(), true))) {
+                  // store an error if we see duplicate change event
+                  // any non-empty error will fail the test so it's OK to do this multiple times
+                  typeChangeEventError.set(Optional.of("Duplicate type change event " + e));
+                }
+                typeChangeEventLatch.countDown();
               });
       ctx.getEventBus()
           .register(
               PreparedStatementRemovalEvent.class,
               (e) -> {
-                if (!idRef.compareAndSet(Optional.empty(), Optional.of(e.queryId)))
-                  LOG.error("Unable to set reference for PS removal event");
-                latch.countDown();
+                if (!removedQueryIds.compareAndSet(Optional.empty(), Optional.of(e.queryId))) {
+                  // store an error if we see multiple cache invalidation events
+                  // any non-empty error will fail the test so it's OK to do this multiple times
+                  removedQueryEventError.set(
+                      Optional.of("Unable to set reference for PS removal event"));
+                }
+                preparedStmtCacheRemoveLatch.countDown();
               });
 
+      // alter test_type_2 to trigger cache invalidation and above events
       session.execute("ALTER TYPE test_type_2 add i blob");
-      Uninterruptibles.awaitUninterruptibly(latch, 2, TimeUnit.SECONDS);
+
+      // wait for latches and fail if they don't reach zero before timeout
+      assertThat(
+              Uninterruptibles.awaitUninterruptibly(
+                  preparedStmtCacheRemoveLatch, 10, TimeUnit.SECONDS))
+          .withFailMessage("preparedStmtCacheRemoveLatch did not trigger before timeout")
+          .isTrue();
+      assertThat(Uninterruptibles.awaitUninterruptibly(typeChangeEventLatch, 10, TimeUnit.SECONDS))
+          .withFailMessage("typeChangeEventLatch did not trigger before timeout")
+          .isTrue();
 
       /* Okay, the latch triggered so cache processing should now be done.  Let's validate :allthethings: */
-      assertThat(changeRef.get()).isNotEmpty();
-      assertThat(changeRef.get().get()).isEqualTo("test_type_2");
-      assertThat(idRef.get()).isNotEmpty();
-      assertThat(idRef.get().get()).isEqualTo(queryId2);
+      assertThat(changedTypes.keySet()).isEqualTo(expectedChangedTypes);
+      assertThat(removedQueryIds.get()).isNotEmpty().get().isEqualTo(queryId2);
       assertThat(getPreparedCacheSize(session)).isEqualTo(1);
+
+      // check no errors were seen in callback (and report those as fail msgs)
+      // if something is broken these may still succeed due to timing
+      // but shouldn't intermittently fail if the code is working properly
+      assertThat(typeChangeEventError.get())
+          .withFailMessage(() -> typeChangeEventError.get().get())
+          .isEmpty();
+      assertThat(removedQueryEventError.get())
+          .withFailMessage(() -> removedQueryEventError.get().get())
+          .isEmpty();
     }
   }
 
@@ -323,12 +302,12 @@ public class PreparedStatementCachingIT {
 
   @Test
   public void should_invalidate_cache_entry_on_basic_udt_change_result_set() {
-    invalidationResultSetTest(setupCacheEntryTestBasic);
+    invalidationResultSetTest(setupCacheEntryTestBasic, ImmutableSet.of("test_type_2"));
   }
 
   @Test
   public void should_invalidate_cache_entry_on_basic_udt_change_variable_defs() {
-    invalidationVariableDefsTest(setupCacheEntryTestBasic, false);
+    invalidationVariableDefsTest(setupCacheEntryTestBasic, false, ImmutableSet.of("test_type_2"));
   }
 
   Consumer<CqlSession> setupCacheEntryTestCollection =
@@ -343,12 +322,13 @@ public class PreparedStatementCachingIT {
 
   @Test
   public void should_invalidate_cache_entry_on_collection_udt_change_result_set() {
-    invalidationResultSetTest(setupCacheEntryTestCollection);
+    invalidationResultSetTest(setupCacheEntryTestCollection, ImmutableSet.of("test_type_2"));
   }
 
   @Test
   public void should_invalidate_cache_entry_on_collection_udt_change_variable_defs() {
-    invalidationVariableDefsTest(setupCacheEntryTestCollection, true);
+    invalidationVariableDefsTest(
+        setupCacheEntryTestCollection, true, ImmutableSet.of("test_type_2"));
   }
 
   Consumer<CqlSession> setupCacheEntryTestTuple =
@@ -363,12 +343,12 @@ public class PreparedStatementCachingIT {
 
   @Test
   public void should_invalidate_cache_entry_on_tuple_udt_change_result_set() {
-    invalidationResultSetTest(setupCacheEntryTestTuple);
+    invalidationResultSetTest(setupCacheEntryTestTuple, ImmutableSet.of("test_type_2"));
   }
 
   @Test
   public void should_invalidate_cache_entry_on_tuple_udt_change_variable_defs() {
-    invalidationVariableDefsTest(setupCacheEntryTestTuple, false);
+    invalidationVariableDefsTest(setupCacheEntryTestTuple, false, ImmutableSet.of("test_type_2"));
   }
 
   Consumer<CqlSession> setupCacheEntryTestNested =
@@ -383,12 +363,14 @@ public class PreparedStatementCachingIT {
 
   @Test
   public void should_invalidate_cache_entry_on_nested_udt_change_result_set() {
-    invalidationResultSetTest(setupCacheEntryTestNested);
+    invalidationResultSetTest(
+        setupCacheEntryTestNested, ImmutableSet.of("test_type_2", "test_type_4"));
   }
 
   @Test
   public void should_invalidate_cache_entry_on_nested_udt_change_variable_defs() {
-    invalidationVariableDefsTest(setupCacheEntryTestNested, false);
+    invalidationVariableDefsTest(
+        setupCacheEntryTestNested, false, ImmutableSet.of("test_type_2", "test_type_4"));
   }
 
   /* ========================= Infrastructure copied from PreparedStatementIT ========================= */
