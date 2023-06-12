@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.driver.api.core.type.CqlVectorType;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.ListType;
@@ -36,6 +37,7 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.data.DefaultTupleValue;
 import com.datastax.oss.driver.internal.core.data.DefaultUdtValue;
 import com.datastax.oss.driver.internal.core.type.codec.CqlIntToStringCodec;
+import com.datastax.oss.driver.internal.core.type.codec.CqlVectorCodec;
 import com.datastax.oss.driver.internal.core.type.codec.IntCodec;
 import com.datastax.oss.driver.internal.core.type.codec.ListCodec;
 import com.datastax.oss.driver.internal.core.type.codec.registry.CachingCodecRegistryTest.TestCachingCodecRegistry.MockCache;
@@ -553,6 +555,22 @@ public class CachingCodecRegistryTest {
     assertThat(
             registry.codecFor(DataTypes.listOf(DataTypes.INT), GenericType.listOf(Integer.class)))
         .isNotSameAs(userListOfIntCodec);
+  }
+
+  @Test
+  public void should_find_cql_vector_codec() {
+    TestCachingCodecRegistry registry = new TestCachingCodecRegistry(mockCache);
+
+    int[] dimensionsValues = new int[] {1, 5, 1000};
+    for (int dimension : dimensionsValues) {
+      CqlVectorType vectorFloat = DataTypes.vectorOf(DataTypes.FLOAT, dimension);
+      TypeCodec<?> typeCodecVectorFloat = registry.codecFor(vectorFloat);
+      assertThat(typeCodecVectorFloat).isInstanceOf(CqlVectorCodec.class);
+      CqlVectorCodec vectorFloatCodec = (CqlVectorCodec) typeCodecVectorFloat;
+      CqlVectorType vectorType = (CqlVectorType) vectorFloatCodec.getCqlType();
+      assertThat(vectorType.getSubtype()).isEqualTo(DataTypes.FLOAT);
+      assertThat(vectorType.getDimensions()).isEqualTo(dimension);
+    }
   }
 
   // Our intent is not to test Guava cache, so we don't need an actual cache here.
