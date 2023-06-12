@@ -24,7 +24,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -275,7 +274,7 @@ public abstract class TokenRangeBase implements TokenRange {
 
   @Override
   public int hashCode() {
-    return Objects.hash(start, end);
+    return 31 * start.hashCode() + end.hashCode();
   }
 
   @Override
