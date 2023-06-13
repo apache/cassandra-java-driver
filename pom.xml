@@ -47,7 +47,7 @@
     <config.version>1.4.1</config.version>
     <hdrhistogram.version>2.1.12</hdrhistogram.version>
     <metrics.version>4.1.18</metrics.version>
-    <netty.version>4.1.77.Final</netty.version>
+    <netty.version>4.1.86.Final</netty.version>
     <esri.version>1.2.1</esri.version>
     <!--
     When upgrading TinkerPop please upgrade the version matrix in
