@@ -23,10 +23,11 @@ jobs:
       - name: snyk scan java
         uses: datastax/shared-github-actions/actions/snyk-scan-java@main
         with:
-          java-version: 8
+          java-version: 11
           directories: .
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
           SNYK_ORG_ID: ${{ secrets.SNYK_ORG_ID }}
+          extra-snyk-options: "-DskipTests -Dmaven.javadoc.skip=true"
 
       - name: Snyk scan result
         uses: datastax/shared-github-actions/actions/snyk-process-scan-results@main
