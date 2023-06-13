@@ -1,0 +1,36 @@
+name: 🔬 Snyk cli SCA
+
+on: 
+  push:
+    branches: [ snyk-monitor ]
+  pull_request:
+    branches: [ snyk-monitor  ]
+  workflow_dispatch:  
+
+env:
+  SNYK_SEVERITY_THRESHOLD_LEVEL: high
+
+jobs:
+  snyk-cli-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+
+      - name: prepare for snyk scan
+        uses: datastax/shared-github-actions/actions/snyk-prepare@main
+
+      - name: snyk scan java
+        uses: datastax/shared-github-actions/actions/snyk-scan-java@main
+        with:
+          java-version: 8
+          directories: .
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          SNYK_ORG_ID: ${{ secrets.SNYK_ORG_ID }}
+
+      - name: Snyk scan result
+        uses: datastax/shared-github-actions/actions/snyk-process-scan-results@main
+        with:
+          gh_repo_token: ${{ secrets.GITHUB_TOKEN }}
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          SNYK_ORG_ID: ${{ secrets.SNYK_ORG_ID }}          
