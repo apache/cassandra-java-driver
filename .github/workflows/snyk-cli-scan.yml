@@ -2,9 +2,9 @@ name: 🔬 Snyk cli SCA
 
 on: 
   push:
-    branches: [ snyk-monitor ]
+    branches: [ 4.x ]
   pull_request:
-    branches: [ snyk-monitor  ]
+    branches: [ 4.x  ]
   workflow_dispatch:  
 
 env:
