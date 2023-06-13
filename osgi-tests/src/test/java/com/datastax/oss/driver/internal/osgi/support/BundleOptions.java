@@ -91,6 +91,7 @@ public class BundleOptions {
             mavenBundle("io.netty", "netty-codec").versionAsInProject(),
             mavenBundle("io.netty", "netty-common").versionAsInProject(),
             mavenBundle("io.netty", "netty-transport").versionAsInProject(),
+            mavenBundle("io.netty", "netty-transport-native-unix-common").versionAsInProject(),
             mavenBundle("io.netty", "netty-resolver").versionAsInProject());
   }
 
