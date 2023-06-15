@@ -13,7 +13,6 @@ import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
-import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor;
 import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
 import com.datastax.oss.driver.internal.core.metadata.schema.events.TypeChangeEvent;
@@ -21,9 +20,7 @@ import com.datastax.oss.driver.internal.core.session.BuiltInRequestProcessors;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
 import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
-import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import org.junit.AfterClass;
@@ -258,7 +255,8 @@ public class PreparedStatementCachingIT {
         invalidationVariableDefsTest(setupCacheEntryTestNested, false);
     }
 
-    protected CqlSession sessionWithCacheSizeMetric() {
+    /* ========================= Infrastructure copied from PreparedStatementIT ========================= */
+    private CqlSession sessionWithCacheSizeMetric() {
         return SessionUtils.newSession(
                 ccmRule,
                 sessionRule.keyspace(),
@@ -272,7 +270,7 @@ public class PreparedStatementCachingIT {
     }
 
     @SuppressWarnings("unchecked")
-    protected static long getPreparedCacheSize(CqlSession session) {
+    private static long getPreparedCacheSize(CqlSession session) {
         return session
                 .getMetrics()
                 .flatMap(metrics -> metrics.getSessionMetric(DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE))
