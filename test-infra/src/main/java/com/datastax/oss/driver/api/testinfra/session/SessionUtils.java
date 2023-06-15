@@ -61,11 +61,14 @@ import org.slf4j.LoggerFactory;
  * SessionRule} provides a simpler alternative.
  */
 public class SessionUtils {
+
+  public static final String SESSION_BUILDER_CLASS_PROPERTY = "session.builder";
+
   private static final Logger LOG = LoggerFactory.getLogger(SessionUtils.class);
   private static final AtomicInteger keyspaceId = new AtomicInteger();
   private static final String DEFAULT_SESSION_CLASS_NAME = CqlSession.class.getName();
   private static final String SESSION_BUILDER_CLASS =
-      System.getProperty("session.builder", DEFAULT_SESSION_CLASS_NAME);
+      System.getProperty(SESSION_BUILDER_CLASS_PROPERTY, DEFAULT_SESSION_CLASS_NAME);
 
   @SuppressWarnings("unchecked")
   public static <SessionT extends Session> SessionBuilder<?, SessionT> baseBuilder() {
