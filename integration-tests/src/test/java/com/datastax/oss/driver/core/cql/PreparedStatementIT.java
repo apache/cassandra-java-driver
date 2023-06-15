@@ -39,20 +39,14 @@ import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
-import com.datastax.oss.driver.internal.core.metadata.schema.events.TypeChangeEvent;
 import com.datastax.oss.driver.internal.core.metadata.token.DefaultTokenMap;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Rule;
@@ -485,8 +479,7 @@ public class PreparedStatementIT {
     return CompletableFutures.getUninterruptibly(stage).currentPage();
   }
 
-  /* We have subclasses now so we must think of the children */
-  protected CqlSession sessionWithCacheSizeMetric() {
+  private CqlSession sessionWithCacheSizeMetric() {
     return SessionUtils.newSession(
         ccmRule,
         sessionRule.keyspace(),
@@ -500,8 +493,7 @@ public class PreparedStatementIT {
   }
 
   @SuppressWarnings("unchecked")
-  /* We have subclasses now so we must think of the children */
-  protected static long getPreparedCacheSize(CqlSession session) {
+  private static long getPreparedCacheSize(CqlSession session) {
     return session
         .getMetrics()
         .flatMap(metrics -> metrics.getSessionMetric(DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE))
