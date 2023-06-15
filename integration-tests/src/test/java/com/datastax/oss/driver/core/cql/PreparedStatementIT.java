@@ -450,142 +450,6 @@ public class PreparedStatementIT {
     }
   }
 
-  private void invalidationResultSetTest(Consumer<CqlSession> createFn) {
-
-    try (CqlSession session = sessionWithCacheSizeMetric()) {
-
-      assertThat(getPreparedCacheSize(session)).isEqualTo(0);
-      createFn.accept(session);
-
-      session.prepare("select f from test_table_1 where e = ?");
-      session.prepare("select h from test_table_2 where g = ?");
-      assertThat(getPreparedCacheSize(session)).isEqualTo(2);
-
-      CountDownLatch latch = new CountDownLatch(1);
-      DefaultDriverContext ctx = (DefaultDriverContext) session.getContext();
-      ctx.getEventBus()
-          .register(
-              TypeChangeEvent.class,
-              (e) -> {
-                assertThat(e.oldType.getName().toString()).isEqualTo("test_type_2");
-                latch.countDown();
-              });
-
-      session.execute("ALTER TYPE test_type_2 add i blob");
-      Uninterruptibles.awaitUninterruptibly(latch, 2, TimeUnit.SECONDS);
-
-      assertThat(getPreparedCacheSize(session)).isEqualTo(1);
-    }
-  }
-
-  private void invalidationVariableDefsTest(Consumer<CqlSession> createFn, boolean isCollection) {
-
-    try (CqlSession session = sessionWithCacheSizeMetric()) {
-
-      assertThat(getPreparedCacheSize(session)).isEqualTo(0);
-      createFn.accept(session);
-
-      String fStr = isCollection ? "f contains ?" : "f = ?";
-      session.prepare(String.format("select e from test_table_1 where %s allow filtering", fStr));
-      String hStr = isCollection ? "h contains ?" : "h = ?";
-      session.prepare(String.format("select g from test_table_2 where %s allow filtering", hStr));
-      assertThat(getPreparedCacheSize(session)).isEqualTo(2);
-
-      CountDownLatch latch = new CountDownLatch(1);
-      DefaultDriverContext ctx = (DefaultDriverContext) session.getContext();
-      ctx.getEventBus()
-          .register(
-              TypeChangeEvent.class,
-              (e) -> {
-                assertThat(e.oldType.getName().toString()).isEqualTo("test_type_2");
-                latch.countDown();
-              });
-
-      session.execute("ALTER TYPE test_type_2 add i blob");
-      Uninterruptibles.awaitUninterruptibly(latch, 2, TimeUnit.SECONDS);
-
-      assertThat(getPreparedCacheSize(session)).isEqualTo(1);
-    }
-  }
-
-  Consumer<CqlSession> setupCacheEntryTestBasic =
-      (session) -> {
-        session.execute("CREATE TYPE test_type_1 (a text, b int)");
-        session.execute("CREATE TYPE test_type_2 (c int, d text)");
-        session.execute("CREATE TABLE test_table_1 (e int primary key, f frozen<test_type_1>)");
-        session.execute("CREATE TABLE test_table_2 (g int primary key, h frozen<test_type_2>)");
-      };
-
-  @Test
-  public void should_invalidate_cache_entry_on_basic_udt_change_result_set() {
-    invalidationResultSetTest(setupCacheEntryTestBasic);
-  }
-
-  @Test
-  public void should_invalidate_cache_entry_on_basic_udt_change_variable_defs() {
-    invalidationVariableDefsTest(setupCacheEntryTestBasic, false);
-  }
-
-  Consumer<CqlSession> setupCacheEntryTestCollection =
-      (session) -> {
-        session.execute("CREATE TYPE test_type_1 (a text, b int)");
-        session.execute("CREATE TYPE test_type_2 (c int, d text)");
-        session.execute(
-            "CREATE TABLE test_table_1 (e int primary key, f list<frozen<test_type_1>>)");
-        session.execute(
-            "CREATE TABLE test_table_2 (g int primary key, h list<frozen<test_type_2>>)");
-      };
-
-  @Test
-  public void should_invalidate_cache_entry_on_collection_udt_change_result_set() {
-    invalidationResultSetTest(setupCacheEntryTestCollection);
-  }
-
-  @Test
-  public void should_invalidate_cache_entry_on_collection_udt_change_variable_defs() {
-    invalidationVariableDefsTest(setupCacheEntryTestCollection, true);
-  }
-
-  Consumer<CqlSession> setupCacheEntryTestTuple =
-      (session) -> {
-        session.execute("CREATE TYPE test_type_1 (a text, b int)");
-        session.execute("CREATE TYPE test_type_2 (c int, d text)");
-        session.execute(
-            "CREATE TABLE test_table_1 (e int primary key, f tuple<int, test_type_1, text>)");
-        session.execute(
-            "CREATE TABLE test_table_2 (g int primary key, h tuple<text, test_type_2, int>)");
-      };
-
-  @Test
-  public void should_invalidate_cache_entry_on_tuple_udt_change_result_set() {
-    invalidationResultSetTest(setupCacheEntryTestTuple);
-  }
-
-  @Test
-  public void should_invalidate_cache_entry_on_tuple_udt_change_variable_defs() {
-    invalidationVariableDefsTest(setupCacheEntryTestTuple, false);
-  }
-
-  Consumer<CqlSession> setupCacheEntryTestNested =
-      (session) -> {
-        session.execute("CREATE TYPE test_type_1 (a text, b int)");
-        session.execute("CREATE TYPE test_type_2 (c int, d text)");
-        session.execute("CREATE TYPE test_type_3 (e frozen<test_type_1>, f int)");
-        session.execute("CREATE TYPE test_type_4 (g int, h frozen<test_type_2>)");
-        session.execute("CREATE TABLE test_table_1 (e int primary key, f frozen<test_type_3>)");
-        session.execute("CREATE TABLE test_table_2 (g int primary key, h frozen<test_type_4>)");
-      };
-
-  @Test
-  public void should_invalidate_cache_entry_on_nested_udt_change_result_set() {
-    invalidationResultSetTest(setupCacheEntryTestNested);
-  }
-
-  @Test
-  public void should_invalidate_cache_entry_on_nested_udt_change_variable_defs() {
-    invalidationVariableDefsTest(setupCacheEntryTestNested, false);
-  }
-
   @Test
   public void should_infer_routing_information_when_partition_key_is_bound() {
     should_infer_routing_information_when_partition_key_is_bound(
@@ -621,7 +485,8 @@ public class PreparedStatementIT {
     return CompletableFutures.getUninterruptibly(stage).currentPage();
   }
 
-  private CqlSession sessionWithCacheSizeMetric() {
+  /* We have subclasses now so we must think of the children */
+  protected CqlSession sessionWithCacheSizeMetric() {
     return SessionUtils.newSession(
         ccmRule,
         sessionRule.keyspace(),
@@ -635,7 +500,8 @@ public class PreparedStatementIT {
   }
 
   @SuppressWarnings("unchecked")
-  private static long getPreparedCacheSize(CqlSession session) {
+  /* We have subclasses now so we must think of the children */
+  protected static long getPreparedCacheSize(CqlSession session) {
     return session
         .getMetrics()
         .flatMap(metrics -> metrics.getSessionMetric(DefaultSessionMetric.CQL_PREPARED_CACHE_SIZE))
