@@ -179,9 +179,13 @@ public class GraphConversions extends Conversions {
       }
     }
 
+    ConsistencyLevel consistency = statement.getConsistencyLevel();
     int consistencyLevel =
-        DefaultConsistencyLevel.valueOf(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
-            .getProtocolCode();
+        (consistency == null)
+            ? context
+                .getConsistencyLevelRegistry()
+                .nameToCode(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
+            : consistency.getProtocolCode();
 
     long timestamp = statement.getTimestamp();
     if (timestamp == Statement.NO_DEFAULT_TIMESTAMP) {
@@ -383,5 +387,22 @@ public class GraphConversions extends Conversions {
     assert deserializedObject instanceof Traverser
         : "Graph protocol error. Received object should be a Traverser but it is not.";
     return new ObjectGraphNode(deserializedObject);
+  }
+
+  public static Duration resolveGraphRequestTimeout(
+      GraphStatement<?> statement, InternalDriverContext context) {
+    DriverExecutionProfile executionProfile = resolveExecutionProfile(statement, context);
+    return statement.getTimeout() != null
+        ? statement.getTimeout()
+        : executionProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT);
+  }
+
+  public static GraphProtocol resolveGraphSubProtocol(
+      GraphStatement<?> statement,
+      GraphSupportChecker graphSupportChecker,
+      InternalDriverContext context) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(statement, context);
+    return graphSupportChecker.inferGraphProtocol(statement, executionProfile, context);
   }
 }

@@ -56,5 +56,13 @@ public enum DefaultProtocolFeature implements ProtocolFeature {
    * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-14664">CASSANDRA-14664</a>
    */
   NOW_IN_SECONDS,
+
+  /**
+   * The new protocol framing format introduced in Cassandra 4: wrapping multiple frames into a
+   * single "segment" to checksum (and possibly compress) them together.
+   *
+   * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-15299">CASSANDRA-15299</a>
+   */
+  MODERN_FRAMING,
   ;
 }

@@ -17,6 +17,7 @@ package com.datastax.oss.driver.core.metadata;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -27,6 +28,11 @@ import org.junit.ClassRule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
+@CassandraRequirement(
+    max = "4.0-beta4",
+    description =
+        "Token allocation is not compatible with this partitioner, "
+            + "but is enabled by default in C* 4.0 (see CASSANDRA-7032 and CASSANDRA-13701)")
 public class ByteOrderedTokenVnodesIT extends TokenITBase {
 
   private static final CustomCcmRule CCM_RULE =
@@ -34,6 +40,10 @@ public class ByteOrderedTokenVnodesIT extends TokenITBase {
           .withNodes(3)
           .withCreateOption("-p ByteOrderedPartitioner")
           .withCreateOption("--vnodes")
+          .withCassandraConfiguration("range_request_timeout_in_ms", 45_000)
+          .withCassandraConfiguration("read_request_timeout_in_ms", 45_000)
+          .withCassandraConfiguration("write_request_timeout_in_ms", 45_000)
+          .withCassandraConfiguration("request_timeout_in_ms", 45_000)
           .build();
 
   private static final SessionRule<CqlSession> SESSION_RULE =

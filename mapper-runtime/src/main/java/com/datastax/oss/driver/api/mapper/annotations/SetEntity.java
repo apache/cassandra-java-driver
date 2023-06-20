@@ -98,4 +98,17 @@ public @interface SetEntity {
    * or {@link NullSavingStrategy#DO_NOT_SET}.
    */
   NullSavingStrategy nullSavingStrategy() default NullSavingStrategy.DO_NOT_SET;
+
+  /**
+   * Whether to tolerate missing columns in the target data structure.
+   *
+   * <p>If {@code false} (the default), then the target must contain a matching column for every
+   * property in the entity definition, <em>except computed ones</em>. If such a column is not
+   * found, an {@link IllegalArgumentException} will be thrown.
+   *
+   * <p>If {@code true}, the mapper will operate on a best-effort basis and attempt to write all
+   * entity properties that have a matching column in the target, leaving unmatched properties
+   * untouched. Beware that this may result in a partially-populated target.
+   */
+  boolean lenient() default false;
 }

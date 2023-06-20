@@ -25,14 +25,16 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.NodeUnavailableException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
+import com.datastax.oss.driver.api.core.retry.RetryVerdict;
 import com.datastax.oss.driver.api.core.servererrors.OverloadedException;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -47,6 +49,7 @@ import com.datastax.oss.protocol.internal.response.result.RawType;
 import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import org.junit.Before;
@@ -177,8 +180,8 @@ public class CqlPrepareHandlerTest {
       when(harness
               .getContext()
               .getRetryPolicy(anyString())
-              .onErrorResponse(eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
-          .thenReturn(RetryDecision.RETRY_NEXT);
+              .onErrorResponseVerdict(eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
+          .thenReturn(RetryVerdict.RETRY_NEXT);
 
       CompletionStage<PreparedStatement> prepareFuture =
           new CqlPrepareHandler(PREPARE_REQUEST, harness.getSession(), harness.getContext(), "test")
@@ -210,8 +213,8 @@ public class CqlPrepareHandlerTest {
       when(harness
               .getContext()
               .getRetryPolicy(anyString())
-              .onErrorResponse(eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
-          .thenReturn(RetryDecision.RETHROW);
+              .onErrorResponseVerdict(eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
+          .thenReturn(RetryVerdict.RETHROW);
 
       CompletionStage<PreparedStatement> prepareFuture =
           new CqlPrepareHandler(PREPARE_REQUEST, harness.getSession(), harness.getContext(), "test")
@@ -224,6 +227,39 @@ public class CqlPrepareHandlerTest {
                 assertThat(error).isInstanceOf(OverloadedException.class);
                 node2Behavior.verifyNoWrite();
                 node3Behavior.verifyNoWrite();
+              });
+    }
+  }
+
+  @Test
+  public void should_fail_if_nodes_unavailable() {
+    RequestHandlerTestHarness.Builder harnessBuilder = RequestHandlerTestHarness.builder();
+    try (RequestHandlerTestHarness harness =
+        harnessBuilder.withEmptyPool(node1).withEmptyPool(node2).build()) {
+      CompletionStage<PreparedStatement> prepareFuture =
+          new CqlPrepareHandler(PREPARE_REQUEST, harness.getSession(), harness.getContext(), "test")
+              .handle();
+      assertThatStage(prepareFuture)
+          .isFailed(
+              error -> {
+                assertThat(error).isInstanceOf(AllNodesFailedException.class);
+                Map<Node, List<Throwable>> allErrors =
+                    ((AllNodesFailedException) error).getAllErrors();
+                assertThat(allErrors).hasSize(2);
+                assertThat(allErrors)
+                    .hasEntrySatisfying(
+                        node1,
+                        nodeErrors ->
+                            assertThat(nodeErrors)
+                                .singleElement()
+                                .isInstanceOf(NodeUnavailableException.class));
+                assertThat(allErrors)
+                    .hasEntrySatisfying(
+                        node2,
+                        nodeErrors ->
+                            assertThat(nodeErrors)
+                                .singleElement()
+                                .isInstanceOf(NodeUnavailableException.class));
               });
     }
   }
@@ -243,9 +279,9 @@ public class CqlPrepareHandlerTest {
       // Make node1's error unrecoverable, will rethrow
       RetryPolicy mockRetryPolicy =
           harness.getContext().getRetryPolicy(DriverExecutionProfile.DEFAULT_NAME);
-      when(mockRetryPolicy.onErrorResponse(
+      when(mockRetryPolicy.onErrorResponseVerdict(
               eq(PREPARE_REQUEST), any(OverloadedException.class), eq(0)))
-          .thenReturn(RetryDecision.IGNORE);
+          .thenReturn(RetryVerdict.IGNORE);
 
       CompletionStage<PreparedStatement> prepareFuture =
           new CqlPrepareHandler(PREPARE_REQUEST, harness.getSession(), harness.getContext(), "test")

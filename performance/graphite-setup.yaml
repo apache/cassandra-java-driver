@@ -1,0 +1,44 @@
+# How long should the Graphite server be kept alive, default: 15 days
+keep_alive: 15d
+# Cloud-specific settings
+cloud_provider: nebula
+cloud_tenant: drivers-automation
+instance_type: m4.2xlarge
+
+---
+
+ensemble:
+  server:
+    node.count: 1
+    provisioner:
+      name: ctool
+      properties:
+        mark_for_reuse: true
+        cluster_ttl: {{keep_alive}}
+        cloud.provider: {{cloud_provider}}
+        cloud.tenant: {{cloud_tenant}}
+        cloud.instance.type: {{instance_type}}
+    configuration_manager:
+      - name: ctool_monitoring
+        properties:
+          graphite.create_server: true
+  client:
+    node.count: 1
+    provisioner:
+      name: ctool
+      properties:
+        mark_for_reuse: false
+        cloud.provider: {{cloud_provider}}
+        cloud.tenant: {{cloud_tenant}}
+        cloud.instance.type: {{instance_type}}
+workload:
+  phases:
+    - upload-dashboards-to-grafana:
+        module: bash
+        properties:
+          script: |
+            echo "Graphite server IP: ${FALLOUT_SERVER_NODE0_MONITORING_GRAPHITE_HOST}"
+            git clone git@github.com:riptano/testeng-devtools.git ${FALLOUT_SCRATCH_DIR}/dashboard
+            curl --user admin:admin -d "@${FALLOUT_SCRATCH_DIR}/dashboard/duration-tests/java/grafana/aggregate4.json" -X POST -H "Content-Type: application/json" http://${FALLOUT_SERVER_NODE0_MONITORING_GRAPHITE_HOST}:3000/api/dashboards/db/
+            curl --user admin:admin -d "@${FALLOUT_SCRATCH_DIR}/dashboard/duration-tests/java/grafana/focus4.json" -X POST -H "Content-Type: application/json" http://${FALLOUT_SERVER_NODE0_MONITORING_GRAPHITE_HOST}:3000/api/dashboards/db/
+          target.group: client

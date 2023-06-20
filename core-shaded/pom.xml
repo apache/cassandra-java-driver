@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.yugabyte</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.6.0-yb-13-SNAPSHOT</version>
+    <version>4.15.0-yb-1</version>
   </parent>
   <artifactId>java-driver-core-shaded</artifactId>
   <name>DataStax Java driver for Apache Cassandra(R) - core with shaded deps</name>
@@ -90,20 +90,19 @@
       <artifactId>HdrHistogram</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.tinkerpop</groupId>
-      <artifactId>gremlin-core</artifactId>
+      <groupId>com.esri.geometry</groupId>
+      <artifactId>esri-geometry-api</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.tinkerpop</groupId>
-      <artifactId>gremlin-driver</artifactId>
+      <artifactId>gremlin-core</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.tinkerpop</groupId>
       <artifactId>tinkergraph-gremlin</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.javatuples</groupId>
-      <artifactId>javatuples</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.reactivestreams</groupId>
@@ -148,28 +147,17 @@
                   -->
                   <include>com.yugabyte:java-driver-core</include>
                   <include>io.netty:*</include>
-                  <include>com.esri.geometry:*</include>
-                  <include>org.json:*</include>
-                  <include>org.codehaus.jackson:*</include>
                   <include>com.fasterxml.jackson.core:*</include>
                 </includes>
               </artifactSet>
               <relocations>
+                <!--
+                Check if relocations declared here must also be declared below to operate on
+                GraalVM's reflection.json file. Currently this is required for Netty only.
+                -->
                 <relocation>
                   <pattern>io.netty</pattern>
                   <shadedPattern>com.datastax.oss.driver.shaded.netty</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>com.esri</pattern>
-                  <shadedPattern>com.datastax.oss.driver.shaded.esri</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.json</pattern>
-                  <shadedPattern>com.datastax.oss.driver.shaded.json</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>org.codehaus.jackson</pattern>
-                  <shadedPattern>com.datastax.oss.driver.shaded.codehaus.jackson</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>com.fasterxml.jackson</pattern>
@@ -181,29 +169,13 @@
                 <filter>
                   <artifact>com.yugabyte:*</artifact>
                   <excludes>
-                    <exclude>META-INF/**</exclude>
+                    <!-- Don't exclude META-INF/services and META-INF/native-image -->
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                    <exclude>META-INF/maven/**</exclude>
                   </excludes>
                 </filter>
                 <filter>
                   <artifact>io.netty:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/**</exclude>
-                  </excludes>
-                </filter>
-                <filter>
-                  <artifact>com.esri.geometry:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/**</exclude>
-                  </excludes>
-                </filter>
-                <filter>
-                  <artifact>org.json:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/**</exclude>
-                  </excludes>
-                </filter>
-                <filter>
-                  <artifact>org.codehaus.jackson:*</artifact>
                   <excludes>
                     <exclude>META-INF/**</exclude>
                   </excludes>
@@ -260,6 +232,31 @@
           </execution>
         </executions>
       </plugin>
+      <!-- Apply shading to classes declared in GraalVM reflection.json config file -->
+      <plugin>
+        <groupId>com.google.code.maven-replacer-plugin</groupId>
+        <artifactId>replacer</artifactId>
+        <version>1.5.3</version>
+        <executions>
+          <execution>
+            <id>shade-graalvm-files</id>
+            <phase>package</phase>
+            <goals>
+              <goal>replace</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <ignoreMissingFile>false</ignoreMissingFile>
+          <filesToInclude>${project.build.directory}/classes/META-INF/native-image/com.datastax.oss/java-driver-core/reflection.json,${project.build.directory}/shaded-sources/META-INF/native-image/com.datastax.oss/java-driver-core/reflection.json</filesToInclude>
+          <replacements>
+            <replacement>
+              <token>io.netty</token>
+              <value>com.datastax.oss.driver.shaded.netty</value>
+            </replacement>
+          </replacements>
+        </configuration>
+      </plugin>
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
         <executions>
@@ -281,6 +278,11 @@
                   <groupId>org.jctools</groupId>
                   <artifactId>jctools-core</artifactId>
                   <version>2.1.2</version>
+                </additionalDependency>
+                <additionalDependency>
+                  <groupId>com.esri.geometry</groupId>
+                  <artifactId>esri-geometry-api</artifactId>
+                  <version>1.2.1</version>
                 </additionalDependency>
               </additionalDependencies>
             </configuration>
@@ -311,30 +313,33 @@
                   <!--
                   1) Don't import packages shaded in the driver bundle. Note that shaded-guava lives
                   in its own bundle, so we must explicitly *not* mention it here.
-                  -->!com.datastax.oss.driver.shaded.netty.*, !com.datastax.oss.driver.shaded.esri.*, !com.datastax.oss.driver.shaded.json.*, !com.datastax.oss.driver.shaded.codehaus.jackson.*, !com.datastax.oss.driver.shaded.fasterxml.jackson.*,
+                  -->!com.datastax.oss.driver.shaded.netty.*, !com.datastax.oss.driver.shaded.fasterxml.jackson.*,
                   <!--
                   2) Don't include the packages below because they contain annotations only and are
                   not required at runtime.
                   -->!net.jcip.annotations.*, !edu.umd.cs.findbugs.annotations.*,
                   <!--
-                  3) Use resolution:=optional whenever possible in order to make it possible to use
+                  3) Don't include GraalVM.
+                  -->!org.graalvm.*, !com.oracle.svm.*,
+                  <!--
+                  4) Use resolution:=optional whenever possible in order to make it possible to use
                   the OSS driver without such dependencies in an OSGi environment, as long as the
                   application does not attempt to access their packages.
                   Note: dependencies marked as optional are by default included with optional
                   resolution in the manifest; we only need to manually set the resolution to
                   optional for dependencies declared as non-optional in the pom files.
-                  -->jnr.*;resolution:=optional, com.esri.core.geometry.*;resolution:=optional,org.reactivestreams.*;resolution:=optional, org.apache.tinkerpop.*;resolution:=optional, org.javatuples.*;resolution:=optional,
+                  -->jnr.*;resolution:=optional, com.esri.core.geometry.*;resolution:=optional,org.reactivestreams.*;resolution:=optional, org.apache.tinkerpop.*;resolution:=optional, org.javatuples.*;resolution:=optional, reactor.blockhound.*;resolution:=optional,
                   <!--
-                  4) Don't import packages imported by shaded classes, if they are not used by the
+                  5) Don't import packages imported by shaded classes, if they are not used by the
                   driver bundle.
-                  -->!com.google.protobuf.*, !com.jcraft.jzlib.*, !com.ning.compress.*, !lzma.sdk.*, !net.jpountz.xxhash.*, !org.bouncycastle.*, !org.conscrypt.*, !org.apache.commons.logging.*, !org.apache.log4j.*, !org.apache.logging.log4j.*, !org.eclipse.jetty.*, !org.jboss.marshalling.*, !sun.misc.*, !sun.security.*, !com.oracle.svm.core.annotate.*,!com.barchart.udt.*, !com.fasterxml.aalto.*, !com.sun.nio.sctp.*, !gnu.io.*, !org.xml.sax.*, !org.w3c.dom.*, !reactor.blockhound.*, *
+                  -->!com.google.protobuf.*, !com.jcraft.jzlib.*, !com.ning.compress.*, !lzma.sdk.*, !net.jpountz.xxhash.*, !org.bouncycastle.*, !org.conscrypt.*, !org.apache.commons.logging.*, !org.apache.log4j.*, !org.apache.logging.log4j.*, !org.eclipse.jetty.*, !org.jboss.marshalling.*, !sun.misc.*, !sun.security.*, !com.barchart.udt.*, !com.fasterxml.aalto.*, !com.sun.nio.sctp.*, !gnu.io.*, !org.xml.sax.*, !org.w3c.dom.*, !com.aayushatharva.brotli4j.*, !com.github.luben.zstd.*, *
                 </Import-Package>
                 <!--
                 Export:
                 1) The driver's packages (API and internal);
                 2) All shaded packages, except Guava which resides in a separate bundle.
                 -->
-                <Export-Package>com.datastax.oss.driver.api.core.*, com.datastax.oss.driver.internal.core.*, com.datastax.dse.driver.api.core.*, com.datastax.dse.driver.internal.core.*, com.datastax.oss.driver.shaded.netty.*, com.datastax.oss.driver.shaded.esri.*, com.datastax.oss.driver.shaded.json.*, com.datastax.oss.driver.shaded.codehaus.jackson.*, com.datastax.oss.driver.shaded.fasterxml.jackson.*,</Export-Package>
+                <Export-Package>com.datastax.oss.driver.api.core.*, com.datastax.oss.driver.internal.core.*, com.datastax.dse.driver.api.core.*, com.datastax.dse.driver.internal.core.*, com.datastax.oss.driver.shaded.netty.*, com.datastax.oss.driver.shaded.fasterxml.jackson.*,</Export-Package>
               </instructions>
               <rebuildBundle>true</rebuildBundle>
             </configuration>

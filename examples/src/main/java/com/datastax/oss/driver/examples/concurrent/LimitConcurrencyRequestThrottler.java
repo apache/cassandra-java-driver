@@ -21,10 +21,10 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.internal.core.session.throttling.ConcurrencyLimitingRequestThrottler;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -86,7 +86,7 @@ public class LimitConcurrencyRequestThrottler {
     for (int i = 0; i < TOTAL_NUMBER_OF_INSERTS; i++) {
       pending.add(
           session
-              .executeAsync(pst.bind().setUuid("id", UUID.randomUUID()).setInt("value", i))
+              .executeAsync(pst.bind().setUuid("id", Uuids.random()).setInt("value", i))
               // Transform CompletionState toCompletableFuture to be able to wait for execution of
               // all using CompletableFuture.allOf
               .toCompletableFuture());

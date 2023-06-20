@@ -26,15 +26,27 @@ first node the driver connects to:
 
 | Cassandra version   | Negotiated protocol version with driver 4 ¹     |
 |---------------------|-------------------------------------------------|
-| 2.1.x (DSE 4.7/4.8) | v3                                              |
+| 2.1.x               | v3                                              |
 | 2.2.x               | v4                                              |
-| 3.x (DSE 5.0/5.1)   | v4                                              |
+| 3.x                 | v4                                              |
 | 4.x ²               | v5                                              |
 
 *(1) for previous driver versions, see the [3.x documentation][driver3]*
 
 *(2) at the time of writing, Cassandra 4 is not released yet. Protocol v5 support is still in beta,
 and must be enabled explicitly (negotiation will yield v4).*
+
+Since version 4.5.0, the driver can also use DSE protocols when all nodes are running a version of
+DSE. The table below shows the protocol matrix for these cases:
+
+| DSE version         | Negotiated protocol version with driver 4       |
+|---------------------|-------------------------------------------------|
+| 4.7/4.8             | v3                                              |
+| 5.0                 | v4                                              |
+| 5.1                 | DSE_V1 ³                                        |
+| 6.0/6.7/6.8         | DSE_V2 ³                                        |
+
+*(3) DSE Protocols are chosen before other Cassandra native protocols.*
 
 ### Controlling the protocol version
 
@@ -86,14 +98,17 @@ force the protocol version manually anymore.
 
 ### Debugging protocol negotiation
 
-The main steps are [logged](../logging/) at level `INFO`. If the driver downgrades while negotiating
-with the first node, you should see logs such as:
+You can observe the negotiation process in the [logs](../logging/).
+ 
+The versions tried while negotiating with the first node are logged at level `DEBUG` in the category
+`com.datastax.oss.driver.internal.core.channel.ChannelFactory`:
 
 ```
-INFO ChannelFactory - Failed to connect with protocol v4, retrying with v3
+DEBUG ChannelFactory - Failed to connect with protocol v4, retrying with v3
 ```
 
-If it then detects a mixed cluster with lower versions, it will log: 
+If a mixed cluster renegotiation happens, it is logged at level `INFO` in the category
+`com.datastax.oss.driver.internal.core.session.DefaultSession`:
 
 ```
 INFO DefaultSession - Negotiated protocol version v4 for the initial contact point, but other nodes
@@ -118,8 +133,8 @@ If you want to see the details of mixed cluster negotiation, enable `DEBUG` leve
   in the face of schema changes
 
 [protocol spec]: https://github.com/datastax/native-protocol/tree/1.x/src/main/resources
-[driver3]: https://docs.datastax.com/en/developer/java-driver/3.5/manual/native_protocol/
+[driver3]: https://docs.datastax.com/en/developer/java-driver/3.10/manual/native_protocol/
 
-[ExecutionInfo.getWarnings]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getWarnings--
-[Request.getCustomPayload]:  https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/session/Request.html#getCustomPayload--
-[AttachmentPoint.getProtocolVersion]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/detach/AttachmentPoint.html#getProtocolVersion--
+[ExecutionInfo.getWarnings]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getWarnings--
+[Request.getCustomPayload]:  https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/Request.html#getCustomPayload--
+[AttachmentPoint.getProtocolVersion]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/detach/AttachmentPoint.html#getProtocolVersion--

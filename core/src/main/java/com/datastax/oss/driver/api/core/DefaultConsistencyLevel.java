@@ -79,7 +79,7 @@ public enum DefaultConsistencyLevel implements ConsistencyLevel {
     return this == SERIAL || this == LOCAL_SERIAL;
   }
 
-  private static Map<Integer, DefaultConsistencyLevel> BY_CODE = mapByCode(values());
+  private static final Map<Integer, DefaultConsistencyLevel> BY_CODE = mapByCode(values());
 
   private static Map<Integer, DefaultConsistencyLevel> mapByCode(DefaultConsistencyLevel[] levels) {
     ImmutableMap.Builder<Integer, DefaultConsistencyLevel> builder = ImmutableMap.builder();

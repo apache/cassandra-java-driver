@@ -18,15 +18,12 @@ package com.datastax.oss.driver.api.querybuilder.update;
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.update;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.internal.querybuilder.update.DefaultUpdate;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class UpdateUsingTest {
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void should_generate_using_timestamp_clause() {
@@ -129,18 +126,22 @@ public class UpdateUsingTest {
                 .whereColumn("k")
                 .isEqualTo(bindMarker());
 
-    thrown.expect(IllegalArgumentException.class);
-    thrown.expectMessage("TTL value must be a BindMarker or an Integer");
+    Throwable t =
+        catchThrowable(
+            () ->
+                new DefaultUpdate(
+                    defaultUpdate.getKeyspace(),
+                    defaultUpdate.getTable(),
+                    defaultUpdate.getTimestamp(),
+                    new Object(), // invalid TTL object
+                    defaultUpdate.getAssignments(),
+                    defaultUpdate.getRelations(),
+                    defaultUpdate.isIfExists(),
+                    defaultUpdate.getConditions()));
 
-    new DefaultUpdate(
-        defaultUpdate.getKeyspace(),
-        defaultUpdate.getTable(),
-        defaultUpdate.getTimestamp(),
-        new Object(), // invalid TTL object
-        defaultUpdate.getAssignments(),
-        defaultUpdate.getRelations(),
-        defaultUpdate.isIfExists(),
-        defaultUpdate.getConditions());
+    assertThat(t)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("TTL value must be a BindMarker or an Integer");
   }
 
   @Test
@@ -153,17 +154,20 @@ public class UpdateUsingTest {
                 .whereColumn("k")
                 .isEqualTo(bindMarker());
 
-    thrown.expect(IllegalArgumentException.class);
-    thrown.expectMessage("TIMESTAMP value must be a BindMarker or a Long");
-
-    new DefaultUpdate(
-        defaultUpdate.getKeyspace(),
-        defaultUpdate.getTable(),
-        new Object(), // invalid timestamp object
-        defaultUpdate.getTtl(),
-        defaultUpdate.getAssignments(),
-        defaultUpdate.getRelations(),
-        defaultUpdate.isIfExists(),
-        defaultUpdate.getConditions());
+    Throwable t =
+        catchThrowable(
+            () ->
+                new DefaultUpdate(
+                    defaultUpdate.getKeyspace(),
+                    defaultUpdate.getTable(),
+                    new Object(), // invalid timestamp object
+                    defaultUpdate.getTtl(),
+                    defaultUpdate.getAssignments(),
+                    defaultUpdate.getRelations(),
+                    defaultUpdate.isIfExists(),
+                    defaultUpdate.getConditions()));
+    assertThat(t)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("TIMESTAMP value must be a BindMarker or a Long");
   }
 }

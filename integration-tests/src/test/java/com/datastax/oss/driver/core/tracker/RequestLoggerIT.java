@@ -40,10 +40,12 @@ import com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingP
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogger;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.codec.ConsistencyLevel;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -52,6 +54,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
@@ -64,6 +67,7 @@ import org.mockito.verification.Timeout;
 import org.slf4j.LoggerFactory;
 
 @RunWith(MockitoJUnitRunner.class)
+@Category(ParallelizableTests.class)
 public class RequestLoggerIT {
   private static final Pattern LOG_PREFIX_PER_REQUEST = Pattern.compile("\\[s\\d*\\|\\d*]");
 
@@ -80,11 +84,14 @@ public class RequestLoggerIT {
 
   private static final String QUERY = "SELECT release_version FROM system.local";
 
-  private SimulacronRule simulacronRule = new SimulacronRule(ClusterSpec.builder().withNodes(3));
+  private final SimulacronRule simulacronRule =
+      new SimulacronRule(ClusterSpec.builder().withNodes(3));
 
   private final DriverConfigLoader requestLoader =
       SessionUtils.configLoaderBuilder()
-          .withClass(DefaultDriverOption.REQUEST_TRACKER_CLASS, RequestLogger.class)
+          .withClassList(
+              DefaultDriverOption.REQUEST_TRACKER_CLASSES,
+              Collections.singletonList(RequestLogger.class))
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, true)
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SLOW_ENABLED, true)
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, true)
@@ -111,12 +118,14 @@ public class RequestLoggerIT {
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES, false)
           .build();
 
-  private SessionRule<CqlSession> sessionRuleRequest =
+  private final SessionRule<CqlSession> sessionRuleRequest =
       SessionRule.builder(simulacronRule).withConfigLoader(requestLoader).build();
 
   private final DriverConfigLoader nodeLoader =
       SessionUtils.configLoaderBuilder()
-          .withClass(DefaultDriverOption.REQUEST_TRACKER_CLASS, RequestNodeLoggerExample.class)
+          .withClassList(
+              DefaultDriverOption.REQUEST_TRACKER_CLASSES,
+              Collections.singletonList(RequestNodeLoggerExample.class))
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, true)
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SLOW_ENABLED, true)
           .withBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, true)
@@ -146,14 +155,16 @@ public class RequestLoggerIT {
               DefaultDriverOption.LOAD_BALANCING_POLICY_CLASS, SortingLoadBalancingPolicy.class)
           .build();
 
-  private SessionRule<CqlSession> sessionRuleNode =
+  private final SessionRule<CqlSession> sessionRuleNode =
       SessionRule.builder(simulacronRule).withConfigLoader(nodeLoader).build();
 
-  private SessionRule<CqlSession> sessionRuleDefaults =
+  private final SessionRule<CqlSession> sessionRuleDefaults =
       SessionRule.builder(simulacronRule)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
-                  .withClass(DefaultDriverOption.REQUEST_TRACKER_CLASS, RequestLogger.class)
+                  .withClassList(
+                      DefaultDriverOption.REQUEST_TRACKER_CLASSES,
+                      Collections.singletonList(RequestLogger.class))
                   .withBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, true)
                   .withBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, true)
                   .startProfile("low-threshold")
@@ -203,7 +214,7 @@ public class RequestLoggerIT {
     sessionRuleRequest.session().execute(QUERY);
 
     // Then
-    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(5000)).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
         .contains("Success", "[0 values]", QUERY)
         .matches(WITH_PER_REQUEST_PREFIX);
@@ -218,7 +229,7 @@ public class RequestLoggerIT {
     sessionRuleDefaults.session().execute(QUERY);
 
     // Then
-    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(5000)).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
         .contains("Success", "[0 values]", QUERY)
         .matches(WITH_PER_REQUEST_PREFIX);
@@ -238,7 +249,7 @@ public class RequestLoggerIT {
     }
 
     // Then
-    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(5000)).doAppend(loggingEventCaptor.capture());
     ILoggingEvent log = loggingEventCaptor.getValue();
     assertThat(log.getFormattedMessage())
         .contains("Error", "[0 values]", QUERY)
@@ -261,7 +272,7 @@ public class RequestLoggerIT {
     }
 
     // Then
-    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(5000)).doAppend(loggingEventCaptor.capture());
     ILoggingEvent log = loggingEventCaptor.getValue();
     assertThat(log.getFormattedMessage())
         .contains("Error", "[0 values]", QUERY, ServerError.class.getName())
@@ -284,7 +295,7 @@ public class RequestLoggerIT {
     }
 
     // Then
-    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(5000)).doAppend(loggingEventCaptor.capture());
     ILoggingEvent log = loggingEventCaptor.getValue();
     assertThat(log.getFormattedMessage())
         .contains("Error", "[0 values]", QUERY, ServerError.class.getName())
@@ -303,7 +314,7 @@ public class RequestLoggerIT {
         .execute(SimpleStatement.builder(QUERY).setExecutionProfileName("low-threshold").build());
 
     // Then
-    verify(appender, timeout(500)).doAppend(loggingEventCaptor.capture());
+    verify(appender, timeout(5000)).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getValue().getFormattedMessage())
         .contains("Slow", "[0 values]", QUERY)
         .matches(WITH_PER_REQUEST_PREFIX);
@@ -348,7 +359,7 @@ public class RequestLoggerIT {
         .execute(SimpleStatement.builder(QUERY).setExecutionProfileName("sorting-lbp").build());
 
     // Then
-    verify(appender, new Timeout(500, VerificationModeFactory.times(3)))
+    verify(appender, new Timeout(5000, VerificationModeFactory.times(3)))
         .doAppend(loggingEventCaptor.capture());
     List<ILoggingEvent> events = loggingEventCaptor.getAllValues();
     assertThat(events.get(0).getFormattedMessage())
@@ -381,7 +392,7 @@ public class RequestLoggerIT {
     sessionRuleNode.session().execute(QUERY);
 
     // Then
-    verify(appender, new Timeout(500, VerificationModeFactory.times(2)))
+    verify(appender, new Timeout(5000, VerificationModeFactory.times(2)))
         .doAppend(loggingEventCaptor.capture());
     List<ILoggingEvent> events = loggingEventCaptor.getAllValues();
     assertThat(events.get(0).getFormattedMessage())

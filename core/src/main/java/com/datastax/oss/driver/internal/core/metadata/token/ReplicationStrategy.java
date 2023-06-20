@@ -17,11 +17,10 @@ package com.datastax.oss.driver.internal.core.metadata.token;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
-import com.datastax.oss.driver.shaded.guava.common.collect.SetMultimap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface ReplicationStrategy {
-  SetMultimap<Token, Node> computeReplicasByToken(
-      Map<Token, Node> tokenToPrimary, List<Token> ring);
+  Map<Token, Set<Node>> computeReplicasByToken(Map<Token, Node> tokenToPrimary, List<Token> ring);
 }

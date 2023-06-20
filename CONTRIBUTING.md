@@ -28,6 +28,11 @@ mvn xml-format:xml-format
 The formatter does not enforce a maximum line length, but please try to keep it below 100 characters
 to keep files readable across all mediums (IDE, terminal, Github...).
 
+### Other text files (markdown, etc)
+
+Similarly, enforce a right margin of 100 characters in those files. Editors and IDEs generally have
+a way to configure this (for IDEA, install the "Wrap to column" plugin).
+
 ## Coding style -- production code
 
 Do not use static imports. They make things harder to understand when you look at the code 
@@ -212,6 +217,10 @@ Static imports are permitted in a couple of places:
   ```java
   when(codecRegistry.codecFor(DataTypes.INT)).thenReturn(codec);
   verify(codec).decodePrimitive(any(ByteBuffer.class), eq(ProtocolVersion.DEFAULT));
+  ```
+* All Awaitility methods, e.g.:
+  ```java
+  await().until(() -> somethingBecomesTrue());
   ```
 
 Test methods names use lower snake case, generally start with `should`, and clearly indicate the
@@ -413,6 +422,23 @@ Note: the tests run on the current state of the working directory. I tried to ad
 the script to only test what's actually being committed, but I couldn't get it to run reliably
 (it's still in there but commented). Keep this in mind when you commit, and don't forget to re-add
 the changes if the first attempt failed and you fixed the tests.
+
+## Speeding up the build for local tests
+
+If you need to install something in your local repository quickly, you can use the `fast` profile to
+skip all "non-essential" checks (licenses, formatting, tests, etc):
+
+```
+mvn clean install -Pfast
+```
+
+You can speed things up even more by targeting specific modules with the `-pl` option:
+
+```
+mvn clean install -Pfast -pl core,query-builder,mapper-runtime,mapper-processor,bom
+```
+
+Please run the normal build at least once before you push your changes.
 
 ## Commits
 

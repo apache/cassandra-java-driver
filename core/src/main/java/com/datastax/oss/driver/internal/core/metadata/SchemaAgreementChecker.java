@@ -32,6 +32,7 @@ import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -105,8 +106,7 @@ class SchemaAgreementChecker {
     } else {
       CompletionStage<AdminResult> localQuery =
           query("SELECT schema_version FROM system.local WHERE key='local'");
-      CompletionStage<AdminResult> peersQuery =
-          query("SELECT host_id, schema_version FROM system.peers");
+      CompletionStage<AdminResult> peersQuery = query("SELECT * FROM system.peers");
 
       localQuery
           .thenCombine(peersQuery, this::extractSchemaVersions)
@@ -142,31 +142,10 @@ class SchemaAgreementChecker {
 
     Map<UUID, Node> nodes = context.getMetadataManager().getMetadata().getNodes();
     for (AdminRow peerRow : peersResult) {
-      UUID hostId = peerRow.getUuid("host_id");
-      if (hostId == null) {
-        LOG.warn(
-            "[{}] Missing host_id in system.peers row, excluding from schema agreement check",
-            logPrefix);
-        continue;
+      if (isPeerValid(peerRow, nodes)) {
+        UUID schemaVersion = Objects.requireNonNull(peerRow.getUuid("schema_version"));
+        schemaVersions.add(schemaVersion);
       }
-      UUID schemaVersion = peerRow.getUuid("schema_version");
-      if (schemaVersion == null) {
-        LOG.warn(
-            "[{}] Missing schema_version in system.peers row for {}, "
-                + "excluding from schema agreement check",
-            logPrefix,
-            hostId);
-        continue;
-      }
-      Node node = nodes.get(hostId);
-      if (node == null) {
-        LOG.warn("[{}] Unknown peer {}, excluding from schema agreement check", logPrefix, hostId);
-        continue;
-      } else if (node.getState() != NodeState.UP) {
-        LOG.debug("[{}] Peer {} is down, excluding from schema agreement check", logPrefix, hostId);
-        continue;
-      }
-      schemaVersions.add(schemaVersion);
     }
     return schemaVersions.build();
   }
@@ -206,5 +185,26 @@ class SchemaAgreementChecker {
     return AdminRequestHandler.query(
             channel, queryString, queryTimeout, INFINITE_PAGE_SIZE, logPrefix)
         .start();
+  }
+
+  protected boolean isPeerValid(AdminRow peerRow, Map<UUID, Node> nodes) {
+    if (PeerRowValidator.isValid(peerRow)) {
+      UUID hostId = peerRow.getUuid("host_id");
+      Node node = nodes.get(hostId);
+      if (node == null) {
+        LOG.warn("[{}] Unknown peer {}, excluding from schema agreement check", logPrefix, hostId);
+        return false;
+      } else if (node.getState() != NodeState.UP) {
+        LOG.debug("[{}] Peer {} is down, excluding from schema agreement check", logPrefix, hostId);
+        return false;
+      }
+      return true;
+    } else {
+      LOG.warn(
+          "[{}] Found invalid system.peers row for peer: {}, excluding from schema agreement check.",
+          logPrefix,
+          peerRow.getInetAddress("peer"));
+      return false;
+    }
   }
 }

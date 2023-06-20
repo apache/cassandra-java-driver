@@ -15,17 +15,18 @@
  */
 package com.datastax.oss.driver.internal.core.config.typesafe;
 
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
-import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigValueFactory;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,29 +38,63 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
     implements ProgrammaticDriverConfigLoaderBuilder {
 
   public static final Supplier<Config> DEFAULT_FALLBACK_SUPPLIER =
-      () -> ConfigFactory.defaultApplication().withFallback(ConfigFactory.defaultReference());
+      () ->
+          ConfigFactory.defaultApplication()
+              // Do not remove root path here, it must be done after merging configs
+              .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()));
 
-  private final NullAllowingImmutableMap.Builder<String, Object> values =
-      NullAllowingImmutableMap.builder();
+  private final Map<String, Object> values = new HashMap<>();
+
   private final Supplier<Config> fallbackSupplier;
   private final String rootPath;
 
   private String currentProfileName = DriverExecutionProfile.DEFAULT_NAME;
 
   /**
+   * Creates an instance of {@link DefaultProgrammaticDriverConfigLoaderBuilder} with default
+   * settings.
+   *
+   * <p>Fallback configuration for options that haven't been specified programmatically will be
+   * obtained from standard classpath resources. Application-specific classpath resources will be
+   * located using the {@linkplain Thread#getContextClassLoader() the current thread's context class
+   * loader}. This might not be suitable for OSGi deployments, which should use {@link
+   * #DefaultProgrammaticDriverConfigLoaderBuilder(ClassLoader)} instead.
+   */
+  public DefaultProgrammaticDriverConfigLoaderBuilder() {
+    this(DEFAULT_FALLBACK_SUPPLIER, DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
+  }
+
+  /**
+   * Creates an instance of {@link DefaultProgrammaticDriverConfigLoaderBuilder} with default
+   * settings but a custom class loader.
+   *
+   * <p>Fallback configuration for options that haven't been specified programmatically will be
+   * obtained from standard classpath resources. Application-specific classpath resources will be
+   * located using the provided {@link ClassLoader} instead of {@linkplain
+   * Thread#getContextClassLoader() the current thread's context class loader}.
+   */
+  public DefaultProgrammaticDriverConfigLoaderBuilder(@NonNull ClassLoader appClassLoader) {
+    this(
+        () ->
+            ConfigFactory.defaultApplication(appClassLoader)
+                .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader())),
+        DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
+  }
+
+  /**
+   * Creates an instance of {@link DefaultProgrammaticDriverConfigLoaderBuilder} using a custom
+   * fallback config supplier.
+   *
    * @param fallbackSupplier the supplier that will provide fallback configuration for options that
    *     haven't been specified programmatically.
    * @param rootPath the root path used in non-programmatic sources (fallback reference.conf and
-   *     system properties).
+   *     system properties). In most cases it should be {@link
+   *     DefaultDriverConfigLoader#DEFAULT_ROOT_PATH}. Cannot be null but can be empty.
    */
   public DefaultProgrammaticDriverConfigLoaderBuilder(
-      Supplier<Config> fallbackSupplier, String rootPath) {
+      @NonNull Supplier<Config> fallbackSupplier, @NonNull String rootPath) {
     this.fallbackSupplier = fallbackSupplier;
     this.rootPath = rootPath;
-  }
-
-  public DefaultProgrammaticDriverConfigLoaderBuilder() {
-    this(DEFAULT_FALLBACK_SUPPLIER, DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
   }
 
   private ProgrammaticDriverConfigLoaderBuilder with(
@@ -215,13 +250,16 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
                   .withFallback(programmaticConfig)
                   .withFallback(fallbackSupplier.get())
                   .resolve();
+          // Only remove rootPath after the merge between system properties
+          // and fallback configuration, since both are supposed to
+          // contain the same rootPath prefix.
           return rootPath.isEmpty() ? config : config.getConfig(rootPath);
         });
   }
 
   private Config buildConfig() {
     Config config = ConfigFactory.empty();
-    for (Map.Entry<String, Object> entry : values.build().entrySet()) {
+    for (Map.Entry<String, Object> entry : values.entrySet()) {
       config = config.withValue(entry.getKey(), ConfigValueFactory.fromAnyRef(entry.getValue()));
     }
     return config;

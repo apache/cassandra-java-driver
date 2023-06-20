@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.core.metadata;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -41,6 +40,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
@@ -54,7 +54,6 @@ import org.mockito.Captor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LoadBalancingPolicyWrapperTest {
@@ -63,9 +62,8 @@ public class LoadBalancingPolicyWrapperTest {
   private DefaultNode node2;
   private DefaultNode node3;
 
-  private Map<UUID, Node> allNodes;
   private Set<DefaultNode> contactPoints;
-  private Queue<Node> defaultPolicysQueryPlan;
+  private Queue<Node> defaultPolicyQueryPlan;
 
   @Mock private InternalDriverContext context;
   @Mock private LoadBalancingPolicy policy1;
@@ -88,16 +86,18 @@ public class LoadBalancingPolicyWrapperTest {
     node3 = TestNodeFactory.newNode(3, context);
 
     contactPoints = ImmutableSet.of(node1, node2);
-    allNodes =
+    Map<UUID, Node> allNodes =
         ImmutableMap.of(
-            node1.getHostId(), node1, node2.getHostId(), node2, node3.getHostId(), node3);
+            Objects.requireNonNull(node1.getHostId()), node1,
+            Objects.requireNonNull(node2.getHostId()), node2,
+            Objects.requireNonNull(node3.getHostId()), node3);
     when(metadataManager.getMetadata()).thenReturn(metadata);
     when(metadata.getNodes()).thenReturn(allNodes);
     when(metadataManager.getContactPoints()).thenReturn(contactPoints);
     when(context.getMetadataManager()).thenReturn(metadataManager);
 
-    defaultPolicysQueryPlan = Lists.newLinkedList(ImmutableList.of(node3, node2, node1));
-    when(policy1.newQueryPlan(null, null)).thenReturn(defaultPolicysQueryPlan);
+    defaultPolicyQueryPlan = Lists.newLinkedList(ImmutableList.of(node3, node2, node1));
+    when(policy1.newQueryPlan(null, null)).thenReturn(defaultPolicyQueryPlan);
 
     eventBus = spy(new EventBus("test"));
     when(context.getEventBus()).thenReturn(eventBus);
@@ -125,7 +125,7 @@ public class LoadBalancingPolicyWrapperTest {
     for (LoadBalancingPolicy policy : ImmutableList.of(policy1, policy2, policy3)) {
       verify(policy, never()).newQueryPlan(null, null);
     }
-    assertThat(queryPlan).containsOnlyElementsOf(contactPoints);
+    assertThat(queryPlan).hasSameElementsAs(contactPoints);
   }
 
   @Test
@@ -142,7 +142,7 @@ public class LoadBalancingPolicyWrapperTest {
     // Then
     // no-arg newQueryPlan() uses the default profile
     verify(policy1).newQueryPlan(null, null);
-    assertThat(queryPlan).isEqualTo(defaultPolicysQueryPlan);
+    assertThat(queryPlan).isEqualTo(defaultPolicyQueryPlan);
   }
 
   @Test
@@ -236,25 +236,16 @@ public class LoadBalancingPolicyWrapperTest {
   @Test
   public void should_accumulate_events_during_init_and_replay() throws InterruptedException {
     // Given
-    // Hack to obtain concurrency: the main thread blocks in init, while another thread fires an
-    // event on the bus
-    CountDownLatch eventLatch = new CountDownLatch(3);
+    // Hack to obtain concurrency: the main thread releases another thread and blocks; then the
+    // other thread fires an event on the bus and unblocks the main thread.
+    CountDownLatch eventLatch = new CountDownLatch(1);
     CountDownLatch initLatch = new CountDownLatch(1);
-    Answer mockInit =
-        i -> {
-          eventLatch.countDown();
-          initLatch.await(500, TimeUnit.MILLISECONDS);
-          return null;
-        };
-    for (LoadBalancingPolicy policy : ImmutableList.of(policy1, policy2, policy3)) {
-      doAnswer(mockInit).when(policy).init(anyMap(), any(DistanceReporter.class));
-    }
 
     // When
     Runnable runnable =
         () -> {
           try {
-            eventLatch.await(500, TimeUnit.MILLISECONDS);
+            eventLatch.await();
           } catch (InterruptedException e) {
             throw new RuntimeException(e);
           }
@@ -266,15 +257,14 @@ public class LoadBalancingPolicyWrapperTest {
     wrapper.init();
 
     // Then
-    // wait for init launch to signal that runnable is complete.
-    initLatch.await(500, TimeUnit.MILLISECONDS);
+    // unblock the thread that will fire the event, and waits until it finishes
+    eventLatch.countDown();
+    boolean ok = initLatch.await(500, TimeUnit.MILLISECONDS);
+    assertThat(ok).isTrue();
     for (LoadBalancingPolicy policy : ImmutableList.of(policy1, policy2, policy3)) {
       verify(policy).onDown(node1);
     }
-    if (thread.isAlive()) {
-      // thread still completing - sleep to allow thread to complete.
-      Thread.sleep(500);
-    }
+    thread.join(500);
     assertThat(thread.isAlive()).isFalse();
   }
 }

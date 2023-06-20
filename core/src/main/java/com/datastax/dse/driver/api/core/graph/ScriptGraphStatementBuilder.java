@@ -34,7 +34,7 @@ public class ScriptGraphStatementBuilder
 
   private String script;
   private Boolean isSystemQuery;
-  private Map<String, Object> queryParams;
+  private final Map<String, Object> queryParams;
 
   public ScriptGraphStatementBuilder() {
     this.queryParams = Maps.newHashMap();

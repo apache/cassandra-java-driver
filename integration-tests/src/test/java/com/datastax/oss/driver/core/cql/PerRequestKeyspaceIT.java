@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -38,7 +39,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestName;
 import org.junit.rules.TestRule;
@@ -60,7 +60,6 @@ public class PerRequestKeyspaceIT {
 
   @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
-  @Rule public ExpectedException thrown = ExpectedException.none();
   @Rule public TestName nameRule = new TestName();
 
   @Before
@@ -113,9 +112,10 @@ public class PerRequestKeyspaceIT {
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V4")
             .build();
     try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
-      thrown.expect(IllegalArgumentException.class);
-      thrown.expectMessage("Can't use per-request keyspace with protocol V4");
-      session.execute(statement);
+      Throwable t = catchThrowable(() -> session.execute(statement));
+      assertThat(t)
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessage("Can't use per-request keyspace with protocol V4");
     }
   }
 

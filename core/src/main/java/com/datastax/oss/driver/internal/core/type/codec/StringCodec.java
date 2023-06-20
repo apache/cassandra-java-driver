@@ -20,22 +20,47 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.Strings;
-import com.datastax.oss.protocol.internal.util.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.netty.util.concurrent.FastThreadLocal;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class StringCodec implements TypeCodec<String> {
 
   private final DataType cqlType;
-  private final Charset charset;
+  private final FastThreadLocal<CharsetEncoder> charsetEncoder;
+  private final FastThreadLocal<CharsetDecoder> charsetDecoder;
 
   public StringCodec(@NonNull DataType cqlType, @NonNull Charset charset) {
     this.cqlType = cqlType;
-    this.charset = charset;
+    charsetEncoder =
+        new FastThreadLocal<CharsetEncoder>() {
+          @Override
+          protected CharsetEncoder initialValue() throws Exception {
+            return charset
+                .newEncoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT);
+          }
+        };
+    charsetDecoder =
+        new FastThreadLocal<CharsetDecoder>() {
+          @Override
+          protected CharsetDecoder initialValue() throws Exception {
+            return charset
+                .newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT);
+          }
+        };
   }
 
   @NonNull
@@ -63,7 +88,14 @@ public class StringCodec implements TypeCodec<String> {
   @Nullable
   @Override
   public ByteBuffer encode(@Nullable String value, @NonNull ProtocolVersion protocolVersion) {
-    return (value == null) ? null : ByteBuffer.wrap(value.getBytes(charset));
+    if (value == null) {
+      return null;
+    }
+    try {
+      return charsetEncoder.get().encode(CharBuffer.wrap(value));
+    } catch (CharacterCodingException e) {
+      throw new IllegalArgumentException(e);
+    }
   }
 
   @Nullable
@@ -74,7 +106,11 @@ public class StringCodec implements TypeCodec<String> {
     } else if (bytes.remaining() == 0) {
       return "";
     } else {
-      return new String(Bytes.getArray(bytes), charset);
+      try {
+        return charsetDecoder.get().decode(bytes.duplicate()).toString();
+      } catch (CharacterCodingException e) {
+        throw new IllegalArgumentException(e);
+      }
     }
   }
 

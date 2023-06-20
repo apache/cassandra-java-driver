@@ -23,8 +23,9 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 /**
  * A listener that gets notified when nodes states change.
  *
- * <p>An implementation of this interface can be registered in the configuration, or with {@link
- * SessionBuilder#withNodeStateListener(NodeStateListener)}.
+ * <p>Implementations of this interface can be registered either via the configuration (see {@code
+ * reference.conf} in the manual or core driver JAR), or programmatically via {@link
+ * SessionBuilder#addNodeStateListener(NodeStateListener)}.
  *
  * <p>Note that the methods defined by this interface will be executed by internal driver threads,
  * and are therefore expected to have short execution times. If you need to perform long
@@ -33,6 +34,9 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  *
  * <p>If you implement this interface but don't need to implement all the methods, extend {@link
  * NodeStateListenerBase}.
+ *
+ * <p>If your implementation of this interface requires access to a fully-initialized session,
+ * consider wrapping it in a {@link SafeInitNodeStateListener}.
  */
 public interface NodeStateListener extends AutoCloseable {
 

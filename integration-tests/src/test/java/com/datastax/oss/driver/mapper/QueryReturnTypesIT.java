@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -46,13 +47,13 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
@@ -65,8 +66,6 @@ public class QueryReturnTypesIT {
 
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private static TestDao dao;
 
@@ -122,11 +121,12 @@ public class QueryReturnTypesIT {
 
   @Test
   public void should_fail_to_map_to_long_if_query_returns_other_type() {
-    thrown.expect(MapperException.class);
-    thrown.expectMessage(
-        "Expected the query to return a column with CQL type BIGINT in first position "
-            + "(return type long is intended for COUNT queries)");
-    dao.wrongCount();
+    Throwable t = catchThrowable(() -> dao.wrongCount());
+    assertThat(t)
+        .isInstanceOf(MapperException.class)
+        .hasMessage(
+            "Expected the query to return a column with CQL type BIGINT in first position "
+                + "(return type long is intended for COUNT queries)");
   }
 
   @Test
@@ -227,11 +227,24 @@ public class QueryReturnTypesIT {
   }
 
   @Test
+  public void should_execute_query_and_map_to_stream() {
+    Stream<TestEntity> stream = dao.findByIdAsStream(1);
+    assertThat(stream).hasSize(10);
+  }
+
+  @Test
   public void should_execute_async_query_and_map_to_iterable() {
     MappedAsyncPagingIterable<TestEntity> iterable =
         CompletableFutures.getUninterruptibly(dao.findByIdAsync(1));
     assertThat(ImmutableList.copyOf(iterable.currentPage())).hasSize(10);
     assertThat(iterable.hasMorePages()).isFalse();
+  }
+
+  @Test
+  public void should_execute_query_and_map_to_stream_async()
+      throws ExecutionException, InterruptedException {
+    CompletableFuture<Stream<TestEntity>> stream = dao.findByIdAsStreamAsync(1);
+    assertThat(stream.get()).hasSize(10);
   }
 
   @Dao
@@ -291,7 +304,13 @@ public class QueryReturnTypesIT {
     PagingIterable<TestEntity> findById(int id);
 
     @Query("SELECT * FROM ${qualifiedTableId} WHERE id = :id")
+    Stream<TestEntity> findByIdAsStream(int id);
+
+    @Query("SELECT * FROM ${qualifiedTableId} WHERE id = :id")
     CompletableFuture<MappedAsyncPagingIterable<TestEntity>> findByIdAsync(int id);
+
+    @Query("SELECT * FROM ${qualifiedTableId} WHERE id = :id")
+    CompletableFuture<Stream<TestEntity>> findByIdAsStreamAsync(int id);
   }
 
   @Entity

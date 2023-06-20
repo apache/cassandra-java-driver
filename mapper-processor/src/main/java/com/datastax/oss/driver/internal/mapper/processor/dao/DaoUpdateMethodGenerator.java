@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOOLEAN;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOUND_STATEMENT;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.CUSTOM;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_ASYNC_RESULT_SET;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_BOOLEAN;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_VOID;
@@ -70,7 +71,19 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
         FUTURE_OF_ASYNC_RESULT_SET,
         BOOLEAN,
         FUTURE_OF_BOOLEAN,
-        REACTIVE_RESULT_SET);
+        REACTIVE_RESULT_SET,
+        CUSTOM);
+  }
+
+  @Override
+  public boolean requiresReactive() {
+    // Validate the return type:
+    DaoReturnType returnType =
+        parseAndValidateReturnType(getSupportedReturnTypes(), Update.class.getSimpleName());
+    if (returnType == null) {
+      return false;
+    }
+    return returnType.requiresReactive();
   }
 
   @Override
@@ -94,7 +107,6 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "%s methods must take the entity to update as the first parameter",
               Update.class.getSimpleName());
       return Optional.empty();
@@ -117,15 +129,15 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
             (methodBuilder, requestName) ->
                 generatePrepareRequest(methodBuilder, requestName, helperFieldName));
 
-    CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
+    CodeBlock.Builder createStatementBlock = CodeBlock.builder();
 
-    methodBodyBuilder.addStatement(
+    createStatementBlock.addStatement(
         "$T boundStatementBuilder = $L.boundStatementBuilder()",
         BoundStatementBuilder.class,
         statementName);
 
-    populateBuilderWithStatementAttributes(methodBodyBuilder, methodElement);
-    populateBuilderWithFunction(methodBodyBuilder, boundStatementFunction);
+    populateBuilderWithStatementAttributes(createStatementBlock, methodElement);
+    populateBuilderWithFunction(createStatementBlock, boundStatementFunction);
 
     String entityParameterName = parameters.get(0).getSimpleName().toString();
 
@@ -139,14 +151,14 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
     if (customWhereClause.isEmpty()) {
       // We generated an update by primary key (see maybeAddWhereClause), all entity properties are
       // present as placeholders.
-      methodBodyBuilder.addStatement(
-          "$1L.set($2L, boundStatementBuilder, $3T.$4L)",
+      createStatementBlock.addStatement(
+          "$1L.set($2L, boundStatementBuilder, $3T.$4L, false)",
           helperFieldName,
           entityParameterName,
           NullSavingStrategy.class,
           nullSavingStrategy);
     } else {
-      methodBodyBuilder.addStatement(
+      createStatementBlock.addStatement(
           "$1T nullSavingStrategy = $1T.$2L", NullSavingStrategy.class, nullSavingStrategy);
 
       // Only non-PK properties are present in SET ... clauses.
@@ -157,9 +169,10 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
             property.getType(),
             CodeBlock.of("$L.$L()", entityParameterName, property.getGetterName()),
             "boundStatementBuilder",
-            methodBodyBuilder,
+            createStatementBlock,
             enclosingClass,
-            true);
+            true,
+            false);
       }
     }
 
@@ -169,22 +182,16 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
       List<? extends VariableElement> bindMarkers = parameters.subList(1, parameters.size());
       if (validateCqlNamesPresent(bindMarkers)) {
         GeneratedCodePatterns.bindParameters(
-            bindMarkers, methodBodyBuilder, enclosingClass, context, false);
+            bindMarkers, createStatementBlock, enclosingClass, context, false);
       } else {
         return Optional.empty();
       }
     }
 
-    methodBodyBuilder
-        .add("\n")
-        .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
+    createStatementBlock.addStatement(
+        "$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
-    returnType.getKind().addExecuteStatement(methodBodyBuilder, helperFieldName);
-
-    CodeBlock methodBody = returnType.getKind().wrapWithErrorHandling(methodBodyBuilder.build());
-
-    return Optional.of(
-        GeneratedCodePatterns.override(methodElement, typeParameters).addCode(methodBody).build());
+    return crudMethod(createStatementBlock, returnType, helperFieldName);
   }
 
   private void generatePrepareRequest(
@@ -232,7 +239,6 @@ public class DaoUpdateMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Invalid annotation parameters: %s cannot have both ifExists and customIfClause",
               Update.class.getSimpleName());
     }

@@ -25,8 +25,20 @@ public class Native {
 
   private static class LibcLoader {
 
+    /* These values come from Graal's imageinfo API which aims to offer the ability to detect
+     * when we're in the Graal build/run time via system props.  The maintainers of Graal have
+     * agreed that this API will not change over time.  We reference these props as literals
+     * to avoid introducing a dependency on Graal code for non-Graal users here. */
+    private static final String GRAAL_STATUS_PROP = "org.graalvm.nativeimage.imagecode";
+    private static final String GRAAL_BUILDTIME_STATUS = "buildtime";
+    private static final String GRAAL_RUNTIME_STATUS = "runtime";
+
     public Libc load() {
       try {
+        if (isGraal()) {
+          LOG.info("Using Graal-specific native functions");
+          return new GraalLibc();
+        }
         return new JnrLibc();
       } catch (Throwable t) {
         LOG.info(
@@ -34,6 +46,13 @@ public class Native {
             t);
         return new EmptyLibc();
       }
+    }
+
+    private boolean isGraal() {
+
+      String val = System.getProperty(GRAAL_STATUS_PROP);
+      return val != null
+          && (val.equals(GRAAL_RUNTIME_STATUS) || val.equalsIgnoreCase(GRAAL_BUILDTIME_STATUS));
     }
   }
 

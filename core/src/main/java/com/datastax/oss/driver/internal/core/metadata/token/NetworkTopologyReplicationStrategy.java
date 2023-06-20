@@ -18,9 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata.token;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSetMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
-import com.datastax.oss.driver.shaded.guava.common.collect.SetMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,21 +54,26 @@ class NetworkTopologyReplicationStrategy implements ReplicationStrategy {
   }
 
   @Override
-  public SetMultimap<Token, Node> computeReplicasByToken(
+  public Map<Token, Set<Node>> computeReplicasByToken(
       Map<Token, Node> tokenToPrimary, List<Token> ring) {
 
-    // This is essentially a copy of org.apache.cassandra.locator.NetworkTopologyStrategy
-    ImmutableSetMultimap.Builder<Token, Node> result = ImmutableSetMultimap.builder();
+    // The implementation of this method was adapted from
+    // org.apache.cassandra.locator.NetworkTopologyStrategy
+
+    ImmutableMap.Builder<Token, Set<Node>> result = ImmutableMap.builder();
     Map<String, Set<String>> racks = getRacksInDcs(tokenToPrimary.values());
     Map<String, Integer> dcNodeCount = Maps.newHashMapWithExpectedSize(replicationFactors.size());
     Set<String> warnedDcs = Sets.newHashSetWithExpectedSize(replicationFactors.size());
+    CanonicalNodeSetBuilder replicasBuilder = new CanonicalNodeSetBuilder();
+
     // find maximum number of nodes in each DC
     for (Node node : Sets.newHashSet(tokenToPrimary.values())) {
       String dc = node.getDatacenter();
-      dcNodeCount.putIfAbsent(dc, 0);
-      dcNodeCount.put(dc, dcNodeCount.get(dc) + 1);
+      dcNodeCount.merge(dc, 1, Integer::sum);
     }
     for (int i = 0; i < ring.size(); i++) {
+      replicasBuilder.clear();
+
       Map<String, Set<Node>> allDcReplicas = new HashMap<>();
       Map<String, Set<String>> seenRacks = new HashMap<>();
       Map<String, Set<Node>> skippedDcEndpoints = new HashMap<>();
@@ -80,30 +83,30 @@ class NetworkTopologyReplicationStrategy implements ReplicationStrategy {
         skippedDcEndpoints.put(dc, new LinkedHashSet<>()); // preserve order
       }
 
-      // Preserve order - primary replica will be first
-      Set<Node> replicas = new LinkedHashSet<>();
       for (int j = 0; j < ring.size() && !allDone(allDcReplicas, dcNodeCount); j++) {
         Node h = tokenToPrimary.get(getTokenWrapping(i + j, ring));
         String dc = h.getDatacenter();
         if (dc == null || !allDcReplicas.containsKey(dc)) {
           continue;
         }
-        Integer rf = replicationFactors.get(dc).fullReplicas();
+        ReplicationFactor dcConfig = replicationFactors.get(dc);
+        assert dcConfig != null; // since allDcReplicas.containsKey(dc)
+        int rf = dcConfig.fullReplicas();
         Set<Node> dcReplicas = allDcReplicas.get(dc);
-        if (rf == null || dcReplicas.size() >= rf) {
+        if (dcReplicas.size() >= rf) {
           continue;
         }
         String rack = h.getRack();
         // Check if we already visited all racks in dc
         if (rack == null || seenRacks.get(dc).size() == racks.get(dc).size()) {
-          replicas.add(h);
+          replicasBuilder.add(h);
           dcReplicas.add(h);
         } else {
           // Is this a new rack?
           if (seenRacks.get(dc).contains(rack)) {
             skippedDcEndpoints.get(dc).add(h);
           } else {
-            replicas.add(h);
+            replicasBuilder.add(h);
             dcReplicas.add(h);
             seenRacks.get(dc).add(rack);
             // If we've run out of distinct racks, add the nodes skipped so far
@@ -111,7 +114,7 @@ class NetworkTopologyReplicationStrategy implements ReplicationStrategy {
               Iterator<Node> skippedIt = skippedDcEndpoints.get(dc).iterator();
               while (skippedIt.hasNext() && dcReplicas.size() < rf) {
                 Node nextSkipped = skippedIt.next();
-                replicas.add(nextSkipped);
+                replicasBuilder.add(nextSkipped);
                 dcReplicas.add(nextSkipped);
               }
             }
@@ -139,7 +142,7 @@ class NetworkTopologyReplicationStrategy implements ReplicationStrategy {
         }
       }
 
-      result.putAll(ring.get(i), replicas);
+      result.put(ring.get(i), replicasBuilder.build());
     }
     return result.build();
   }

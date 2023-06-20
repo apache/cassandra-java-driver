@@ -27,7 +27,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 /**
  * Thrown when the coordinator reported itself as being overloaded.
  *
- * <p>This exception is processed by {@link RetryPolicy#onErrorResponse(Request,
+ * <p>This exception is processed by {@link RetryPolicy#onErrorResponseVerdict(Request,
  * CoordinatorException, int)}, which will decide if it is rethrown directly to the client or if the
  * request should be retried. If all other tried nodes also fail, this exception will appear in the
  * {@link AllNodesFailedException} thrown to the client.
@@ -35,7 +35,11 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 public class OverloadedException extends QueryExecutionException {
 
   public OverloadedException(@NonNull Node coordinator) {
-    super(coordinator, String.format("%s is bootstrapping", coordinator), null, false);
+    super(coordinator, String.format("%s is overloaded", coordinator), null, false);
+  }
+
+  public OverloadedException(@NonNull Node coordinator, @NonNull String message) {
+    super(coordinator, String.format("%s is overloaded: %s", coordinator, message), null, false);
   }
 
   private OverloadedException(

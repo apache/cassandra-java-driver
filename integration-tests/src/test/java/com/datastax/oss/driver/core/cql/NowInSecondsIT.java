@@ -18,9 +18,6 @@ package com.datastax.oss.driver.core.cql;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
-import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
@@ -45,27 +42,13 @@ import org.junit.rules.TestRule;
 @CassandraRequirement(min = "4.0")
 @DseRequirement(
     // Use next version -- not sure if it will be in by then, but as a reminder to check
-    min = "6.9",
+    min = "7.0",
     description = "Feature not available in DSE yet")
 public class NowInSecondsIT {
 
   private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static final SessionRule<CqlSession> SESSION_RULE = buildSessionRule();
-
-  private static SessionRule<CqlSession> buildSessionRule() {
-    // Reminder to revisit the test when V5 comes out of beta: remove the custom config loader and
-    // inline this method.
-    assertThat(DefaultProtocolVersion.V5.isBeta())
-        .as("This test can be simplified now that protocol v5 is stable")
-        .isTrue();
-    return SessionRule.builder(CCM_RULE)
-        .withConfigLoader(
-            DriverConfigLoader.programmaticBuilder()
-                .withString(DefaultDriverOption.PROTOCOL_VERSION, "V5")
-                .build())
-        .build();
-  }
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);

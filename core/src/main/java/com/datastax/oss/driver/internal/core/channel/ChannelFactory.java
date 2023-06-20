@@ -60,7 +60,10 @@ public class ChannelFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(ChannelFactory.class);
 
-  /** A value for {@link #productType} that indicates that we are connected to Datastax Cloud. */
+  /**
+   * A value for {@link #productType} that indicates that we are connected to DataStax Cloud. This
+   * value matches the one defined at DSE DB server side at {@code ProductType.java}.
+   */
   private static final String DATASTAX_CLOUD_PRODUCT_TYPE = "DATASTAX_APOLLO";
 
   private static final AtomicBoolean LOGGED_ORPHAN_WARNING = new AtomicBoolean();
@@ -70,6 +73,20 @@ public class ChannelFactory {
    * type.
    */
   private static final String UNKNOWN_PRODUCT_TYPE = "UNKNOWN";
+
+  // The names of the handlers on the pipeline:
+  public static final String SSL_HANDLER_NAME = "ssl";
+  public static final String INBOUND_TRAFFIC_METER_NAME = "inboundTrafficMeter";
+  public static final String OUTBOUND_TRAFFIC_METER_NAME = "outboundTrafficMeter";
+  public static final String FRAME_TO_BYTES_ENCODER_NAME = "frameToBytesEncoder";
+  public static final String FRAME_TO_SEGMENT_ENCODER_NAME = "frameToSegmentEncoder";
+  public static final String SEGMENT_TO_BYTES_ENCODER_NAME = "segmentToBytesEncoder";
+  public static final String BYTES_TO_FRAME_DECODER_NAME = "bytesToFrameDecoder";
+  public static final String BYTES_TO_SEGMENT_DECODER_NAME = "bytesToSegmentDecoder";
+  public static final String SEGMENT_TO_FRAME_DECODER_NAME = "segmentToFrameDecoder";
+  public static final String HEARTBEAT_HANDLER_NAME = "heartbeat";
+  public static final String INFLIGHT_HANDLER_NAME = "inflight";
+  public static final String INIT_HANDLER_NAME = "init";
 
   private final String logPrefix;
   protected final InternalDriverContext context;
@@ -221,7 +238,7 @@ public class ChannelFactory {
               Optional<ProtocolVersion> downgraded =
                   context.getProtocolVersionRegistry().downgrade(currentVersion);
               if (downgraded.isPresent()) {
-                LOG.info(
+                LOG.debug(
                     "[{}] Failed to connect with protocol {}, retrying with {}",
                     logPrefix,
                     currentVersion,
@@ -255,94 +272,121 @@ public class ChannelFactory {
       DriverChannelOptions options,
       NodeMetricUpdater nodeMetricUpdater,
       CompletableFuture<DriverChannel> resultFuture) {
-    return new ChannelInitializer<Channel>() {
-      @Override
-      protected void initChannel(Channel channel) {
-        try {
-          DriverExecutionProfile defaultConfig = context.getConfig().getDefaultProfile();
+    return new ChannelFactoryInitializer(
+        endPoint, protocolVersion, options, nodeMetricUpdater, resultFuture);
+  };
 
-          long setKeyspaceTimeoutMillis =
-              defaultConfig
-                  .getDuration(DefaultDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT)
-                  .toMillis();
-          int maxFrameLength =
-              (int) defaultConfig.getBytes(DefaultDriverOption.PROTOCOL_MAX_FRAME_LENGTH);
-          int maxRequestsPerConnection =
-              defaultConfig.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS);
-          int maxOrphanRequests =
-              defaultConfig.getInt(DefaultDriverOption.CONNECTION_MAX_ORPHAN_REQUESTS);
-          if (maxOrphanRequests >= maxRequestsPerConnection) {
-            if (LOGGED_ORPHAN_WARNING.compareAndSet(false, true)) {
-              LOG.warn(
-                  "[{}] Invalid value for {}: {}. It must be lower than {}. "
-                      + "Defaulting to {} (1/4 of max-requests) instead.",
-                  logPrefix,
-                  DefaultDriverOption.CONNECTION_MAX_ORPHAN_REQUESTS.getPath(),
-                  maxOrphanRequests,
-                  DefaultDriverOption.CONNECTION_MAX_REQUESTS.getPath(),
-                  maxRequestsPerConnection / 4);
-            }
-            maxOrphanRequests = maxRequestsPerConnection / 4;
+  class ChannelFactoryInitializer extends ChannelInitializer<Channel> {
+
+    private final EndPoint endPoint;
+    private final ProtocolVersion protocolVersion;
+    private final DriverChannelOptions options;
+    private final NodeMetricUpdater nodeMetricUpdater;
+    private final CompletableFuture<DriverChannel> resultFuture;
+
+    ChannelFactoryInitializer(
+        EndPoint endPoint,
+        ProtocolVersion protocolVersion,
+        DriverChannelOptions options,
+        NodeMetricUpdater nodeMetricUpdater,
+        CompletableFuture<DriverChannel> resultFuture) {
+
+      this.endPoint = endPoint;
+      this.protocolVersion = protocolVersion;
+      this.options = options;
+      this.nodeMetricUpdater = nodeMetricUpdater;
+      this.resultFuture = resultFuture;
+    }
+
+    @Override
+    protected void initChannel(Channel channel) {
+      try {
+        DriverExecutionProfile defaultConfig = context.getConfig().getDefaultProfile();
+
+        long setKeyspaceTimeoutMillis =
+            defaultConfig
+                .getDuration(DefaultDriverOption.CONNECTION_SET_KEYSPACE_TIMEOUT)
+                .toMillis();
+        int maxFrameLength =
+            (int) defaultConfig.getBytes(DefaultDriverOption.PROTOCOL_MAX_FRAME_LENGTH);
+        int maxRequestsPerConnection =
+            defaultConfig.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS);
+        int maxOrphanRequests =
+            defaultConfig.getInt(DefaultDriverOption.CONNECTION_MAX_ORPHAN_REQUESTS);
+        if (maxOrphanRequests >= maxRequestsPerConnection) {
+          if (LOGGED_ORPHAN_WARNING.compareAndSet(false, true)) {
+            LOG.warn(
+                "[{}] Invalid value for {}: {}. It must be lower than {}. "
+                    + "Defaulting to {} (1/4 of max-requests) instead.",
+                logPrefix,
+                DefaultDriverOption.CONNECTION_MAX_ORPHAN_REQUESTS.getPath(),
+                maxOrphanRequests,
+                DefaultDriverOption.CONNECTION_MAX_REQUESTS.getPath(),
+                maxRequestsPerConnection / 4);
           }
-
-          InFlightHandler inFlightHandler =
-              new InFlightHandler(
-                  protocolVersion,
-                  new StreamIdGenerator(maxRequestsPerConnection),
-                  maxOrphanRequests,
-                  setKeyspaceTimeoutMillis,
-                  channel.newPromise(),
-                  options.eventCallback,
-                  options.ownerLogPrefix);
-          HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultConfig);
-          ProtocolInitHandler initHandler =
-              new ProtocolInitHandler(
-                  context,
-                  protocolVersion,
-                  clusterName,
-                  endPoint,
-                  options,
-                  heartbeatHandler,
-                  productType == null);
-
-          ChannelPipeline pipeline = channel.pipeline();
-          context
-              .getSslHandlerFactory()
-              .map(f -> f.newSslHandler(channel, endPoint))
-              .map(h -> pipeline.addLast("ssl", h));
-
-          // Only add meter handlers on the pipeline if metrics are enabled.
-          SessionMetricUpdater sessionMetricUpdater =
-              context.getMetricsFactory().getSessionUpdater();
-          if (nodeMetricUpdater.isEnabled(DefaultNodeMetric.BYTES_RECEIVED, null)
-              || sessionMetricUpdater.isEnabled(DefaultSessionMetric.BYTES_RECEIVED, null)) {
-            pipeline.addLast(
-                "inboundTrafficMeter",
-                new InboundTrafficMeter(nodeMetricUpdater, sessionMetricUpdater));
-          }
-
-          if (nodeMetricUpdater.isEnabled(DefaultNodeMetric.BYTES_SENT, null)
-              || sessionMetricUpdater.isEnabled(DefaultSessionMetric.BYTES_SENT, null)) {
-            pipeline.addLast(
-                "outboundTrafficMeter",
-                new OutboundTrafficMeter(nodeMetricUpdater, sessionMetricUpdater));
-          }
-
-          pipeline
-              .addLast("encoder", new FrameEncoder(context.getFrameCodec(), maxFrameLength))
-              .addLast("decoder", new FrameDecoder(context.getFrameCodec(), maxFrameLength))
-              // Note: HeartbeatHandler is inserted here once init completes
-              .addLast("inflight", inFlightHandler)
-              .addLast("init", initHandler);
-
-          context.getNettyOptions().afterChannelInitialized(channel);
-        } catch (Throwable t) {
-          // If the init handler throws an exception, Netty swallows it and closes the channel. We
-          // want to propagate it instead, so fail the outer future (the result of connect()).
-          resultFuture.completeExceptionally(t);
-          throw t;
+          maxOrphanRequests = maxRequestsPerConnection / 4;
         }
+
+        InFlightHandler inFlightHandler =
+            new InFlightHandler(
+                protocolVersion,
+                new StreamIdGenerator(maxRequestsPerConnection),
+                maxOrphanRequests,
+                setKeyspaceTimeoutMillis,
+                channel.newPromise(),
+                options.eventCallback,
+                options.ownerLogPrefix);
+        HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultConfig);
+        ProtocolInitHandler initHandler =
+            new ProtocolInitHandler(
+                context,
+                protocolVersion,
+                clusterName,
+                endPoint,
+                options,
+                heartbeatHandler,
+                productType == null);
+
+        ChannelPipeline pipeline = channel.pipeline();
+        context
+            .getSslHandlerFactory()
+            .map(f -> f.newSslHandler(channel, endPoint))
+            .map(h -> pipeline.addLast(SSL_HANDLER_NAME, h));
+
+        // Only add meter handlers on the pipeline if metrics are enabled.
+        SessionMetricUpdater sessionMetricUpdater = context.getMetricsFactory().getSessionUpdater();
+        if (nodeMetricUpdater.isEnabled(DefaultNodeMetric.BYTES_RECEIVED, null)
+            || sessionMetricUpdater.isEnabled(DefaultSessionMetric.BYTES_RECEIVED, null)) {
+          pipeline.addLast(
+              INBOUND_TRAFFIC_METER_NAME,
+              new InboundTrafficMeter(nodeMetricUpdater, sessionMetricUpdater));
+        }
+
+        if (nodeMetricUpdater.isEnabled(DefaultNodeMetric.BYTES_SENT, null)
+            || sessionMetricUpdater.isEnabled(DefaultSessionMetric.BYTES_SENT, null)) {
+          pipeline.addLast(
+              OUTBOUND_TRAFFIC_METER_NAME,
+              new OutboundTrafficMeter(nodeMetricUpdater, sessionMetricUpdater));
+        }
+
+        pipeline
+            .addLast(
+                FRAME_TO_BYTES_ENCODER_NAME,
+                new FrameEncoder(context.getFrameCodec(), maxFrameLength))
+            .addLast(
+                BYTES_TO_FRAME_DECODER_NAME,
+                new FrameDecoder(context.getFrameCodec(), maxFrameLength))
+            // Note: HeartbeatHandler is inserted here once init completes
+            .addLast(INFLIGHT_HANDLER_NAME, inFlightHandler)
+            .addLast(INIT_HANDLER_NAME, initHandler);
+
+        context.getNettyOptions().afterChannelInitialized(channel);
+      } catch (Throwable t) {
+        // If the init handler throws an exception, Netty swallows it and closes the channel. We
+        // want to propagate it instead, so fail the outer future (the result of connect()).
+        resultFuture.completeExceptionally(t);
+        throw t;
       }
-    };
+    }
   }
 }

@@ -27,17 +27,121 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
+import java.util.SplittableRandom;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DataProviderRunner.class)
 public class UuidsTest {
+
+  @Test
+  public void should_generate_unique_random_uuids_Random() {
+    Set<UUID> generated = serialGeneration(1_000_000, Uuids::random);
+    assertThat(generated).hasSize(1_000_000);
+  }
+
+  @Test
+  public void should_generate_unique_random_uuids_shared_Random2() {
+    Random random = new Random();
+    Set<UUID> generated = serialGeneration(1_000_000, () -> Uuids.random(random));
+    assertThat(generated).hasSize(1_000_000);
+  }
+
+  @Test
+  public void should_generate_unique_random_uuids_across_threads_shared_Random() throws Exception {
+    Random random = new Random();
+    Set<UUID> generated = parallelGeneration(10, 10_000, () -> () -> Uuids.random(random));
+    assertThat(generated).hasSize(10 * 10_000);
+  }
+
+  @Test
+  public void should_generate_unique_random_uuids_shared_SecureRandom() {
+    SecureRandom random = new SecureRandom();
+    Set<UUID> generated = serialGeneration(1_000_000, () -> Uuids.random(random));
+    assertThat(generated).hasSize(1_000_000);
+  }
+
+  @Test
+  public void should_generate_unique_random_uuids_across_threads_shared_SecureRandom()
+      throws Exception {
+    SecureRandom random = new SecureRandom();
+    Set<UUID> generated = parallelGeneration(10, 10_000, () -> () -> Uuids.random(random));
+    assertThat(generated).hasSize(10 * 10_000);
+  }
+
+  @Test
+  public void should_generate_unique_random_uuids_ThreadLocalRandom() {
+    ThreadLocalRandom random = ThreadLocalRandom.current();
+    Set<UUID> generated = serialGeneration(1_000_000, () -> Uuids.random(random));
+    assertThat(generated).hasSize(1_000_000);
+  }
+
+  @Test
+  public void should_generate_unique_random_uuids_across_threads_ThreadLocalRandom()
+      throws Exception {
+    Set<UUID> generated =
+        parallelGeneration(
+            10,
+            10_000,
+            () -> {
+              ThreadLocalRandom random = ThreadLocalRandom.current();
+              return () -> Uuids.random(random);
+            });
+    assertThat(generated).hasSize(10 * 10_000);
+  }
+
+  @Test
+  public void should_generate_unique_random_uuids_Netty_ThreadLocalRandom() {
+    io.netty.util.internal.ThreadLocalRandom random =
+        io.netty.util.internal.ThreadLocalRandom.current();
+    Set<UUID> generated = serialGeneration(1_000_000, () -> Uuids.random(random));
+    assertThat(generated).hasSize(1_000_000);
+  }
+
+  @Test
+  public void should_generate_unique_random_uuids_across_threads_Netty_ThreadLocalRandom()
+      throws Exception {
+    Set<UUID> generated =
+        parallelGeneration(
+            10,
+            10_000,
+            () -> {
+              io.netty.util.internal.ThreadLocalRandom random =
+                  io.netty.util.internal.ThreadLocalRandom.current();
+              return () -> Uuids.random(random);
+            });
+    assertThat(generated).hasSize(10 * 10_000);
+  }
+
+  @Test
+  public void should_generate_unique_random_uuids_SplittableRandom() {
+    SplittableRandom random = new SplittableRandom();
+    Set<UUID> generated = serialGeneration(1_000_000, () -> Uuids.random(random));
+    assertThat(generated).hasSize(1_000_000);
+  }
+
+  @Test
+  public void should_generate_unique_random_uuids_across_threads_SplittableRandom()
+      throws Exception {
+    Set<UUID> generated =
+        parallelGeneration(
+            10,
+            10_000,
+            () -> {
+              SplittableRandom random = new SplittableRandom();
+              return () -> Uuids.random(random);
+            });
+    assertThat(generated).hasSize(10 * 10_000);
+  }
 
   @Test
   @UseDataProvider("byteArrayNames")
@@ -186,7 +290,7 @@ public class UuidsTest {
 
     // The Uuids class does some computation at class initialization, which may screw up our
     // assumption below that Uuids.timeBased() takes less than 10ms, so force class loading now.
-    Uuids.random();
+    Uuids.timeBased();
 
     long start = System.currentTimeMillis();
     UUID uuid = Uuids.timeBased();
@@ -203,34 +307,14 @@ public class UuidsTest {
 
   @Test
   public void should_generate_unique_time_based_uuids() {
-    int count = 1_000_000;
-    Set<UUID> generated = new HashSet<>(count);
-
-    for (int i = 0; i < count; ++i) {
-      generated.add(Uuids.timeBased());
-    }
-
-    assertThat(generated).hasSize(count);
+    Set<UUID> generated = serialGeneration(1_000_000, Uuids::timeBased);
+    assertThat(generated).hasSize(1_000_000);
   }
 
   @Test
   public void should_generate_unique_time_based_uuids_across_threads() throws Exception {
-    int threadCount = 10;
-    int uuidsPerThread = 10_000;
-    Set<UUID> generated = new ConcurrentSkipListSet<>();
-
-    UUIDGenerator[] generators = new UUIDGenerator[threadCount];
-    for (int i = 0; i < threadCount; i++) {
-      generators[i] = new UUIDGenerator(uuidsPerThread, generated);
-    }
-    for (int i = 0; i < threadCount; i++) {
-      generators[i].start();
-    }
-    for (int i = 0; i < threadCount; i++) {
-      generators[i].join();
-    }
-
-    assertThat(generated).hasSize(threadCount * uuidsPerThread);
+    Set<UUID> generated = parallelGeneration(10, 10_000, () -> Uuids::timeBased);
+    assertThat(generated).hasSize(10 * 10_000);
   }
 
   @Test
@@ -362,20 +446,48 @@ public class UuidsTest {
     return ByteBuffer.allocate(Long.BYTES).putLong(x).array();
   }
 
-  private static class UUIDGenerator extends Thread {
+  private Set<UUID> serialGeneration(int count, Supplier<UUID> uuidSupplier) {
+    Set<UUID> generated = new HashSet<>(count);
+    for (int i = 0; i < count; ++i) {
+      generated.add(uuidSupplier.get());
+    }
+    return generated;
+  }
+
+  public Set<UUID> parallelGeneration(
+      int threadCount, int uuidsPerThread, Supplier<Supplier<UUID>> uuidSupplier)
+      throws InterruptedException {
+    Set<UUID> generated = new ConcurrentSkipListSet<>();
+    UuidGenerator[] generators = new UuidGenerator[threadCount];
+    for (int i = 0; i < threadCount; i++) {
+      generators[i] = new UuidGenerator(uuidsPerThread, uuidSupplier, generated);
+    }
+    for (int i = 0; i < threadCount; i++) {
+      generators[i].start();
+    }
+    for (int i = 0; i < threadCount; i++) {
+      generators[i].join();
+    }
+    return generated;
+  }
+
+  private static class UuidGenerator extends Thread {
 
     private final int toGenerate;
     private final Set<UUID> generated;
+    private final Supplier<Supplier<UUID>> uuidSupplier;
 
-    UUIDGenerator(int toGenerate, Set<UUID> generated) {
+    UuidGenerator(int toGenerate, Supplier<Supplier<UUID>> uuidSupplier, Set<UUID> generated) {
       this.toGenerate = toGenerate;
       this.generated = generated;
+      this.uuidSupplier = uuidSupplier;
     }
 
     @Override
     public void run() {
+      Supplier<UUID> uuidSupplier = this.uuidSupplier.get();
       for (int i = 0; i < toGenerate; ++i) {
-        generated.add(Uuids.timeBased());
+        generated.add(uuidSupplier.get());
       }
     }
   }

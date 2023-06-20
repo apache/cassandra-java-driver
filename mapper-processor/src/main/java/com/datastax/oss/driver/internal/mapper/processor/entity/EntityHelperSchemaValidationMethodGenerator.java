@@ -64,51 +64,59 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
             .addModifiers(Modifier.PUBLIC)
             .returns(TypeName.VOID);
 
-    // get keyspaceId from context, and if not present fallback to keyspace set on session
-    methodBuilder.addStatement(
-        "$1T keyspaceId = this.keyspaceId != null ? this.keyspaceId : context.getSession().getKeyspace().orElse(null)",
-        CqlIdentifier.class);
+    Optional<TargetElement> targetElement =
+        Optional.ofNullable(entityTypeElement.getAnnotation(SchemaHint.class))
+            .map(SchemaHint::targetElement);
 
-    methodBuilder.addStatement("String entityClassName = $S", entityDefinition.getClassName());
-    generateKeyspaceNull(methodBuilder);
-
-    generateKeyspaceNameWrong(methodBuilder);
-
-    methodBuilder.addStatement(
-        "$1T<$2T> keyspace = context.getSession().getMetadata().getKeyspace(keyspaceId)",
-        Optional.class,
-        KeyspaceMetadata.class);
-
-    // Generates expected names to be present in cql (table or udt)
-    List<CodeBlock> expectedCqlNames =
-        entityDefinition.getAllColumns().stream()
-            .map(PropertyDefinition::getCqlName)
-            .collect(Collectors.toList());
-    methodBuilder.addStatement(
-        "$1T<$2T> expectedCqlNames = new $3T<>()",
-        List.class,
-        CqlIdentifier.class,
-        ArrayList.class);
-    for (CodeBlock expectedCqlName : expectedCqlNames) {
+    if (targetElement.isPresent() && targetElement.get() == TargetElement.NONE) {
+      methodBuilder.addComment(
+          "Nothing to do, validation was disabled with @SchemaHint(targetElement = NONE)");
+    } else {
+      // get keyspaceId from context, and if not present fallback to keyspace set on session
       methodBuilder.addStatement(
-          "expectedCqlNames.add($1T.fromCql($2L))", CqlIdentifier.class, expectedCqlName);
+          "$1T keyspaceId = this.keyspaceId != null ? this.keyspaceId : context.getSession().getKeyspace().orElse(null)",
+          CqlIdentifier.class);
+
+      methodBuilder.addStatement("String entityClassName = $S", entityDefinition.getClassName());
+      generateKeyspaceNull(methodBuilder);
+
+      generateKeyspaceNameWrong(methodBuilder);
+
+      methodBuilder.addStatement(
+          "$1T<$2T> keyspace = context.getSession().getMetadata().getKeyspace(keyspaceId)",
+          Optional.class,
+          KeyspaceMetadata.class);
+
+      // Generates expected names to be present in cql (table or udt)
+      List<CodeBlock> expectedCqlNames =
+          entityDefinition.getAllColumns().stream()
+              .map(PropertyDefinition::getCqlName)
+              .collect(Collectors.toList());
+      methodBuilder.addStatement(
+          "$1T<$2T> expectedCqlNames = new $3T<>()",
+          List.class,
+          CqlIdentifier.class,
+          ArrayList.class);
+      for (CodeBlock expectedCqlName : expectedCqlNames) {
+        methodBuilder.addStatement(
+            "expectedCqlNames.add($1T.fromCql($2L))", CqlIdentifier.class, expectedCqlName);
+      }
+
+      methodBuilder.addStatement(
+          "$1T<$2T> tableMetadata = keyspace.flatMap(v -> v.getTable(tableId))",
+          Optional.class,
+          TableMetadata.class);
+
+      // Generated UserDefineTypes metadata
+      methodBuilder.addStatement(
+          "$1T<$2T> userDefinedType = keyspace.flatMap(v -> v.getUserDefinedType(tableId))",
+          Optional.class,
+          UserDefinedType.class);
+
+      generateValidationChecks(methodBuilder, targetElement);
+
+      logMissingMetadata(methodBuilder);
     }
-
-    methodBuilder.addStatement(
-        "$1T<$2T> tableMetadata = keyspace.flatMap(v -> v.getTable(tableId))",
-        Optional.class,
-        TableMetadata.class);
-
-    // Generated UserDefineTypes metadata
-    methodBuilder.addStatement(
-        "$1T<$2T> userDefinedType = keyspace.flatMap(v -> v.getUserDefinedType(tableId))",
-        Optional.class,
-        UserDefinedType.class);
-
-    generateValidationChecks(methodBuilder);
-
-    logMissingMetadata(methodBuilder);
-
     return Optional.of(methodBuilder.build());
   }
 
@@ -159,11 +167,8 @@ public class EntityHelperSchemaValidationMethodGenerator implements MethodGenera
     methodBuilder.endControlFlow();
   }
 
-  private void generateValidationChecks(MethodSpec.Builder methodBuilder) {
-    Optional<TargetElement> targetElement =
-        Optional.ofNullable(entityTypeElement.getAnnotation(SchemaHint.class))
-            .map(SchemaHint::targetElement);
-
+  private void generateValidationChecks(
+      MethodSpec.Builder methodBuilder, Optional<TargetElement> targetElement) {
     // if SchemaHint was not provided explicitly try to match TABLE, then fallback to UDT
     if (!targetElement.isPresent()) {
       validateColumnsInTable(methodBuilder);

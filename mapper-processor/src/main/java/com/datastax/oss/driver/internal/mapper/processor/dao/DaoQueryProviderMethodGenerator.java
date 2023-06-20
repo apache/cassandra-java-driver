@@ -15,10 +15,14 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.UNSUPPORTED;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.values;
+
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import java.util.ArrayList;
@@ -26,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.ExecutableElement;
@@ -44,6 +49,27 @@ public class DaoQueryProviderMethodGenerator extends DaoMethodGenerator {
       DaoImplementationSharedCode enclosingClass,
       ProcessorContext context) {
     super(methodElement, typeParameters, processedType, enclosingClass, context);
+  }
+
+  protected Set<DaoReturnTypeKind> getSupportedReturnTypes() {
+    ImmutableSet.Builder<DaoReturnTypeKind> builder = ImmutableSet.builder();
+    for (DefaultDaoReturnTypeKind value : values()) {
+      if (value != UNSUPPORTED) {
+        builder.add(value);
+      }
+    }
+    return builder.build();
+  }
+
+  @Override
+  public boolean requiresReactive() {
+    // Validate the return type:
+    DaoReturnType returnType =
+        parseAndValidateReturnType(getSupportedReturnTypes(), QueryProvider.class.getSimpleName());
+    if (returnType == null) {
+      return false;
+    }
+    return returnType.requiresReactive();
   }
 
   @Override
@@ -116,7 +142,6 @@ public class DaoQueryProviderMethodGenerator extends DaoMethodGenerator {
                 .getMessager()
                 .error(
                     methodElement,
-                    processedType,
                     "Invalid annotation configuration: the elements in %s.entityHelpers "
                         + "must be %s-annotated classes (offending element: %s)",
                     QueryProvider.class.getSimpleName(),

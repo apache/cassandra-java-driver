@@ -15,48 +15,33 @@
  */
 package com.datastax.oss.driver.api.mapper.annotations;
 
+import com.datastax.oss.driver.api.mapper.MapperBuilder;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This annotation could be used only on a class that is annotated with &#64;Entity annotation. The
- * logic will be applied only, if you are running mapper {@code withSchemaValidationEnabled(true)}.
+ * Annotates an entity to indicate which type of schema element it is supposed to map to. This is
+ * only used to optimize {@linkplain MapperBuilder#withSchemaValidationEnabled(boolean) schema
+ * validation}, it has no impact on query execution.
  *
  * <p>Example:
  *
  * <pre>
  * &#64;Entity
- * &#64;SchemaHint(targetElement = &#64;SchemaHint.TargetElement.TABLE)
+ * &#64;SchemaHint(targetElement = SchemaHint.TargetElement.TABLE)
  * public class Product {
  *   // fields of the entity
  * }
  * </pre>
  *
- * <p>By default, if you will create an &#64;Entity without the &#64;SchemaHint annotation, the
- * following logic will be applied when doing validation:
+ * <p>By default, the mapper first tries to match the entity with a table, and if that doesn't work,
+ * with a UDT. This annotation allows you to provide a hint as to which check should be done, so
+ * that the mapper can skip the other one.
  *
- * <ol>
- *   <li>Check if the given entity is a Table, if it is - validates if all fields of the Entity are
- *       present in the CQL table.
- *   <li>If it is not a table, check if the given entity is a UDT. If this is a case check if all
- *       Entity fields are present in the CQL UDT type.
- *   <li>If there is not information about Table or UDT it means that the given &#64;Entity has no
- *       corresponding CQL definition and error is generated.
- * </ol>
- *
- * <p>If you want the mapper to generate code only to check the path for UDT or Table you can
- * provide the &#64;SchemaHint on the Entity:
- *
- * <ol>
- *   <li>If you will set the {@code targetElement = TABLE}, then only the code path for checking CQL
- *       TABLE will be generated. If there is no corresponding CQL Table, then there is no check of
- *       UDT. The code throws an Exception denoting that CQL Table is missing for this Entity.
- *   <li>If you will set the {@code targetElement = UDT}, then only the code path for checking CQL
- *       UDT will be generated. If there is no corresponding CQL UDT type, the code throws an
- *       Exception denoting that CQL UDT is missing for this Entity.
- * </ol>
+ * <p>In addition, you can ask to completely skip the validation for this entity by using {@link
+ * TargetElement#NONE}.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -65,6 +50,8 @@ public @interface SchemaHint {
 
   enum TargetElement {
     TABLE,
-    UDT
+    UDT,
+    NONE,
+    ;
   }
 }

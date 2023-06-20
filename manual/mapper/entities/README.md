@@ -8,6 +8,7 @@ POJO annotated with [@Entity], must expose a no-arg constructor.
   * [@NamingStrategy]
   * [@CqlName]
   * [@HierarchyScanStrategy]
+  * [@PropertyStrategy]
 * field/method-level annotations:
   * [@PartitionKey], [@ClusteringColumn]
   * [@Computed]
@@ -37,19 +38,105 @@ public class Product {
 }
 ```
 
-Each entity property will be mapped to a CQL column. In order to detect a property:
+Each entity property will be mapped to a CQL column. The way properties are detected is
+configurable, as explained below:
 
-* there **must** be a getter method that follows the usual naming convention (e.g. `getDescription`)
-  and has no parameters. The name of the property is obtained by removing the "get" prefix and
-  decapitalizing (`description`), and the type of the property is the return type of the getter.
-* there **must** be a matching setter method (`setDescription`), with a single parameter that has
-  the same type as the property (the return type does not matter).
+### Property detection
 
-There *may* also be a matching field (`description`) that has the same type as the property, but
-this is not mandatory: a property can have only a getter and a setter (for example if the value is
-computed, or the field has a different name, or is nested into another field, etc.)
+#### Mutability
+
+By default, the mapper expects mutable entity classes:
+
+```java
+@Entity
+public class Product {
+  @PartitionKey private UUID productId;
+
+  public Product() {}
+
+  public UUID getProductId() { return productId; }
+  public void setProductId(UUID productId) { this.productId = productId; }
+}
+```
+
+With mutable entities:
+
+* each entity property:
+  * **must** have a non-void, no-argument getter method.
+  * **must** have a corresponding setter method: matching name, and exactly one argument matching
+    the getter's return type. Note that the return type of the setter does not matter.
+  * *may* have a corresponding field: matching name and type.
+* the type **must** expose a non-private, no-argument constructor.
+
+When the mapper reads a mutable entity from the database, it will invoke the no-argument
+constructor to materialize the instance, and then read and set the properties one by one.
+
+You can switch to an immutable style with the [@PropertyStrategy] annotation:
+
+```java
+@Entity
+@PropertyStrategy(mutable = false)
+public class ImmutableProduct {
+  @PartitionKey private final UUID productId;
+
+  public ImmutableProduct(UUID productId) { this.productId = productId; }
+
+  public UUID getProductId() { return productId; }
+}
+```
+
+With immutable entities:
+
+* each entity property:
+  * **must** have a non-void, no-argument getter method. The mapper will not look for a setter.
+  * *may* have a corresponding field: matching name and type. You'll probably want to make that
+    field final (although that has no impact on the mapper-generated code).
+* the type **must** expose a non-private constructor that takes every
+  non-[transient](#transient-properties) property, in the declaration order.
   
-The class must expose a no-arg constructor that is at least package-private.
+When the mapper reads an immutable entity from the database, it will first read all properties, then
+invoke the "all columns" constructor to materialize the instance.
+
+Note: the "all columns" constructor must take the properties in the order that they are declared in
+the entity. If the entity inherits properties from parent types, those must come last in the
+constructor signature, ordered from the closest parent to the farthest. If things get too
+complicated, a good trick is to deliberately omit the constructor to let the mapper processor fail:
+the error message describes the expected signature.
+
+#### Accessor styles
+
+By default, the mapper looks for JavaBeans-style accessors: getter prefixed with "get" (or "is" for
+boolean properties) and, if the entity is mutable, setter prefixed with "set":
+
+```java
+@Entity
+public class Product {
+  @PartitionKey private UUID productId;
+
+  public UUID getProductId() { return productId; }
+  public void setProductId(UUID productId) { this.productId = productId; }
+}
+```
+
+You can switch to a "fluent" style (no prefixes) with the [@PropertyStrategy] annotation:
+
+```java
+import static com.datastax.oss.driver.api.mapper.entity.naming.GetterStyle;
+import static com.datastax.oss.driver.api.mapper.entity.naming.SetterStyle;
+
+@Entity
+@PropertyStrategy(getterStyle = GetterStyle.FLUENT, setterStyle = SetterStyle.FLUENT)
+public class Product {
+  @PartitionKey private UUID productId;
+
+  public UUID productId() { return productId; }
+  public void productId(UUID productId) { this.productId = productId; }
+}
+```
+
+Note that if you use the fluent style with immutable entities, Java's built-in `hashCode()` and
+`toString()` methods would qualify as properties. The mapper skips them automatically. If you have
+other false positives that you'd like to ignore, mark them as [transient](#transient-properties).
 
 ### Naming strategy
 
@@ -468,21 +555,22 @@ the same level.
 
 To control how the class hierarchy is scanned, annotate classes with [@HierarchyScanStrategy].
 
-[@ClusteringColumn]:    https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
-[@CqlName]:             https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/CqlName.html
-[@Dao]:                 https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/Dao.html
-[@Entity]:              https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/Entity.html
-[NameConverter]:        https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/entity/naming/NameConverter.html
-[NamingConvention]:     https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/entity/naming/NamingConvention.html
-[@NamingStrategy]:      https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/NamingStrategy.html
-[@PartitionKey]:        https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
-[@Computed]:            https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/Computed.html
-[@Select]:              https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/Select.html
-[@Insert]:              https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/Insert.html
-[@Update]:              https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/Update.html
-[@GetEntity]:           https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/GetEntity.html
-[@Query]:               https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/Query.html
+[@ClusteringColumn]:    https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
+[@CqlName]:             https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/CqlName.html
+[@Dao]:                 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Dao.html
+[@Entity]:              https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Entity.html
+[NameConverter]:        https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/entity/naming/NameConverter.html
+[NamingConvention]:     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/entity/naming/NamingConvention.html
+[@NamingStrategy]:      https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/NamingStrategy.html
+[@PartitionKey]:        https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
+[@Computed]:            https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Computed.html
+[@Select]:              https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Select.html
+[@Insert]:              https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Insert.html
+[@Update]:              https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Update.html
+[@GetEntity]:           https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/GetEntity.html
+[@Query]:               https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Query.html
 [aliases]:              http://cassandra.apache.org/doc/latest/cql/dml.html?#aliases
-[@Transient]:           https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/Transient.html
-[@TransientProperties]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/TransientProperties.html
-[@HierarchyScanStrategy]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/HierarchyScanStrategy.html
+[@Transient]:           https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Transient.html
+[@TransientProperties]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/TransientProperties.html
+[@HierarchyScanStrategy]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/HierarchyScanStrategy.html
+[@PropertyStrategy]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/PropertyStrategy.html

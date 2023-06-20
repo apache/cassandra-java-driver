@@ -41,6 +41,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -65,7 +66,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
@@ -90,7 +90,7 @@ public class InsightsClient {
   static final String DEFAULT_JAVA_APPLICATION = "Default Java Application";
 
   private final ControlConnection controlConnection;
-  private final String id = UUID.randomUUID().toString();
+  private final String id = Uuids.random().toString();
   private final InsightsConfiguration insightsConfiguration;
   private final AtomicInteger numberOfStatusEventErrors = new AtomicInteger();
 

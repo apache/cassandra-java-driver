@@ -23,6 +23,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.zip.CRC32;
 import org.apache.tinkerpop.gremlin.structure.io.Buffer;
 
 /**
@@ -88,6 +89,16 @@ public class TinkerpopBufferPrimitiveCodec implements PrimitiveCodec<Buffer> {
   }
 
   @Override
+  public void markReaderIndex(Buffer source) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void resetReaderIndex(Buffer source) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public byte readByte(Buffer source) {
     return source.readByte();
   }
@@ -95,6 +106,11 @@ public class TinkerpopBufferPrimitiveCodec implements PrimitiveCodec<Buffer> {
   @Override
   public int readInt(Buffer source) {
     return source.readInt();
+  }
+
+  @Override
+  public int readInt(Buffer source, int offset) {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -146,6 +162,16 @@ public class TinkerpopBufferPrimitiveCodec implements PrimitiveCodec<Buffer> {
   public String readLongString(Buffer source) {
     int length = readInt(source);
     return readString(source, length);
+  }
+
+  @Override
+  public Buffer readRetainedSlice(Buffer source, int sliceLength) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void updateCrc(Buffer source, CRC32 crc) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

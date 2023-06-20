@@ -18,6 +18,7 @@ package com.datastax.oss.driver.core.cql;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
@@ -35,10 +36,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
@@ -53,8 +52,6 @@ public class SimpleStatementSimulacronIT {
 
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(SIMULACRON_RULE).around(SESSION_RULE);
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Before
   public void clearPrimes() {
@@ -95,9 +92,10 @@ public class SimpleStatementSimulacronIT {
             .setConsistencyLevel(DefaultConsistencyLevel.ONE)
             .build();
 
-    thrown.expect(DriverTimeoutException.class);
-    thrown.expectMessage("Query timed out after PT1S");
+    Throwable t = catchThrowable(() -> SESSION_RULE.session().execute(st));
 
-    SESSION_RULE.session().execute(st);
+    assertThat(t)
+        .isInstanceOf(DriverTimeoutException.class)
+        .hasMessage("Query timed out after PT1S");
   }
 }

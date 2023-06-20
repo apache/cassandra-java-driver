@@ -16,15 +16,12 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.net.InetSocketAddress;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class DefaultEndPointTest {
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void should_create_from_host_name() {
@@ -54,9 +51,8 @@ public class DefaultEndPointTest {
 
   @Test
   public void should_reject_null_address() {
-    thrown.expect(NullPointerException.class);
-    thrown.expectMessage("address can't be null");
-
-    new DefaultEndPoint(null);
+    assertThatThrownBy(() -> new DefaultEndPoint(null))
+        .isInstanceOf(NullPointerException.class)
+        .hasMessage("address can't be null");
   }
 }

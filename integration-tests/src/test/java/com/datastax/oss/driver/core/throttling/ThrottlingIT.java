@@ -15,26 +15,30 @@
  */
 package com.datastax.oss.driver.core.throttling;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.session.throttling.ConcurrencyLimitingRequestThrottler;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.stubbing.PrimeDsl;
 import java.util.concurrent.TimeUnit;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.experimental.categories.Category;
 
+@Category(ParallelizableTests.class)
 public class ThrottlingIT {
 
   private static final String QUERY = "select * from foo";
 
   @Rule public SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(1));
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void should_reject_request_when_throttling_by_concurrency() {
@@ -66,12 +70,13 @@ public class ThrottlingIT {
       }
 
       // The next query should be rejected
-      thrown.expect(RequestThrottlingException.class);
-      thrown.expectMessage(
-          "The session has reached its maximum capacity "
-              + "(concurrent requests: 10, queue size: 10)");
+      Throwable t = catchThrowable(() -> session.execute(QUERY));
 
-      session.execute(QUERY);
+      assertThat(t)
+          .isInstanceOf(RequestThrottlingException.class)
+          .hasMessage(
+              "The session has reached its maximum capacity "
+                  + "(concurrent requests: 10, queue size: 10)");
     }
   }
 }

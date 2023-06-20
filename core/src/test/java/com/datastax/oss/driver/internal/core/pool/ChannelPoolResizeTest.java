@@ -125,7 +125,7 @@ public class ChannelPoolResizeTest extends ChannelPoolTestBase {
 
     factoryHelper.waitForCalls(node, 2);
 
-    // Pool should have shrinked back to 2. We keep the most recent channels so 1 and 2 get closed.
+    // Pool should have shrunk back to 2. We keep the most recent channels so 1 and 2 get closed.
     inOrder.verify(eventBus, VERIFY_TIMEOUT.times(2)).fire(ChannelEvent.channelOpened(node));
     inOrder.verify(eventBus, VERIFY_TIMEOUT.times(2)).fire(ChannelEvent.channelClosed(node));
     inOrder.verify(eventBus, VERIFY_TIMEOUT).fire(ChannelEvent.reconnectionStopped(node));

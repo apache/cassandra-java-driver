@@ -34,7 +34,7 @@ class StreamIdGenerator {
   private final int maxAvailableIds;
   // unset = available, set = borrowed (note that this is the opposite of the 3.x implementation)
   private final BitSet ids;
-  private AtomicInteger availableIds;
+  private final AtomicInteger availableIds;
 
   StreamIdGenerator(int maxAvailableIds) {
     this.maxAvailableIds = maxAvailableIds;

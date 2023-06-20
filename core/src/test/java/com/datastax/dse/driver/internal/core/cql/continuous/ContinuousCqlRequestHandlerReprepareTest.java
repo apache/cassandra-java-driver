@@ -18,6 +18,7 @@ package com.datastax.dse.driver.internal.core.cql.continuous;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static com.datastax.oss.protocol.internal.Frame.NO_PAYLOAD;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -91,7 +92,7 @@ public class ContinuousCqlRequestHandlerReprepareTest extends ContinuousCqlReque
       when(harness.getChannel(node1).write(any(Prepare.class), anyBoolean(), anyMap(), any()))
           .then(
               invocation -> {
-                AdminRequestHandler admin = invocation.getArgument(3);
+                AdminRequestHandler<?> admin = invocation.getArgument(3);
                 admin.onResponse(defaultFrameOf(prepared));
                 return future;
               });
@@ -121,7 +122,7 @@ public class ContinuousCqlRequestHandlerReprepareTest extends ContinuousCqlReque
       when(harness.getChannel(node1).write(any(Prepare.class), anyBoolean(), anyMap(), any()))
           .then(
               invocation -> {
-                AdminRequestHandler admin = invocation.getArgument(3);
+                AdminRequestHandler<?> admin = invocation.getArgument(3);
                 admin.onResponse(defaultFrameOf(unrecoverable));
                 return future;
               });
@@ -135,10 +136,9 @@ public class ContinuousCqlRequestHandlerReprepareTest extends ContinuousCqlReque
       verify(harness.getChannel(node1)).write(any(Prepare.class), anyBoolean(), anyMap(), any());
 
       assertThat(handler.getState()).isEqualTo(-2);
-      assertThat(page1Future)
-          .hasFailedWithThrowableThat()
-          .isInstanceOf(SyntaxError.class)
-          .hasMessageContaining("bad query");
+      assertThat(page1Future).isCompletedExceptionally();
+      Throwable t = catchThrowable(() -> page1Future.toCompletableFuture().get());
+      assertThat(t).hasRootCauseInstanceOf(SyntaxError.class).hasMessageContaining("bad query");
     }
   }
 
@@ -158,7 +158,7 @@ public class ContinuousCqlRequestHandlerReprepareTest extends ContinuousCqlReque
       when(harness.getChannel(node1).write(any(Prepare.class), anyBoolean(), anyMap(), any()))
           .then(
               invocation -> {
-                AdminRequestHandler admin = invocation.getArgument(3);
+                AdminRequestHandler<?> admin = invocation.getArgument(3);
                 admin.onResponse(defaultFrameOf(recoverable));
                 return future;
               });

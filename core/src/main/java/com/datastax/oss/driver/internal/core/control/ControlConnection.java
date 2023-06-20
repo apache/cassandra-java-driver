@@ -306,9 +306,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
         connect(
             nodes,
             null,
-            () -> {
-              initFuture.complete(null);
-            },
+            () -> initFuture.complete(null),
             error -> {
               if (isAuthFailure(error)) {
                 LOG.warn(

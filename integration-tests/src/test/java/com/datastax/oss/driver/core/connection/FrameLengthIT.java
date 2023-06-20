@@ -29,7 +29,7 @@ import com.datastax.oss.driver.api.core.connection.FrameTooLongException;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.retry.RetryDecision;
+import com.datastax.oss.driver.api.core.retry.RetryVerdict;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -122,9 +122,9 @@ public class FrameLengthIT {
     }
 
     @Override
-    public RetryDecision onRequestAborted(
+    public RetryVerdict onRequestAbortedVerdict(
         @NonNull Request request, @NonNull Throwable error, int retryCount) {
-      return RetryDecision.RETRY_NEXT;
+      return RetryVerdict.RETRY_NEXT;
     }
   }
 }

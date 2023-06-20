@@ -145,4 +145,34 @@ public class ReactiveResultSetSubscriptionTest {
     assertThat(wasAppliedSubscriber.getElements()).hasSize(1).containsExactly(true);
     assertThat(wasAppliedSubscriber.getError()).isNull();
   }
+
+  @Test
+  public void should_handle_empty_non_final_pages() {
+    CompletableFuture<AsyncResultSet> future1 = new CompletableFuture<>();
+    CompletableFuture<AsyncResultSet> future2 = new CompletableFuture<>();
+    CompletableFuture<AsyncResultSet> future3 = new CompletableFuture<>();
+    MockAsyncResultSet page1 = new MockAsyncResultSet(10, future2);
+    MockAsyncResultSet page2 = new MockAsyncResultSet(0, future3);
+    MockAsyncResultSet page3 = new MockAsyncResultSet(10, null);
+    TestSubscriber<ReactiveRow> mainSubscriber = new TestSubscriber<>(1);
+    TestSubscriber<ColumnDefinitions> colDefsSubscriber = new TestSubscriber<>();
+    TestSubscriber<ExecutionInfo> execInfosSubscriber = new TestSubscriber<>();
+    TestSubscriber<Boolean> wasAppliedSubscriber = new TestSubscriber<>();
+    ReactiveResultSetSubscription<AsyncResultSet> subscription =
+        new ReactiveResultSetSubscription<>(
+            mainSubscriber, colDefsSubscriber, execInfosSubscriber, wasAppliedSubscriber);
+    mainSubscriber.onSubscribe(subscription);
+    subscription.start(() -> future1);
+    future1.complete(page1);
+    future2.complete(page2);
+    // emulate backpressure
+    subscription.request(1);
+    future3.complete(page3);
+    subscription.request(Long.MAX_VALUE);
+    mainSubscriber.awaitTermination();
+    assertThat(mainSubscriber.getError()).isNull();
+    List<Row> expected = new ArrayList<>(page1.currentPage());
+    expected.addAll(page3.currentPage());
+    assertThat(mainSubscriber.getElements()).hasSize(20).extracting("row").isEqualTo(expected);
+  }
 }

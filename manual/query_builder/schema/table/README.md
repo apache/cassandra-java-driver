@@ -31,12 +31,12 @@ CreateTable create = createTable("cycling", "cyclist_name").withPartitionKey("id
 A table with only one column is not so typical however.  At this point you may provide partition,
 clustering, regular and static columns using any of the following API methods:
 
-* `withPrimaryKey(name, dataType)`
+* `withPartitionKey(name, dataType)`
 * `withClusteringColumn(name, dataType)`
 * `withColumn(name, dataType)`
 * `withStaticColumn(name, dataType)`
 
-Primary key precedence is driven by the order of `withPrimaryKey` and `withClusteringKey`
+Primary key precedence is driven by the order of `withPartitionKey` and `withClusteringKey`
 invocations, for example:
 
 
@@ -107,6 +107,6 @@ dropTable("cyclist_name").ifExists();
 // DROP TABLE IF EXISTS cyclist_name
 ```
 
-[SchemaBuilder]:          https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
-[CreateTableWithOptions]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/querybuilder/schema/CreateTableWithOptions.html
-[AlterTableWithOptions]:  https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/querybuilder/schema/AlterTableWithOptions.html
+[SchemaBuilder]:          https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
+[CreateTableWithOptions]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/schema/CreateTableWithOptions.html
+[AlterTableWithOptions]:  https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/schema/AlterTableWithOptions.html

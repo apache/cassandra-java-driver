@@ -197,6 +197,15 @@ public interface GettableById extends GettableByIndex, AccessibleById {
   }
 
   /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #getBoolean(CqlIdentifier)}.
+   */
+  @Deprecated
+  default boolean getBool(@NonNull CqlIdentifier id) {
+    return getBoolean(id);
+  }
+
+  /**
    * Returns the value for the first occurrence of {@code id} as a Java primitive byte.
    *
    * <p>By default, this works with CQL type {@code tinyint}.

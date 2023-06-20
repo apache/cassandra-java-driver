@@ -18,13 +18,15 @@ package com.datastax.oss.driver.core.auth;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.api.core.auth.AuthProvider;
+import com.datastax.oss.driver.api.core.auth.ProgrammaticPlainTextAuthProvider;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
-import com.google.common.util.concurrent.Uninterruptibles;
+import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import java.util.concurrent.TimeUnit;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -63,10 +65,30 @@ public class PlainTextAuthProviderIT {
   @Test
   public void should_connect_with_programmatic_credentials() {
 
-    SessionBuilder builder =
+    SessionBuilder<?, ?> builder =
         SessionUtils.baseBuilder()
             .addContactEndPoints(CCM_RULE.getContactPoints())
             .withAuthCredentials("cassandra", "cassandra");
+
+    try (CqlSession session = (CqlSession) builder.build()) {
+      session.execute("select * from system.local");
+    }
+  }
+
+  @Test
+  public void should_connect_with_programmatic_provider() {
+
+    AuthProvider authProvider = new ProgrammaticPlainTextAuthProvider("cassandra", "cassandra");
+    SessionBuilder<?, ?> builder =
+        SessionUtils.baseBuilder()
+            .addContactEndPoints(CCM_RULE.getContactPoints())
+            // Open more than one connection in order to validate that the provider is creating
+            // valid Credentials for every invocation of PlainTextAuthProviderBase.getCredentials.
+            .withConfigLoader(
+                SessionUtils.configLoaderBuilder()
+                    .withInt(DefaultDriverOption.CONNECTION_POOL_LOCAL_SIZE, 4)
+                    .build())
+            .withAuthProvider(authProvider);
 
     try (CqlSession session = (CqlSession) builder.build()) {
       session.execute("select * from system.local");
@@ -82,6 +104,32 @@ public class PlainTextAuthProviderIT {
             .withString(DefaultDriverOption.AUTH_PROVIDER_PASSWORD, "badpass")
             .build();
     try (CqlSession session = SessionUtils.newSession(CCM_RULE, loader)) {
+      session.execute("select * from system.local");
+    }
+  }
+
+  @Test(expected = AllNodesFailedException.class)
+  public void should_not_connect_with_invalid_programmatic_credentials() {
+    SessionBuilder<?, ?> builder =
+        SessionUtils.baseBuilder()
+            .addContactEndPoints(CCM_RULE.getContactPoints())
+            .withAuthCredentials("baduser", "badpass");
+
+    try (CqlSession session = (CqlSession) builder.build()) {
+      session.execute("select * from system.local");
+    }
+  }
+
+  @Test(expected = AllNodesFailedException.class)
+  public void should_not_connect_with_invalid_programmatic_provider() {
+
+    AuthProvider authProvider = new ProgrammaticPlainTextAuthProvider("baduser", "badpass");
+    SessionBuilder<?, ?> builder =
+        SessionUtils.baseBuilder()
+            .addContactEndPoints(CCM_RULE.getContactPoints())
+            .withAuthProvider(authProvider);
+
+    try (CqlSession session = (CqlSession) builder.build()) {
       session.execute("select * from system.local");
     }
   }

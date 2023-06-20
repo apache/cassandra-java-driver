@@ -15,15 +15,23 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import static com.google.testing.compile.CompilationSubject.assertThat;
+
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
+import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Delete;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.testing.compile.Compilation;
 import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeSpec;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import javax.lang.model.element.Modifier;
 import org.junit.Test;
@@ -162,5 +170,33 @@ public class DaoDeleteMethodGeneratorTest extends DaoMethodGeneratorTest {
             .addParameter(String.class, "description")
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .build());
+  }
+
+  @Test
+  public void should_not_fail_on_unsupported_result_when_custom_results_enabled() {
+
+    MethodSpec methodSpec =
+        MethodSpec.methodBuilder("delete")
+            .addAnnotation(Delete.class)
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .addParameter(ENTITY_CLASS_NAME, "entity")
+            .returns(Integer.class) // not a built-in return type
+            .build();
+    TypeSpec daoSpec =
+        TypeSpec.interfaceBuilder(ClassName.get("test", "ProductDao"))
+            .addModifiers(Modifier.PUBLIC)
+            .addAnnotation(Dao.class)
+            .addMethod(methodSpec)
+            .build();
+
+    for (List<String> compilerOptions :
+        ImmutableList.of(
+            ImmutableList.of("-Acom.datastax.oss.driver.mapper.customResults.enabled=true"),
+            // The option defaults to true, so it should also work without explicit options:
+            Collections.<String>emptyList())) {
+      Compilation compilation =
+          compileWithMapperProcessor("test", compilerOptions, ENTITY_SPEC, daoSpec);
+      assertThat(compilation).succeededWithoutWarnings();
+    }
   }
 }

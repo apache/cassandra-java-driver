@@ -17,23 +17,13 @@ package com.datastax.oss.driver.internal.core.loadbalancing;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.api.core.config.DriverExecutionProfile.DEFAULT_NAME;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.reset;
 
-import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.UUID;
-import org.junit.Before;
 
 public class DcInferringLoadBalancingPolicyEventsTest extends BasicLoadBalancingPolicyEventsTest {
-
-  @Override
-  @Before
-  public void setup() {
-    given(context.getRequestTracker()).willReturn(new MultiplexingRequestTracker());
-    super.setup();
-  }
 
   @Override
   @NonNull
@@ -42,7 +32,7 @@ public class DcInferringLoadBalancingPolicyEventsTest extends BasicLoadBalancing
         new DcInferringLoadBalancingPolicy(context, DEFAULT_NAME);
     policy.init(
         ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2), distanceReporter);
-    assertThat(policy.getLiveNodes()).containsOnly(node1, node2);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsOnly(node1, node2);
     reset(distanceReporter);
     return policy;
   }

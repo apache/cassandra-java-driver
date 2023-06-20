@@ -29,6 +29,8 @@ public interface ConsistencyLevelRegistry {
 
   int nameToCode(String name);
 
+  ConsistencyLevel nameToLevel(String name);
+
   /** @return all the values known to this driver instance. */
   Iterable<ConsistencyLevel> getValues();
 }

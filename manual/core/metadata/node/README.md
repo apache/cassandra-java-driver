@@ -7,7 +7,7 @@ actively connected).
 
 * [Node] instances are mutable, the fields will update in real time.
 * getting notifications:
-  [CqlSession.builder().withNodeStateListener][SessionBuilder.withNodeStateListener].
+  [CqlSession.builder().addNodeStateListener][SessionBuilder.addNodeStateListener].
 
 -----
 
@@ -59,8 +59,10 @@ Object rawDseVersion = node.getExtras().get(DseNodeProperties.DSE_VERSION);
 Version dseVersion = (rawDseVersion == null) ? null : (Version) rawDseVersion;
 ```
 
+### Notifications
+
 If you need to follow node state changes, you don't need to poll the metadata manually; instead,
-you can register a listener to get notified when changes occur:
+you can register one or more listeners to get notified when changes occur:
 
 ```java
 NodeStateListener listener =
@@ -71,12 +73,27 @@ NodeStateListener listener =
       }
     };
 CqlSession session = CqlSession.builder()
-    .withNodeStateListener(listener)
+    .addNodeStateListener(listener)
     .build();
 ``` 
 
 See [NodeStateListener] for the list of available methods. [NodeStateListenerBase] is a
 convenience implementation with empty methods, for when you only need to override a few of them.
+
+It is also possible to register one or more listeners via the configuration:
+
+```hocon
+datastax-java-driver {
+  advanced {
+    node-state-listener.classes = [com.example.app.MyNodeStateListener1,com.example.app.MyNodeStateListener2]
+  }
+}
+```
+
+Listeners registered via configuration will be instantiated with reflection; they must have a public
+constructor taking a `DriverContext` argument.
+
+The two registration methods (programmatic and via the configuration) can be used simultaneously.
 
 ### Advanced topics
 
@@ -112,17 +129,17 @@ beyond the scope of this document; if you're interested, study the `TopologyMoni
 the source code.
 
 
-[Metadata#getNodes]:         https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/metadata/Metadata.html#getNodes--
-[Node]:                      https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/metadata/Node.html
-[Node#getState()]:           https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/metadata/Node.html#getState--
-[Node#getDatacenter()]:      https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/metadata/Node.html#getDatacenter--
-[Node#getRack()]:            https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/metadata/Node.html#getRack--
-[Node#getDistance()]:        https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/metadata/Node.html#getDistance--
-[Node#getExtras()]:          https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/metadata/Node.html#getExtras--
-[Node#getOpenConnections()]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/metadata/Node.html#getOpenConnections--
-[Node#isReconnecting()]:     https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/metadata/Node.html#isReconnecting--
-[NodeState]:                 https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/metadata/NodeState.html
-[NodeStateListener]:         https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/metadata/NodeStateListener.html
-[NodeStateListenerBase]:     https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/metadata/NodeStateListenerBase.html
-[SessionBuilder.withNodeStateListener]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withNodeStateListener-com.datastax.oss.driver.api.core.metadata.NodeStateListener-
-[DseNodeProperties]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/dse/driver/api/core/metadata/DseNodeProperties.html
+[Metadata#getNodes]:         https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/Metadata.html#getNodes--
+[Node]:                      https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/Node.html
+[Node#getState()]:           https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/Node.html#getState--
+[Node#getDatacenter()]:      https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/Node.html#getDatacenter--
+[Node#getRack()]:            https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/Node.html#getRack--
+[Node#getDistance()]:        https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/Node.html#getDistance--
+[Node#getExtras()]:          https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/Node.html#getExtras--
+[Node#getOpenConnections()]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/Node.html#getOpenConnections--
+[Node#isReconnecting()]:     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/Node.html#isReconnecting--
+[NodeState]:                 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/NodeState.html
+[NodeStateListener]:         https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/NodeStateListener.html
+[NodeStateListenerBase]:     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/NodeStateListenerBase.html
+[SessionBuilder.addNodeStateListener]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addNodeStateListener-com.datastax.oss.driver.api.core.metadata.NodeStateListener-
+[DseNodeProperties]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/metadata/DseNodeProperties.html

@@ -15,11 +15,15 @@
  */
 package com.datastax.oss.driver.internal.core.loadbalancing;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
@@ -27,24 +31,30 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.loadbalancing.helper.DefaultNodeFilterHelper;
+import com.datastax.oss.driver.internal.core.loadbalancing.helper.DefaultNodeDistanceEvaluatorHelper;
 import com.datastax.oss.driver.internal.core.loadbalancing.helper.OptionalLocalDcHelper;
+import com.datastax.oss.driver.internal.core.loadbalancing.nodeset.DcAgnosticNodeSet;
+import com.datastax.oss.driver.internal.core.loadbalancing.nodeset.MultiDcNodeSet;
+import com.datastax.oss.driver.internal.core.loadbalancing.nodeset.NodeSet;
+import com.datastax.oss.driver.internal.core.loadbalancing.nodeset.SingleDcNodeSet;
 import com.datastax.oss.driver.internal.core.util.ArrayUtils;
+import com.datastax.oss.driver.internal.core.util.collection.CompositeQueryPlan;
+import com.datastax.oss.driver.internal.core.util.collection.LazyQueryPlan;
 import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import com.datastax.oss.driver.internal.core.util.collection.SimpleQueryPlan;
+import com.datastax.oss.driver.shaded.guava.common.base.Predicates;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntUnaryOperator;
-import java.util.function.Predicate;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,54 +98,77 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   private static final Logger LOG = LoggerFactory.getLogger(BasicLoadBalancingPolicy.class);
 
   protected static final IntUnaryOperator INCREMENT = i -> (i == Integer.MAX_VALUE) ? 0 : i + 1;
+  private static final Object[] EMPTY_NODES = new Object[0];
 
   @NonNull protected final InternalDriverContext context;
   @NonNull protected final DriverExecutionProfile profile;
   @NonNull protected final String logPrefix;
 
   protected final AtomicInteger roundRobinAmount = new AtomicInteger();
-  protected final CopyOnWriteArraySet<Node> liveNodes = new CopyOnWriteArraySet<>();
+
+  private final int maxNodesPerRemoteDc;
+  private final boolean allowDcFailoverForLocalCl;
+  private final ConsistencyLevel defaultConsistencyLevel;
 
   // private because they should be set in init() and never be modified after
   private volatile DistanceReporter distanceReporter;
-  private volatile Predicate<Node> filter;
+  private volatile NodeDistanceEvaluator nodeDistanceEvaluator;
   private volatile String localDc;
+  private volatile NodeSet liveNodes;
 
   public BasicLoadBalancingPolicy(@NonNull DriverContext context, @NonNull String profileName) {
     this.context = (InternalDriverContext) context;
     profile = context.getConfig().getProfile(profileName);
     logPrefix = context.getSessionName() + "|" + profileName;
-  }
-
-  /** @return The local datacenter, if known; empty otherwise. */
-  public Optional<String> getLocalDatacenter() {
-    return Optional.ofNullable(localDc);
+    maxNodesPerRemoteDc =
+        profile.getInt(DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_MAX_NODES_PER_REMOTE_DC);
+    allowDcFailoverForLocalCl =
+        profile.getBoolean(
+            DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_ALLOW_FOR_LOCAL_CONSISTENCY_LEVELS);
+    defaultConsistencyLevel =
+        this.context
+            .getConsistencyLevelRegistry()
+            .nameToLevel(profile.getString(DefaultDriverOption.REQUEST_CONSISTENCY));
   }
 
   /**
-   * @return An immutable copy of the nodes currently considered as live; if the local datacenter is
-   *     known, this set will contain only nodes belonging to that datacenter.
+   * Returns the local datacenter name, if known; empty otherwise.
+   *
+   * <p>When this method returns null, then datacenter awareness is completely disabled. All
+   * non-ignored nodes will be considered "local" regardless of their actual datacenters, and will
+   * have equal chances of being selected for query plans.
+   *
+   * <p>After the policy is {@linkplain #init(Map, DistanceReporter) initialized} this method will
+   * return the local datacenter that was discovered by calling {@link #discoverLocalDc(Map)}.
+   * Before initialization, this method always returns null.
    */
-  public Set<Node> getLiveNodes() {
-    return ImmutableSet.copyOf(liveNodes);
+  @Nullable
+  protected String getLocalDatacenter() {
+    return localDc;
+  }
+
+  /** @return The nodes currently considered as live. */
+  protected NodeSet getLiveNodes() {
+    return liveNodes;
   }
 
   @Override
   public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
     this.distanceReporter = distanceReporter;
     localDc = discoverLocalDc(nodes).orElse(null);
-    filter = createNodeFilter(localDc, nodes);
+    nodeDistanceEvaluator = createNodeDistanceEvaluator(localDc, nodes);
+    liveNodes =
+        localDc == null
+            ? new DcAgnosticNodeSet()
+            : maxNodesPerRemoteDc <= 0 ? new SingleDcNodeSet(localDc) : new MultiDcNodeSet();
     for (Node node : nodes.values()) {
-      if (filter.test(node)) {
-        distanceReporter.setDistance(node, NodeDistance.LOCAL);
-        if (node.getState() != NodeState.DOWN) {
-          // This includes state == UNKNOWN. If the node turns out to be unreachable, this will be
-          // detected when we try to open a pool to it, it will get marked down and this will be
-          // signaled back to this policy
-          liveNodes.add(node);
-        }
-      } else {
-        distanceReporter.setDistance(node, NodeDistance.IGNORED);
+      NodeDistance distance = computeNodeDistance(node);
+      distanceReporter.setDistance(node, distance);
+      if (distance != NodeDistance.IGNORED && node.getState() != NodeState.DOWN) {
+        // This includes state == UNKNOWN. If the node turns out to be unreachable, this will be
+        // detected when we try to open a pool to it, it will get marked down and this will be
+        // signaled back to this policy, which will then remove it from the live set.
+        liveNodes.add(node);
       }
     }
   }
@@ -151,6 +184,10 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
    * Optional#empty empty}, if they require a local datacenter to be defined in order to operate
    * properly.
    *
+   * <p>If this method returns empty, then datacenter awareness will be completely disabled. All
+   * non-ignored nodes will be considered "local" regardless of their actual datacenters, and will
+   * have equal chances of being selected for query plans.
+   *
    * @param nodes All the nodes that were known to exist in the cluster (regardless of their state)
    *     when the load balancing policy was initialized. This argument is provided in case
    *     implementors need to inspect the cluster topology to discover the local datacenter.
@@ -164,7 +201,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   }
 
   /**
-   * Creates a new node filter to use with this policy.
+   * Creates a new node distance evaluator to use with this policy.
    *
    * <p>This method is called only once, during {@linkplain LoadBalancingPolicy#init(Map,
    * LoadBalancingPolicy.DistanceReporter) initialization}, and only after local datacenter
@@ -173,21 +210,21 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
    * @param localDc The local datacenter that was just discovered, or null if none found.
    * @param nodes All the nodes that were known to exist in the cluster (regardless of their state)
    *     when the load balancing policy was initialized. This argument is provided in case
-   *     implementors need to inspect the cluster topology to create the node filter.
-   * @return the node filter to use.
+   *     implementors need to inspect the cluster topology to create the evaluator.
+   * @return the distance evaluator to use.
    */
   @NonNull
-  protected Predicate<Node> createNodeFilter(
+  protected NodeDistanceEvaluator createNodeDistanceEvaluator(
       @Nullable String localDc, @NonNull Map<UUID, Node> nodes) {
-    return new DefaultNodeFilterHelper(context, profile, logPrefix)
-        .createNodeFilter(localDc, nodes);
+    return new DefaultNodeDistanceEvaluatorHelper(context, profile, logPrefix)
+        .createNodeDistanceEvaluator(localDc, nodes);
   }
 
   @NonNull
   @Override
   public Queue<Node> newQueryPlan(@Nullable Request request, @Nullable Session session) {
     // Take a snapshot since the set is concurrent:
-    Object[] currentNodes = liveNodes.toArray();
+    Object[] currentNodes = liveNodes.dc(localDc).toArray();
 
     Set<Node> allReplicas = getReplicas(request, session);
     int replicaCount = 0; // in currentNodes
@@ -216,7 +253,8 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
         currentNodes.length - replicaCount,
         roundRobinAmount.getAndUpdate(INCREMENT));
 
-    return new QueryPlan(currentNodes);
+    QueryPlan plan = currentNodes.length == 0 ? QueryPlan.EMPTY : new SimpleQueryPlan(currentNodes);
+    return maybeAddDcFailover(request, plan);
   }
 
   @NonNull
@@ -233,9 +271,9 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
     // Note: we're on the hot path and the getXxx methods are potentially more than simple getters,
     // so we only call each method when strictly necessary (which is why the code below looks a bit
     // weird).
-    CqlIdentifier keyspace = null;
-    Token token = null;
-    ByteBuffer key = null;
+    CqlIdentifier keyspace;
+    Token token;
+    ByteBuffer key;
     try {
       keyspace = request.getKeyspace();
       if (keyspace == null) {
@@ -265,34 +303,67 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
         : tokenMap.getReplicas(keyspace, key);
   }
 
+  @NonNull
+  protected Queue<Node> maybeAddDcFailover(@Nullable Request request, @NonNull Queue<Node> local) {
+    if (maxNodesPerRemoteDc <= 0 || localDc == null) {
+      return local;
+    }
+    if (!allowDcFailoverForLocalCl && request instanceof Statement) {
+      Statement<?> statement = (Statement<?>) request;
+      ConsistencyLevel consistency = statement.getConsistencyLevel();
+      if (consistency == null) {
+        consistency = defaultConsistencyLevel;
+      }
+      if (consistency.isDcLocal()) {
+        return local;
+      }
+    }
+    QueryPlan remote =
+        new LazyQueryPlan() {
+
+          @Override
+          protected Object[] computeNodes() {
+            Object[] remoteNodes =
+                liveNodes.dcs().stream()
+                    .filter(Predicates.not(Predicates.equalTo(localDc)))
+                    .flatMap(dc -> liveNodes.dc(dc).stream().limit(maxNodesPerRemoteDc))
+                    .toArray();
+
+            int remoteNodesLength = remoteNodes.length;
+            if (remoteNodesLength == 0) {
+              return EMPTY_NODES;
+            }
+            shuffleHead(remoteNodes, remoteNodesLength);
+            return remoteNodes;
+          }
+        };
+
+    return new CompositeQueryPlan(local, remote);
+  }
+
   /** Exposed as a protected method so that it can be accessed by tests */
-  protected void shuffleHead(Object[] currentNodes, int replicaCount) {
-    ArrayUtils.shuffleHead(currentNodes, replicaCount);
+  protected void shuffleHead(Object[] currentNodes, int headLength) {
+    ArrayUtils.shuffleHead(currentNodes, headLength);
   }
 
   @Override
   public void onAdd(@NonNull Node node) {
-    if (filter.test(node)) {
-      LOG.debug("[{}] {} was added, setting distance to LOCAL", logPrefix, node);
-      // Setting to a non-ignored distance triggers the session to open a pool, which will in turn
-      // set the node UP when the first channel gets opened.
-      distanceReporter.setDistance(node, NodeDistance.LOCAL);
-    } else {
-      distanceReporter.setDistance(node, NodeDistance.IGNORED);
-    }
+    NodeDistance distance = computeNodeDistance(node);
+    // Setting to a non-ignored distance triggers the session to open a pool, which will in turn
+    // set the node UP when the first channel gets opened, then #onUp will be called, and the
+    // node will be eventually added to the live set.
+    distanceReporter.setDistance(node, distance);
+    LOG.debug("[{}] {} was added, setting distance to {}", logPrefix, node, distance);
   }
 
   @Override
   public void onUp(@NonNull Node node) {
-    if (filter.test(node)) {
-      // Normally this is already the case, but the filter could be dynamic and have ignored the
-      // node previously.
-      distanceReporter.setDistance(node, NodeDistance.LOCAL);
-      if (liveNodes.add(node)) {
-        LOG.debug("[{}] {} came back UP, added to live set", logPrefix, node);
-      }
-    } else {
-      distanceReporter.setDistance(node, NodeDistance.IGNORED);
+    NodeDistance distance = computeNodeDistance(node);
+    if (node.getDistance() != distance) {
+      distanceReporter.setDistance(node, distance);
+    }
+    if (distance != NodeDistance.IGNORED && liveNodes.add(node)) {
+      LOG.debug("[{}] {} came back UP, added to live set", logPrefix, node);
     }
   }
 
@@ -308,6 +379,43 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
     if (liveNodes.remove(node)) {
       LOG.debug("[{}] {} was removed, removed from live set", logPrefix, node);
     }
+  }
+
+  /**
+   * Computes the distance of the given node.
+   *
+   * <p>This method is called during {@linkplain #init(Map, DistanceReporter) initialization}, when
+   * a node {@linkplain #onAdd(Node) is added}, and when a node {@linkplain #onUp(Node) is back UP}.
+   */
+  protected NodeDistance computeNodeDistance(@NonNull Node node) {
+    // We interrogate the custom evaluator every time since it could be dynamic
+    // and change its verdict between two invocations of this method.
+    NodeDistance distance = nodeDistanceEvaluator.evaluateDistance(node, localDc);
+    if (distance != null) {
+      return distance;
+    }
+    // no local DC defined: all nodes are considered LOCAL.
+    if (localDc == null) {
+      return NodeDistance.LOCAL;
+    }
+    // otherwise, the node is LOCAL if its datacenter is the local datacenter.
+    if (Objects.equals(node.getDatacenter(), localDc)) {
+      return NodeDistance.LOCAL;
+    }
+    // otherwise, the node will be either REMOTE or IGNORED, depending
+    // on how many remote nodes we accept per DC.
+    if (maxNodesPerRemoteDc > 0) {
+      Object[] remoteNodes = liveNodes.dc(node.getDatacenter()).toArray();
+      for (int i = 0; i < maxNodesPerRemoteDc; i++) {
+        if (i == remoteNodes.length) {
+          // there is still room for one more REMOTE node in this DC
+          return NodeDistance.REMOTE;
+        } else if (remoteNodes[i] == node) {
+          return NodeDistance.REMOTE;
+        }
+      }
+    }
+    return NodeDistance.IGNORED;
   }
 
   @Override

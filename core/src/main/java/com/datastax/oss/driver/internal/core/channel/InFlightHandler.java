@@ -27,6 +27,7 @@ import com.datastax.oss.driver.internal.core.protocol.FrameDecodingException;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.shaded.guava.common.collect.BiMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.HashBiMap;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Query;
@@ -39,6 +40,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.Promise;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -196,7 +198,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
       ctx.channel().close();
     } else {
       // remove heartbeat handler from pipeline if present.
-      ChannelHandler heartbeatHandler = ctx.pipeline().get("heartbeat");
+      ChannelHandler heartbeatHandler = ctx.pipeline().get(ChannelFactory.HEARTBEAT_HANDLER_NAME);
       if (heartbeatHandler != null) {
         ctx.pipeline().remove(heartbeatHandler);
       }
@@ -357,12 +359,18 @@ public class InFlightHandler extends ChannelDuplexHandler {
    */
   private void abortAllInFlight(DriverException cause, ResponseCallback ignore) {
     if (!inFlight.isEmpty()) {
-      for (ResponseCallback responseCallback : inFlight.values()) {
+
+      // Create a local copy and clear the map immediately. This prevents
+      // ConcurrentModificationException if aborting one of the handlers recurses back into this
+      // method.
+      Set<ResponseCallback> responseCallbacks = ImmutableSet.copyOf(inFlight.values());
+      inFlight.clear();
+
+      for (ResponseCallback responseCallback : responseCallbacks) {
         if (responseCallback != ignore) {
           fail(responseCallback, cause);
         }
       }
-      inFlight.clear();
       // It's not necessary to release the stream ids, since we always call this method right before
       // closing the channel
     }

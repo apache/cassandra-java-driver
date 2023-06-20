@@ -186,11 +186,41 @@ public abstract class StatementBuilder<
     return self;
   }
 
+  /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #setTracing(boolean) setTracing(true)}.
+   */
+  @Deprecated
+  @NonNull
+  public SelfT enableTracing() {
+    return setTracing(true);
+  }
+
+  /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #setTracing(boolean) setTracing(false)}.
+   */
+  @Deprecated
+  @NonNull
+  public SelfT disableTracing() {
+    return setTracing(false);
+  }
+
   /** @see Statement#setQueryTimestamp(long) */
   @NonNull
   public SelfT setQueryTimestamp(long timestamp) {
     this.timestamp = timestamp;
     return self;
+  }
+
+  /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #setQueryTimestamp(long)}.
+   */
+  @Deprecated
+  @NonNull
+  public SelfT setDefaultTimestamp(long timestamp) {
+    return setQueryTimestamp(timestamp);
   }
 
   /** @see Statement#setPagingState(ByteBuffer) */
@@ -205,6 +235,16 @@ public abstract class StatementBuilder<
   public SelfT setPageSize(int pageSize) {
     this.pageSize = pageSize;
     return self;
+  }
+
+  /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #setPageSize(int)}.
+   */
+  @Deprecated
+  @NonNull
+  public SelfT setFetchSize(int pageSize) {
+    return this.setPageSize(pageSize);
   }
 
   /** @see Statement#setConsistencyLevel(ConsistencyLevel) */

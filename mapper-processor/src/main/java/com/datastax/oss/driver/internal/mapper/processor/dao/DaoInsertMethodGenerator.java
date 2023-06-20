@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOOLEAN;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOUND_STATEMENT;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.CUSTOM;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.ENTITY;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_ASYNC_RESULT_SET;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_BOOLEAN;
@@ -75,7 +76,18 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
         RESULT_SET,
         BOUND_STATEMENT,
         FUTURE_OF_ASYNC_RESULT_SET,
-        REACTIVE_RESULT_SET);
+        REACTIVE_RESULT_SET,
+        CUSTOM);
+  }
+
+  @Override
+  public boolean requiresReactive() {
+    DaoReturnType returnType =
+        parseAndValidateReturnType(getSupportedReturnTypes(), Insert.class.getSimpleName());
+    if (returnType == null) {
+      return false;
+    }
+    return returnType.requiresReactive();
   }
 
   @Override
@@ -99,7 +111,6 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "%s methods must take the entity to insert as the first parameter",
               Insert.class.getSimpleName());
       return Optional.empty();
@@ -117,7 +128,6 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Invalid return type: %s methods must return the same entity as their argument ",
               Insert.class.getSimpleName());
       return Optional.empty();
@@ -131,15 +141,15 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
             (methodBuilder, requestName) ->
                 generatePrepareRequest(methodBuilder, requestName, helperFieldName));
 
-    CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
+    CodeBlock.Builder createStatementBlock = CodeBlock.builder();
 
-    methodBodyBuilder.addStatement(
+    createStatementBlock.addStatement(
         "$T boundStatementBuilder = $L.boundStatementBuilder()",
         BoundStatementBuilder.class,
         statementName);
 
-    populateBuilderWithStatementAttributes(methodBodyBuilder, methodElement);
-    populateBuilderWithFunction(methodBodyBuilder, boundStatementFunction);
+    populateBuilderWithStatementAttributes(createStatementBlock, methodElement);
+    populateBuilderWithFunction(createStatementBlock, boundStatementFunction);
 
     warnIfCqlNamePresent(parameters.subList(0, 1));
     String entityParameterName = parameters.get(0).getSimpleName().toString();
@@ -148,8 +158,8 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
         nullSavingStrategyValidation.getNullSavingStrategy(
             Insert.class, Insert::nullSavingStrategy, methodElement, enclosingClass);
 
-    methodBodyBuilder.addStatement(
-        "$1L.set($2L, boundStatementBuilder, $3T.$4L)",
+    createStatementBlock.addStatement(
+        "$1L.set($2L, boundStatementBuilder, $3T.$4L, false)",
         helperFieldName,
         entityParameterName,
         NullSavingStrategy.class,
@@ -160,22 +170,16 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
       List<? extends VariableElement> bindMarkers = parameters.subList(1, parameters.size());
       if (validateCqlNamesPresent(bindMarkers)) {
         GeneratedCodePatterns.bindParameters(
-            bindMarkers, methodBodyBuilder, enclosingClass, context, false);
+            bindMarkers, createStatementBlock, enclosingClass, context, false);
       } else {
         return Optional.empty();
       }
     }
 
-    methodBodyBuilder
-        .add("\n")
-        .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
+    createStatementBlock.addStatement(
+        "$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
-    returnType.getKind().addExecuteStatement(methodBodyBuilder, helperFieldName);
-
-    CodeBlock methodBody = returnType.getKind().wrapWithErrorHandling(methodBodyBuilder.build());
-
-    return Optional.of(
-        GeneratedCodePatterns.override(methodElement, typeParameters).addCode(methodBody).build());
+    return crudMethod(createStatementBlock, returnType, helperFieldName);
   }
 
   private void generatePrepareRequest(

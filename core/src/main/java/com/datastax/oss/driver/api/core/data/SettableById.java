@@ -41,7 +41,7 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
     extends SettableByIndex<SelfT>, AccessibleById {
 
   /**
-   * Sets the raw binary representation of the value for the first occurrence of {@code id}.
+   * Sets the raw binary representation of the value for all occurrences of {@code id}.
    *
    * <p>This is primarily for internal use; you'll likely want to use one of the typed setters
    * instead, to pass a higher-level Java representation.
@@ -59,7 +59,12 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setBytesUnsafe(@NonNull CqlIdentifier id, @Nullable ByteBuffer v) {
-    return setBytesUnsafe(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setBytesUnsafe(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   @NonNull
@@ -69,7 +74,7 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to CQL {@code NULL}.
+   * Sets the value for all occurrences of {@code id} to CQL {@code NULL}.
    *
    * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
    * this method that takes a string argument.
@@ -79,12 +84,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setToNull(@NonNull CqlIdentifier id) {
-    return setToNull(firstIndexOf(id));
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setToNull(i);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id}, using the given codec for the
-   * conversion.
+   * Sets the value for all occurrences of {@code id}, using the given codec for the conversion.
    *
    * <p>This method completely bypasses the {@link #codecRegistry()}, and forces the driver to use
    * the given codec instead. This can be useful if the codec would collide with a previously
@@ -102,11 +111,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @CheckReturnValue
   default <ValueT> SelfT set(
       @NonNull CqlIdentifier id, @Nullable ValueT v, @NonNull TypeCodec<ValueT> codec) {
-    return set(firstIndexOf(id), v, codec);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).set(i, v, codec);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id}, converting it to the given Java type.
+   * Sets the value for all occurrences of {@code id}, converting it to the given Java type.
    *
    * <p>The {@link #codecRegistry()} will be used to look up a codec to handle the conversion.
    *
@@ -123,11 +137,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @CheckReturnValue
   default <ValueT> SelfT set(
       @NonNull CqlIdentifier id, @Nullable ValueT v, @NonNull GenericType<ValueT> targetType) {
-    return set(firstIndexOf(id), v, targetType);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).set(i, v, targetType);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Returns the value for the first occurrence of {@code id}, converting it to the given Java type.
+   * Returns the value for all occurrences of {@code id}, converting it to the given Java type.
    *
    * <p>The {@link #codecRegistry()} will be used to look up a codec to handle the conversion.
    *
@@ -143,11 +162,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @CheckReturnValue
   default <ValueT> SelfT set(
       @NonNull CqlIdentifier id, @Nullable ValueT v, @NonNull Class<ValueT> targetClass) {
-    return set(firstIndexOf(id), v, targetClass);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).set(i, v, targetClass);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java primitive boolean.
+   * Sets the value for all occurrences of {@code id} to the provided Java primitive boolean.
    *
    * <p>By default, this works with CQL type {@code boolean}.
    *
@@ -162,11 +186,27 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setBoolean(@NonNull CqlIdentifier id, boolean v) {
-    return setBoolean(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setBoolean(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java primitive byte.
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #setBoolean(CqlIdentifier, boolean)}.
+   */
+  @Deprecated
+  @NonNull
+  @CheckReturnValue
+  default SelfT setBool(@NonNull CqlIdentifier id, boolean v) {
+    return setBoolean(id, v);
+  }
+
+  /**
+   * Sets the value for all occurrences of {@code id} to the provided Java primitive byte.
    *
    * <p>By default, this works with CQL type {@code tinyint}.
    *
@@ -181,11 +221,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setByte(@NonNull CqlIdentifier id, byte v) {
-    return setByte(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setByte(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java primitive double.
+   * Sets the value for all occurrences of {@code id} to the provided Java primitive double.
    *
    * <p>By default, this works with CQL type {@code double}.
    *
@@ -200,11 +245,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setDouble(@NonNull CqlIdentifier id, double v) {
-    return setDouble(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setDouble(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java primitive float.
+   * Sets the value for all occurrences of {@code id} to the provided Java primitive float.
    *
    * <p>By default, this works with CQL type {@code float}.
    *
@@ -219,11 +269,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setFloat(@NonNull CqlIdentifier id, float v) {
-    return setFloat(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setFloat(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java primitive integer.
+   * Sets the value for all occurrences of {@code id} to the provided Java primitive integer.
    *
    * <p>By default, this works with CQL type {@code int}.
    *
@@ -238,11 +293,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setInt(@NonNull CqlIdentifier id, int v) {
-    return setInt(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setInt(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java primitive long.
+   * Sets the value for all occurrences of {@code id} to the provided Java primitive long.
    *
    * <p>By default, this works with CQL types {@code bigint} and {@code counter}.
    *
@@ -257,11 +317,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setLong(@NonNull CqlIdentifier id, long v) {
-    return setLong(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setLong(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java primitive short.
+   * Sets the value for all occurrences of {@code id} to the provided Java primitive short.
    *
    * <p>By default, this works with CQL type {@code smallint}.
    *
@@ -276,11 +341,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setShort(@NonNull CqlIdentifier id, short v) {
-    return setShort(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setShort(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java instant.
+   * Sets the value for all occurrences of {@code id} to the provided Java instant.
    *
    * <p>By default, this works with CQL type {@code timestamp}.
    *
@@ -292,11 +362,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setInstant(@NonNull CqlIdentifier id, @Nullable Instant v) {
-    return setInstant(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setInstant(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java local date.
+   * Sets the value for all occurrences of {@code id} to the provided Java local date.
    *
    * <p>By default, this works with CQL type {@code date}.
    *
@@ -308,11 +383,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setLocalDate(@NonNull CqlIdentifier id, @Nullable LocalDate v) {
-    return setLocalDate(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setLocalDate(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java local time.
+   * Sets the value for all occurrences of {@code id} to the provided Java local time.
    *
    * <p>By default, this works with CQL type {@code time}.
    *
@@ -324,11 +404,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setLocalTime(@NonNull CqlIdentifier id, @Nullable LocalTime v) {
-    return setLocalTime(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setLocalTime(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java byte buffer.
+   * Sets the value for all occurrences of {@code id} to the provided Java byte buffer.
    *
    * <p>By default, this works with CQL type {@code blob}.
    *
@@ -340,11 +425,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setByteBuffer(@NonNull CqlIdentifier id, @Nullable ByteBuffer v) {
-    return setByteBuffer(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setByteBuffer(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java string.
+   * Sets the value for all occurrences of {@code id} to the provided Java string.
    *
    * <p>By default, this works with CQL types {@code text}, {@code varchar} and {@code ascii}.
    *
@@ -356,11 +446,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setString(@NonNull CqlIdentifier id, @Nullable String v) {
-    return setString(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setString(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java big integer.
+   * Sets the value for all occurrences of {@code id} to the provided Java big integer.
    *
    * <p>By default, this works with CQL type {@code varint}.
    *
@@ -372,11 +467,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setBigInteger(@NonNull CqlIdentifier id, @Nullable BigInteger v) {
-    return setBigInteger(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setBigInteger(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java big decimal.
+   * Sets the value for all occurrences of {@code id} to the provided Java big decimal.
    *
    * <p>By default, this works with CQL type {@code decimal}.
    *
@@ -388,11 +488,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setBigDecimal(@NonNull CqlIdentifier id, @Nullable BigDecimal v) {
-    return setBigDecimal(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setBigDecimal(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java UUID.
+   * Sets the value for all occurrences of {@code id} to the provided Java UUID.
    *
    * <p>By default, this works with CQL types {@code uuid} and {@code timeuuid}.
    *
@@ -404,11 +509,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setUuid(@NonNull CqlIdentifier id, @Nullable UUID v) {
-    return setUuid(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setUuid(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java IP address.
+   * Sets the value for all occurrences of {@code id} to the provided Java IP address.
    *
    * <p>By default, this works with CQL type {@code inet}.
    *
@@ -420,11 +530,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setInetAddress(@NonNull CqlIdentifier id, @Nullable InetAddress v) {
-    return setInetAddress(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setInetAddress(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided duration.
+   * Sets the value for all occurrences of {@code id} to the provided duration.
    *
    * <p>By default, this works with CQL type {@code duration}.
    *
@@ -436,11 +551,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setCqlDuration(@NonNull CqlIdentifier id, @Nullable CqlDuration v) {
-    return setCqlDuration(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setCqlDuration(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided token.
+   * Sets the value for all occurrences of {@code id} to the provided token.
    *
    * <p>This works with the CQL type matching the partitioner in use for this cluster: {@code
    * bigint} for {@code Murmur3Partitioner}, {@code blob} for {@code ByteOrderedPartitioner}, and
@@ -454,11 +574,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setToken(@NonNull CqlIdentifier id, @NonNull Token v) {
-    return setToken(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setToken(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java list.
+   * Sets the value for all occurrences of {@code id} to the provided Java list.
    *
    * <p>By default, this works with CQL type {@code list}.
    *
@@ -476,11 +601,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
       @NonNull CqlIdentifier id,
       @Nullable List<ElementT> v,
       @NonNull Class<ElementT> elementsClass) {
-    return setList(firstIndexOf(id), v, elementsClass);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setList(i, v, elementsClass);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java set.
+   * Sets the value for all occurrences of {@code id} to the provided Java set.
    *
    * <p>By default, this works with CQL type {@code set}.
    *
@@ -498,11 +628,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
       @NonNull CqlIdentifier id,
       @Nullable Set<ElementT> v,
       @NonNull Class<ElementT> elementsClass) {
-    return setSet(firstIndexOf(id), v, elementsClass);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setSet(i, v, elementsClass);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided Java map.
+   * Sets the value for all occurrences of {@code id} to the provided Java map.
    *
    * <p>By default, this works with CQL type {@code map}.
    *
@@ -521,11 +656,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
       @Nullable Map<KeyT, ValueT> v,
       @NonNull Class<KeyT> keyClass,
       @NonNull Class<ValueT> valueClass) {
-    return setMap(firstIndexOf(id), v, keyClass, valueClass);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setMap(i, v, keyClass, valueClass);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided user defined type value.
+   * Sets the value for all occurrences of {@code id} to the provided user defined type value.
    *
    * <p>By default, this works with CQL user-defined types.
    *
@@ -537,11 +677,16 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setUdtValue(@NonNull CqlIdentifier id, @Nullable UdtValue v) {
-    return setUdtValue(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setUdtValue(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 
   /**
-   * Sets the value for the first occurrence of {@code id} to the provided tuple value.
+   * Sets the value for all occurrences of {@code id} to the provided tuple value.
    *
    * <p>By default, this works with CQL tuples.
    *
@@ -553,6 +698,11 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   @NonNull
   @CheckReturnValue
   default SelfT setTupleValue(@NonNull CqlIdentifier id, @Nullable TupleValue v) {
-    return setTupleValue(firstIndexOf(id), v);
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setTupleValue(i, v);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
   }
 }

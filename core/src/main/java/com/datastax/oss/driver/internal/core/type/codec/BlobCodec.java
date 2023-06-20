@@ -26,6 +26,12 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import net.jcip.annotations.ThreadSafe;
 
+/**
+ * A codec that maps the CQL type {@code blob} to the Java type {@link ByteBuffer}.
+ *
+ * <p>If you are looking for a codec mapping the CQL type {@code blob} to the Java type {@code
+ * byte[]}, you should use {@link SimpleBlobCodec} instead.
+ */
 @ThreadSafe
 public class BlobCodec implements TypeCodec<ByteBuffer> {
   @NonNull

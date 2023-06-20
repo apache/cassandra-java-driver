@@ -67,7 +67,7 @@ public class CounterCodecTest extends CodecTestBase<Long> {
 
   @Test(expected = IllegalArgumentException.class)
   public void should_fail_to_parse_if_out_of_range() {
-    parse(Long.toString(Long.MAX_VALUE) + "0");
+    parse(Long.MAX_VALUE + "0");
   }
 
   @Test

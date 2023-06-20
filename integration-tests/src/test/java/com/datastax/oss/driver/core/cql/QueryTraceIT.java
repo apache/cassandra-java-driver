@@ -16,11 +16,13 @@
 package com.datastax.oss.driver.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.QueryTrace;
+import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
@@ -29,10 +31,8 @@ import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
@@ -46,8 +46,6 @@ public class QueryTraceIT {
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
-  @Rule public ExpectedException thrown = ExpectedException.none();
-
   @Test
   public void should_not_have_tracing_id_when_tracing_disabled() {
     ExecutionInfo executionInfo =
@@ -58,9 +56,11 @@ public class QueryTraceIT {
 
     assertThat(executionInfo.getTracingId()).isNull();
 
-    thrown.expect(IllegalStateException.class);
-    thrown.expectMessage("Tracing was disabled for this request");
-    executionInfo.getQueryTrace();
+    Throwable t = catchThrowable(executionInfo::getQueryTrace);
+
+    assertThat(t)
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("Tracing was disabled for this request");
   }
 
   @Test
@@ -87,7 +87,20 @@ public class QueryTraceIT {
     assertThat(queryTrace.getRequestType()).isEqualTo("Execute CQL3 query");
     assertThat(queryTrace.getDurationMicros()).isPositive();
     assertThat(queryTrace.getCoordinatorAddress().getAddress()).isEqualTo(nodeAddress);
-    assertThat(queryTrace.getCoordinatorAddress().getPort()).isEqualTo(expectPorts ? 7000 : 0);
+    if (expectPorts) {
+      Row row =
+          SESSION_RULE
+              .session()
+              .execute(
+                  "SELECT coordinator_port FROM system_traces.sessions WHERE session_id = "
+                      + queryTrace.getTracingId())
+              .one();
+      assertThat(row).isNotNull();
+      int expectedPort = row.getInt(0);
+      assertThat(queryTrace.getCoordinatorAddress().getPort()).isEqualTo(expectedPort);
+    } else {
+      assertThat(queryTrace.getCoordinatorAddress().getPort()).isEqualTo(0);
+    }
     assertThat(queryTrace.getParameters())
         .containsEntry("consistency_level", "LOCAL_ONE")
         .containsEntry("page_size", "5000")
@@ -99,6 +112,20 @@ public class QueryTraceIT {
     InetSocketAddress sourceAddress0 = queryTrace.getEvents().get(0).getSourceAddress();
     assertThat(sourceAddress0).isNotNull();
     assertThat(sourceAddress0.getAddress()).isEqualTo(nodeAddress);
-    assertThat(sourceAddress0.getPort()).isEqualTo(expectPorts ? 7000 : 0);
+    if (expectPorts) {
+      Row row =
+          SESSION_RULE
+              .session()
+              .execute(
+                  "SELECT source_port FROM system_traces.events WHERE session_id = "
+                      + queryTrace.getTracingId()
+                      + " LIMIT 1")
+              .one();
+      assertThat(row).isNotNull();
+      int expectedPort = row.getInt(0);
+      assertThat(sourceAddress0.getPort()).isEqualTo(expectedPort);
+    } else {
+      assertThat(sourceAddress0.getPort()).isEqualTo(0);
+    }
   }
 }

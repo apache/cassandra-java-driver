@@ -15,8 +15,6 @@
  */
 package com.datastax.oss.driver.api.testinfra.ccm;
 
-import static io.netty.util.internal.PlatformDependent.isWindows;
-
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
 import com.datastax.oss.driver.shaded.guava.common.io.Resources;
@@ -32,7 +30,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -49,27 +49,10 @@ import org.slf4j.LoggerFactory;
 
 public class CcmBridge implements AutoCloseable {
 
-  private static final Logger logger = LoggerFactory.getLogger(CcmBridge.class);
+  private static final Logger LOG = LoggerFactory.getLogger(CcmBridge.class);
 
-  private final int[] nodes;
-
-  private final Path configDirectory;
-
-  private final AtomicBoolean started = new AtomicBoolean();
-
-  private final AtomicBoolean created = new AtomicBoolean();
-
-  private final String ipPrefix;
-
-  private final Map<String, Object> cassandraConfiguration;
-  private final Map<String, Object> dseConfiguration;
-  private final List<String> rawDseYaml;
-  private final List<String> createOptions;
-  private final List<String> dseWorkloads;
-
-  private final String jvmArgs;
-
-  public static final Version VERSION = Version.parse(System.getProperty("ccm.version", "3.11.0"));
+  public static final Version VERSION =
+      Objects.requireNonNull(Version.parse(System.getProperty("ccm.version", "4.0.0")));
 
   public static final String INSTALL_DIRECTORY = System.getProperty("ccm.directory");
 
@@ -125,6 +108,26 @@ public class CcmBridge implements AutoCloseable {
   private static final Version V3_0_15 = Version.parse("3.0.15");
   private static final Version V2_1_19 = Version.parse("2.1.19");
 
+  static {
+    if (DSE_ENABLEMENT) {
+      LOG.info("CCM Bridge configured with DSE version {}", VERSION);
+    } else {
+      LOG.info("CCM Bridge configured with Apache Cassandra version {}", VERSION);
+    }
+  }
+
+  private final int[] nodes;
+  private final Path configDirectory;
+  private final AtomicBoolean started = new AtomicBoolean();
+  private final AtomicBoolean created = new AtomicBoolean();
+  private final String ipPrefix;
+  private final Map<String, Object> cassandraConfiguration;
+  private final Map<String, Object> dseConfiguration;
+  private final List<String> rawDseYaml;
+  private final List<String> createOptions;
+  private final List<String> dseWorkloads;
+  private final String jvmArgs;
+
   private CcmBridge(
       Path configDirectory,
       int[] nodes,
@@ -140,10 +143,7 @@ public class CcmBridge implements AutoCloseable {
       // Hack to ensure that the default DC is always called 'dc1': pass a list ('-nX:0') even if
       // there is only one DC (with '-nX', CCM configures `SimpleSnitch`, which hard-codes the name
       // to 'datacenter1')
-      int[] tmp = new int[2];
-      tmp[0] = nodes[0];
-      tmp[1] = 0;
-      this.nodes = tmp;
+      this.nodes = new int[] {nodes[0], 0};
     } else {
       this.nodes = nodes;
     }
@@ -165,6 +165,11 @@ public class CcmBridge implements AutoCloseable {
     }
     this.jvmArgs = allJvmArgs.toString();
     this.dseWorkloads = dseWorkloads;
+  }
+
+  // Copied from Netty's PlatformDependent to avoid the dependency on Netty
+  private static boolean isWindows() {
+    return System.getProperty("os.name", "").toLowerCase(Locale.US).contains("win");
   }
 
   public Optional<Version> getDseVersion() {
@@ -299,7 +304,11 @@ public class CcmBridge implements AutoCloseable {
   }
 
   public void add(int n, String dc) {
-    execute("add", "-i", ipPrefix + n, "-d", dc, "node" + n);
+    if (getDseVersion().isPresent()) {
+      execute("add", "-i", ipPrefix + n, "-d", dc, "node" + n, "--dse");
+    } else {
+      execute("add", "-i", ipPrefix + n, "-d", dc, "node" + n);
+    }
     start(n);
   }
 
@@ -341,9 +350,9 @@ public class CcmBridge implements AutoCloseable {
 
   private void execute(CommandLine cli, boolean forceErrorLogging) {
     if (forceErrorLogging) {
-      logger.error("Executing: " + cli);
+      LOG.error("Executing: " + cli);
     } else {
-      logger.debug("Executing: " + cli);
+      LOG.debug("Executing: " + cli);
     }
     ExecuteWatchdog watchDog = new ExecuteWatchdog(TimeUnit.MINUTES.toMillis(10));
     try (LogOutputStream outStream =
@@ -351,9 +360,9 @@ public class CcmBridge implements AutoCloseable {
               @Override
               protected void processLine(String line, int logLevel) {
                 if (forceErrorLogging) {
-                  logger.error("ccmout> {}", line);
+                  LOG.error("ccmout> {}", line);
                 } else {
-                  logger.debug("ccmout> {}", line);
+                  LOG.debug("ccmout> {}", line);
                 }
               }
             };
@@ -361,7 +370,7 @@ public class CcmBridge implements AutoCloseable {
             new LogOutputStream() {
               @Override
               protected void processLine(String line, int logLevel) {
-                logger.error("ccmerr> {}", line);
+                LOG.error("ccmerr> {}", line);
               }
             }) {
       Executor executor = new DefaultExecutor();
@@ -371,8 +380,7 @@ public class CcmBridge implements AutoCloseable {
 
       int retValue = executor.execute(cli);
       if (retValue != 0) {
-        logger.error(
-            "Non-zero exit code ({}) returned from executing ccm command: {}", retValue, cli);
+        LOG.error("Non-zero exit code ({}) returned from executing ccm command: {}", retValue, cli);
       }
     } catch (IOException ex) {
       if (watchDog.killedProcess()) {
@@ -403,7 +411,7 @@ public class CcmBridge implements AutoCloseable {
       f.deleteOnExit();
       Resources.copy(CcmBridge.class.getResource(storePath), os);
     } catch (IOException e) {
-      logger.warn("Failure to write keystore, SSL-enabled servers may fail to start.", e);
+      LOG.warn("Failure to write keystore, SSL-enabled servers may fail to start.", e);
     }
     return f;
   }
@@ -476,6 +484,7 @@ public class CcmBridge implements AutoCloseable {
     /** Enables SSL encryption. */
     public Builder withSsl() {
       cassandraConfiguration.put("client_encryption_options.enabled", "true");
+      cassandraConfiguration.put("client_encryption_options.optional", "false");
       cassandraConfiguration.put(
           "client_encryption_options.keystore", DEFAULT_SERVER_KEYSTORE_FILE.getAbsolutePath());
       cassandraConfiguration.put(
@@ -485,6 +494,7 @@ public class CcmBridge implements AutoCloseable {
 
     public Builder withSslLocalhostCn() {
       cassandraConfiguration.put("client_encryption_options.enabled", "true");
+      cassandraConfiguration.put("client_encryption_options.optional", "false");
       cassandraConfiguration.put(
           "client_encryption_options.keystore",
           DEFAULT_SERVER_LOCALHOST_KEYSTORE_FILE.getAbsolutePath());

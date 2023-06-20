@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import static com.datastax.oss.driver.api.mapper.MapperBuilder.SCHEMA_VALIDATION_ENABLED_SETTING;
 
+import com.datastax.dse.driver.internal.mapper.reactive.ReactiveDaoBase;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.mapper.MapperContext;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
@@ -29,12 +30,14 @@ import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.util.Capitalizer;
 import com.datastax.oss.driver.internal.mapper.processor.util.HierarchyScanner;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -44,7 +47,6 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.beans.Introspector;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -137,7 +139,7 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
     return entityHelperFields.computeIfAbsent(
         helperClass,
         k -> {
-          String baseName = Introspector.decapitalize(entityClassName.simpleName()) + "Helper";
+          String baseName = Capitalizer.decapitalize(entityClassName.simpleName()) + "Helper";
           return nameIndex.uniqueField(baseName);
         });
   }
@@ -255,7 +257,6 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
                 .getMessager()
                 .error(
                     element,
-                    interfaceElement,
                     "Could not resolve type parameter %s "
                         + "on %s from child interfaces. This error usually means an interface "
                         + "was inappropriately annotated with @%s. Interfaces should only be annotated "
@@ -301,10 +302,14 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
     TypeSpec.Builder classBuilder =
         TypeSpec.classBuilder(implementationName)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
+            .addAnnotation(
+                AnnotationSpec.builder(SuppressWarnings.class)
+                    .addMember("value", "\"all\"")
+                    .build())
             .addModifiers(Modifier.PUBLIC)
-            .superclass(getDaoParentClass())
             .addSuperinterface(ClassName.get(interfaceElement));
 
+    boolean reactive = false;
     for (TypeMirror mirror : interfaces) {
       TypeElement parentInterfaceElement = (TypeElement) context.getTypeUtils().asElement(mirror);
       Map<Name, TypeElement> typeParameters = parseTypeParameters(mirror);
@@ -324,15 +329,17 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
                   .getMessager()
                   .error(
                       methodElement,
-                      interfaceElement,
                       "Unrecognized method signature: no implementation will be generated");
             } else {
               maybeGenerator.flatMap(MethodGenerator::generate).ifPresent(classBuilder::addMethod);
+              reactive |= maybeGenerator.get().requiresReactive();
             }
           }
         }
       }
     }
+
+    classBuilder = classBuilder.superclass(getDaoParentClass(reactive));
 
     genericTypeConstantGenerator.generate(classBuilder);
 
@@ -393,8 +400,12 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
   }
 
   @NonNull
-  protected Class<?> getDaoParentClass() {
-    return DaoBase.class;
+  protected Class<?> getDaoParentClass(boolean requiresReactive) {
+    if (requiresReactive) {
+      return ReactiveDaoBase.class;
+    } else {
+      return DaoBase.class;
+    }
   }
 
   /**

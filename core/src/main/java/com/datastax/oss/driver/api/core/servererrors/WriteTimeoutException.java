@@ -28,10 +28,10 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 /**
  * A server-side timeout during a write query.
  *
- * <p>This exception is processed by {@link RetryPolicy#onWriteTimeout(Request, ConsistencyLevel,
- * WriteType, int, int, int)}, which will decide if it is rethrown directly to the client or if the
- * request should be retried. If all other tried nodes also fail, this exception will appear in the
- * {@link AllNodesFailedException} thrown to the client.
+ * <p>This exception is processed by {@link RetryPolicy#onWriteTimeoutVerdict(Request,
+ * ConsistencyLevel, WriteType, int, int, int)}, which will decide if it is rethrown directly to the
+ * client or if the request should be retried. If all other tried nodes also fail, this exception
+ * will appear in the {@link AllNodesFailedException} thrown to the client.
  */
 public class WriteTimeoutException extends QueryConsistencyException {
 

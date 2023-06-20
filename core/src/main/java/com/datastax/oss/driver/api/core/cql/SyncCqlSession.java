@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.cql.DefaultPrepareRequest;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -57,6 +58,9 @@ public interface SyncCqlSession extends Session {
    * Executes a CQL statement synchronously (the calling thread blocks until the result becomes
    * available).
    *
+   * <p>This is an alias for {@link #execute(Statement)
+   * execute(SimpleStatement.newInstance(query))}.
+   *
    * @param query the CQL query to execute.
    * @return the result of the query. That result will never be null but can be empty (and will be
    *     for any non SELECT query).
@@ -67,10 +71,63 @@ public interface SyncCqlSession extends Session {
    *     consistency level successfully.
    * @throws QueryValidationException if the query if invalid (syntax error, unauthorized or any
    *     other validation problem).
+   * @see SimpleStatement#newInstance(String)
    */
   @NonNull
   default ResultSet execute(@NonNull String query) {
     return execute(SimpleStatement.newInstance(query));
+  }
+
+  /**
+   * Executes a CQL statement synchronously (the calling thread blocks until the result becomes
+   * available).
+   *
+   * <p>This is an alias for {@link #execute(Statement) execute(SimpleStatement.newInstance(query,
+   * values))}.
+   *
+   * @param query the CQL query to execute.
+   * @param values the values for placeholders in the query string. Individual values can be {@code
+   *     null}, but the vararg array itself can't.
+   * @return the result of the query. That result will never be null but can be empty (and will be
+   *     for any non SELECT query).
+   * @throws AllNodesFailedException if no host in the cluster can be contacted successfully to
+   *     execute this query.
+   * @throws QueryExecutionException if the query triggered an execution exception, i.e. an
+   *     exception thrown by Cassandra when it cannot execute the query with the requested
+   *     consistency level successfully.
+   * @throws QueryValidationException if the query if invalid (syntax error, unauthorized or any
+   *     other validation problem).
+   * @see SimpleStatement#newInstance(String, Object...)
+   */
+  @NonNull
+  default ResultSet execute(@NonNull String query, @NonNull Object... values) {
+    return execute(SimpleStatement.newInstance(query, values));
+  }
+
+  /**
+   * Executes a CQL statement synchronously (the calling thread blocks until the result becomes
+   * available).
+   *
+   * <p>This is an alias for {@link #execute(Statement) execute(SimpleStatement.newInstance(query,
+   * values))}.
+   *
+   * @param query the CQL query to execute.
+   * @param values the values for named placeholders in the query string. Individual values can be
+   *     {@code null}, but the map itself can't.
+   * @return the result of the query. That result will never be null but can be empty (and will be
+   *     for any non SELECT query).
+   * @throws AllNodesFailedException if no host in the cluster can be contacted successfully to
+   *     execute this query.
+   * @throws QueryExecutionException if the query triggered an execution exception, i.e. an
+   *     exception thrown by Cassandra when it cannot execute the query with the requested
+   *     consistency level successfully.
+   * @throws QueryValidationException if the query if invalid (syntax error, unauthorized or any
+   *     other validation problem).
+   * @see SimpleStatement#newInstance(String, Map)
+   */
+  @NonNull
+  default ResultSet execute(@NonNull String query, @NonNull Map<String, Object> values) {
+    return execute(SimpleStatement.newInstance(query, values));
   }
 
   /**

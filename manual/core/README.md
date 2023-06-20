@@ -56,6 +56,10 @@ We recommend that you take a look at the [reference configuration](configuration
 list of available options, and cross-reference with the sub-sections in this manual for more
 explanations.
 
+By default, `CqlSession.builder().build()` fails immediately if the cluster is not available. If you
+want to retry instead, you can set the [reconnect-on-init](reconnection/#at-init-time) option in the
+configuration.
+
 ##### Contact points
 
 If you don't specify any contact point, the driver defaults to `127.0.0.1:9042`:
@@ -310,18 +314,18 @@ for (ColumnDefinitions.Definition definition : row.getColumnDefinitions()) {
 }
 ```
 
-[CqlSession]:                           https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/CqlSession.html
-[CqlSession#builder()]:                 https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/CqlSession.html#builder--
-[ResultSet]:                            https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/ResultSet.html
-[Row]:                                  https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/Row.html
-[CqlIdentifier]:                        https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/CqlIdentifier.html
-[AccessibleByName]:                     https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/data/AccessibleByName.html
-[GenericType]:                          https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
-[CqlDuration]:                          https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/data/CqlDuration.html
-[TupleValue]:                           https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/data/TupleValue.html
-[UdtValue]:                             https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/data/UdtValue.html
-[SessionBuilder.addContactPoint()]:     https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoint-java.net.InetSocketAddress-
-[SessionBuilder.addContactPoints()]:    https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoints-java.util.Collection-
-[SessionBuilder.withLocalDatacenter()]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withLocalDatacenter-java.lang.String-
+[CqlSession]:                           https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/CqlSession.html
+[CqlSession#builder()]:                 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/CqlSession.html#builder--
+[ResultSet]:                            https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[Row]:                                  https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/Row.html
+[CqlIdentifier]:                        https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/CqlIdentifier.html
+[AccessibleByName]:                     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/AccessibleByName.html
+[GenericType]:                          https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
+[CqlDuration]:                          https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/CqlDuration.html
+[TupleValue]:                           https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/TupleValue.html
+[UdtValue]:                             https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/UdtValue.html
+[SessionBuilder.addContactPoint()]:     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoint-java.net.InetSocketAddress-
+[SessionBuilder.addContactPoints()]:    https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoints-java.util.Collection-
+[SessionBuilder.withLocalDatacenter()]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withLocalDatacenter-java.lang.String-
 
 [CASSANDRA-10145]: https://issues.apache.org/jira/browse/CASSANDRA-10145

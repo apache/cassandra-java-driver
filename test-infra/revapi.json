@@ -100,6 +100,77 @@
         "old": "field com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.DEFAULT_SERVER_TRUSTSTORE_PASSWORD",
         "new": "field com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.DEFAULT_SERVER_TRUSTSTORE_PASSWORD",
         "justification": "JAVA-2620: Use clearly dummy passwords in tests"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class com.datastax.oss.simulacron.common.cluster.ClusterSpec",
+        "justification":"Dependency was made optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class com.datastax.oss.simulacron.common.cluster.ClusterSpec.Builder",
+        "justification":"Dependency was made optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class com.datastax.oss.simulacron.common.cluster.QueryLog",
+        "justification":"Dependency was made optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class com.datastax.oss.simulacron.server.BoundCluster",
+        "justification":"Dependency was made optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class com.datastax.oss.simulacron.server.BoundTopic",
+        "justification":"Dependency was made optional"
+      },
+      {
+        "code": "java.missing.newClass",
+        "new": "missing-class com.datastax.oss.simulacron.server.Server",
+        "justification":"Dependency was made optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class com.datastax.oss.simulacron.common.cluster.ClusterSpec",
+        "new": "missing-class com.datastax.oss.simulacron.common.cluster.ClusterSpec",
+        "justification": "Dependency was made optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class com.datastax.oss.simulacron.common.cluster.ClusterSpec.Builder",
+        "new": "missing-class com.datastax.oss.simulacron.common.cluster.ClusterSpec.Builder",
+        "justification": "Dependency was made optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class com.datastax.oss.simulacron.common.cluster.QueryLog",
+        "new": "missing-class com.datastax.oss.simulacron.common.cluster.QueryLog",
+        "justification": "Dependency was made optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class com.datastax.oss.simulacron.server.BoundCluster",
+        "new": "missing-class com.datastax.oss.simulacron.server.BoundCluster",
+        "justification": "Dependency was made optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class com.datastax.oss.simulacron.server.BoundTopic",
+        "new": "missing-class com.datastax.oss.simulacron.server.BoundTopic",
+        "justification": "Dependency was made optional"
+      },
+      {
+        "code": "java.missing.oldClass",
+        "old": "missing-class com.datastax.oss.simulacron.server.Server",
+        "new": "missing-class com.datastax.oss.simulacron.server.Server",
+        "justification": "Dependency was made optional"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method void com.datastax.oss.driver.api.testinfra.ccm.CcmRule::reloadCore(int, java.lang.String, java.lang.String, boolean)",
+        "justification": "Modifying the state of a globally shared CCM instance is dangerous"
       }
     ]
   }

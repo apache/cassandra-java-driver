@@ -85,8 +85,8 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   /**
    * Sets the name of the execution profile that will be used for this statement.
    *
-   * <p>For all the driver's built-in implementations, this method has no effect if {@link
-   * #setExecutionProfile(DriverExecutionProfile)} has been called with a non-null argument.
+   * <p>For all the driver's built-in implementations, calling this method with a non-null argument
+   * automatically resets {@link #getExecutionProfile()} to null.
    *
    * <p>All the driver's built-in implementations are immutable, and return a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance.
@@ -97,6 +97,9 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
 
   /**
    * Sets the execution profile to use for this statement.
+   *
+   * <p>For all the driver's built-in implementations, calling this method with a non-null argument
+   * automatically resets {@link #getExecutionProfileName()} to null.
    *
    * <p>All the driver's built-in implementations are immutable, and return a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance.
@@ -230,7 +233,30 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   SelfT setTracing(boolean newTracing);
 
   /**
-   * Returns the query timestamp, in microseconds, to send with the statement.
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #setTracing(boolean) setTracing(true)}.
+   */
+  @Deprecated
+  @NonNull
+  @CheckReturnValue
+  default SelfT enableTracing() {
+    return setTracing(true);
+  }
+
+  /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #setTracing(boolean) setTracing(false)}.
+   */
+  @Deprecated
+  @NonNull
+  @CheckReturnValue
+  default SelfT disableTracing() {
+    return setTracing(false);
+  }
+
+  /**
+   * Returns the query timestamp, in microseconds, to send with the statement. See {@link
+   * #setQueryTimestamp(long)} for details.
    *
    * <p>If this is equal to {@link #NO_DEFAULT_TIMESTAMP}, the {@link TimestampGenerator} configured
    * for this driver instance will be used to generate a timestamp.
@@ -241,7 +267,29 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   long getQueryTimestamp();
 
   /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #getQueryTimestamp()}.
+   */
+  @Deprecated
+  default long getDefaultTimestamp() {
+    return getQueryTimestamp();
+  }
+
+  /**
    * Sets the query timestamp, in microseconds, to send with the statement.
+   *
+   * <p>This is an alternative to appending a {@code USING TIMESTAMP} clause in the statement's
+   * query string, and has the advantage of sending the timestamp separately from the query string
+   * itself, which doesn't have to be modified when executing the same statement with different
+   * timestamps. Note that, if both a {@code USING TIMESTAMP} clause and a query timestamp are set
+   * for a given statement, the timestamp from the {@code USING TIMESTAMP} clause wins.
+   *
+   * <p>This method can be used on any instance of {@link SimpleStatement}, {@link BoundStatement}
+   * or {@link BatchStatement}. For a {@link BatchStatement}, the timestamp will apply to all its
+   * child statements; it is not possible to define per-child timestamps using this method, and
+   * consequently, if this method is called on a batch child statement, the provided timestamp will
+   * be silently ignored. If different timestamps are required for individual child statements, this
+   * can only be achieved with a custom {@code USING TIMESTAMP} clause in each child query.
    *
    * <p>If this is equal to {@link #NO_DEFAULT_TIMESTAMP}, the {@link TimestampGenerator} configured
    * for this driver instance will be used to generate a timestamp.
@@ -255,6 +303,17 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   @NonNull
   @CheckReturnValue
   SelfT setQueryTimestamp(long newTimestamp);
+
+  /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #setQueryTimestamp(long)}.
+   */
+  @Deprecated
+  @NonNull
+  @CheckReturnValue
+  default SelfT setDefaultTimestamp(long newTimestamp) {
+    return setQueryTimestamp(newTimestamp);
+  }
 
   /**
    * Sets how long to wait for this request to complete. This is a global limit on the duration of a
@@ -300,6 +359,50 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   SelfT setPagingState(@Nullable ByteBuffer newPagingState);
 
   /**
+   * Sets the paging state to send with the statement, or {@code null} if this statement has no
+   * paging state.
+   *
+   * <p>This variant uses the "safe" paging state wrapper, it will throw immediately if the
+   * statement doesn't match the one that the state was initially extracted from (same query string,
+   * same parameters). The advantage is that it fails fast, instead of waiting for an error response
+   * from the server.
+   *
+   * <p>Note that, if this statement is a {@link SimpleStatement} with bound values, those values
+   * must be encoded in order to perform the check. This method uses the default codec registry and
+   * default protocol version. This might fail if you use custom codecs; in that case, use {@link
+   * #setPagingState(PagingState, Session)} instead.
+   *
+   * @throws IllegalArgumentException if the given state does not match this statement.
+   * @see #setPagingState(ByteBuffer)
+   * @see ExecutionInfo#getSafePagingState()
+   */
+  @NonNull
+  @CheckReturnValue
+  default SelfT setPagingState(@Nullable PagingState newPagingState) {
+    return setPagingState(newPagingState, null);
+  }
+
+  /**
+   * Alternative to {@link #setPagingState(PagingState)} that specifies the session the statement
+   * will be executed with. <b>You only need this for simple statements, and if you use custom
+   * codecs.</b> Bound statements already know which session they are attached to.
+   */
+  @NonNull
+  @CheckReturnValue
+  default SelfT setPagingState(@Nullable PagingState newPagingState, @Nullable Session session) {
+    if (newPagingState == null) {
+      return setPagingState((ByteBuffer) null);
+    } else if (newPagingState.matches(this, session)) {
+      return setPagingState(newPagingState.getRawPagingState());
+    } else {
+      throw new IllegalArgumentException(
+          "Paging state mismatch, "
+              + "this means that either the paging state contents were altered, "
+              + "or you're trying to apply it to a different statement");
+    }
+  }
+
+  /**
    * Returns the page size to use for the statement.
    *
    * @return the set page size, otherwise 0 or a negative value to use the default value defined in
@@ -307,6 +410,15 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * @see DefaultDriverOption#REQUEST_PAGE_SIZE
    */
   int getPageSize();
+
+  /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #getPageSize()}.
+   */
+  @Deprecated
+  default int getFetchSize() {
+    return getPageSize();
+  }
 
   /**
    * Configures how many rows will be retrieved simultaneously in a single network roundtrip (the
@@ -319,6 +431,17 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
   @NonNull
   @CheckReturnValue
   SelfT setPageSize(int newPageSize);
+
+  /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #setPageSize(int)}.
+   */
+  @Deprecated
+  @NonNull
+  @CheckReturnValue
+  default SelfT setFetchSize(int newPageSize) {
+    return setPageSize(newPageSize);
+  }
 
   /**
    * Returns the {@link ConsistencyLevel} to use for the statement.

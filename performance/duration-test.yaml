@@ -1,0 +1,82 @@
+# Possible values: cassandra or dse
+server_type: cassandra
+# Server version (e.g. 3.11.7 or 6.8.8)
+server_version: 3.11.7
+# The driver Git revision to checkout and build (can be a branch name, a tag name or a commit SHA)
+driver_rev: 4.x
+# A distinctive driver label to use, for reporting purposes (will appear in Graphite metric names)
+driver_label: 4.10.0
+# The IP of a running Graphite server, see graphite-setup.yaml
+graphite_host: 1.2.3.4
+# How long to run the duration test, default: 2 days
+duration: 2d
+# Cloud-specific settings
+cloud_provider: nebula
+cloud_tenant: drivers-automation
+instance_type: m4.4xlarge
+
+---
+
+ensemble:
+  server:
+    node.count: 3
+    provisioner:
+      name: ctool
+      properties:
+        mark_for_reuse: false
+        cloud.provider: {{cloud_provider}}
+        cloud.tenant: {{cloud_tenant}}
+        cloud.instance.type: {{instance_type}}
+    configuration_manager:
+      - name: ctool
+        properties:
+          java.version: openjdk8
+          product.install.type: tarball
+          product.type: {{server_type}}
+          product.version: {{server_version}}
+          cassandra.yaml:
+            hinted_handoff_enabled: false
+          datacenters:
+            datacenter1:
+              size: 3
+              workload: cassandra
+  client:
+    node.count: 1
+    provisioner:
+      name: ctool
+      properties:
+        mark_for_reuse: false
+        cloud.provider: {{cloud_provider}}
+        cloud.tenant: {{cloud_tenant}}
+        cloud.instance.type: {{instance_type}}
+    configuration_manager:
+      - name: ctool
+        properties:
+          java.version: openjdk8
+          install.maven: true
+      - name: java_driver
+        properties:
+          oss.git.repository: git@github.com:datastax/java-driver.git
+          oss.git.branch: {{driver_rev}}
+          type: FOUR_X_OSS
+      - name: java_driver_duration_test
+        properties:
+          git.branch: java-driver-4.x
+workload:
+  phases:
+    - run-duration-test:
+        module: java_driver_duration_test
+        properties:
+          is.four: true
+          duration: {{duration}}
+          graphite.host: {{graphite_host}}
+          graphite.prefix: duration-test-java-driver-{{driver_label}}-{{server_type}}-{{server_version}}
+      kill-nodes:
+        module: killnode_rhino
+        properties:
+          target.strategy: whitelist
+          target.number_of_nodes: 1
+          target.selector: "*:*"
+          repeat.delay: 120
+          repeat.iterations: 0
+          graceful: true

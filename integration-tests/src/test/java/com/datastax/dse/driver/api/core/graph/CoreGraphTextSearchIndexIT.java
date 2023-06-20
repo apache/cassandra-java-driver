@@ -119,7 +119,6 @@ public class CoreGraphTextSearchIndexIT extends GraphTextSearchIndexITBase {
   @BeforeClass
   public static void setup() {
     for (String setupQuery : textIndices()) {
-      System.out.println("Executing: " + setupQuery);
       SESSION_RULE.session().execute(ScriptGraphStatement.newInstance(setupQuery));
     }
 

@@ -28,6 +28,8 @@
   <logger name="org.apache.directory" level="${adsServerLevel:-ERROR}"/>
   <logger name="com.datastax.oss.driver" level="${ossDriverLevel:-ERROR}"/>
   <logger name="com.datastax.dse.driver" level="${dseDriverLevel:-ERROR}"/>
+  <logger name="com.datastax.oss.simulacron" level="${simulacronLevel:-ERROR}"/>
+  <logger name="com.datastax.oss.driver.api.testinfra.ccm" level="${ccmLevel:-INFO}"/>
   <!-- Set this logger to DEBUG to help debugging OSGi tests -->
-  <logger name="org.ops4j" level="ERROR"/>
+  <logger name="org.ops4j" level="${osgiLevel:-ERROR}"/>
 </configuration>

@@ -15,8 +15,11 @@
  */
 package com.datastax.oss.driver.internal.core.protocol;
 
+import static com.datastax.oss.driver.internal.core.util.Dependency.LZ4;
+
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.internal.core.util.DependencyCheck;
+import com.datastax.oss.driver.internal.core.util.DefaultDependencyChecker;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import io.netty.buffer.ByteBuf;
 import java.nio.ByteBuffer;
 import net.jcip.annotations.ThreadSafe;
@@ -35,9 +38,14 @@ public class Lz4Compressor extends ByteBufCompressor {
   private final LZ4FastDecompressor decompressor;
 
   public Lz4Compressor(DriverContext context) {
-    if (DependencyCheck.LZ4.isPresent()) {
+    this(context.getSessionName());
+  }
+
+  @VisibleForTesting
+  Lz4Compressor(String sessionName) {
+    if (DefaultDependencyChecker.isPresent(LZ4)) {
       LZ4Factory lz4Factory = LZ4Factory.fastestInstance();
-      LOG.info("[{}] Using {}", context.getSessionName(), lz4Factory.toString());
+      LOG.info("[{}] Using {}", sessionName, lz4Factory.toString());
       this.compressor = lz4Factory.fastCompressor();
       this.decompressor = lz4Factory.fastDecompressor();
     } else {
@@ -54,17 +62,20 @@ public class Lz4Compressor extends ByteBufCompressor {
   }
 
   @Override
-  protected ByteBuf compressDirect(ByteBuf input) {
+  protected ByteBuf compressDirect(ByteBuf input, boolean prependWithUncompressedLength) {
     int maxCompressedLength = compressor.maxCompressedLength(input.readableBytes());
     // If the input is direct we will allocate a direct output buffer as well as this will allow us
     // to use LZ4Compressor.compress and so eliminate memory copies.
-    ByteBuf output = input.alloc().directBuffer(4 + maxCompressedLength);
+    ByteBuf output =
+        input.alloc().directBuffer((prependWithUncompressedLength ? 4 : 0) + maxCompressedLength);
     try {
       ByteBuffer in = inputNioBuffer(input);
       // Increase reader index.
       input.readerIndex(input.writerIndex());
 
-      output.writeInt(in.remaining());
+      if (prependWithUncompressedLength) {
+        output.writeInt(in.remaining());
+      }
 
       ByteBuffer out = outputNioBuffer(output);
       int written =
@@ -81,7 +92,7 @@ public class Lz4Compressor extends ByteBufCompressor {
   }
 
   @Override
-  protected ByteBuf compressHeap(ByteBuf input) {
+  protected ByteBuf compressHeap(ByteBuf input, boolean prependWithUncompressedLength) {
     int maxCompressedLength = compressor.maxCompressedLength(input.readableBytes());
 
     // Not a direct buffer so use byte arrays...
@@ -93,9 +104,12 @@ public class Lz4Compressor extends ByteBufCompressor {
 
     // Allocate a heap buffer from the ByteBufAllocator as we may use a PooledByteBufAllocator and
     // so can eliminate the overhead of allocate a new byte[].
-    ByteBuf output = input.alloc().heapBuffer(4 + maxCompressedLength);
+    ByteBuf output =
+        input.alloc().heapBuffer((prependWithUncompressedLength ? 4 : 0) + maxCompressedLength);
     try {
-      output.writeInt(len);
+      if (prependWithUncompressedLength) {
+        output.writeInt(len);
+      }
       // calculate the correct offset.
       int offset = output.arrayOffset() + output.writerIndex();
       byte[] out = output.array();
@@ -112,11 +126,15 @@ public class Lz4Compressor extends ByteBufCompressor {
   }
 
   @Override
-  protected ByteBuf decompressDirect(ByteBuf input) {
+  protected int readUncompressedLength(ByteBuf compressed) {
+    return compressed.readInt();
+  }
+
+  @Override
+  protected ByteBuf decompressDirect(ByteBuf input, int uncompressedLength) {
     // If the input is direct we will allocate a direct output buffer as well as this will allow us
     // to use LZ4Compressor.decompress and so eliminate memory copies.
     int readable = input.readableBytes();
-    int uncompressedLength = input.readInt();
     ByteBuffer in = inputNioBuffer(input);
     // Increase reader index.
     input.readerIndex(input.writerIndex());
@@ -124,7 +142,7 @@ public class Lz4Compressor extends ByteBufCompressor {
     try {
       ByteBuffer out = outputNioBuffer(output);
       int read = decompressor.decompress(in, in.position(), out, out.position(), out.remaining());
-      if (read != readable - 4) {
+      if (read != readable) {
         throw new IllegalArgumentException("Compressed lengths mismatch");
       }
 
@@ -139,11 +157,10 @@ public class Lz4Compressor extends ByteBufCompressor {
   }
 
   @Override
-  protected ByteBuf decompressHeap(ByteBuf input) {
+  protected ByteBuf decompressHeap(ByteBuf input, int uncompressedLength) {
     // Not a direct buffer so use byte arrays...
     byte[] in = input.array();
     int len = input.readableBytes();
-    int uncompressedLength = input.readInt();
     int inOffset = input.arrayOffset() + input.readerIndex();
     // Increase reader index.
     input.readerIndex(input.writerIndex());
@@ -153,9 +170,9 @@ public class Lz4Compressor extends ByteBufCompressor {
     ByteBuf output = input.alloc().heapBuffer(uncompressedLength);
     try {
       int offset = output.arrayOffset() + output.writerIndex();
-      byte out[] = output.array();
+      byte[] out = output.array();
       int read = decompressor.decompress(in, inOffset, out, offset, uncompressedLength);
-      if (read != len - 4) {
+      if (read != len) {
         throw new IllegalArgumentException("Compressed lengths mismatch");
       }
 

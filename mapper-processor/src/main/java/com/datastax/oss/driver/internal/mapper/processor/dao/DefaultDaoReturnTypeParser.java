@@ -26,11 +26,15 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
@@ -72,6 +76,7 @@ public class DefaultDaoReturnTypeParser implements DaoReturnTypeParser {
           .put(CompletionStage.class, DefaultDaoReturnTypeKind.FUTURE_OF_ENTITY)
           .put(CompletableFuture.class, DefaultDaoReturnTypeKind.FUTURE_OF_ENTITY)
           .put(PagingIterable.class, DefaultDaoReturnTypeKind.PAGING_ITERABLE)
+          .put(Stream.class, DefaultDaoReturnTypeKind.STREAM)
           .put(MappedReactiveResultSet.class, DefaultDaoReturnTypeKind.MAPPED_REACTIVE_RESULT_SET)
           .build();
 
@@ -96,6 +101,7 @@ public class DefaultDaoReturnTypeParser implements DaoReturnTypeParser {
               .put(
                   MappedAsyncPagingIterable.class,
                   DefaultDaoReturnTypeKind.FUTURE_OF_ASYNC_PAGING_ITERABLE)
+              .put(Stream.class, DefaultDaoReturnTypeKind.FUTURE_OF_STREAM)
               .build();
 
   protected final ProcessorContext context;
@@ -204,6 +210,14 @@ public class DefaultDaoReturnTypeParser implements DaoReturnTypeParser {
           }
         }
       }
+
+      // Otherwise assume a custom type. A MappedResultProducer will be looked up from the
+      // MapperContext at runtime.
+      if (context.areCustomResultsEnabled()) {
+        return new DaoReturnType(
+            DefaultDaoReturnTypeKind.CUSTOM,
+            findEntityInCustomType(declaredReturnType, typeParameters, new ArrayList<>()));
+      }
     }
 
     if (returnTypeMirror.getKind() == TypeKind.TYPEVAR) {
@@ -231,5 +245,56 @@ public class DefaultDaoReturnTypeParser implements DaoReturnTypeParser {
     }
 
     return DaoReturnType.UNSUPPORTED;
+  }
+
+  /**
+   * If we're dealing with a {@link DefaultDaoReturnTypeKind#CUSTOM}, we allow one entity element to
+   * appear at any level of nesting in the type, e.g. {@code MyCustomFuture<Optional<Entity>>}.
+   */
+  private TypeElement findEntityInCustomType(
+      TypeMirror type,
+      Map<Name, TypeElement> typeParameters,
+      List<TypeMirror> alreadyCheckedTypes) {
+
+    // Generic types can be recursive! e.g. Integer implements Comparable<Integer>. Avoid infinite
+    // recursion:
+    for (TypeMirror alreadyCheckedType : alreadyCheckedTypes) {
+      if (context.getTypeUtils().isSameType(type, alreadyCheckedType)) {
+        return null;
+      }
+    }
+    alreadyCheckedTypes.add(type);
+
+    TypeElement entityElement = EntityUtils.asEntityElement(type, typeParameters);
+    if (entityElement != null) {
+      return entityElement;
+    } else if (type.getKind() == TypeKind.DECLARED) {
+      // Check type arguments, e.g. `Foo<T>` where T = Product
+      DeclaredType declaredType = (DeclaredType) type;
+      for (TypeMirror typeArgument : declaredType.getTypeArguments()) {
+        entityElement = findEntityInCustomType(typeArgument, typeParameters, alreadyCheckedTypes);
+        if (entityElement != null) {
+          return entityElement;
+        }
+      }
+      Element element = declaredType.asElement();
+      if (element.getKind() == ElementKind.CLASS || element.getKind() == ElementKind.INTERFACE) {
+        // Check interfaces, e.g. `Foo implements Iterable<T>`, where T = Product
+        TypeElement typeElement = (TypeElement) element;
+        for (TypeMirror parentInterface : typeElement.getInterfaces()) {
+          entityElement =
+              findEntityInCustomType(parentInterface, typeParameters, alreadyCheckedTypes);
+          if (entityElement != null) {
+            return entityElement;
+          }
+        }
+        // Check superclass (if there is none then the mirror has TypeKind.NONE and the recursive
+        // call will return null).
+        return findEntityInCustomType(
+            typeElement.getSuperclass(), typeParameters, alreadyCheckedTypes);
+      }
+    }
+    // null is a valid result even at the top level, a custom type may not contain any entity
+    return null;
   }
 }

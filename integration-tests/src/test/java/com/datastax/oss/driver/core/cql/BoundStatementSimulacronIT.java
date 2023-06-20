@@ -19,6 +19,7 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.noRows;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.query;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
@@ -35,15 +36,13 @@ import com.datastax.oss.simulacron.common.cluster.QueryLog;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 
 @Category(ParallelizableTests.class)
 public class BoundStatementSimulacronIT {
@@ -51,8 +50,6 @@ public class BoundStatementSimulacronIT {
   @ClassRule
   public static final SimulacronRule SIMULACRON_RULE =
       new SimulacronRule(ClusterSpec.builder().withNodes(1));
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Before
   public void clearPrimes() {
@@ -128,8 +125,8 @@ public class BoundStatementSimulacronIT {
   @Test
   public void should_use_timeout_from_simple_statement() {
     try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE)) {
-      Map<String, Object> params = ImmutableMap.of("k", 0);
-      Map<String, String> paramTypes = ImmutableMap.of("k", "int");
+      LinkedHashMap<String, Object> params = new LinkedHashMap<>(ImmutableMap.of("k", 0));
+      LinkedHashMap<String, String> paramTypes = new LinkedHashMap<>(ImmutableMap.of("k", "int"));
       SIMULACRON_RULE
           .cluster()
           .prime(
@@ -148,18 +145,19 @@ public class BoundStatementSimulacronIT {
               .build();
       PreparedStatement prepared = session.prepare(st);
 
-      thrown.expect(DriverTimeoutException.class);
-      thrown.expectMessage("Query timed out after PT1S");
+      Throwable t = catchThrowable(() -> session.execute(prepared.bind(0)));
 
-      session.execute(prepared.bind(0));
+      assertThat(t)
+          .isInstanceOf(DriverTimeoutException.class)
+          .hasMessage("Query timed out after PT1S");
     }
   }
 
   @Test
   public void should_use_timeout() {
     try (CqlSession session = SessionUtils.newSession(SIMULACRON_RULE)) {
-      Map<String, Object> params = ImmutableMap.of("k", 0);
-      Map<String, String> paramTypes = ImmutableMap.of("k", "int");
+      LinkedHashMap<String, Object> params = new LinkedHashMap<>(ImmutableMap.of("k", 0));
+      LinkedHashMap<String, String> paramTypes = new LinkedHashMap<>(ImmutableMap.of("k", "int"));
       // set timeout on simple statement, but will be unused since overridden by bound statement.
       SIMULACRON_RULE
           .cluster()
@@ -179,10 +177,13 @@ public class BoundStatementSimulacronIT {
               .build();
       PreparedStatement prepared = session.prepare(st);
 
-      thrown.expect(DriverTimeoutException.class);
-      thrown.expectMessage("Query timed out after PT0.15S");
+      Throwable t =
+          catchThrowable(
+              () -> session.execute(prepared.bind(0).setTimeout(Duration.ofMillis(150))));
 
-      session.execute(prepared.bind(0).setTimeout(Duration.ofMillis(150)));
+      assertThat(t)
+          .isInstanceOf(DriverTimeoutException.class)
+          .hasMessage("Query timed out after PT0.15S");
     }
   }
 }

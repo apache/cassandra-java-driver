@@ -20,6 +20,7 @@ import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.default
 import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.tenGraphRows;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -85,7 +86,7 @@ public class ContinuousGraphRequestHandlerTest {
 
     try (RequestHandlerTestHarness harness = builder.build()) {
 
-      GraphStatement graphStatement =
+      GraphStatement<?> graphStatement =
           ScriptGraphStatement.newInstance("mockQuery").setExecutionProfileName(profileName);
 
       ContinuousGraphRequestHandler handler =
@@ -158,7 +159,7 @@ public class ContinuousGraphRequestHandlerTest {
       when(profile.getString(DseDriverOption.GRAPH_SUB_PROTOCOL))
           .thenReturn(GraphProtocol.GRAPH_BINARY_1_0.toInternalCode());
 
-      GraphStatement graphStatement = ScriptGraphStatement.newInstance("mockQuery");
+      GraphStatement<?> graphStatement = ScriptGraphStatement.newInstance("mockQuery");
 
       // when
       ContinuousGraphRequestHandler handler =
@@ -182,9 +183,10 @@ public class ContinuousGraphRequestHandlerTest {
 
       // will trigger the global timeout and complete it exceptionally
       globalTimeout.task().run(globalTimeout);
-      assertThat(page1Future.toCompletableFuture())
-          .hasFailedWithThrowableThat()
-          .isInstanceOf(DriverTimeoutException.class)
+      assertThat(page1Future.toCompletableFuture()).isCompletedExceptionally();
+
+      assertThatThrownBy(() -> page1Future.toCompletableFuture().get())
+          .hasRootCauseExactlyInstanceOf(DriverTimeoutException.class)
           .hasMessageContaining("Query timed out after " + defaultTimeout);
     }
   }
@@ -207,7 +209,7 @@ public class ContinuousGraphRequestHandlerTest {
       when(profile.getString(DseDriverOption.GRAPH_SUB_PROTOCOL))
           .thenReturn(GraphProtocol.GRAPH_BINARY_1_0.toInternalCode());
 
-      GraphStatement graphStatement =
+      GraphStatement<?> graphStatement =
           ScriptGraphStatement.newInstance("mockQuery").setTimeout(statementTimeout);
 
       // when
@@ -233,9 +235,10 @@ public class ContinuousGraphRequestHandlerTest {
 
       // will trigger the global timeout and complete it exceptionally
       globalTimeout.task().run(globalTimeout);
-      assertThat(page1Future.toCompletableFuture())
-          .hasFailedWithThrowableThat()
-          .isInstanceOf(DriverTimeoutException.class)
+      assertThat(page1Future.toCompletableFuture()).isCompletedExceptionally();
+
+      assertThatThrownBy(() -> page1Future.toCompletableFuture().get())
+          .hasRootCauseExactlyInstanceOf(DriverTimeoutException.class)
           .hasMessageContaining("Query timed out after " + statementTimeout);
     }
   }
@@ -249,10 +252,7 @@ public class ContinuousGraphRequestHandlerTest {
 
     verify(harness.getSession().getMetricUpdater())
         .updateTimer(
-            eq(DseSessionMetric.GRAPH_REQUESTS),
-            eq(profileName),
-            anyLong(),
-            eq(TimeUnit.NANOSECONDS));
+            eq(DseSessionMetric.GRAPH_REQUESTS), eq(null), anyLong(), eq(TimeUnit.NANOSECONDS));
     verifyNoMoreInteractions(harness.getSession().getMetricUpdater());
   }
 }

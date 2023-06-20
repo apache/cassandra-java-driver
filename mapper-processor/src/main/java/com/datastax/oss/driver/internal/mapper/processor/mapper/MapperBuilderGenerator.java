@@ -21,6 +21,7 @@ import com.datastax.oss.driver.internal.mapper.DefaultMapperContext;
 import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
@@ -62,6 +63,10 @@ public class MapperBuilderGenerator extends SingleFileCodeGenerator {
                 getSessionClass())
             .addJavadoc(JAVADOC_PARAGRAPH_SEPARATOR)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
+            .addAnnotation(
+                AnnotationSpec.builder(SuppressWarnings.class)
+                    .addMember("value", "\"all\"")
+                    .build())
             .addModifiers(Modifier.PUBLIC)
             .addMethod(
                 MethodSpec.constructorBuilder()
