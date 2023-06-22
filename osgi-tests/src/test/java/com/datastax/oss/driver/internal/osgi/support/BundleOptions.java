@@ -152,7 +152,9 @@ public class BundleOptions {
                 .overwriteManifest(WrappedUrlProvisionOption.OverwriteMode.FULL),
             // Note: the versions below are hard-coded because they shouldn't change very often,
             // but if the tests fail because of them, we should consider parameterizing them
-            mavenBundle("commons-configuration", "commons-configuration", "1.10"),
+            mavenBundle("com.sun.mail", "mailapi", "1.6.4"),
+            mavenBundle("org.apache.commons", "commons-text", "1.8"),
+            mavenBundle("org.apache.commons", "commons-configuration2", "2.7"),
             CoreOptions.wrappedBundle(mavenBundle("commons-logging", "commons-logging", "1.1.1"))
                 .exports("org.apache.commons.logging.*")
                 .bundleVersion("1.1.1")
