@@ -21,10 +21,7 @@ import com.datastax.oss.driver.api.core.type.CqlVectorType;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
-import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
@@ -62,7 +59,7 @@ public class CqlVectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> 
       return null;
     }
     ByteBuffer[] valueBuffs = new ByteBuffer[cqlType.getDimensions()];
-    Iterator<SubtypeT> values = value.getValues().iterator();
+    Iterator<SubtypeT> values = value.iterator();
     int allValueBuffsSize = 0;
     for (int i = 0; i < cqlType.getDimensions(); ++i) {
       ByteBuffer valueBuff = this.subtypeCodec.encode(values.next(), protocolVersion);
@@ -112,24 +109,20 @@ public class CqlVectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> 
     /* Restore the input ByteBuffer to its original state */
     bytes.rewind();
 
-    return CqlVector.builder().addAll(builder.build()).build();
+    return CqlVector.newInstance(builder.build());
   }
 
   @NonNull
   @Override
   public String format(@Nullable CqlVector<SubtypeT> value) {
-    return value == null ? "NULL" : Iterables.toString(value.getValues());
+    return value == null ? "NULL" : value.toString();
   }
 
   @Nullable
   @Override
   public CqlVector<SubtypeT> parse(@Nullable String value) {
-    if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) return null;
-
-    ImmutableList<SubtypeT> values =
-        Streams.stream(Splitter.on(", ").split(value.substring(1, value.length() - 1)))
-            .map(subtypeCodec::parse)
-            .collect(ImmutableList.toImmutableList());
-    return CqlVector.builder().addAll(values).build();
+    return (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL"))
+        ? null
+        : CqlVector.from(value, this.subtypeCodec);
   }
 }

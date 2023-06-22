@@ -27,7 +27,7 @@ import org.junit.Test;
 
 public class CqlVectorCodecTest extends CodecTestBase<CqlVector<Float>> {
 
-  private static final CqlVector VECTOR = CqlVector.builder().add(1.0f, 2.5f).build();
+  private static final CqlVector VECTOR = CqlVector.newInstance(1.0f, 2.5f);
 
   private static final String VECTOR_HEX_STRING = "0x" + "3f800000" + "40200000";
 
