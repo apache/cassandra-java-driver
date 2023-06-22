@@ -1,13 +1,13 @@
-name: 🗑️ Snyk PR cleanup - merged/closed 
+name: 🗑️ Snyk PR cleanup - merged/closed
 
 on:
   pull_request:
     types:
       - closed
-    branches:    
+    branches:
       - snyk-monitor
-  workflow_dispatch:  
-  
+  workflow_dispatch:
+
 jobs:
   snyk_project_cleanup_when_pr_closed:
     uses: datastax/shared-github-actions/.github/workflows/snyk-pr-cleanup.yml@main

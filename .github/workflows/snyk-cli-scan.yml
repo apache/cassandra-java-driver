@@ -1,11 +1,11 @@
 name: 🔬 Snyk cli SCA
 
-on: 
+on:
   push:
     branches: [ 4.x ]
   pull_request:
     branches: [ 4.x ]
-  workflow_dispatch:  
+  workflow_dispatch:
 
 env:
   SNYK_SEVERITY_THRESHOLD_LEVEL: high
@@ -26,11 +26,11 @@ jobs:
           distribution: 'temurin'
           java-version: '8'
           cache: maven
-          
+
       - name: run maven install prepare for snyk
         run: |
           mvn -B -V install -DskipTests -Dmaven.javadoc.skip=true
-      
+
       - name: snyk scan java
         uses: datastax/shared-github-actions/actions/snyk-scan-java@main
         with:
@@ -44,4 +44,4 @@ jobs:
         with:
           gh_repo_token: ${{ secrets.GITHUB_TOKEN }}
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-          SNYK_ORG_ID: ${{ secrets.SNYK_ORG_ID }}          
+          SNYK_ORG_ID: ${{ secrets.SNYK_ORG_ID }}
