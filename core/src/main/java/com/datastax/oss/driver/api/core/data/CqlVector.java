@@ -83,6 +83,7 @@ public class CqlVector<T> implements Iterable<T> {
     return new CqlVector<T>(values);
   }
 
+  @Override
   public Iterator<T> iterator() {
     return values.iterator();
   }
