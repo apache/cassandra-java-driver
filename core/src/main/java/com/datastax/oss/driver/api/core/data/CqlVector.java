@@ -23,13 +23,14 @@ import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
 import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 
 /**
  * An immutable n-dimensional vector representation of the CQL vector type.
  *
  * <p>Instances may be created iteratively using {@link CqlVector.Builder} or in a single method
- * call via {@link #newInstance(Object[])} or {@link #newInstance(ImmutableList)}.
+ * call via {@link #newInstance(Object[])} or {@link #newInstance(Collection)}.
  */
 public class CqlVector<T> implements Iterable<T> {
 
@@ -53,8 +54,8 @@ public class CqlVector<T> implements Iterable<T> {
    *
    * @param values the values contained in the created vector
    */
-  public static <T> CqlVector<T> newInstance(ImmutableList<T> values) {
-    return new CqlVector<T>(values);
+  public static <T> CqlVector<T> newInstance(Collection<T> values) {
+    return new CqlVector<T>(ImmutableList.copyOf(values));
   }
 
   /**

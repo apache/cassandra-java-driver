@@ -43,8 +43,8 @@ public class CqlVectorTest {
     floats2[floats2.length - 1] = 0.0f;
     CqlVector<Float> v3 = CqlVector.newInstance(floats2);
 
-    assertThat(v1.equals(v2)).isTrue();
-    assertThat(v1.equals(v3)).isFalse();
+    assertThat(v1).isEqualTo(v2);
+    assertThat(v1).isNotEqualTo(v3);
   }
 
   @Test
@@ -56,8 +56,8 @@ public class CqlVectorTest {
     v3Array[v3Array.length - 1] = v3Array.length * 1.1f;
     CqlVector<Float> v3 = CqlVector.newInstance(v3Array);
 
-    assertThat(v1.equals(v2)).isFalse();
-    assertThat(v1.equals(v3)).isFalse();
+    assertThat(v1).isNotEqualTo(v2);
+    assertThat(v1).isNotEqualTo(v3);
   }
 
   @Test
@@ -68,7 +68,7 @@ public class CqlVectorTest {
         ImmutableList.<Float>builder().addAll(Iterators.forArray(FLOATS)).build();
     CqlVector<Float> v2 = CqlVector.newInstance(l);
 
-    assertThat(v1.equals(v2));
+    assertThat(v1).isEqualTo(v2);
   }
 
   @Test
@@ -88,8 +88,8 @@ public class CqlVectorTest {
     b4.addAll(ImmutableList.copyOf(FLOATS));
     CqlVector<Float> v4 = b4.build();
 
-    assertThat(v1.equals(v2));
-    assertThat(v1.equals(v3));
-    assertThat(v1.equals(v4));
+    assertThat(v1).isEqualTo(v2);
+    assertThat(v1).isEqualTo(v3);
+    assertThat(v1).isEqualTo(v4);
   }
 }
