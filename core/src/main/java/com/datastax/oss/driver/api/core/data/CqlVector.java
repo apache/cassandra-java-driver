@@ -72,7 +72,7 @@ public class CqlVector<T> implements Iterable<T> {
    *
    * <p>This method should understand the format used by {@link CqlVector#toString()}
    *
-   * @param input the String to be converted
+   * @param input the <code>String</code> to be converted
    * @param subtypeCodec an instance of <code>TypeCodec</code> to use when encoding extracted values
    */
   public static <T> CqlVector<T> from(@NonNull String input, TypeCodec<T> subtypeCodec) {
@@ -82,6 +82,18 @@ public class CqlVector<T> implements Iterable<T> {
             .map(subtypeCodec::parse)
             .collect(ImmutableList.toImmutableList());
     return new CqlVector<T>(values);
+  }
+
+  /**
+   * Export the contents of this vector to a <code>Collection</code>.
+   *
+   * @param collection the <code>Collection</code> which will receive the contents of this vector
+   */
+  public Collection<? super T> export(Collection<? super T> collection) {
+    for (T val : this.values) {
+      collection.add(val);
+    }
+    return collection;
   }
 
   @Override

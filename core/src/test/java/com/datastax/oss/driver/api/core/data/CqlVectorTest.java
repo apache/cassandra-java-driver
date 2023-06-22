@@ -19,8 +19,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
+import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Queues;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentSkipListSet;
+import org.apache.commons.collections.Bag;
+import org.apache.commons.collections.bag.HashBag;
+import org.apache.commons.collections.bag.TreeBag;
 import org.junit.Test;
 
 public class CqlVectorTest {
@@ -91,5 +103,76 @@ public class CqlVectorTest {
     assertThat(v1).isEqualTo(v2);
     assertThat(v1).isEqualTo(v3);
     assertThat(v1).isEqualTo(v4);
+  }
+
+  /** Not necessarily intended to be exhaustive; aiming more for good coverage */
+  @Test
+  public void should_export_any_collection_type() {
+
+    CqlVector<Float> v = CqlVector.newInstance(FLOATS);
+
+    /** =========== Lists =========== */
+    List<Float> compareList = Lists.newArrayList(FLOATS);
+    for (List l :
+        new List[] {Lists.newArrayList(), Lists.newLinkedList(), Lists.newCopyOnWriteArrayList()}) {
+      v.export(l);
+      assertThat(l).isEqualTo(compareList);
+    }
+
+    /** =========== Set =========== */
+    Set<Float> compareSet = Sets.newHashSet(Iterators.forArray(FLOATS));
+    for (Set s :
+        new Set[] {
+          Sets.newHashSet(),
+          Sets.newLinkedHashSet(),
+          new TreeSet<Float>(),
+          new ConcurrentSkipListSet<Float>()
+        }) {
+      v.export(s);
+      assertThat(s).isEqualTo(compareSet);
+    }
+
+    /** =========== Queue =========== */
+    Queue<Float> compareQueue = Queues.newConcurrentLinkedQueue(Lists.newArrayList(FLOATS));
+    for (Queue q :
+        new Queue[] {
+          Queues.newArrayBlockingQueue(FLOATS.length),
+          Queues.newArrayDeque(),
+          Queues.newConcurrentLinkedQueue(),
+          Queues.newLinkedBlockingQueue(),
+          Queues.newLinkedBlockingDeque()
+        }) {
+      v.export(q);
+      assertThat(Lists.newArrayList(q)).isEqualTo(Lists.newArrayList(compareQueue));
+    }
+
+    /** =========== Random third-party Collection impl =========== */
+    Bag compareBag = new HashBag();
+    for (Float f : v) compareBag.add(f);
+    for (Collection c : new Collection[] {new HashBag(), new TreeBag()}) {
+      v.export(c);
+      assertThat(c).isEqualTo(compareBag);
+    }
+  }
+
+  @Test
+  public void should_export_list_of_supertype() {
+
+    CqlVector<Float> v = CqlVector.newInstance(FLOATS);
+    List<Number> l = Lists.newArrayList();
+    v.export(l);
+
+    List<Float> compareList = Lists.newArrayList(FLOATS);
+    assertThat(l).isEqualTo(compareList);
+  }
+
+  @Test
+  public void should_return_list_on_export() {
+
+    CqlVector<Float> v = CqlVector.newInstance(FLOATS);
+    Collection<Float> rv = (Collection<Float>) v.export(Lists.newArrayList());
+
+    List<Float> compareList = Lists.newArrayList(FLOATS);
+    assertThat(rv).isEqualTo(compareList);
   }
 }
