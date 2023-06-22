@@ -6824,6 +6824,48 @@
         "new": "class com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException",
         "superClass": "com.datastax.oss.driver.api.core.DriverException",
         "justification": "Make CodecNotFoundException to extend DriverException as all other driver exceptions do"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method com.datastax.oss.driver.api.core.data.CqlVector.Builder com.datastax.oss.driver.api.core.data.CqlVector.Builder<T>::add(T)",
+        "new": "method com.datastax.oss.driver.api.core.data.CqlVector.Builder<T> com.datastax.oss.driver.api.core.data.CqlVector.Builder<T>::add(T)",
+        "justification": "Refactoring in JAVA-3061"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method com.datastax.oss.driver.api.core.data.CqlVector.Builder com.datastax.oss.driver.api.core.data.CqlVector.Builder<T>::add(T[])",
+        "new": "method com.datastax.oss.driver.api.core.data.CqlVector.Builder<T> com.datastax.oss.driver.api.core.data.CqlVector.Builder<T>::add(T[])",
+        "justification": "Refactoring in JAVA-3061"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method com.datastax.oss.driver.api.core.data.CqlVector.Builder com.datastax.oss.driver.api.core.data.CqlVector.Builder<T>::addAll(java.lang.Iterable<T>)",
+        "new": "method com.datastax.oss.driver.api.core.data.CqlVector.Builder<T> com.datastax.oss.driver.api.core.data.CqlVector.Builder<T>::addAll(java.lang.Iterable<T>)",
+        "justification": "Refactoring in JAVA-3061"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method com.datastax.oss.driver.api.core.data.CqlVector.Builder com.datastax.oss.driver.api.core.data.CqlVector<T>::builder()",
+        "new": "method <T> com.datastax.oss.driver.api.core.data.CqlVector.Builder<T> com.datastax.oss.driver.api.core.data.CqlVector<T>::builder()",
+        "justification": "Refactoring in JAVA-3061"
+      },
+      {
+        "code": "java.generics.elementNowParameterized",
+        "old": "method com.datastax.oss.driver.api.core.data.CqlVector.Builder com.datastax.oss.driver.api.core.data.CqlVector<T>::builder()",
+        "new": "method <T> com.datastax.oss.driver.api.core.data.CqlVector.Builder<T> com.datastax.oss.driver.api.core.data.CqlVector<T>::builder()",
+        "justification": "Refactoring in JAVA-3061"
+      },
+      {
+        "code": "java.generics.formalTypeParameterAdded",
+        "old": "method com.datastax.oss.driver.api.core.data.CqlVector.Builder com.datastax.oss.driver.api.core.data.CqlVector<T>::builder()",
+        "new": "method <T> com.datastax.oss.driver.api.core.data.CqlVector.Builder<T> com.datastax.oss.driver.api.core.data.CqlVector<T>::builder()",
+        "typeParameter": "T",
+        "justification": "Refactoring in JAVA-3061"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method java.lang.Iterable<T> com.datastax.oss.driver.api.core.data.CqlVector<T>::getValues()",
+        "justification": "Refactoring in JAVA-3061"
       }
     ]
   }
