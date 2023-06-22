@@ -1,0 +1,19 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.22.2
+# ignores vulnerabilities until expiry date; change duration by modifying expiry date
+ignore:
+  SNYK-JAVA-ORGGRAALVMSDK-2767964:
+    - '*':
+        reason: cannot upgrade to graal-sdk 22.1.0+ until we move off Java8, which is slated for later this year
+        expires: 2024-01-10T00:00:00.000Z
+        created: 2023-06-21T00:00:00.000Z
+  SNYK-JAVA-ORGGRAALVMSDK-2769618:
+    - '*':
+        reason: cannot upgrade to graal-sdk 22.1.0+ until we move off Java8, which is slated for later this year
+        expires: 2024-01-10T00:00:00.000Z
+        created: 2023-06-21T00:00:00.000Z
+  SNYK-JAVA-ORGGRAALVMSDK-5457933:
+    - '*':
+        reason: cannot upgrade to graal-sdk 22.1.0+ until we move off Java8, which is slated for later this year
+        expires: 2024-01-10T00:00:00.000Z
+        created: 2023-06-21T00:00:00.000Z
