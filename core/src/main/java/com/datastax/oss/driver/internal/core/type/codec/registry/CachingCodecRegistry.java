@@ -16,10 +16,8 @@
 package com.datastax.oss.driver.internal.core.type.codec.registry;
 
 import com.datastax.oss.driver.api.core.data.CqlDuration;
-import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
-import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.CustomType;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
@@ -28,6 +26,7 @@ import com.datastax.oss.driver.api.core.type.MapType;
 import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
@@ -604,11 +603,19 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
       } else if (cqlType instanceof UserDefinedType
           && UdtValue.class.isAssignableFrom(token.getRawType())) {
         return TypeCodecs.udtOf((UserDefinedType) cqlType);
-      } else if (cqlType instanceof VectorType
-          && CqlVector.class.isAssignableFrom(token.getRawType())) {
+      } else if (cqlType instanceof VectorType && List.class.isAssignableFrom(token.getRawType())) {
         VectorType vectorType = (VectorType) cqlType;
-        TypeCodec<Object> subtypeCodec = codecFor(vectorType.getSubtype());
-        return TypeCodecs.vectorOf((VectorType) cqlType, subtypeCodec);
+        TypeCodec<Object> elementCodec;
+        if (token.getType() instanceof ParameterizedType) {
+          Type[] typeArguments = ((ParameterizedType) token.getType()).getActualTypeArguments();
+          GenericType<?> elementJavaType = GenericType.of(typeArguments[0]);
+          elementCodec =
+              uncheckedCast(
+                  codecFor(vectorType.getElementType(), elementJavaType, isJavaCovariant));
+        } else {
+          elementCodec = codecFor(vectorType.getElementType());
+        }
+        return TypeCodecs.vectorOf(vectorType, elementCodec);
       } else if (cqlType instanceof CustomType
           && ByteBuffer.class.isAssignableFrom(token.getRawType())) {
         return TypeCodecs.custom(cqlType);

@@ -20,8 +20,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
 
 /**
- * Type representing a Cassandra vector type as described in CEP-30.  At the moment
- * this is implemented as a custom type so we include the CustomType interface as well.
+ * Type representing a Cassandra vector type as described in CEP-30. At the moment this is
+ * implemented as a custom type so we include the CustomType interface as well.
  */
 public class VectorType implements CustomType {
 
@@ -40,7 +40,7 @@ public class VectorType implements CustomType {
     return this.dimensions;
   }
 
-  public DataType getSubtype() {
+  public DataType getElementType() {
     return this.subtype;
   }
 
@@ -75,7 +75,7 @@ public class VectorType implements CustomType {
 
   @Override
   public String toString() {
-    return String.format("CqlVector(%s, %d)", getSubtype(), getDimensions());
+    return String.format("CqlVector(%s, %d)", getElementType(), getDimensions());
   }
 
   @Override

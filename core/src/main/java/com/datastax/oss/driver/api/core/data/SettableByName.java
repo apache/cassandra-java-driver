@@ -570,10 +570,11 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    */
   @NonNull
   @CheckReturnValue
-  default SelfT setCqlVector(@NonNull String name, @Nullable CqlVector<?> v) {
+  default <ElementT> SelfT setVector(
+      @NonNull String name, @Nullable List<ElementT> v, @NonNull Class<ElementT> elementsClass) {
     SelfT result = null;
     for (Integer i : allIndicesOf(name)) {
-      result = (result == null ? this : result).setCqlVector(i, v);
+      result = (result == null ? this : result).setVector(i, v, elementsClass);
     }
     assert result != null; // allIndices throws if there are no results
     return result;

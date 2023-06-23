@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.api.core.type.reflect;
 
 import com.datastax.oss.driver.api.core.data.CqlDuration;
-import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.core.data.GettableByIndex;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
@@ -165,7 +164,7 @@ public class GenericType<T> {
             .where(new TypeParameter<V>() {}, valueType.token);
     return new GenericType<>(token);
   }
-  
+
   @NonNull
   public static <T> GenericType<T[]> arrayOf(@NonNull Class<T> componentType) {
     TypeToken<T[]> token =

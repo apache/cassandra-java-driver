@@ -18,14 +18,13 @@ package com.datastax.oss.driver.internal.core.type.codec;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.google.common.collect.Lists;
-import org.junit.Test;
-
 import java.util.List;
+import org.junit.Test;
 
 public class VectorCodecTest extends CodecTestBase<List<Float>> {
 

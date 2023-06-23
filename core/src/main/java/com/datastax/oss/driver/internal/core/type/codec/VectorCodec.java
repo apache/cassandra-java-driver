@@ -16,8 +16,8 @@
 package com.datastax.oss.driver.internal.core.type.codec;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.DataType;
+import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
@@ -132,7 +132,7 @@ public class VectorCodec<SubtypeT> implements TypeCodec<List<SubtypeT>> {
   private List<SubtypeT> from(@Nullable String value) {
 
     return Streams.stream(Splitter.on(", ").split(value.substring(1, value.length() - 1)))
-                    .map(subtypeCodec::parse)
-                    .collect(ImmutableList.toImmutableList());
+        .map(subtypeCodec::parse)
+        .collect(ImmutableList.toImmutableList());
   }
 }
