@@ -18,15 +18,7 @@ package com.datastax.oss.driver.internal.core.type.codec.registry;
 import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
-import com.datastax.oss.driver.api.core.type.CustomType;
-import com.datastax.oss.driver.api.core.type.DataType;
-import com.datastax.oss.driver.api.core.type.DataTypes;
-import com.datastax.oss.driver.api.core.type.ListType;
-import com.datastax.oss.driver.api.core.type.MapType;
-import com.datastax.oss.driver.api.core.type.SetType;
-import com.datastax.oss.driver.api.core.type.TupleType;
-import com.datastax.oss.driver.api.core.type.UserDefinedType;
-import com.datastax.oss.driver.api.core.type.VectorType;
+import com.datastax.oss.driver.api.core.type.*;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
@@ -341,7 +333,7 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
         }
         GenericType<?> elementType =
             inspectType(
-                firstElement, cqlType == null ? null : ((ListType) cqlType).getElementType());
+                firstElement, cqlType == null ? null : ((SequenceType) cqlType).getElementType());
         return GenericType.listOf(elementType);
       }
     } else if (value instanceof Set) {

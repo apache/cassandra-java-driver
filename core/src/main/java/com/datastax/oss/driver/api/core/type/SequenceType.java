@@ -15,11 +15,11 @@
  */
 package com.datastax.oss.driver.api.core.type;
 
-/**
- * Type representing a Cassandra vector type as described in CEP-30. At the moment this is
- * implemented as a custom type so we include the CustomType interface as well.
- */
-public interface VectorType extends CustomType, SequenceType {
+import edu.umd.cs.findbugs.annotations.NonNull;
 
-  int getDimensions();
+/** An ordered collection of some contained value, otherwise known as a "sequence" */
+public interface SequenceType {
+
+  @NonNull
+  DataType getElementType();
 }

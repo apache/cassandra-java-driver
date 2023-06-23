@@ -19,10 +19,10 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
-import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.schema.ShallowUserDefinedType;
 import com.datastax.oss.driver.internal.core.type.DefaultTupleType;
+import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import com.datastax.oss.driver.internal.core.type.codec.ParseUtils;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -145,7 +145,7 @@ public class DataTypeCqlNameParser implements DataTypeParser {
       }
       DataType subType = parse(parameters.get(0), keyspaceId, false, userTypes, context);
       int dimensions = Integer.parseInt(parameters.get(1));
-      return new VectorType(subType, dimensions);
+      return new DefaultVectorType(subType, dimensions);
     }
 
     throw new IllegalArgumentException("Could not parse type name " + toParse);

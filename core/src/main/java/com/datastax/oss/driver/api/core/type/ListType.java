@@ -18,10 +18,7 @@ package com.datastax.oss.driver.api.core.type;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
-public interface ListType extends DataType {
-
-  @NonNull
-  DataType getElementType();
+public interface ListType extends DataType, SequenceType {
 
   boolean isFrozen();
 

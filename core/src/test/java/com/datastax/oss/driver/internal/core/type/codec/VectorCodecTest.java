@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import com.google.common.collect.Lists;
 import java.util.List;
 import org.junit.Test;
@@ -81,17 +82,17 @@ public class VectorCodecTest extends CodecTestBase<List<Float>> {
 
   @Test
   public void should_accept_data_type() {
-    assertThat(codec.accepts(new VectorType(DataTypes.FLOAT, 2))).isTrue();
+    assertThat(codec.accepts(new DefaultVectorType(DataTypes.FLOAT, 2))).isTrue();
     assertThat(codec.accepts(DataTypes.INT)).isFalse();
   }
 
   @Test
   public void should_accept_vector_type_correct_dimension_only() {
-    assertThat(codec.accepts(new VectorType(DataTypes.FLOAT, 0))).isFalse();
-    assertThat(codec.accepts(new VectorType(DataTypes.FLOAT, 1))).isFalse();
-    assertThat(codec.accepts(new VectorType(DataTypes.FLOAT, 2))).isTrue();
+    assertThat(codec.accepts(new DefaultVectorType(DataTypes.FLOAT, 0))).isFalse();
+    assertThat(codec.accepts(new DefaultVectorType(DataTypes.FLOAT, 1))).isFalse();
+    assertThat(codec.accepts(new DefaultVectorType(DataTypes.FLOAT, 2))).isTrue();
     for (int i = 3; i < 1000; ++i) {
-      assertThat(codec.accepts(new VectorType(DataTypes.FLOAT, i))).isFalse();
+      assertThat(codec.accepts(new DefaultVectorType(DataTypes.FLOAT, i))).isFalse();
     }
   }
 

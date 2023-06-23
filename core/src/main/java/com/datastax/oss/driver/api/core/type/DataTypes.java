@@ -23,6 +23,7 @@ import com.datastax.oss.driver.internal.core.type.DefaultListType;
 import com.datastax.oss.driver.internal.core.type.DefaultMapType;
 import com.datastax.oss.driver.internal.core.type.DefaultSetType;
 import com.datastax.oss.driver.internal.core.type.DefaultTupleType;
+import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import com.datastax.oss.driver.internal.core.type.PrimitiveType;
 import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -65,14 +66,14 @@ public class DataTypes {
     if (className.equals("org.apache.cassandra.db.marshal.DurationType")) return DURATION;
 
     /* Vector support is currently implemented as a custom type but is also parameterized */
-    if (className.startsWith(VectorType.VECTOR_CLASS_NAME)) {
+    if (className.startsWith(DefaultVectorType.VECTOR_CLASS_NAME)) {
       List<String> params =
           paramSplitter.splitToList(
               className.substring(
-                  VectorType.VECTOR_CLASS_NAME.length() + 1, className.length() - 1));
+                  DefaultVectorType.VECTOR_CLASS_NAME.length() + 1, className.length() - 1));
       DataType subType = classNameParser.parse(params.get(0), AttachmentPoint.NONE);
       int dimensions = Integer.parseInt(params.get(1));
-      return new VectorType(subType, dimensions);
+      return new DefaultVectorType(subType, dimensions);
     }
     return new DefaultCustomType(className);
   }
@@ -136,6 +137,6 @@ public class DataTypes {
   }
 
   public static VectorType vectorOf(DataType subtype, int dimensions) {
-    return new VectorType(subtype, dimensions);
+    return new DefaultVectorType(subtype, dimensions);
   }
 }
