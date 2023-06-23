@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata.schema.parsing;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.api.core.type.CqlVectorType;
+import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
@@ -145,7 +145,7 @@ public class DataTypeCqlNameParser implements DataTypeParser {
       }
       DataType subType = parse(parameters.get(0), keyspaceId, false, userTypes, context);
       int dimensions = Integer.parseInt(parameters.get(1));
-      return new CqlVectorType(subType, dimensions);
+      return new VectorType(subType, dimensions);
     }
 
     throw new IllegalArgumentException("Could not parse type name " + toParse);

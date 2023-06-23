@@ -65,14 +65,14 @@ public class DataTypes {
     if (className.equals("org.apache.cassandra.db.marshal.DurationType")) return DURATION;
 
     /* Vector support is currently implemented as a custom type but is also parameterized */
-    if (className.startsWith(CqlVectorType.CQLVECTOR_CLASS_NAME)) {
+    if (className.startsWith(VectorType.VECTOR_CLASS_NAME)) {
       List<String> params =
           paramSplitter.splitToList(
               className.substring(
-                  CqlVectorType.CQLVECTOR_CLASS_NAME.length() + 1, className.length() - 1));
+                  VectorType.VECTOR_CLASS_NAME.length() + 1, className.length() - 1));
       DataType subType = classNameParser.parse(params.get(0), AttachmentPoint.NONE);
       int dimensions = Integer.parseInt(params.get(1));
-      return new CqlVectorType(subType, dimensions);
+      return new VectorType(subType, dimensions);
     }
     return new DefaultCustomType(className);
   }
@@ -135,7 +135,7 @@ public class DataTypes {
     return new DefaultTupleType(ImmutableList.copyOf(Arrays.asList(componentTypes)));
   }
 
-  public static CqlVectorType vectorOf(DataType subtype, int dimensions) {
-    return new CqlVectorType(subtype, dimensions);
+  public static VectorType vectorOf(DataType subtype, int dimensions) {
+    return new VectorType(subtype, dimensions);
   }
 }

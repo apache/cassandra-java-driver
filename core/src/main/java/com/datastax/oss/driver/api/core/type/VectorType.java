@@ -19,14 +19,18 @@ import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
 
-public class CqlVectorType implements CustomType {
+/**
+ * Type representing a Cassandra vector type as described in CEP-30.  At the moment
+ * this is implemented as a custom type so we include the CustomType interface as well.
+ */
+public class VectorType implements CustomType {
 
-  public static final String CQLVECTOR_CLASS_NAME = "org.apache.cassandra.db.marshal.VectorType";
+  public static final String VECTOR_CLASS_NAME = "org.apache.cassandra.db.marshal.VectorType";
 
   private final DataType subtype;
   private final int dimensions;
 
-  public CqlVectorType(DataType subtype, int dimensions) {
+  public VectorType(DataType subtype, int dimensions) {
 
     this.dimensions = dimensions;
     this.subtype = subtype;
@@ -43,7 +47,7 @@ public class CqlVectorType implements CustomType {
   @NonNull
   @Override
   public String getClassName() {
-    return CQLVECTOR_CLASS_NAME;
+    return VECTOR_CLASS_NAME;
   }
 
   @NonNull
@@ -56,8 +60,8 @@ public class CqlVectorType implements CustomType {
   public boolean equals(Object o) {
     if (o == this) {
       return true;
-    } else if (o instanceof CqlVectorType) {
-      CqlVectorType that = (CqlVectorType) o;
+    } else if (o instanceof VectorType) {
+      VectorType that = (VectorType) o;
       return that.subtype.equals(this.subtype) && that.dimensions == this.dimensions;
     } else {
       return false;

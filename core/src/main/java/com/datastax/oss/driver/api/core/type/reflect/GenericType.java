@@ -165,14 +165,7 @@ public class GenericType<T> {
             .where(new TypeParameter<V>() {}, valueType.token);
     return new GenericType<>(token);
   }
-
-  @NonNull
-  public static <T> GenericType<CqlVector<T>> vectorOf(@NonNull GenericType<T> elementType) {
-    TypeToken<CqlVector<T>> token =
-        new TypeToken<CqlVector<T>>() {}.where(new TypeParameter<T>() {}, elementType.token);
-    return new GenericType<>(token);
-  }
-
+  
   @NonNull
   public static <T> GenericType<T[]> arrayOf(@NonNull Class<T> componentType) {
     TypeToken<T[]> token =

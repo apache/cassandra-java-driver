@@ -18,23 +18,25 @@ package com.datastax.oss.driver.internal.core.type.codec;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.datastax.oss.driver.api.core.data.CqlVector;
-import com.datastax.oss.driver.api.core.type.CqlVectorType;
+import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.google.common.collect.Lists;
 import org.junit.Test;
 
-public class CqlVectorCodecTest extends CodecTestBase<CqlVector<Float>> {
+import java.util.List;
 
-  private static final CqlVector VECTOR = CqlVector.newInstance(1.0f, 2.5f);
+public class VectorCodecTest extends CodecTestBase<List<Float>> {
+
+  private static final List<Float> VECTOR = Lists.newArrayList(1.0f, 2.5f);
 
   private static final String VECTOR_HEX_STRING = "0x" + "3f800000" + "40200000";
 
   private static final String FORMATTED_VECTOR = "[1.0, 2.5]";
 
-  public CqlVectorCodecTest() {
-    CqlVectorType vectorType = DataTypes.vectorOf(DataTypes.FLOAT, 2);
+  public VectorCodecTest() {
+    VectorType vectorType = DataTypes.vectorOf(DataTypes.FLOAT, 2);
     this.codec = TypeCodecs.vectorOf(vectorType, TypeCodecs.FLOAT);
   }
 
@@ -80,30 +82,30 @@ public class CqlVectorCodecTest extends CodecTestBase<CqlVector<Float>> {
 
   @Test
   public void should_accept_data_type() {
-    assertThat(codec.accepts(new CqlVectorType(DataTypes.FLOAT, 2))).isTrue();
+    assertThat(codec.accepts(new VectorType(DataTypes.FLOAT, 2))).isTrue();
     assertThat(codec.accepts(DataTypes.INT)).isFalse();
   }
 
   @Test
   public void should_accept_vector_type_correct_dimension_only() {
-    assertThat(codec.accepts(new CqlVectorType(DataTypes.FLOAT, 0))).isFalse();
-    assertThat(codec.accepts(new CqlVectorType(DataTypes.FLOAT, 1))).isFalse();
-    assertThat(codec.accepts(new CqlVectorType(DataTypes.FLOAT, 2))).isTrue();
+    assertThat(codec.accepts(new VectorType(DataTypes.FLOAT, 0))).isFalse();
+    assertThat(codec.accepts(new VectorType(DataTypes.FLOAT, 1))).isFalse();
+    assertThat(codec.accepts(new VectorType(DataTypes.FLOAT, 2))).isTrue();
     for (int i = 3; i < 1000; ++i) {
-      assertThat(codec.accepts(new CqlVectorType(DataTypes.FLOAT, i))).isFalse();
+      assertThat(codec.accepts(new VectorType(DataTypes.FLOAT, i))).isFalse();
     }
   }
 
   @Test
   public void should_accept_generic_type() {
-    assertThat(codec.accepts(GenericType.vectorOf(GenericType.FLOAT))).isTrue();
-    assertThat(codec.accepts(GenericType.vectorOf(GenericType.INTEGER))).isFalse();
+    assertThat(codec.accepts(GenericType.listOf(GenericType.FLOAT))).isTrue();
+    assertThat(codec.accepts(GenericType.listOf(GenericType.INTEGER))).isFalse();
     assertThat(codec.accepts(GenericType.of(Integer.class))).isFalse();
   }
 
   @Test
   public void should_accept_raw_type() {
-    assertThat(codec.accepts(CqlVector.class)).isTrue();
+    assertThat(codec.accepts(List.class)).isTrue();
     assertThat(codec.accepts(Integer.class)).isFalse();
   }
 

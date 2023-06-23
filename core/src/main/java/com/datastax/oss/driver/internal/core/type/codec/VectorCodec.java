@@ -16,32 +16,35 @@
 package com.datastax.oss.driver.internal.core.type.codec;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.data.CqlVector;
-import com.datastax.oss.driver.api.core.type.CqlVectorType;
+import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
+import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
+import java.util.List;
 
-public class CqlVectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
+public class VectorCodec<SubtypeT> implements TypeCodec<List<SubtypeT>> {
 
-  private final CqlVectorType cqlType;
-  private final GenericType<CqlVector<SubtypeT>> javaType;
+  private final VectorType cqlType;
+  private final GenericType<List<SubtypeT>> javaType;
   private final TypeCodec<SubtypeT> subtypeCodec;
 
-  public CqlVectorCodec(CqlVectorType cqlType, TypeCodec<SubtypeT> subtypeCodec) {
+  public VectorCodec(VectorType cqlType, TypeCodec<SubtypeT> subtypeCodec) {
     this.cqlType = cqlType;
     this.subtypeCodec = subtypeCodec;
-    this.javaType = GenericType.vectorOf(subtypeCodec.getJavaType());
+    this.javaType = GenericType.listOf(subtypeCodec.getJavaType());
   }
 
   @NonNull
   @Override
-  public GenericType<CqlVector<SubtypeT>> getJavaType() {
+  public GenericType<List<SubtypeT>> getJavaType() {
     return this.javaType;
   }
 
@@ -54,7 +57,7 @@ public class CqlVectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> 
   @Nullable
   @Override
   public ByteBuffer encode(
-      @Nullable CqlVector<SubtypeT> value, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable List<SubtypeT> value, @NonNull ProtocolVersion protocolVersion) {
     if (value == null || cqlType.getDimensions() <= 0) {
       return null;
     }
@@ -79,7 +82,7 @@ public class CqlVectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> 
 
   @Nullable
   @Override
-  public CqlVector<SubtypeT> decode(
+  public List<SubtypeT> decode(
       @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return null;
@@ -109,20 +112,27 @@ public class CqlVectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> 
     /* Restore the input ByteBuffer to its original state */
     bytes.rewind();
 
-    return CqlVector.newInstance(builder.build());
+    return builder.build();
   }
 
   @NonNull
   @Override
-  public String format(@Nullable CqlVector<SubtypeT> value) {
-    return value == null ? "NULL" : value.toString();
+  public String format(@Nullable List<SubtypeT> value) {
+    return value == null ? "NULL" : Iterables.toString(value);
   }
 
   @Nullable
   @Override
-  public CqlVector<SubtypeT> parse(@Nullable String value) {
+  public List<SubtypeT> parse(@Nullable String value) {
     return (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL"))
         ? null
-        : CqlVector.from(value, this.subtypeCodec);
+        : this.from(value);
+  }
+
+  private List<SubtypeT> from(@Nullable String value) {
+
+    return Streams.stream(Splitter.on(", ").split(value.substring(1, value.length() - 1)))
+                    .map(subtypeCodec::parse)
+                    .collect(ImmutableList.toImmutableList());
   }
 }
