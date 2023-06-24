@@ -333,7 +333,7 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
         }
         GenericType<?> elementType =
             inspectType(
-                firstElement, cqlType == null ? null : ((SequenceType) cqlType).getElementType());
+                firstElement, cqlType == null ? null : ((ContainerType) cqlType).getElementType());
         return GenericType.listOf(elementType);
       }
     } else if (value instanceof Set) {
@@ -538,6 +538,18 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
     return null;
   }
 
+  private TypeCodec<Object> getElementCodec(
+      ContainerType cqlType, TypeToken<?> token, boolean isJavaCovariant) {
+
+    DataType elementCqlType = cqlType.getElementType();
+    if (token.getType() instanceof ParameterizedType) {
+      Type[] typeArguments = ((ParameterizedType) token.getType()).getActualTypeArguments();
+      GenericType<?> elementJavaType = GenericType.of(typeArguments[0]);
+      return uncheckedCast(codecFor(elementCqlType, elementJavaType, isJavaCovariant));
+    }
+    return codecFor(elementCqlType);
+  }
+
   // Try to create a codec when we haven't found it in the cache
   @NonNull
   protected TypeCodec<?> createCodec(
@@ -552,26 +564,12 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
     } else { // Both non-null
       TypeToken<?> token = javaType.__getToken();
       if (cqlType instanceof ListType && List.class.isAssignableFrom(token.getRawType())) {
-        DataType elementCqlType = ((ListType) cqlType).getElementType();
-        TypeCodec<Object> elementCodec;
-        if (token.getType() instanceof ParameterizedType) {
-          Type[] typeArguments = ((ParameterizedType) token.getType()).getActualTypeArguments();
-          GenericType<?> elementJavaType = GenericType.of(typeArguments[0]);
-          elementCodec = uncheckedCast(codecFor(elementCqlType, elementJavaType, isJavaCovariant));
-        } else {
-          elementCodec = codecFor(elementCqlType);
-        }
+        TypeCodec<Object> elementCodec =
+            getElementCodec((ContainerType) cqlType, token, isJavaCovariant);
         return TypeCodecs.listOf(elementCodec);
       } else if (cqlType instanceof SetType && Set.class.isAssignableFrom(token.getRawType())) {
-        DataType elementCqlType = ((SetType) cqlType).getElementType();
-        TypeCodec<Object> elementCodec;
-        if (token.getType() instanceof ParameterizedType) {
-          Type[] typeArguments = ((ParameterizedType) token.getType()).getActualTypeArguments();
-          GenericType<?> elementJavaType = GenericType.of(typeArguments[0]);
-          elementCodec = uncheckedCast(codecFor(elementCqlType, elementJavaType, isJavaCovariant));
-        } else {
-          elementCodec = codecFor(elementCqlType);
-        }
+        TypeCodec<Object> elementCodec =
+            getElementCodec((ContainerType) cqlType, token, isJavaCovariant);
         return TypeCodecs.setOf(elementCodec);
       } else if (cqlType instanceof MapType && Map.class.isAssignableFrom(token.getRawType())) {
         DataType keyCqlType = ((MapType) cqlType).getKeyType();
@@ -597,16 +595,7 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
         return TypeCodecs.udtOf((UserDefinedType) cqlType);
       } else if (cqlType instanceof VectorType && List.class.isAssignableFrom(token.getRawType())) {
         VectorType vectorType = (VectorType) cqlType;
-        TypeCodec<Object> elementCodec;
-        if (token.getType() instanceof ParameterizedType) {
-          Type[] typeArguments = ((ParameterizedType) token.getType()).getActualTypeArguments();
-          GenericType<?> elementJavaType = GenericType.of(typeArguments[0]);
-          elementCodec =
-              uncheckedCast(
-                  codecFor(vectorType.getElementType(), elementJavaType, isJavaCovariant));
-        } else {
-          elementCodec = codecFor(vectorType.getElementType());
-        }
+        TypeCodec<Object> elementCodec = getElementCodec(vectorType, token, isJavaCovariant);
         return TypeCodecs.vectorOf(vectorType, elementCodec);
       } else if (cqlType instanceof CustomType
           && ByteBuffer.class.isAssignableFrom(token.getRawType())) {

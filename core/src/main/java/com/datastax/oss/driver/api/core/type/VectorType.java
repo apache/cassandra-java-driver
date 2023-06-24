@@ -19,7 +19,7 @@ package com.datastax.oss.driver.api.core.type;
  * Type representing a Cassandra vector type as described in CEP-30. At the moment this is
  * implemented as a custom type so we include the CustomType interface as well.
  */
-public interface VectorType extends CustomType, SequenceType {
+public interface VectorType extends CustomType, ContainerType {
 
   int getDimensions();
 }

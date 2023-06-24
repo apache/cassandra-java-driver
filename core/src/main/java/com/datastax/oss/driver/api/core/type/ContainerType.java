@@ -17,8 +17,11 @@ package com.datastax.oss.driver.api.core.type;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
-/** An ordered collection of some contained value, otherwise known as a "sequence" */
-public interface SequenceType {
+/**
+ * Representation of a type which "contains" some other type. This might be a collection type or it
+ * could be some other kind of container; the term is deliberately left somewhat vague.
+ */
+public interface ContainerType {
 
   @NonNull
   DataType getElementType();
