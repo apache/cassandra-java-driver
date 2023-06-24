@@ -27,6 +27,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -101,18 +102,18 @@ public class VectorCodec<SubtypeT> implements TypeCodec<List<SubtypeT>> {
               cqlType.getDimensions(), bytes.remaining()));
     }
 
-    ImmutableList.Builder<SubtypeT> builder = ImmutableList.builder();
+    List<SubtypeT> rv = new ArrayList<SubtypeT>(cqlType.getDimensions());
     for (int i = 0; i < cqlType.getDimensions(); ++i) {
       ByteBuffer slice = bytes.slice();
       slice.limit(elementSize);
-      builder.add(this.subtypeCodec.decode(slice, protocolVersion));
+      rv.add(this.subtypeCodec.decode(slice, protocolVersion));
       bytes.position(bytes.position() + elementSize);
     }
 
     /* Restore the input ByteBuffer to its original state */
     bytes.rewind();
 
-    return builder.build();
+    return rv;
   }
 
   @NonNull
