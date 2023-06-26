@@ -21,7 +21,6 @@ import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -30,6 +29,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class VectorCodec<SubtypeT> implements TypeCodec<List<SubtypeT>> {
 
@@ -134,6 +134,6 @@ public class VectorCodec<SubtypeT> implements TypeCodec<List<SubtypeT>> {
 
     return Streams.stream(Splitter.on(", ").split(value.substring(1, value.length() - 1)))
         .map(subtypeCodec::parse)
-        .collect(ImmutableList.toImmutableList());
+        .collect(Collectors.toCollection(ArrayList::new));
   }
 }

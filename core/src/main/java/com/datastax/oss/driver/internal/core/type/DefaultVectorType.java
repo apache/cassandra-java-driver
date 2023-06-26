@@ -36,7 +36,7 @@ public class DefaultVectorType implements VectorType {
     this.subtype = subtype;
   }
 
-  /* ============== SequenceType interface ============== */
+  /* ============== ContainerType interface ============== */
   @Override
   public DataType getElementType() {
     return this.subtype;

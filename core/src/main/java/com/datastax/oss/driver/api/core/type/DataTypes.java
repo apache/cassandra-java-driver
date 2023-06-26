@@ -73,6 +73,11 @@ public class DataTypes {
                   DefaultVectorType.VECTOR_CLASS_NAME.length() + 1, className.length() - 1));
       DataType subType = classNameParser.parse(params.get(0), AttachmentPoint.NONE);
       int dimensions = Integer.parseInt(params.get(1));
+      if (dimensions <= 0) {
+        throw new IllegalArgumentException(
+            String.format(
+                "Request to create vector of size %d, size must be positive", dimensions));
+      }
       return new DefaultVectorType(subType, dimensions);
     }
     return new DefaultCustomType(className);
