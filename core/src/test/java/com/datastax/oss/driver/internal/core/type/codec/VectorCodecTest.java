@@ -46,6 +46,26 @@ public class VectorCodecTest extends CodecTestBase<List<Float>> {
     assertThat(encode(null)).isNull();
   }
 
+  /** Too few eleements will cause an exception, extra elements will be silently ignored */
+  @Test
+  public void should_throw_on_encode_with_too_few_elements() {
+    assertThatThrownBy(() -> encode(VECTOR.subList(0, 1)))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  public void should_throw_on_encode_with_empty_list() {
+    assertThatThrownBy(() -> encode(Lists.newArrayList()))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  public void should_encode_with_too_many_elements() {
+    List<Float> doubleVector = Lists.newArrayList(VECTOR);
+    doubleVector.addAll(VECTOR);
+    assertThat(encode(doubleVector)).isEqualTo(VECTOR_HEX_STRING);
+  }
+
   @Test
   public void should_decode() {
     assertThat(decode(VECTOR_HEX_STRING)).isEqualTo(VECTOR);
@@ -54,7 +74,7 @@ public class VectorCodecTest extends CodecTestBase<List<Float>> {
   }
 
   @Test
-  public void decode_throws_if_too_few_bytes() {
+  public void should_throw_on_decode_if_too_few_bytes() {
     // Dropping 4 bytes would knock off exactly 1 float, anything less than that would be something
     // we couldn't parse a float out of
     for (int i = 1; i <= 3; ++i) {

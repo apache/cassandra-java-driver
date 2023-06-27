@@ -415,7 +415,7 @@ public interface SettableByIndex<SelfT extends SettableByIndex<SelfT>> extends A
   }
 
   /**
-   * Sets the {@code i}th value to the provided duration.
+   * Sets the {@code i}th value to the provided vector.
    *
    * <p>By default, this works with CQL type {@code vector}.
    *

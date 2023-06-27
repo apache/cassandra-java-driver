@@ -559,7 +559,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
   }
 
   /**
-   * Sets the value for all occurrences of {@code name} to the provided duration.
+   * Sets the value for all occurrences of {@code name} to the provided vector.
    *
    * <p>By default, this works with CQL type {@code vector}.
    *

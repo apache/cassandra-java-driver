@@ -29,6 +29,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 public class VectorCodec<SubtypeT> implements TypeCodec<List<SubtypeT>> {
@@ -66,7 +67,26 @@ public class VectorCodec<SubtypeT> implements TypeCodec<List<SubtypeT>> {
     Iterator<SubtypeT> values = value.iterator();
     int allValueBuffsSize = 0;
     for (int i = 0; i < cqlType.getDimensions(); ++i) {
-      ByteBuffer valueBuff = this.subtypeCodec.encode(values.next(), protocolVersion);
+      ByteBuffer valueBuff;
+      SubtypeT valueObj;
+
+      try {
+        valueObj = values.next();
+      } catch (NoSuchElementException nsee) {
+        throw new IllegalArgumentException(
+            String.format(
+                "Not enough elements; must provide elements for %d dimensions",
+                cqlType.getDimensions()));
+      }
+
+      try {
+        valueBuff = this.subtypeCodec.encode(valueObj, protocolVersion);
+      } catch (ClassCastException e) {
+        throw new IllegalArgumentException("Invalid type for element: " + valueObj.getClass());
+      }
+      if (valueBuff == null) {
+        throw new NullPointerException("Vector elements cannot encode to CQL NULL");
+      }
       allValueBuffsSize += valueBuff.limit();
       valueBuff.rewind();
       valueBuffs[i] = valueBuff;
