@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.type.codec;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
@@ -32,21 +33,21 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
-public class VectorCodec<SubtypeT> implements TypeCodec<List<SubtypeT>> {
+public class VectorCodec<SubtypeT extends Number> implements TypeCodec<CqlVector<SubtypeT>> {
 
   private final VectorType cqlType;
-  private final GenericType<List<SubtypeT>> javaType;
+  private final GenericType<CqlVector<SubtypeT>> javaType;
   private final TypeCodec<SubtypeT> subtypeCodec;
 
   public VectorCodec(VectorType cqlType, TypeCodec<SubtypeT> subtypeCodec) {
     this.cqlType = cqlType;
     this.subtypeCodec = subtypeCodec;
-    this.javaType = GenericType.listOf(subtypeCodec.getJavaType());
+    this.javaType = GenericType.vectorOf(subtypeCodec.getJavaType());
   }
 
   @NonNull
   @Override
-  public GenericType<List<SubtypeT>> getJavaType() {
+  public GenericType<CqlVector<SubtypeT>> getJavaType() {
     return this.javaType;
   }
 
@@ -59,7 +60,7 @@ public class VectorCodec<SubtypeT> implements TypeCodec<List<SubtypeT>> {
   @Nullable
   @Override
   public ByteBuffer encode(
-      @Nullable List<SubtypeT> value, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable CqlVector<SubtypeT> value, @NonNull ProtocolVersion protocolVersion) {
     if (value == null || cqlType.getDimensions() <= 0) {
       return null;
     }
@@ -103,7 +104,7 @@ public class VectorCodec<SubtypeT> implements TypeCodec<List<SubtypeT>> {
 
   @Nullable
   @Override
-  public List<SubtypeT> decode(
+  public CqlVector<SubtypeT> decode(
       @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return null;
@@ -133,27 +134,28 @@ public class VectorCodec<SubtypeT> implements TypeCodec<List<SubtypeT>> {
     /* Restore the input ByteBuffer to its original state */
     bytes.rewind();
 
-    return rv;
+    return CqlVector.newInstance(rv);
   }
 
   @NonNull
   @Override
-  public String format(@Nullable List<SubtypeT> value) {
+  public String format(@Nullable CqlVector<SubtypeT> value) {
     return value == null ? "NULL" : Iterables.toString(value);
   }
 
   @Nullable
   @Override
-  public List<SubtypeT> parse(@Nullable String value) {
+  public CqlVector<SubtypeT> parse(@Nullable String value) {
     return (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL"))
         ? null
         : this.from(value);
   }
 
-  private List<SubtypeT> from(@Nullable String value) {
+  private CqlVector<SubtypeT> from(@Nullable String value) {
 
-    return Streams.stream(Splitter.on(", ").split(value.substring(1, value.length() - 1)))
+    ArrayList<SubtypeT> vals =  Streams.stream(Splitter.on(", ").split(value.substring(1, value.length() - 1)))
         .map(subtypeCodec::parse)
         .collect(Collectors.toCollection(ArrayList::new));
+    return CqlVector.newInstance(vals);
   }
 }

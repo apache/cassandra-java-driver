@@ -15,10 +15,7 @@
  */
 package com.datastax.oss.driver.api.core.type.reflect;
 
-import com.datastax.oss.driver.api.core.data.CqlDuration;
-import com.datastax.oss.driver.api.core.data.GettableByIndex;
-import com.datastax.oss.driver.api.core.data.TupleValue;
-import com.datastax.oss.driver.api.core.data.UdtValue;
+import com.datastax.oss.driver.api.core.data.*;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.shaded.guava.common.primitives.Primitives;
 import com.datastax.oss.driver.shaded.guava.common.reflect.TypeParameter;
@@ -144,6 +141,20 @@ public class GenericType<T> {
   public static <T> GenericType<Set<T>> setOf(@NonNull GenericType<T> elementType) {
     TypeToken<Set<T>> token =
         new TypeToken<Set<T>>() {}.where(new TypeParameter<T>() {}, elementType.token);
+    return new GenericType<>(token);
+  }
+
+  @NonNull
+  public static <T extends Number> GenericType<CqlVector<T>> vectorOf(@NonNull Class<T> elementType) {
+    TypeToken<CqlVector<T>> token =
+            new TypeToken<CqlVector<T>>() {}.where(new TypeParameter<T>() {}, TypeToken.of(elementType));
+    return new GenericType<>(token);
+  }
+
+  @NonNull
+  public static <T extends Number> GenericType<CqlVector<T>> vectorOf(@NonNull GenericType<T> elementType) {
+    TypeToken<CqlVector<T>> token =
+            new TypeToken<CqlVector<T>>() {}.where(new TypeParameter<T>() {}, elementType.token);
     return new GenericType<>(token);
   }
 

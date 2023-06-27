@@ -18,18 +18,22 @@ package com.datastax.oss.driver.internal.core.type.codec;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import com.google.common.collect.Lists;
-import java.util.List;
+
+import java.util.Arrays;
 import org.junit.Test;
 
-public class VectorCodecTest extends CodecTestBase<List<Float>> {
+public class VectorCodecTest extends CodecTestBase<CqlVector<Float>> {
 
-  private static final List<Float> VECTOR = Lists.newArrayList(1.0f, 2.5f);
+  private static final Float[] VECTOR_ARGS = {1.0f, 2.5f};
+
+  private static final CqlVector<Float> VECTOR = CqlVector.newInstance(VECTOR_ARGS);
 
   private static final String VECTOR_HEX_STRING = "0x" + "3f800000" + "40200000";
 
@@ -49,21 +53,21 @@ public class VectorCodecTest extends CodecTestBase<List<Float>> {
   /** Too few eleements will cause an exception, extra elements will be silently ignored */
   @Test
   public void should_throw_on_encode_with_too_few_elements() {
-    assertThatThrownBy(() -> encode(VECTOR.subList(0, 1)))
+    assertThatThrownBy(() -> encode(VECTOR.subVector(0, 1)))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   public void should_throw_on_encode_with_empty_list() {
-    assertThatThrownBy(() -> encode(Lists.newArrayList()))
+    assertThatThrownBy(() -> encode(CqlVector.newInstance()))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
   public void should_encode_with_too_many_elements() {
-    List<Float> doubleVector = Lists.newArrayList(VECTOR);
-    doubleVector.addAll(VECTOR);
-    assertThat(encode(doubleVector)).isEqualTo(VECTOR_HEX_STRING);
+    Float[] doubledVectorContents = Arrays.copyOf(VECTOR_ARGS, VECTOR_ARGS.length * 2);
+    System.arraycopy(VECTOR_ARGS, 0, doubledVectorContents, VECTOR_ARGS.length, VECTOR_ARGS.length);
+    assertThat(encode(CqlVector.newInstance(doubledVectorContents))).isEqualTo(VECTOR_HEX_STRING);
   }
 
   @Test
@@ -118,14 +122,14 @@ public class VectorCodecTest extends CodecTestBase<List<Float>> {
 
   @Test
   public void should_accept_generic_type() {
-    assertThat(codec.accepts(GenericType.listOf(GenericType.FLOAT))).isTrue();
-    assertThat(codec.accepts(GenericType.listOf(GenericType.INTEGER))).isFalse();
+    assertThat(codec.accepts(GenericType.vectorOf(GenericType.FLOAT))).isTrue();
+    assertThat(codec.accepts(GenericType.vectorOf(GenericType.INTEGER))).isFalse();
     assertThat(codec.accepts(GenericType.of(Integer.class))).isFalse();
   }
 
   @Test
   public void should_accept_raw_type() {
-    assertThat(codec.accepts(List.class)).isTrue();
+    assertThat(codec.accepts(CqlVector.class)).isTrue();
     assertThat(codec.accepts(Integer.class)).isFalse();
   }
 

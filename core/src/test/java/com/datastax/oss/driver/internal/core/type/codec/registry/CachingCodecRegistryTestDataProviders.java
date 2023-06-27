@@ -285,6 +285,61 @@ public class CachingCodecRegistryTestDataProviders {
         ImmutableMap.of(
             ImmutableMap.of(udtValue, udtValue), ImmutableMap.of(tupleValue, tupleValue))
       },
+            // vexctors
+            {
+                    DataTypes.vectorOf(DataTypes.INT,1),
+                    GenericType.listOf(Integer.class),
+                    GenericType.listOf(Integer.class),
+                    ImmutableList.of(1)
+            },
+            {
+                    DataTypes.vectorOf(DataTypes.TEXT,1),
+                    GenericType.listOf(String.class),
+                    GenericType.listOf(String.class),
+                    ImmutableList.of("foo")
+            },
+            {
+                    DataTypes.vectorOf(DataTypes.BLOB,1),
+                    GenericType.listOf(ByteBuffer.class),
+                    GenericType.listOf(Class.forName("java.nio.HeapByteBuffer")),
+                    ImmutableList.of(ByteBuffer.wrap(new byte[] {127, 0, 0, 1}))
+            },
+            {
+                    DataTypes.vectorOf(DataTypes.INET,1),
+                    GenericType.listOf(InetAddress.class),
+                    GenericType.listOf(Inet4Address.class),
+                    ImmutableList.of(InetAddress.getByAddress(new byte[] {127, 0, 0, 1}))
+            },
+            {
+                    DataTypes.vectorOf(tupleType,1),
+                    GenericType.listOf(TupleValue.class),
+                    GenericType.listOf(DefaultTupleValue.class),
+                    ImmutableList.of(tupleValue)
+            },
+            {
+                    DataTypes.vectorOf(userType,1),
+                    GenericType.listOf(UdtValue.class),
+                    GenericType.listOf(DefaultUdtValue.class),
+                    ImmutableList.of(udtValue)
+            },
+            {
+                    DataTypes.vectorOf(DataTypes.listOf(DataTypes.INT), 1),
+                    GenericType.listOf(GenericType.listOf(Integer.class)),
+                    GenericType.listOf(GenericType.listOf(Integer.class)),
+                    ImmutableList.of(ImmutableList.of(1))
+            },
+            {
+                    DataTypes.vectorOf(DataTypes.listOf(tupleType), 1),
+                    GenericType.listOf(GenericType.listOf(TupleValue.class)),
+                    GenericType.listOf(GenericType.listOf(DefaultTupleValue.class)),
+                    ImmutableList.of(ImmutableList.of(tupleValue))
+            },
+            {
+                    DataTypes.vectorOf(DataTypes.listOf(userType), 1),
+                    GenericType.listOf(GenericType.listOf(UdtValue.class)),
+                    GenericType.listOf(GenericType.listOf(DefaultUdtValue.class)),
+                    ImmutableList.of(ImmutableList.of(udtValue))
+            },
     };
   }
 
