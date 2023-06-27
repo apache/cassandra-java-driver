@@ -22,7 +22,6 @@ import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
 import edu.umd.cs.findbugs.annotations.NonNull;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -34,128 +33,149 @@ import java.util.stream.Stream;
 /**
  * Representation of a vector as defined in CQL.
  *
- * A CQL vector is a fixed-length array of non-null numeric values.  These properties don't map cleanly to an
- * existing class in the standard JDK Collections hierarchy so we provide this value object instead.  Like other
- * value object collections returned by the driver instances of this class are not immutable; think of these value
- * objects as a representation of a vector stored in the database as an initial step in some additional computation.
+ * <p>A CQL vector is a fixed-length array of non-null numeric values. These properties don't map
+ * cleanly to an existing class in the standard JDK Collections hierarchy so we provide this value
+ * object instead. Like other value object collections returned by the driver instances of this
+ * class are not immutable; think of these value objects as a representation of a vector stored in
+ * the database as an initial step in some additional computation.
  *
- * While we don't implement any Collection APIs we do implement Iterable.  We also attempt to play nice with the
- * Streams API in order to better facilitate integration with data pipelines.  Finally, where possible we've tried to
- * make the API of this class similar to the equivalent methods on {@link List}.
+ * <p>While we don't implement any Collection APIs we do implement Iterable. We also attempt to play
+ * nice with the Streams API in order to better facilitate integration with data pipelines. Finally,
+ * where possible we've tried to make the API of this class similar to the equivalent methods on
+ * {@link List}.
  */
 public class CqlVector<T extends Number> implements Iterable<T> {
 
-    /**
-     * Create a new CqlVector containing the specified values.
-     *
-     * @param vals  the collection of values to wrap.
-     * @return a CqlVector wrapping those values
-     */
-    public static <V extends Number> CqlVector<V> newInstance(V... vals) {
+  /**
+   * Create a new CqlVector containing the specified values.
+   *
+   * @param vals the collection of values to wrap.
+   * @return a CqlVector wrapping those values
+   */
+  public static <V extends Number> CqlVector<V> newInstance(V... vals) {
 
-        // Note that Array.asList() guarantees the return of an array which implements RandomAccess
-        return new CqlVector(Arrays.asList(vals));
+    // Note that Array.asList() guarantees the return of an array which implements RandomAccess
+    return new CqlVector(Arrays.asList(vals));
+  }
+
+  /**
+   * Create a new CqlVector that "wraps" an existing ArrayList. Modifications to the passed
+   * ArrayList will also be reflected in the returned CqlVector.
+   *
+   * @param list the collection of values to wrap.
+   * @return a CqlVector wrapping those values
+   */
+  public static <V extends Number> CqlVector<V> newInstance(List<V> list) {
+    Preconditions.checkArgument(list != null, "Input list should not be null");
+    return new CqlVector(list);
+  }
+
+  private final List<T> list;
+
+  private CqlVector(@NonNull List<T> list) {
+
+    Preconditions.checkArgument(
+        Iterables.all(list, Predicates.notNull()), "CqlVectors cannot contain null values");
+    this.list = list;
+  }
+
+  /**
+   * Retrieve the value at the specified index. Modelled after {@link List#get(int)}
+   *
+   * @param idx the index to retrieve
+   * @return the value at the specified index
+   */
+  public T get(int idx) {
+    return list.get(idx);
+  }
+
+  /**
+   * Update the value at the specified index. Modelled after {@link List#set(int, Object)}
+   *
+   * @param idx the index to set
+   * @param val the new value for the specified index
+   * @return the old value for the specified index
+   */
+  public T set(int idx, T val) {
+    return list.set(idx, val);
+  }
+
+  /**
+   * Return the size of this vector. Modelled after {@link List#size()}
+   *
+   * @return the vector size
+   */
+  public int size() {
+    return this.list.size();
+  }
+
+  /**
+   * Return a CqlVector consisting of the contents of a portion of this vector. Modelled after
+   * {@link List#subList(int, int)}
+   *
+   * @param from the index to start from (inclusive)
+   * @param to the index to end on (exclusive)
+   * @return a new CqlVector wrapping the sublist
+   */
+  public CqlVector<T> subVector(int from, int to) {
+    return new CqlVector<T>(this.list.subList(from, to));
+  }
+
+  /**
+   * Create an {@link Iterator} for this vector
+   *
+   * @return the generated iterator
+   */
+  @Override
+  public Iterator<T> iterator() {
+    return this.list.iterator();
+  }
+
+  /**
+   * Create a {@link Stream} of the values in this vector
+   *
+   * @return the Stream instance
+   */
+  public Stream<T> stream() {
+    return this.list.stream();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    } else if (o instanceof CqlVector) {
+      CqlVector that = (CqlVector) o;
+      return this.list.equals(that.list);
+    } else {
+      return false;
     }
+  }
 
-    /**
-     * Create a new CqlVector that "wraps" an existing ArrayList.  Modifications to the
-     * passed ArrayList will also be reflected in the returned CqlVector.
-     *
-     * @param list the collection of values to wrap.
-     * @return a CqlVector wrapping those values
-     */
-    public static <V extends Number> CqlVector<V> newInstance(List<V> list) {
-        Preconditions.checkArgument(list != null, "Input list should not be null");
-        return new CqlVector(list);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(list);
+  }
 
-    private final List<T> list;
+  @Override
+  public String toString() {
+    return Iterables.toString(this.list);
+  }
 
-    private CqlVector(@NonNull List<T> list) {
-
-        Preconditions.checkArgument(Iterables.all(list, Predicates.notNull()), "CqlVectors cannot contain null values");
-        this.list = list;
-    }
-
-    /**
-     * Retrieve the value at the specified index.  Modelled after {@link List#get(int)}
-     *
-     * @param idx the index to retrieve
-     * @return the value at the specified index
-     */
-    public T get(int idx) { return list.get(idx); }
-
-    /**
-     * Update the value at the specified index.  Modelled after {@link List#set(int, Object)}
-
-     * @param idx the index to set
-     * @param val the new value for the specified index
-     * @return the old value for the specified index
-     */
-    public T set(int idx, T val) { return list.set(idx,val); }
-
-    /**
-     * Return the size of this vector.  Modelled after {@link List#size()} 
-     *
-     * @return the vector size
-     */
-    public int size() { return this.list.size(); }
-
-    /**
-     * Return a CqlVector consisting of the contents of a portion of this vector.  Modelled after {@link List#subList(int, int)}
-     *
-     * @param from the index to start from (inclusive)
-     * @param to the index to end on (exclusive)
-     * @return a new CqlVector wrapping the sublist
-     */
-    public CqlVector<T> subVector(int from, int to) { return new CqlVector<T>(this.list.subList(from,to)); }
-
-    /**
-     * Create an {@link Iterator} for this vector
-     *
-     * @return the generated iterator
-     */
-    @Override
-    public Iterator<T> iterator() { return this.list.iterator(); }
-
-    /**
-     * Create a {@link Stream} of the values in this vector
-     *
-     * @return the Stream instance
-     */
-    public Stream<T> stream() { return this.list.stream(); }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        CqlVector<?> cqlVector = (CqlVector<?>) o;
-        return list.equals(cqlVector.list);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(list);
-    }
-
-    @Override
-    public String toString() {
-        return Iterables.toString(this.list);
-    }
-
-    /**
-     * Create a new CqlVector instance from the specified string representation.  Note that this method is intended
-     * to mirror {@link #toString()}; calling this method from a <code>toString</code> call on some CqlVector should
-     * return a CqlVector that is equal to the origin instance.
-     *
-     * @param str a String representation of a CqlVector
-     * @param subtypeCodec
-     * @return
-     */
-    public CqlVector<T> from(@NonNull String str, @NonNull TypeCodec<T> subtypeCodec) {
-        ArrayList<T> vals =  Streams.stream(Splitter.on(", ").split(str.substring(1, str.length() - 1)))
-                .map(subtypeCodec::parse)
-                .collect(Collectors.toCollection(ArrayList::new));
-        return CqlVector.newInstance(vals);
-    }
+  /**
+   * Create a new CqlVector instance from the specified string representation. Note that this method
+   * is intended to mirror {@link #toString()}; calling this method from a <code>toString</code>
+   * call on some CqlVector should return a CqlVector that is equal to the origin instance.
+   *
+   * @param str a String representation of a CqlVector
+   * @param subtypeCodec
+   * @return
+   */
+  public CqlVector<T> from(@NonNull String str, @NonNull TypeCodec<T> subtypeCodec) {
+    ArrayList<T> vals =
+        Streams.stream(Splitter.on(", ").split(str.substring(1, str.length() - 1)))
+            .map(subtypeCodec::parse)
+            .collect(Collectors.toCollection(ArrayList::new));
+    return CqlVector.newInstance(vals);
+  }
 }

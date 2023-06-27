@@ -145,16 +145,19 @@ public class GenericType<T> {
   }
 
   @NonNull
-  public static <T extends Number> GenericType<CqlVector<T>> vectorOf(@NonNull Class<T> elementType) {
+  public static <T extends Number> GenericType<CqlVector<T>> vectorOf(
+      @NonNull Class<T> elementType) {
     TypeToken<CqlVector<T>> token =
-            new TypeToken<CqlVector<T>>() {}.where(new TypeParameter<T>() {}, TypeToken.of(elementType));
+        new TypeToken<CqlVector<T>>() {}.where(
+            new TypeParameter<T>() {}, TypeToken.of(elementType));
     return new GenericType<>(token);
   }
 
   @NonNull
-  public static <T extends Number> GenericType<CqlVector<T>> vectorOf(@NonNull GenericType<T> elementType) {
+  public static <T extends Number> GenericType<CqlVector<T>> vectorOf(
+      @NonNull GenericType<T> elementType) {
     TypeToken<CqlVector<T>> token =
-            new TypeToken<CqlVector<T>>() {}.where(new TypeParameter<T>() {}, elementType.token);
+        new TypeToken<CqlVector<T>>() {}.where(new TypeParameter<T>() {}, elementType.token);
     return new GenericType<>(token);
   }
 

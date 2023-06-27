@@ -571,7 +571,9 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
   @NonNull
   @CheckReturnValue
   default <ElementT extends Number> SelfT setVector(
-      @NonNull String name, @Nullable CqlVector<ElementT> v, @NonNull Class<ElementT> elementsClass) {
+      @NonNull String name,
+      @Nullable CqlVector<ElementT> v,
+      @NonNull Class<ElementT> elementsClass) {
     SelfT result = null;
     for (Integer i : allIndicesOf(name)) {
       result = (result == null ? this : result).setVector(i, v, elementsClass);

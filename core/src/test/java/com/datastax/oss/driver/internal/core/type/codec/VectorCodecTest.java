@@ -24,8 +24,6 @@ import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
-import com.google.common.collect.Lists;
-
 import java.util.Arrays;
 import org.junit.Test;
 

@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.type.codec.registry;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.data.CqlDuration;
+import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.type.DataTypes;
@@ -285,61 +286,55 @@ public class CachingCodecRegistryTestDataProviders {
         ImmutableMap.of(
             ImmutableMap.of(udtValue, udtValue), ImmutableMap.of(tupleValue, tupleValue))
       },
-            // vexctors
-            {
-                    DataTypes.vectorOf(DataTypes.INT,1),
-                    GenericType.listOf(Integer.class),
-                    GenericType.listOf(Integer.class),
-                    ImmutableList.of(1)
-            },
-            {
-                    DataTypes.vectorOf(DataTypes.TEXT,1),
-                    GenericType.listOf(String.class),
-                    GenericType.listOf(String.class),
-                    ImmutableList.of("foo")
-            },
-            {
-                    DataTypes.vectorOf(DataTypes.BLOB,1),
-                    GenericType.listOf(ByteBuffer.class),
-                    GenericType.listOf(Class.forName("java.nio.HeapByteBuffer")),
-                    ImmutableList.of(ByteBuffer.wrap(new byte[] {127, 0, 0, 1}))
-            },
-            {
-                    DataTypes.vectorOf(DataTypes.INET,1),
-                    GenericType.listOf(InetAddress.class),
-                    GenericType.listOf(Inet4Address.class),
-                    ImmutableList.of(InetAddress.getByAddress(new byte[] {127, 0, 0, 1}))
-            },
-            {
-                    DataTypes.vectorOf(tupleType,1),
-                    GenericType.listOf(TupleValue.class),
-                    GenericType.listOf(DefaultTupleValue.class),
-                    ImmutableList.of(tupleValue)
-            },
-            {
-                    DataTypes.vectorOf(userType,1),
-                    GenericType.listOf(UdtValue.class),
-                    GenericType.listOf(DefaultUdtValue.class),
-                    ImmutableList.of(udtValue)
-            },
-            {
-                    DataTypes.vectorOf(DataTypes.listOf(DataTypes.INT), 1),
-                    GenericType.listOf(GenericType.listOf(Integer.class)),
-                    GenericType.listOf(GenericType.listOf(Integer.class)),
-                    ImmutableList.of(ImmutableList.of(1))
-            },
-            {
-                    DataTypes.vectorOf(DataTypes.listOf(tupleType), 1),
-                    GenericType.listOf(GenericType.listOf(TupleValue.class)),
-                    GenericType.listOf(GenericType.listOf(DefaultTupleValue.class)),
-                    ImmutableList.of(ImmutableList.of(tupleValue))
-            },
-            {
-                    DataTypes.vectorOf(DataTypes.listOf(userType), 1),
-                    GenericType.listOf(GenericType.listOf(UdtValue.class)),
-                    GenericType.listOf(GenericType.listOf(DefaultUdtValue.class)),
-                    ImmutableList.of(ImmutableList.of(udtValue))
-            },
+      // vexctors
+      {
+        DataTypes.vectorOf(DataTypes.INT, 1),
+        GenericType.vectorOf(Integer.class),
+        GenericType.vectorOf(Integer.class),
+        CqlVector.newInstance(1)
+      },
+      {
+        DataTypes.vectorOf(DataTypes.BIGINT, 1),
+        GenericType.vectorOf(Long.class),
+        GenericType.vectorOf(Long.class),
+        CqlVector.newInstance(1l)
+      },
+      {
+        DataTypes.vectorOf(DataTypes.SMALLINT, 1),
+        GenericType.vectorOf(Short.class),
+        GenericType.vectorOf(Short.class),
+        CqlVector.newInstance(1)
+      },
+      {
+        DataTypes.vectorOf(DataTypes.TINYINT, 1),
+        GenericType.vectorOf(Byte.class),
+        GenericType.vectorOf(Byte.class),
+        CqlVector.newInstance(1)
+      },
+      {
+        DataTypes.vectorOf(DataTypes.FLOAT, 1),
+        GenericType.vectorOf(Float.class),
+        GenericType.vectorOf(Float.class),
+        CqlVector.newInstance(1.0f)
+      },
+      {
+        DataTypes.vectorOf(DataTypes.DOUBLE, 1),
+        GenericType.vectorOf(Double.class),
+        GenericType.vectorOf(Double.class),
+        CqlVector.newInstance(1.0d)
+      },
+      {
+        DataTypes.vectorOf(DataTypes.DECIMAL, 1),
+        GenericType.vectorOf(BigDecimal.class),
+        GenericType.vectorOf(BigDecimal.class),
+        CqlVector.newInstance(BigDecimal.ONE)
+      },
+      {
+        DataTypes.vectorOf(DataTypes.VARINT, 1),
+        GenericType.vectorOf(BigInteger.class),
+        GenericType.vectorOf(BigInteger.class),
+        CqlVector.newInstance(BigInteger.ONE)
+      },
     };
   }
 
