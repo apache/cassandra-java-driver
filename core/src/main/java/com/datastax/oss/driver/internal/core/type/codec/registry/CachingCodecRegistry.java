@@ -16,18 +16,9 @@
 package com.datastax.oss.driver.internal.core.type.codec.registry;
 
 import com.datastax.oss.driver.api.core.data.CqlDuration;
-import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
-import com.datastax.oss.driver.api.core.type.CqlVectorType;
-import com.datastax.oss.driver.api.core.type.CustomType;
-import com.datastax.oss.driver.api.core.type.DataType;
-import com.datastax.oss.driver.api.core.type.DataTypes;
-import com.datastax.oss.driver.api.core.type.ListType;
-import com.datastax.oss.driver.api.core.type.MapType;
-import com.datastax.oss.driver.api.core.type.SetType;
-import com.datastax.oss.driver.api.core.type.TupleType;
-import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.api.core.type.*;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
@@ -342,7 +333,7 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
         }
         GenericType<?> elementType =
             inspectType(
-                firstElement, cqlType == null ? null : ((ListType) cqlType).getElementType());
+                firstElement, cqlType == null ? null : ((ContainerType) cqlType).getElementType());
         return GenericType.listOf(elementType);
       }
     } else if (value instanceof Set) {
@@ -547,6 +538,18 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
     return null;
   }
 
+  private TypeCodec<Object> getElementCodec(
+      ContainerType cqlType, TypeToken<?> token, boolean isJavaCovariant) {
+
+    DataType elementCqlType = cqlType.getElementType();
+    if (token.getType() instanceof ParameterizedType) {
+      Type[] typeArguments = ((ParameterizedType) token.getType()).getActualTypeArguments();
+      GenericType<?> elementJavaType = GenericType.of(typeArguments[0]);
+      return uncheckedCast(codecFor(elementCqlType, elementJavaType, isJavaCovariant));
+    }
+    return codecFor(elementCqlType);
+  }
+
   // Try to create a codec when we haven't found it in the cache
   @NonNull
   protected TypeCodec<?> createCodec(
@@ -561,26 +564,12 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
     } else { // Both non-null
       TypeToken<?> token = javaType.__getToken();
       if (cqlType instanceof ListType && List.class.isAssignableFrom(token.getRawType())) {
-        DataType elementCqlType = ((ListType) cqlType).getElementType();
-        TypeCodec<Object> elementCodec;
-        if (token.getType() instanceof ParameterizedType) {
-          Type[] typeArguments = ((ParameterizedType) token.getType()).getActualTypeArguments();
-          GenericType<?> elementJavaType = GenericType.of(typeArguments[0]);
-          elementCodec = uncheckedCast(codecFor(elementCqlType, elementJavaType, isJavaCovariant));
-        } else {
-          elementCodec = codecFor(elementCqlType);
-        }
+        TypeCodec<Object> elementCodec =
+            getElementCodec((ContainerType) cqlType, token, isJavaCovariant);
         return TypeCodecs.listOf(elementCodec);
       } else if (cqlType instanceof SetType && Set.class.isAssignableFrom(token.getRawType())) {
-        DataType elementCqlType = ((SetType) cqlType).getElementType();
-        TypeCodec<Object> elementCodec;
-        if (token.getType() instanceof ParameterizedType) {
-          Type[] typeArguments = ((ParameterizedType) token.getType()).getActualTypeArguments();
-          GenericType<?> elementJavaType = GenericType.of(typeArguments[0]);
-          elementCodec = uncheckedCast(codecFor(elementCqlType, elementJavaType, isJavaCovariant));
-        } else {
-          elementCodec = codecFor(elementCqlType);
-        }
+        TypeCodec<Object> elementCodec =
+            getElementCodec((ContainerType) cqlType, token, isJavaCovariant);
         return TypeCodecs.setOf(elementCodec);
       } else if (cqlType instanceof MapType && Map.class.isAssignableFrom(token.getRawType())) {
         DataType keyCqlType = ((MapType) cqlType).getKeyType();
@@ -604,11 +593,10 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
       } else if (cqlType instanceof UserDefinedType
           && UdtValue.class.isAssignableFrom(token.getRawType())) {
         return TypeCodecs.udtOf((UserDefinedType) cqlType);
-      } else if (cqlType instanceof CqlVectorType
-          && CqlVector.class.isAssignableFrom(token.getRawType())) {
-        CqlVectorType vectorType = (CqlVectorType) cqlType;
-        TypeCodec<Object> subtypeCodec = codecFor(vectorType.getSubtype());
-        return TypeCodecs.vectorOf((CqlVectorType) cqlType, subtypeCodec);
+      } else if (cqlType instanceof VectorType && List.class.isAssignableFrom(token.getRawType())) {
+        VectorType vectorType = (VectorType) cqlType;
+        TypeCodec<Object> elementCodec = getElementCodec(vectorType, token, isJavaCovariant);
+        return TypeCodecs.vectorOf(vectorType, elementCodec);
       } else if (cqlType instanceof CustomType
           && ByteBuffer.class.isAssignableFrom(token.getRawType())) {
         return TypeCodecs.custom(cqlType);

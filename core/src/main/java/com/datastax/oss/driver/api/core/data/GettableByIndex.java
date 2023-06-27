@@ -444,8 +444,8 @@ public interface GettableByIndex extends AccessibleByIndex {
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @Nullable
-  default CqlVector<?> getCqlVector(int i) {
-    return get(i, CqlVector.class);
+  default <ElementT> List<ElementT> getVector(int i, @NonNull Class<ElementT> elementsClass) {
+    return get(i, GenericType.listOf(elementsClass));
   }
 
   /**
