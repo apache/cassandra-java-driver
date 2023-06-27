@@ -15,22 +15,14 @@
  */
 package com.datastax.oss.driver.api.core.type;
 
-import com.datastax.oss.protocol.internal.ProtocolConstants;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
-public interface ListType extends DataType, ContainerType {
-
-  boolean isFrozen();
+/**
+ * Representation of a type which "contains" some other type. This might be a collection type or it
+ * could be some other kind of container; the term is deliberately left somewhat vague.
+ */
+public interface ContainerType {
 
   @NonNull
-  @Override
-  default String asCql(boolean includeFrozen, boolean pretty) {
-    String template = (isFrozen() && includeFrozen) ? "frozen<list<%s>>" : "list<%s>";
-    return String.format(template, getElementType().asCql(includeFrozen, pretty));
-  }
-
-  @Override
-  default int getProtocolCode() {
-    return ProtocolConstants.DataType.LIST;
-  }
+  DataType getElementType();
 }

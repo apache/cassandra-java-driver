@@ -15,22 +15,11 @@
  */
 package com.datastax.oss.driver.api.core.type;
 
-import com.datastax.oss.protocol.internal.ProtocolConstants;
-import edu.umd.cs.findbugs.annotations.NonNull;
+/**
+ * Type representing a Cassandra vector type as described in CEP-30. At the moment this is
+ * implemented as a custom type so we include the CustomType interface as well.
+ */
+public interface VectorType extends CustomType, ContainerType {
 
-public interface ListType extends DataType, ContainerType {
-
-  boolean isFrozen();
-
-  @NonNull
-  @Override
-  default String asCql(boolean includeFrozen, boolean pretty) {
-    String template = (isFrozen() && includeFrozen) ? "frozen<list<%s>>" : "list<%s>";
-    return String.format(template, getElementType().asCql(includeFrozen, pretty));
-  }
-
-  @Override
-  default int getProtocolCode() {
-    return ProtocolConstants.DataType.LIST;
-  }
+  int getDimensions();
 }
