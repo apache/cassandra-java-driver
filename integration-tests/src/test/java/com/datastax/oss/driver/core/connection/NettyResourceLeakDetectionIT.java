@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.core.connection;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -28,6 +29,7 @@ import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.connection.FrameTooLongException;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
@@ -35,12 +37,19 @@ import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
 import com.datastax.oss.driver.shaded.guava.common.base.Strings;
+import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import com.datastax.oss.protocol.internal.Segment;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import io.netty.util.ResourceLeakDetector;
 import io.netty.util.ResourceLeakDetector.Level;
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -86,6 +95,10 @@ public class NettyResourceLeakDetectionIT {
     session.execute(
         SimpleStatement.newInstance(
                 "CREATE TABLE IF NOT EXISTS leak_test_large (key int PRIMARY KEY, value blob)")
+            .setExecutionProfile(slowProfile));
+    session.execute(
+        SimpleStatement.newInstance(
+                "CREATE TABLE IF NOT EXISTS frame_too_large (key int PRIMARY KEY, value blob)")
             .setExecutionProfile(slowProfile));
   }
 
@@ -173,5 +186,50 @@ public class NettyResourceLeakDetectionIT {
       ByteBuffer actual = row.getByteBuffer(0);
       assertThat(actual).isEqualTo(LARGE_PAYLOAD.duplicate());
     }
+  }
+
+  @Test
+  public void too_large_frame_leak_v4() {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withString(DefaultDriverOption.PROTOCOL_VERSION, "V4")
+            .withBytes(DefaultDriverOption.PROTOCOL_MAX_FRAME_LENGTH, 1024)
+            .build();
+    try (CqlSession session = SessionUtils.newSession(CCM_RULE, SESSION_RULE.keyspace(), loader)) {
+      for (int i = 0; i < 10; i++) {
+        assertThatThrownBy(
+                () ->
+                    session.execute(
+                        "INSERT INTO frame_too_large (key, value) VALUES (?,?)",
+                        0,
+                        LARGE_PAYLOAD.duplicate()))
+            .isInstanceOf(FrameTooLongException.class);
+        waitForGc();
+        verify(appender, never()).doAppend(any());
+      }
+    }
+  }
+
+  private WeakReference<String> createWeakReference() {
+    String random = RandomStringUtils.random(10);
+    return new WeakReference<>(random);
+  }
+
+  private void waitForGc() {
+    ExecutorService service = Executors.newFixedThreadPool(1);
+    CountDownLatch latch = new CountDownLatch(1);
+    service.submit(
+        () -> {
+          WeakReference<String> ref = createWeakReference();
+          while (ref.get() != null) {
+            System.gc();
+            Uninterruptibles.sleepUninterruptibly(10, TimeUnit.MILLISECONDS);
+          }
+          latch.countDown();
+        });
+
+    assertThat(Uninterruptibles.awaitUninterruptibly(latch, 10, TimeUnit.SECONDS))
+        .withFailMessage("timed out waiting for GC")
+        .isTrue();
   }
 }
