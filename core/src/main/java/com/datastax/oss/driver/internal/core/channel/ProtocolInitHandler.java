@@ -34,6 +34,7 @@ import com.datastax.oss.driver.internal.core.protocol.SegmentToBytesEncoder;
 import com.datastax.oss.driver.internal.core.protocol.SegmentToFrameDecoder;
 import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.ProtocolConstants.ErrorCode;
@@ -64,7 +65,7 @@ import org.slf4j.LoggerFactory;
  * user requests.
  */
 @NotThreadSafe
-class ProtocolInitHandler extends ConnectInitHandler {
+public class ProtocolInitHandler extends ConnectInitHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProtocolInitHandler.class);
   private static final Query CLUSTER_NAME_QUERY =
       new Query("SELECT cluster_name FROM system.local");
@@ -108,6 +109,18 @@ class ProtocolInitHandler extends ConnectInitHandler {
     this.heartbeatHandler = heartbeatHandler;
     this.querySupportedOptions = querySupportedOptions;
     this.logPrefix = options.ownerLogPrefix + "|connecting...";
+  }
+
+  @VisibleForTesting
+  protected ProtocolInitHandler(InternalDriverContext context, ProtocolInitHandler template) {
+    this(
+        context,
+        template.initialProtocolVersion,
+        template.expectedClusterName,
+        template.endPoint,
+        template.options,
+        template.heartbeatHandler,
+        template.querySupportedOptions);
   }
 
   @Override
@@ -381,7 +394,8 @@ class ProtocolInitHandler extends ConnectInitHandler {
    * first messages still use the legacy format, we only do this after a successful response to the
    * first STARTUP message.
    */
-  private void maybeSwitchToModernFraming() {
+  @VisibleForTesting
+  protected void maybeSwitchToModernFraming() {
     if (context
         .getProtocolVersionRegistry()
         .supports(initialProtocolVersion, DefaultProtocolFeature.MODERN_FRAMING)) {
@@ -414,5 +428,10 @@ class ProtocolInitHandler extends ConnectInitHandler {
 
   private String getString(List<ByteBuffer> row, int i) {
     return TypeCodecs.TEXT.decode(row.get(i), DefaultProtocolVersion.DEFAULT);
+  }
+
+  @VisibleForTesting
+  protected ChannelHandlerContext getContext() {
+    return this.ctx;
   }
 }

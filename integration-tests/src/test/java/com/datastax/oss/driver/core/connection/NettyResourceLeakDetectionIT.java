@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.core.connection;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -28,19 +29,44 @@ import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.connection.ClosedConnectionException;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.session.ProgrammaticArguments;
+import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
+import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
+import com.datastax.oss.driver.internal.core.channel.ProtocolInitHandler;
+import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
+import com.datastax.oss.driver.internal.core.context.DefaultNettyOptions;
+import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.shaded.guava.common.base.Strings;
+import com.datastax.oss.driver.shaded.guava.common.base.Supplier;
+import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import com.datastax.oss.protocol.internal.Segment;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.util.ResourceLeakDetector;
 import io.netty.util.ResourceLeakDetector.Level;
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -75,6 +101,9 @@ public class NettyResourceLeakDetectionIT {
 
   @Mock private Appender<ILoggingEvent> appender;
 
+  // thread pool with single thread, used for checking if GC has run
+  private static ExecutorService singleThreadExecutor = Executors.newFixedThreadPool(1);
+
   @BeforeClass
   public static void createTables() {
     CqlSession session = SESSION_RULE.session();
@@ -86,6 +115,10 @@ public class NettyResourceLeakDetectionIT {
     session.execute(
         SimpleStatement.newInstance(
                 "CREATE TABLE IF NOT EXISTS leak_test_large (key int PRIMARY KEY, value blob)")
+            .setExecutionProfile(slowProfile));
+    session.execute(
+        SimpleStatement.newInstance(
+                "CREATE TABLE IF NOT EXISTS disconnect_between_segments (key int PRIMARY KEY, value blob)")
             .setExecutionProfile(slowProfile));
   }
 
@@ -172,6 +205,176 @@ public class NettyResourceLeakDetectionIT {
       assertThat(row).isNotNull();
       ByteBuffer actual = row.getByteBuffer(0);
       assertThat(actual).isEqualTo(LARGE_PAYLOAD.duplicate());
+    }
+  }
+
+  private WeakReference<String> createWeakReference() {
+    String random = RandomStringUtils.random(10);
+    return new WeakReference<>(random);
+  }
+
+  private void waitForGc() {
+    CountDownLatch latch = new CountDownLatch(1);
+    singleThreadExecutor.submit(
+        () -> {
+          WeakReference<String> ref = createWeakReference();
+          while (ref.get() != null) {
+            System.gc();
+            Uninterruptibles.sleepUninterruptibly(10, TimeUnit.MILLISECONDS);
+          }
+          latch.countDown();
+        });
+
+    assertThat(Uninterruptibles.awaitUninterruptibly(latch, 10, TimeUnit.SECONDS))
+        .withFailMessage("timed out waiting for GC")
+        .isTrue();
+  }
+
+  @BackendRequirement(
+      type = BackendType.CASSANDRA,
+      minInclusive = "4.0.0",
+      description = "Requires v5 native protocol")
+  @Test
+  public void disconnect_between_segments_leak() {
+    // write a large amount of data which we will read later
+    for (int i = 0; i < 100; i++) {
+      SESSION_RULE
+          .session()
+          .execute(
+              "INSERT INTO disconnect_between_segments (key, value) VALUES (?,?)",
+              i,
+              LARGE_PAYLOAD.duplicate());
+    }
+
+    // This test requires re-writing the inbound pipeline to add a stage that simulates connection
+    // loss mid-way through processing segments for a frame, this is injected using custom
+    // session builder, driver context and protocol init handler defined in this class
+    System.setProperty(
+        SessionUtils.SESSION_BUILDER_CLASS_PROPERTY,
+        DisconnectMidFrameSessionBuilder.class.getName());
+    try {
+      for (int i = 0; i < 10; i++) {
+        try (CqlSession session = SessionUtils.newSession(CCM_RULE, SESSION_RULE.keyspace())) {
+          // read all data we wrote in one go so response frames are chopped up into mutiple
+          // segments
+          assertThatThrownBy(
+                  () -> session.execute("select * from disconnect_between_segments limit 100"))
+              .isInstanceOf(ClosedConnectionException.class);
+
+          waitForGc();
+          verify(appender, never()).doAppend(any());
+        }
+      }
+    } finally {
+      // clear session builder override after test finishes
+      System.clearProperty(SessionUtils.SESSION_BUILDER_CLASS_PROPERTY);
+    }
+  }
+
+  public static class TestProtocolInitHandler extends ProtocolInitHandler {
+    private final Supplier<ChannelHandler> segmentInterceptDecoder;
+
+    public TestProtocolInitHandler(
+        TestDriverContext context,
+        ProtocolInitHandler template,
+        Supplier<ChannelHandler> segmentInterceptDecoder) {
+      super(context, template);
+      this.segmentInterceptDecoder = segmentInterceptDecoder;
+    }
+
+    @Override
+    protected void maybeSwitchToModernFraming() {
+      super.maybeSwitchToModernFraming();
+
+      if (getContext().pipeline().get(ChannelFactory.SEGMENT_TO_FRAME_DECODER_NAME) == null) {
+        // SegmentToFrameDecoder has not been added so we cannot replace it
+        return;
+      }
+
+      getContext()
+          .pipeline()
+          .addBefore(
+              ChannelFactory.SEGMENT_TO_FRAME_DECODER_NAME,
+              "fault-injection-closing",
+              segmentInterceptDecoder.get());
+    }
+  }
+
+  public static class TestDriverContext extends DefaultDriverContext {
+    private final Supplier<ChannelHandler> segmentInterceptDecoder;
+
+    public TestDriverContext(
+        DriverConfigLoader configLoader,
+        ProgrammaticArguments programmaticArguments,
+        Supplier<ChannelHandler> segmentInterceptDecoder) {
+      super(configLoader, programmaticArguments);
+      this.segmentInterceptDecoder = segmentInterceptDecoder;
+    }
+
+    @Override
+    protected NettyOptions buildNettyOptions() {
+      return new DefaultNettyOptions(this) {
+        @Override
+        public void afterChannelInitialized(Channel channel) {
+          // overwrite the default init-handler in the pipeline with our own testing version
+          ProtocolInitHandler defaultInitHandler =
+              (ProtocolInitHandler) channel.pipeline().get(ChannelFactory.INIT_HANDLER_NAME);
+          channel
+              .pipeline()
+              .replace(
+                  ChannelFactory.INIT_HANDLER_NAME,
+                  "test-init-handler",
+                  new TestProtocolInitHandler(
+                      TestDriverContext.this, defaultInitHandler, segmentInterceptDecoder));
+        }
+      };
+    }
+  }
+
+  public static class TestSessionBuilder extends SessionBuilder {
+    private final Supplier<ChannelHandler> segmentInterceptDecoder;
+
+    public TestSessionBuilder(Supplier<ChannelHandler> segmentInterceptDecoder) {
+      this.segmentInterceptDecoder = segmentInterceptDecoder;
+    }
+
+    @Override
+    protected Object wrap(@NonNull CqlSession defaultSession) {
+      return defaultSession;
+    }
+
+    @Override
+    protected DriverContext buildContext(
+        DriverConfigLoader configLoader, ProgrammaticArguments programmaticArguments) {
+      return new TestDriverContext(configLoader, programmaticArguments, segmentInterceptDecoder);
+    }
+  }
+
+  // Constructs test session builder that inserts a connection close fault into the incoming
+  // pipeline after receiving 10 non-self-contained segments
+  public static class DisconnectMidFrameSessionBuilder {
+    public static SessionBuilder builder() {
+      return new TestSessionBuilder(
+          () ->
+              new MessageToMessageDecoder<Segment<ByteBuf>>() {
+                private int segmentsReceived = 0;
+
+                @Override
+                protected void decode(
+                    ChannelHandlerContext ctx, Segment<ByteBuf> msg, List<Object> out)
+                    throws Exception {
+                  if (!msg.isSelfContained && segmentsReceived++ > 10) {
+                    // simulate connection lost mid-way through processing multi-segment response,
+                    // skip counting for self-contained segments
+                    ctx.close();
+
+                    // release this segment because we're not passing it to the next stage
+                    msg.payload.release();
+                    return;
+                  }
+                  out.add(msg);
+                }
+              });
     }
   }
 }
