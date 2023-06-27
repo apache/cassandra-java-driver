@@ -89,6 +89,34 @@ public class ArrayUtils {
     }
   }
 
+  /**
+   * Shuffles elements of the array in a range.
+   *
+   * @param elements the array to shuffle.
+   * @param startIndex the start index of the range; must be {@code >= 0}.
+   * @param endIndex the end index of the range; must be {@code <= elements.length}.
+   * @see <a
+   *     href="https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm">Modern
+   *     Fisher-Yates shuffle</a>
+   */
+  public static <ElementT> void shuffleInRange(
+      @NonNull ElementT[] elements, int startIndex, int endIndex) {
+    assert startIndex >= 0 && startIndex < elements.length;
+    assert endIndex >= 0 && endIndex < elements.length;
+
+    if (startIndex > endIndex) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Start index %d should be less than or equal to endIndex %d", startIndex, endIndex));
+    }
+
+    final ThreadLocalRandom random = ThreadLocalRandom.current();
+    for (int i = endIndex; i > startIndex; i--) {
+      int j = random.nextInt(startIndex, i + 1);
+      swap(elements, i, j);
+    }
+  }
+
   /** Rotates the elements in the specified range by the specified amount (round-robin). */
   public static <ElementT> void rotate(
       @NonNull ElementT[] elements, int startIndex, int length, int amount) {

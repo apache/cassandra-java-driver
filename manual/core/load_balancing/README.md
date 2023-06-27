@@ -139,7 +139,24 @@ that case, the driver will connect to 127.0.0.1:9042, and use that node's datace
 for a better out-of-the-box experience for users who have just downloaded the driver; beyond that
 initial development phase, you should provide explicit contact points and a local datacenter.
 
-##### Finding the local datacenter
+##### Rack awareness
+
+The `DefaultLoadBalancingPolicy` and implicitly the `DcInferringLoadBalancingPolicy` prioritize replicas that are in the
+local datacenter, however, sometimes there is a need to prioritize replicas that are in the local rack and to not send
+queries to other replicas in the local datacenter. This will allow to avoid high network traffic between racks/availability zones
+and thus will reduce data transfer costs. The rack-awareness feature is optional and to enable it the local rack should
+be supplied through the configuration:
+
+```
+datastax-java-driver.basic.load-balancing-policy {
+  local-rack = rack1
+}
+```
+
+The feature is disabled by default and unlike the local datacenter it will not be implicitly fetched from the provided
+contact points.
+
+##### Finding the local datacenter & local rack
 
 To check which datacenters are defined in a given cluster, you can run [`nodetool status`]. It will 
 print information about each node in the cluster, grouped by datacenters. Here is an example: 
@@ -165,17 +182,17 @@ UN  <IP5>      1.5 TB     256     ?     <ID5>    rack2
 UN  <IP6>      1.5 TB     256     ?     <ID6>    rack3
 ```
 
-To find out which datacenter should be considered local, you need to first determine which nodes the 
-driver is going to be co-located with, then choose their datacenter as local. In case of doubt, you
+To find out which datacenter and rack(availability zone) should be considered local, you need to first determine which nodes the 
+driver is going to be co-located with, then choose their datacenter and rack as local. In case of doubt, you
 can also use [cqlsh]; if cqlsh is co-located too in the same datacenter, simply run the command 
 below:
 
 ```
-cqlsh> select data_center from system.local;
+cqlsh> select data_center,rack from system.local;
 
-data_center
--------------
-DC1 
+ data_center | rack
+-------------+-------
+ datacenter1 | rack1
 ```
 
 #### Cross-datacenter failover

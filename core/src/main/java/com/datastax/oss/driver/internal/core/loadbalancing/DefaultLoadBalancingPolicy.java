@@ -35,6 +35,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.BitSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
@@ -132,21 +133,36 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
 
     Set<Node> allReplicas = getReplicas(request, session);
     int replicaCount = 0; // in currentNodes
+    int localRackReplicaCount = 0; // in currentNodes
+    String localRack = getLocalRack();
 
     if (!allReplicas.isEmpty()) {
 
       // Move replicas to the beginning of the plan
+      // Replicas in local rack should precede other replicas
       for (int i = 0; i < currentNodes.length; i++) {
         Node node = (Node) currentNodes[i];
         if (allReplicas.contains(node)) {
-          ArrayUtils.bubbleUp(currentNodes, i, replicaCount);
+          if (Objects.equals(node.getRack(), localRack)
+              && Objects.equals(node.getDatacenter(), getLocalDatacenter())) {
+            ArrayUtils.bubbleUp(currentNodes, i, localRackReplicaCount);
+            localRackReplicaCount++;
+          } else {
+            ArrayUtils.bubbleUp(currentNodes, i, replicaCount);
+          }
           replicaCount++;
         }
       }
 
       if (replicaCount > 1) {
-
-        shuffleHead(currentNodes, replicaCount);
+        if (localRack != null && localRackReplicaCount > 0) {
+          // Shuffle only replicas that are in the local rack
+          shuffleHead(currentNodes, localRackReplicaCount);
+          // Shuffles only replicas that are not in local rack
+          shuffleInRange(currentNodes, localRackReplicaCount, replicaCount - 1);
+        } else {
+          shuffleHead(currentNodes, replicaCount);
+        }
 
         if (replicaCount > 2) {
 

@@ -94,6 +94,12 @@ public enum DefaultDriverOption implements DriverOption {
    */
   LOAD_BALANCING_LOCAL_DATACENTER("basic.load-balancing-policy.local-datacenter"),
   /**
+   * The rack that is considered "local".
+   *
+   * <p>Value-type: {@link String}
+   */
+  LOAD_BALANCING_LOCAL_RACK("basic.load-balancing-policy.local-rack"),
+  /**
    * A custom filter to include/exclude nodes.
    *
    * <p>Value-Type: {@link String}

@@ -33,6 +33,9 @@ public class DcInferringLoadBalancingPolicyQueryPlanTest
               protected void shuffleHead(Object[] array, int n) {}
 
               @Override
+              protected void shuffleInRange(Object[] currentNodes, int startIndex, int endIndex) {}
+
+              @Override
               protected long nanoTime() {
                 return nanoTime;
               }

@@ -331,6 +331,54 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends BasicLoadBalancingP
     then(dsePolicy).should(never()).diceRoll1d4();
   }
 
+  @Test
+  public void should_not_shuffle_local_rack_replica_with_all_replicas_healthy() {
+    // Given
+    given(request.getRoutingKeyspace()).willReturn(KEYSPACE);
+    given(request.getRoutingKey()).willReturn(ROUTING_KEY);
+    given(tokenMap.getReplicas(KEYSPACE, null, ROUTING_KEY))
+        .willReturn(ImmutableSet.of(node1, node3, node5));
+    String localRack = "rack1";
+    given(dsePolicy.getLocalRack()).willReturn(localRack);
+    given(node1.getRack()).willReturn(localRack);
+    given(pool1.getInFlight()).willReturn(0);
+    given(pool3.getInFlight()).willReturn(0);
+    given(pool5.getInFlight()).willReturn(0);
+
+    // When
+    Queue<Node> plan1 = dsePolicy.newQueryPlan(request, session);
+    Queue<Node> plan2 = dsePolicy.newQueryPlan(request, session);
+
+    // Then
+    // nodes 1, 3 and 5 always first, round-robin on the rest
+    assertThat(plan1).containsExactly(node1, node3, node5, node2, node4);
+    assertThat(plan2).containsExactly(node1, node3, node5, node4, node2);
+  }
+
+  @Test
+  public void should_prefer_local_rack_replica_with_less_inflight_requests() {
+    // Given
+    given(request.getRoutingKeyspace()).willReturn(KEYSPACE);
+    given(request.getRoutingKey()).willReturn(ROUTING_KEY);
+    given(tokenMap.getReplicas(KEYSPACE, null, ROUTING_KEY))
+        .willReturn(ImmutableSet.of(node1, node3, node5));
+    String localRack = "rack1";
+    given(dsePolicy.getLocalRack()).willReturn(localRack);
+    given(node3.getRack()).willReturn(localRack);
+    given(node5.getRack()).willReturn(localRack);
+    given(pool1.getInFlight()).willReturn(0);
+    given(pool3.getInFlight()).willReturn(20);
+    given(pool5.getInFlight()).willReturn(10);
+
+    // When
+    Queue<Node> plan1 = dsePolicy.newQueryPlan(request, session);
+    Queue<Node> plan2 = dsePolicy.newQueryPlan(request, session);
+
+    // Then
+    assertThat(plan1).containsExactly(node5, node3, node1, node2, node4);
+    assertThat(plan2).containsExactly(node5, node3, node1, node4, node2);
+  }
+
   @Override
   protected DefaultLoadBalancingPolicy createAndInitPolicy() {
     DefaultLoadBalancingPolicy policy =
@@ -338,6 +386,9 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends BasicLoadBalancingP
             new DefaultLoadBalancingPolicy(context, DEFAULT_NAME) {
               @Override
               protected void shuffleHead(Object[] array, int n) {}
+
+              @Override
+              protected void shuffleInRange(Object[] array, int startIndex, int endIndex) {}
 
               @Override
               protected long nanoTime() {

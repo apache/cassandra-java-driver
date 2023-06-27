@@ -137,6 +137,9 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<String> LOAD_BALANCING_LOCAL_DATACENTER =
       new TypedDriverOption<>(
           DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, GenericType.STRING);
+
+  public static final TypedDriverOption<String> LOAD_BALANCING_LOCAL_RACK =
+      new TypedDriverOption<>(DefaultDriverOption.LOAD_BALANCING_LOCAL_RACK, GenericType.STRING);
   /**
    * A custom filter to include/exclude nodes.
    *

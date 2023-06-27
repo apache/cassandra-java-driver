@@ -52,6 +52,23 @@ public class DefaultLoadBalancingPolicyInitTest extends LoadBalancingPolicyTestB
   }
 
   @Test
+  public void should_use_local_rack_if_provided_via_config() {
+    // Given
+    when(defaultProfile.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_RACK)).thenReturn(true);
+    when(defaultProfile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_RACK))
+        .thenReturn("rack1");
+    when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1));
+
+    DefaultLoadBalancingPolicy policy = createPolicy();
+
+    // When
+    policy.init(ImmutableMap.of(UUID.randomUUID(), node1), distanceReporter);
+
+    // Then
+    assertThat(policy.getLocalRack()).isEqualTo("rack1");
+  }
+
+  @Test
   public void should_use_local_dc_if_provided_via_context() {
     // Given
     when(context.getLocalDatacenter(DriverExecutionProfile.DEFAULT_NAME)).thenReturn("dc1");

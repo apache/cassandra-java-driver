@@ -40,6 +40,7 @@ import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.loadbalancing.helper.DefaultNodeDistanceEvaluatorHelper;
 import com.datastax.oss.driver.internal.core.loadbalancing.helper.OptionalLocalDcHelper;
+import com.datastax.oss.driver.internal.core.loadbalancing.helper.OptionalLocalRackHelper;
 import com.datastax.oss.driver.internal.core.loadbalancing.nodeset.DcAgnosticNodeSet;
 import com.datastax.oss.driver.internal.core.loadbalancing.nodeset.MultiDcNodeSet;
 import com.datastax.oss.driver.internal.core.loadbalancing.nodeset.NodeSet;
@@ -121,6 +122,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   private volatile DistanceReporter distanceReporter;
   private volatile NodeDistanceEvaluator nodeDistanceEvaluator;
   private volatile String localDc;
+  private volatile String localRack;
   private volatile NodeSet liveNodes;
 
   public BasicLoadBalancingPolicy(@NonNull DriverContext context, @NonNull String profileName) {
@@ -154,6 +156,11 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
     return localDc;
   }
 
+  @Nullable
+  protected String getLocalRack() {
+    return localRack;
+  }
+
   /** @return The nodes currently considered as live. */
   protected NodeSet getLiveNodes() {
     return liveNodes;
@@ -163,6 +170,8 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
     this.distanceReporter = distanceReporter;
     localDc = discoverLocalDc(nodes).orElse(null);
+    // If local datacenter is not provided then the rack awareness is disabled
+    localRack = localDc != null ? discoverLocalRack(nodes).orElse(null) : null;
     nodeDistanceEvaluator = createNodeDistanceEvaluator(localDc, nodes);
     liveNodes =
         localDc == null
@@ -205,6 +214,11 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   @NonNull
   protected Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes) {
     return new OptionalLocalDcHelper(context, profile, logPrefix).discoverLocalDc(nodes);
+  }
+
+  @NonNull
+  protected Optional<String> discoverLocalRack(@NonNull Map<UUID, Node> nodes) {
+    return new OptionalLocalRackHelper(profile, logPrefix).discoverLocalRack(nodes);
   }
 
   /**
@@ -354,6 +368,11 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   /** Exposed as a protected method so that it can be accessed by tests */
   protected void shuffleHead(Object[] currentNodes, int headLength) {
     ArrayUtils.shuffleHead(currentNodes, headLength);
+  }
+
+  /** Exposed as a protected method so that it can be accessed by tests */
+  protected void shuffleInRange(Object[] currentNodes, int startIndex, int endIndex) {
+    ArrayUtils.shuffleInRange(currentNodes, startIndex, endIndex);
   }
 
   @Override
