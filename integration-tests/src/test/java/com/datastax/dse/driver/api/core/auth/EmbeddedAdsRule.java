@@ -20,12 +20,14 @@ import com.datastax.dse.driver.internal.core.auth.DseGssApiAuthProvider;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
+import com.datastax.oss.driver.api.testinfra.requirement.VersionRequirement;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.AssumptionViolatedException;
@@ -151,50 +153,25 @@ public class EmbeddedAdsRule extends ExternalResource {
     }
   }
 
-  private Statement buildErrorStatement(
-      Version requirement, Version actual, String description, boolean lessThan) {
-    return new Statement() {
-
-      @Override
-      public void evaluate() {
-        throw new AssumptionViolatedException(
-            String.format(
-                "Test requires %s %s %s but %s is configured.  Description: %s",
-                lessThan ? "less than" : "at least", "DSE", requirement, actual, description));
-      }
-    };
-  }
-
   @Override
   public Statement apply(Statement base, Description description) {
-    DseRequirement dseRequirement = description.getAnnotation(DseRequirement.class);
-    if (dseRequirement != null) {
-      if (!CcmBridge.DSE_ENABLEMENT) {
-        return new Statement() {
-          @Override
-          public void evaluate() {
-            throw new AssumptionViolatedException("Test Requires DSE but C* is configured.");
-          }
-        };
-      } else {
-        Version dseVersion = CcmBridge.VERSION;
-        if (!dseRequirement.min().isEmpty()) {
-          Version minVersion = Version.parse(dseRequirement.min());
-          if (minVersion.compareTo(dseVersion) > 0) {
-            return buildErrorStatement(dseVersion, dseVersion, dseRequirement.description(), false);
-          }
-        }
+    BackendType backend = CcmBridge.DSE_ENABLEMENT ? BackendType.DSE : BackendType.CASSANDRA;
+    Version version = CcmBridge.VERSION;
 
-        if (!dseRequirement.max().isEmpty()) {
-          Version maxVersion = Version.parse(dseRequirement.max());
+    Collection<VersionRequirement> requirements = VersionRequirement.fromAnnotations(description);
 
-          if (maxVersion.compareTo(dseVersion) <= 0) {
-            return buildErrorStatement(dseVersion, dseVersion, dseRequirement.description(), true);
-          }
+    if (VersionRequirement.meetsAny(requirements, backend, version)) {
+      return super.apply(base, description);
+    } else {
+      // requirements not met, throw reasoning assumption to skip test
+      return new Statement() {
+        @Override
+        public void evaluate() {
+          throw new AssumptionViolatedException(
+              VersionRequirement.buildReasonString(requirements, backend, version));
         }
-      }
+      };
     }
-    return super.apply(base, description);
   }
 
   @Override
