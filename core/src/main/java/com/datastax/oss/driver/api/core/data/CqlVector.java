@@ -70,6 +70,23 @@ public class CqlVector<T extends Number> implements Iterable<T> {
     return new CqlVector(list);
   }
 
+  /**
+   * Create a new CqlVector instance from the specified string representation. Note that this method
+   * is intended to mirror {@link #toString()}; passing this method the output from a <code>toString</code>
+   * call on some CqlVector should return a CqlVector that is equal to the origin instance.
+   *
+   * @param str a String representation of a CqlVector
+   * @param subtypeCodec
+   * @return a new CqlVector built from the String representation
+   */
+  public static <V extends Number> CqlVector<V> from(@NonNull String str, @NonNull TypeCodec<V> subtypeCodec) {
+    ArrayList<V> vals =
+            Streams.stream(Splitter.on(", ").split(str.substring(1, str.length() - 1)))
+                    .map(subtypeCodec::parse)
+                    .collect(Collectors.toCollection(ArrayList::new));
+    return CqlVector.newInstance(vals);
+  }
+
   private final List<T> list;
 
   private CqlVector(@NonNull List<T> list) {
@@ -169,22 +186,5 @@ public class CqlVector<T extends Number> implements Iterable<T> {
   @Override
   public String toString() {
     return Iterables.toString(this.list);
-  }
-
-  /**
-   * Create a new CqlVector instance from the specified string representation. Note that this method
-   * is intended to mirror {@link #toString()}; calling this method from a <code>toString</code>
-   * call on some CqlVector should return a CqlVector that is equal to the origin instance.
-   *
-   * @param str a String representation of a CqlVector
-   * @param subtypeCodec
-   * @return
-   */
-  public CqlVector<T> from(@NonNull String str, @NonNull TypeCodec<T> subtypeCodec) {
-    ArrayList<T> vals =
-        Streams.stream(Splitter.on(", ").split(str.substring(1, str.length() - 1)))
-            .map(subtypeCodec::parse)
-            .collect(Collectors.toCollection(ArrayList::new));
-    return CqlVector.newInstance(vals);
   }
 }

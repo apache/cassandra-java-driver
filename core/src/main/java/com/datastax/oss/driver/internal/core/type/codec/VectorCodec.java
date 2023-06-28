@@ -153,15 +153,6 @@ public class VectorCodec<SubtypeT extends Number> implements TypeCodec<CqlVector
   public CqlVector<SubtypeT> parse(@Nullable String value) {
     return (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL"))
         ? null
-        : this.from(value);
-  }
-
-  private CqlVector<SubtypeT> from(@Nullable String value) {
-
-    ArrayList<SubtypeT> vals =
-        Streams.stream(Splitter.on(", ").split(value.substring(1, value.length() - 1)))
-            .map(subtypeCodec::parse)
-            .collect(Collectors.toCollection(ArrayList::new));
-    return CqlVector.newInstance(vals);
+        : CqlVector.from(value, this.subtypeCodec);
   }
 }
