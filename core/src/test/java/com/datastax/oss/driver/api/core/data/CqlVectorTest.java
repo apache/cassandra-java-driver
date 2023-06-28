@@ -20,145 +20,159 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.internal.core.type.codec.FloatCodec;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
-import org.assertj.core.util.Lists;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.assertj.core.util.Lists;
+import org.junit.Test;
 
 public class CqlVectorTest {
 
-    private static final Float[] VECTOR_ARGS = {1.0f, 2.5f};
+  private static final Float[] VECTOR_ARGS = {1.0f, 2.5f};
 
-    private void validate_built_vector(CqlVector<Float> vec) {
+  private void validate_built_vector(CqlVector<Float> vec) {
 
-        assertThat(vec.size()).isEqualTo(2);
-        assertThat(vec.isEmpty()).isFalse();
-        assertThat(vec.get(0)).isEqualTo(VECTOR_ARGS[0]);
-        assertThat(vec.get(1)).isEqualTo(VECTOR_ARGS[1]);
+    assertThat(vec.size()).isEqualTo(2);
+    assertThat(vec.isEmpty()).isFalse();
+    assertThat(vec.get(0)).isEqualTo(VECTOR_ARGS[0]);
+    assertThat(vec.get(1)).isEqualTo(VECTOR_ARGS[1]);
+  }
+
+  @Test
+  public void should_build_vector_from_elements() {
+
+    validate_built_vector(CqlVector.newInstance(VECTOR_ARGS));
+  }
+
+  @Test
+  public void should_build_vector_from_list() {
+
+    validate_built_vector(CqlVector.newInstance(Lists.newArrayList(VECTOR_ARGS)));
+  }
+
+  @Test
+  public void should_build_vector_from_tostring_output() {
+
+    CqlVector<Float> vector1 = CqlVector.newInstance(VECTOR_ARGS);
+    CqlVector<Float> vector2 = CqlVector.from(vector1.toString(), new FloatCodec());
+    assertThat(vector2).isEqualTo(vector1);
+  }
+
+  @Test
+  public void should_throw_when_building_with_nulls() {
+
+    assertThatThrownBy(
+            () -> {
+              CqlVector.newInstance(1.1f, null, 2.2f);
+            })
+        .isInstanceOf(IllegalArgumentException.class);
+
+    Float[] theArray = new Float[] {1.1f, null, 2.2f};
+    assertThatThrownBy(
+            () -> {
+              CqlVector.newInstance(theArray);
+            })
+        .isInstanceOf(IllegalArgumentException.class);
+
+    List<Float> theList = Lists.newArrayList(1.1f, null, 2.2f);
+    assertThatThrownBy(
+            () -> {
+              CqlVector.newInstance(theList);
+            })
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  public void should_build_empty_vector() {
+
+    CqlVector<Float> vector = CqlVector.newInstance();
+    assertThat(vector.isEmpty()).isTrue();
+    assertThat(vector.size()).isEqualTo(0);
+  }
+
+  @Test
+  public void should_behave_mostly_like_a_list() {
+
+    CqlVector<Float> vector = CqlVector.newInstance(VECTOR_ARGS);
+    assertThat(vector.get(0)).isEqualTo(VECTOR_ARGS[0]);
+    Float newVal = VECTOR_ARGS[0] * 2;
+    vector.set(0, newVal);
+    assertThat(vector.get(0)).isEqualTo(newVal);
+    assertThat(vector.isEmpty()).isFalse();
+    assertThat(vector.size()).isEqualTo(2);
+    assertThat(Iterators.toArray(vector.iterator(), Float.class)).isEqualTo(VECTOR_ARGS);
+  }
+
+  @Test
+  public void should_play_nicely_with_streams() {
+
+    CqlVector<Float> vector = CqlVector.newInstance(VECTOR_ARGS);
+    List<Float> results =
+        vector.stream()
+            .map((f) -> f * 2)
+            .collect(Collectors.toCollection(() -> new ArrayList<Float>()));
+    for (int i = 0; i < vector.size(); ++i) {
+      assertThat(results.get(i)).isEqualTo(vector.get(i) * 2);
     }
+  }
 
-    @Test
-    public void should_build_vector_from_elements() {
+  @Test
+  public void should_reflect_changes_to_mutable_list() {
 
-        validate_built_vector(CqlVector.newInstance(VECTOR_ARGS));
-    }
+    List<Float> theList = Lists.newArrayList(1.1f, 2.2f, 3.3f);
+    CqlVector<Float> vector = CqlVector.newInstance(theList);
+    assertThat(vector.size()).isEqualTo(3);
+    assertThat(vector.get(2)).isEqualTo(3.3f);
 
-    @Test
-    public void should_build_vector_from_list() {
+    float newVal1 = 4.4f;
+    theList.set(2, newVal1);
+    assertThat(vector.size()).isEqualTo(3);
+    assertThat(vector.get(2)).isEqualTo(newVal1);
 
-        validate_built_vector(CqlVector.newInstance(Lists.newArrayList(VECTOR_ARGS)));
-    }
+    float newVal2 = 5.5f;
+    theList.add(newVal2);
+    assertThat(vector.size()).isEqualTo(4);
+    assertThat(vector.get(3)).isEqualTo(newVal2);
+  }
 
-    @Test
-    public void should_build_vector_from_tostring_output() {
+  @Test
+  public void should_reflect_changes_to_array() {
 
-        CqlVector<Float> vector1 = CqlVector.newInstance(VECTOR_ARGS);
-        CqlVector<Float> vector2 = CqlVector.from(vector1.toString(), new FloatCodec());
-        assertThat(vector2).isEqualTo(vector1);
-    }
+    Float[] theArray = new Float[] {1.1f, 2.2f, 3.3f};
+    CqlVector<Float> vector = CqlVector.newInstance(theArray);
+    assertThat(vector.size()).isEqualTo(3);
+    assertThat(vector.get(2)).isEqualTo(3.3f);
 
-    @Test
-    public void should_throw_when_building_with_nulls() {
+    float newVal1 = 4.4f;
+    theArray[2] = newVal1;
+    assertThat(vector.size()).isEqualTo(3);
+    assertThat(vector.get(2)).isEqualTo(newVal1);
+  }
 
-        assertThatThrownBy(() -> { CqlVector.newInstance(1.1f, null, 2.2f); }).isInstanceOf(IllegalArgumentException.class);
+  @Test
+  public void should_correctly_compare_vectors() {
 
-        Float[] theArray = new Float[] { 1.1f, null, 2.2f };
-        assertThatThrownBy(() -> { CqlVector.newInstance(theArray); }).isInstanceOf(IllegalArgumentException.class);
+    Float[] args = VECTOR_ARGS.clone();
+    CqlVector<Float> vector1 = CqlVector.newInstance(args);
+    CqlVector<Float> vector2 = CqlVector.newInstance(args);
+    CqlVector<Float> vector3 = CqlVector.newInstance(Lists.newArrayList(args));
+    assertThat(vector1).isNotSameAs(vector2);
+    assertThat(vector1).isEqualTo(vector2);
+    assertThat(vector1).isNotSameAs(vector3);
+    assertThat(vector1).isEqualTo(vector3);
 
-        List<Float> theList = Lists.newArrayList(1.1f, null, 2.2f);
-        assertThatThrownBy(() -> { CqlVector.newInstance(theList); }).isInstanceOf(IllegalArgumentException.class);
-    }
+    Float[] differentArgs = args.clone();
+    float newVal = differentArgs[0] * 2;
+    differentArgs[0] = newVal;
+    CqlVector<Float> vector4 = CqlVector.newInstance(differentArgs);
+    assertThat(vector1).isNotSameAs(vector4);
+    assertThat(vector1).isNotEqualTo(vector4);
 
-    @Test
-    public void should_build_empty_vector() {
-
-        CqlVector<Float> vector = CqlVector.newInstance();
-        assertThat(vector.isEmpty()).isTrue();
-        assertThat(vector.size()).isEqualTo(0);
-    }
-
-    @Test
-    public void should_behave_mostly_like_a_list() {
-
-        CqlVector<Float> vector = CqlVector.newInstance(VECTOR_ARGS);
-        assertThat(vector.get(0)).isEqualTo(VECTOR_ARGS[0]);
-        Float newVal = VECTOR_ARGS[0] * 2;
-        vector.set(0, newVal);
-        assertThat(vector.get(0)).isEqualTo(newVal);
-        assertThat(vector.isEmpty()).isFalse();
-        assertThat(vector.size()).isEqualTo(2);
-        assertThat(Iterators.toArray(vector.iterator(), Float.class)).isEqualTo(VECTOR_ARGS);
-    }
-
-    @Test
-    public void should_play_nicely_with_streams() {
-
-        CqlVector<Float> vector = CqlVector.newInstance(VECTOR_ARGS);
-        List<Float> results = vector.stream().map((f) -> f * 2).collect(Collectors.toCollection(() -> new ArrayList<Float>()));
-        for (int i = 0; i < vector.size(); ++i) {
-            assertThat(results.get(i)).isEqualTo(vector.get(i) * 2);
-        }
-    }
-
-    @Test
-    public void should_reflect_changes_to_mutable_list() {
-
-        List<Float> theList = Lists.newArrayList(1.1f, 2.2f, 3.3f);
-        CqlVector<Float> vector = CqlVector.newInstance(theList);
-        assertThat(vector.size()).isEqualTo(3);
-        assertThat(vector.get(2)).isEqualTo(3.3f);
-
-        float newVal1 = 4.4f;
-        theList.set(2, newVal1);
-        assertThat(vector.size()).isEqualTo(3);
-        assertThat(vector.get(2)).isEqualTo(newVal1);
-
-        float newVal2 = 5.5f;
-        theList.add(newVal2);
-        assertThat(vector.size()).isEqualTo(4);
-        assertThat(vector.get(3)).isEqualTo(newVal2);
-    }
-
-    @Test
-    public void should_reflect_changes_to_array() {
-
-        Float[] theArray = new Float[] {1.1f, 2.2f, 3.3f};
-        CqlVector<Float> vector = CqlVector.newInstance(theArray);
-        assertThat(vector.size()).isEqualTo(3);
-        assertThat(vector.get(2)).isEqualTo(3.3f);
-
-        float newVal1 = 4.4f;
-        theArray[2] = newVal1;
-        assertThat(vector.size()).isEqualTo(3);
-        assertThat(vector.get(2)).isEqualTo(newVal1);
-    }
-
-    @Test
-    public void should_correctly_compare_vectors() {
-
-        Float[] args = VECTOR_ARGS.clone();
-        CqlVector<Float> vector1 = CqlVector.newInstance(args);
-        CqlVector<Float> vector2 = CqlVector.newInstance(args);
-        CqlVector<Float> vector3 = CqlVector.newInstance(Lists.newArrayList(args));
-        assertThat(vector1).isNotSameAs(vector2);
-        assertThat(vector1).isEqualTo(vector2);
-        assertThat(vector1).isNotSameAs(vector3);
-        assertThat(vector1).isEqualTo(vector3);
-
-        Float[] differentArgs = args.clone();
-        float newVal = differentArgs[0] * 2;
-        differentArgs[0] = newVal;
-        CqlVector<Float> vector4 = CqlVector.newInstance(differentArgs);
-        assertThat(vector1).isNotSameAs(vector4);
-        assertThat(vector1).isNotEqualTo(vector4);
-
-        Float[] biggerArgs = Arrays.copyOf(args, args.length + 1);
-        biggerArgs[biggerArgs.length - 1] = newVal;
-        CqlVector<Float> vector5 = CqlVector.newInstance(biggerArgs);
-        assertThat(vector1).isNotSameAs(vector5);
-        assertThat(vector1).isNotEqualTo(vector5);
-    }
+    Float[] biggerArgs = Arrays.copyOf(args, args.length + 1);
+    biggerArgs[biggerArgs.length - 1] = newVal;
+    CqlVector<Float> vector5 = CqlVector.newInstance(biggerArgs);
+    assertThat(vector1).isNotSameAs(vector5);
+    assertThat(vector1).isNotEqualTo(vector5);
+  }
 }
