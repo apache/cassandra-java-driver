@@ -214,6 +214,11 @@ public class TypeCodecs {
         DataTypes.vectorOf(subtypeCodec.getCqlType(), type.getDimensions()), subtypeCodec);
   }
 
+  public static <SubtypeT extends Number> TypeCodec<CqlVector<SubtypeT>> vectorOf(
+      int dimensions, @NonNull TypeCodec<SubtypeT> subtypeCodec) {
+    return new VectorCodec(DataTypes.vectorOf(subtypeCodec.getCqlType(), dimensions), subtypeCodec);
+  }
+
   /**
    * Builds a new codec that maps a CQL user defined type to the driver's {@link UdtValue}, for the
    * given type definition.
