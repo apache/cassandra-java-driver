@@ -22,8 +22,9 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata;
 import com.datastax.oss.driver.api.core.type.DataTypes;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import java.util.Objects;
 import java.util.Optional;
@@ -32,7 +33,10 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@DseRequirement(min = "5.0", description = "DSE 5.0+ required function/aggregate support")
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "5.0",
+    description = "DSE 5.0+ required function/aggregate support")
 public class DseAggregateMetadataIT extends AbstractMetadataIT {
 
   private static final CcmRule CCM_RULE = CcmRule.getInstance();

@@ -32,8 +32,9 @@ import com.datastax.oss.driver.api.mapper.annotations.Delete;
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -47,7 +48,10 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
-@CassandraRequirement(min = "3.4", description = "Creates a SASI index")
+@BackendRequirement(
+    type = BackendType.CASSANDRA,
+    minInclusive = "3.4",
+    description = "Creates a SASI index")
 public class SelectCustomWhereClauseIT extends InventoryITBase {
 
   private static final CcmRule CCM_RULE = CcmRule.getInstance();

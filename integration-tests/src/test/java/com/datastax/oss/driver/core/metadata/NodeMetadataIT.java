@@ -23,9 +23,10 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.context.EventBus;
@@ -90,7 +91,7 @@ public class NodeMetadataIT {
   }
 
   @Test
-  @DseRequirement(min = "5.1")
+  @BackendRequirement(type = BackendType.DSE, minInclusive = "5.1")
   public void should_expose_dse_node_properties() {
     try (CqlSession session = SessionUtils.newSession(ccmRule)) {
 

@@ -31,8 +31,9 @@ import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import io.reactivex.Flowable;
@@ -47,8 +48,9 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
-@CassandraRequirement(
-    min = "3.6",
+@BackendRequirement(
+    type = BackendType.CASSANDRA,
+    minInclusive = "3.6",
     description = "Uses UDT fields in IF conditions (CASSANDRA-7423)")
 public class UpdateReactiveIT extends InventoryITBase {
 

@@ -32,8 +32,9 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.Metrics;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
@@ -53,7 +54,10 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
-@DseRequirement(min = "6.8.0", description = "Graph paging requires DSE 6.8+")
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "6.8.0",
+    description = "Graph paging requires DSE 6.8+")
 @RunWith(DataProviderRunner.class)
 public class GraphPagingIT {
 

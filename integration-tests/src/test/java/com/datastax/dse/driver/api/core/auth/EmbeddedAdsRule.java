@@ -18,16 +18,12 @@ package com.datastax.dse.driver.api.core.auth;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.internal.core.auth.DseGssApiAuthProvider;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
-import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
-import com.datastax.oss.driver.api.testinfra.requirement.VersionRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirementRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.io.File;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.AssumptionViolatedException;
@@ -155,12 +151,7 @@ public class EmbeddedAdsRule extends ExternalResource {
 
   @Override
   public Statement apply(Statement base, Description description) {
-    BackendType backend = CcmBridge.DSE_ENABLEMENT ? BackendType.DSE : BackendType.CASSANDRA;
-    Version version = CcmBridge.VERSION;
-
-    Collection<VersionRequirement> requirements = VersionRequirement.fromAnnotations(description);
-
-    if (VersionRequirement.meetsAny(requirements, backend, version)) {
+    if (BackendRequirementRule.meetsDescriptionRequirements(description)) {
       return super.apply(base, description);
     } else {
       // requirements not met, throw reasoning assumption to skip test
@@ -168,7 +159,7 @@ public class EmbeddedAdsRule extends ExternalResource {
         @Override
         public void evaluate() {
           throw new AssumptionViolatedException(
-              VersionRequirement.buildReasonString(requirements, backend, version));
+              BackendRequirementRule.buildReasonString(description));
         }
       };
     }

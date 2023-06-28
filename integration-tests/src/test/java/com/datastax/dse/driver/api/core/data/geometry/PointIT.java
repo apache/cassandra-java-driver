@@ -16,8 +16,9 @@
 package com.datastax.dse.driver.api.core.data.geometry;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import org.assertj.core.util.Lists;
 import org.junit.BeforeClass;
@@ -25,7 +26,7 @@ import org.junit.ClassRule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@DseRequirement(min = "5.0")
+@BackendRequirement(type = BackendType.DSE, minInclusive = "5.0")
 public class PointIT extends GeometryIT<Point> {
 
   private static CcmRule ccm = CcmRule.getInstance();

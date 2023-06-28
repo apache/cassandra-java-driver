@@ -25,8 +25,9 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -44,7 +45,7 @@ import org.junit.rules.TestName;
 import org.junit.rules.TestRule;
 
 @Category({ParallelizableTests.class})
-@DseRequirement(min = "5.1")
+@BackendRequirement(type = BackendType.DSE, minInclusive = "5.1")
 public class DateRangeIT {
 
   private static CcmRule ccmRule = CcmRule.getInstance();

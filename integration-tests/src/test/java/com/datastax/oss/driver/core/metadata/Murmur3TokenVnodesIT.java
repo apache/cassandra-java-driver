@@ -17,8 +17,9 @@ package com.datastax.oss.driver.core.metadata;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
@@ -28,8 +29,9 @@ import org.junit.ClassRule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@CassandraRequirement(
-    max = "4.0-beta4",
+@BackendRequirement(
+    type = BackendType.CASSANDRA,
+    maxExclusive = "4.0-beta4",
     // TODO Re-enable when CASSANDRA-16364 is fixed
     description = "TODO Re-enable when CASSANDRA-16364 is fixed")
 public class Murmur3TokenVnodesIT extends TokenITBase {
