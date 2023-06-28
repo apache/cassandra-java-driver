@@ -122,6 +122,15 @@ public class CqlVector<T extends Number> implements Iterable<T> {
   }
 
   /**
+   * Return a boolean indicating whether the vector is empty. Modelled after {@link List#isEmpty()}
+   *
+   * @return true if the list is empty, false otherwise
+   */
+  public boolean isEmpty() {
+    return this.list.isEmpty();
+  }
+
+  /**
    * Create an {@link Iterator} for this vector
    *
    * @return the generated iterator

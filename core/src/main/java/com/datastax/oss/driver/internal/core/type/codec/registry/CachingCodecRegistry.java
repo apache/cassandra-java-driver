@@ -372,6 +372,23 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
             inspectType(firstValue, cqlType == null ? null : ((MapType) cqlType).getValueType());
         return GenericType.mapOf(keyType, valueType);
       }
+    } else if (value instanceof CqlVector) {
+      CqlVector<?> set = (CqlVector<?>) value;
+      if (set.isEmpty()) {
+        return cqlType == null ? JAVA_TYPE_FOR_EMPTY_CQLVECTORS : inferJavaTypeFromCqlType(cqlType);
+      } else {
+        Object firstElement = set.iterator().next();
+        if (firstElement == null) {
+          throw new IllegalArgumentException(
+              "Can't infer vector codec because the first element is null "
+                  + "(note that CQL does not allow null values in collections)");
+        }
+        GenericType<? extends Number> elementType =
+            (GenericType<? extends Number>)
+                inspectType(
+                    firstElement, cqlType == null ? null : ((VectorType) cqlType).getElementType());
+        return GenericType.vectorOf(elementType);
+      }
     } else {
       // There's not much more we can do
       return GenericType.of(value.getClass());
@@ -380,12 +397,9 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
 
   @NonNull
   protected GenericType<?> inferJavaTypeFromCqlType(@NonNull DataType cqlType) {
-    if (cqlType instanceof ListType) {
-      DataType elementType = ((ListType) cqlType).getElementType();
+    if (cqlType instanceof ContainerType) {
+      DataType elementType = ((ContainerType) cqlType).getElementType();
       return GenericType.listOf(inferJavaTypeFromCqlType(elementType));
-    } else if (cqlType instanceof SetType) {
-      DataType elementType = ((SetType) cqlType).getElementType();
-      return GenericType.setOf(inferJavaTypeFromCqlType(elementType));
     } else if (cqlType instanceof MapType) {
       DataType keyType = ((MapType) cqlType).getKeyType();
       DataType valueType = ((MapType) cqlType).getValueType();
@@ -641,14 +655,10 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
       TypeCodec<?> valueCodec = codecFor(valueType, isJavaCovariant);
       return TypeCodecs.mapOf(keyCodec, valueCodec);
     } else if (CqlVector.class.isAssignableFrom(token.getRawType())
-        && token.getType() instanceof ParameterizedType) {
-      /*
+            && token.getType() instanceof ParameterizedType) {
       TypeCodec<? extends Number> elementCodec =
-          uncheckedCast(
-              getElementCodecForJavaType((ParameterizedType) token.getType(), isJavaCovariant));
-       return TypeCodecs.vectorOf(elementCodec);
-       */
-      return null;
+              uncheckedCast(getElementCodecForJavaType((ParameterizedType) token.getType(), isJavaCovariant));
+      return TypeCodecs.vectorOf(elementCodec);
     }
     throw new CodecNotFoundException(null, javaType);
   }
@@ -711,6 +721,8 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
       GenericType.setOf(Boolean.class);
   private static final GenericType<Map<Boolean, Boolean>> JAVA_TYPE_FOR_EMPTY_MAPS =
       GenericType.mapOf(Boolean.class, Boolean.class);
+  private static final GenericType<CqlVector<Number>> JAVA_TYPE_FOR_EMPTY_CQLVECTORS =
+      GenericType.vectorOf(Number.class);
   private static final DataType CQL_TYPE_FOR_EMPTY_LISTS = DataTypes.listOf(DataTypes.BOOLEAN);
   private static final DataType CQL_TYPE_FOR_EMPTY_SETS = DataTypes.setOf(DataTypes.BOOLEAN);
   private static final DataType CQL_TYPE_FOR_EMPTY_MAPS =
