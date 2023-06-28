@@ -18,9 +18,10 @@ package com.datastax.oss.driver.api.testinfra.ccm;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.Version;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
+import com.datastax.oss.driver.api.testinfra.requirement.VersionRequirement;
+import java.util.Collection;
 import java.util.Optional;
 import org.junit.AssumptionViolatedException;
 import org.junit.runner.Description;
@@ -55,80 +56,26 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
     ccmBridge.remove();
   }
 
-  private Statement buildErrorStatement(
-      Version requirement, String description, boolean lessThan, boolean dse) {
-    return new Statement() {
-
-      @Override
-      public void evaluate() {
-        throw new AssumptionViolatedException(
-            String.format(
-                "Test requires %s %s %s but %s is configured.  Description: %s",
-                lessThan ? "less than" : "at least",
-                dse ? "DSE" : "C*",
-                requirement,
-                dse ? ccmBridge.getDseVersion().orElse(null) : ccmBridge.getCassandraVersion(),
-                description));
-      }
-    };
-  }
-
   @Override
   public Statement apply(Statement base, Description description) {
-    // If test is annotated with CassandraRequirement or DseRequirement, ensure configured CCM
-    // cluster meets those requirements.
-    CassandraRequirement cassandraRequirement =
-        description.getAnnotation(CassandraRequirement.class);
+    BackendType backend =
+        ccmBridge.getDseVersion().isPresent() ? BackendType.DSE : BackendType.CASSANDRA;
+    Version version = ccmBridge.getDseVersion().orElseGet(ccmBridge::getCassandraVersion);
 
-    if (cassandraRequirement != null) {
-      // if the configured cassandra cassandraRequirement exceeds the one being used skip this test.
-      if (!cassandraRequirement.min().isEmpty()) {
-        Version minVersion = Version.parse(cassandraRequirement.min());
-        if (minVersion.compareTo(ccmBridge.getCassandraVersion()) > 0) {
-          return buildErrorStatement(minVersion, cassandraRequirement.description(), false, false);
+    Collection<VersionRequirement> requirements = VersionRequirement.fromAnnotations(description);
+
+    if (VersionRequirement.meetsAny(requirements, backend, version)) {
+      return super.apply(base, description);
+    } else {
+      // requirements not met, throw reasoning assumption to skip test
+      return new Statement() {
+        @Override
+        public void evaluate() {
+          throw new AssumptionViolatedException(
+              VersionRequirement.buildReasonString(requirements, backend, version));
         }
-      }
-
-      if (!cassandraRequirement.max().isEmpty()) {
-        // if the test version exceeds the maximum configured one, fail out.
-        Version maxVersion = Version.parse(cassandraRequirement.max());
-
-        if (maxVersion.compareTo(ccmBridge.getCassandraVersion()) <= 0) {
-          return buildErrorStatement(maxVersion, cassandraRequirement.description(), true, false);
-        }
-      }
+      };
     }
-
-    DseRequirement dseRequirement = description.getAnnotation(DseRequirement.class);
-    if (dseRequirement != null) {
-      Optional<Version> dseVersionOption = ccmBridge.getDseVersion();
-      if (!dseVersionOption.isPresent()) {
-        return new Statement() {
-
-          @Override
-          public void evaluate() {
-            throw new AssumptionViolatedException("Test Requires DSE but C* is configured.");
-          }
-        };
-      } else {
-        Version dseVersion = dseVersionOption.get();
-        if (!dseRequirement.min().isEmpty()) {
-          Version minVersion = Version.parse(dseRequirement.min());
-          if (minVersion.compareTo(dseVersion) > 0) {
-            return buildErrorStatement(minVersion, dseRequirement.description(), false, true);
-          }
-        }
-
-        if (!dseRequirement.max().isEmpty()) {
-          Version maxVersion = Version.parse(dseRequirement.max());
-
-          if (maxVersion.compareTo(dseVersion) <= 0) {
-            return buildErrorStatement(maxVersion, dseRequirement.description(), true, true);
-          }
-        }
-      }
-    }
-    return super.apply(base, description);
   }
 
   public Version getCassandraVersion() {

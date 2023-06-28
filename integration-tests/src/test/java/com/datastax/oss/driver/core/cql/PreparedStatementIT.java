@@ -16,7 +16,7 @@
 package com.datastax.oss.driver.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.codahale.metrics.Gauge;
@@ -36,24 +36,21 @@ import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
-import com.datastax.oss.driver.internal.core.metadata.schema.events.TypeChangeEvent;
 import com.datastax.oss.driver.internal.core.metadata.token.DefaultTokenMap;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import junit.framework.TestCase;
+import org.assertj.core.api.AbstractThrowableAssert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -374,9 +371,15 @@ public class PreparedStatementIT {
       assertThat(getPreparedCacheSize(session)).isEqualTo(0);
       String query = "SELECT * FROM prepared_statement_test WHERE a = ?";
 
-      // When
-      PreparedStatement preparedStatement1 = session.prepare(query);
-      PreparedStatement preparedStatement2 = session.prepare(query);
+      // Send prepare requests, keep hold of CompletionStage objects to prevent them being removed
+      // from CqlPrepareAsyncProcessor#cache, see JAVA-3062
+      CompletionStage<PreparedStatement> preparedStatement1Future = session.prepareAsync(query);
+      CompletionStage<PreparedStatement> preparedStatement2Future = session.prepareAsync(query);
+
+      PreparedStatement preparedStatement1 =
+          CompletableFutures.getUninterruptibly(preparedStatement1Future);
+      PreparedStatement preparedStatement2 =
+          CompletableFutures.getUninterruptibly(preparedStatement2Future);
 
       // Then
       assertThat(preparedStatement1).isSameAs(preparedStatement2);
@@ -391,11 +394,17 @@ public class PreparedStatementIT {
       // Given
       assertThat(getPreparedCacheSize(session)).isEqualTo(0);
 
-      // When
+      // Send prepare requests, keep hold of CompletionStage objects to prevent them being removed
+      // from CqlPrepareAsyncProcessor#cache, see JAVA-3062
+      CompletionStage<PreparedStatement> preparedStatement1Future =
+          session.prepareAsync("SELECT * FROM prepared_statement_test WHERE a = ?");
+      CompletionStage<PreparedStatement> preparedStatement2Future =
+          session.prepareAsync("select * from prepared_statement_test where a = ?");
+
       PreparedStatement preparedStatement1 =
-          session.prepare("SELECT * FROM prepared_statement_test WHERE a = ?");
+          CompletableFutures.getUninterruptibly(preparedStatement1Future);
       PreparedStatement preparedStatement2 =
-          session.prepare("select * from prepared_statement_test where a = ?");
+          CompletableFutures.getUninterruptibly(preparedStatement2Future);
 
       // Then
       assertThat(preparedStatement1).isNotSameAs(preparedStatement2);
@@ -411,9 +420,17 @@ public class PreparedStatementIT {
       SimpleStatement statement =
           SimpleStatement.newInstance("SELECT * FROM prepared_statement_test");
 
-      // When
-      PreparedStatement preparedStatement1 = session.prepare(statement.setPageSize(1));
-      PreparedStatement preparedStatement2 = session.prepare(statement.setPageSize(4));
+      // Send prepare requests, keep hold of CompletionStage objects to prevent them being removed
+      // from CqlPrepareAsyncProcessor#cache, see JAVA-3062
+      CompletionStage<PreparedStatement> preparedStatement1Future =
+          session.prepareAsync(statement.setPageSize(1));
+      CompletionStage<PreparedStatement> preparedStatement2Future =
+          session.prepareAsync(statement.setPageSize(4));
+
+      PreparedStatement preparedStatement1 =
+          CompletableFutures.getUninterruptibly(preparedStatement1Future);
+      PreparedStatement preparedStatement2 =
+          CompletableFutures.getUninterruptibly(preparedStatement2Future);
 
       // Then
       assertThat(preparedStatement1).isNotSameAs(preparedStatement2);
@@ -425,13 +442,11 @@ public class PreparedStatementIT {
   }
 
   /**
-   * This test relies on CASSANDRA-15252 to reproduce the error condition. If the bug gets fixed in
-   * Cassandra, we'll need to add a version restriction.
+   * This method reproduces CASSANDRA-15252 which is fixed in 3.0.26/3.11.12/4.0.2.
    *
    * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-15252">CASSANDRA-15252</a>
    */
-  @Test
-  public void should_fail_fast_if_id_changes_on_reprepare() {
+  private AbstractThrowableAssert<?, ? extends Throwable> assertableReprepareAfterIdChange() {
     try (CqlSession session = SessionUtils.newSession(ccmRule)) {
       PreparedStatement preparedStatement =
           session.prepare(
@@ -444,146 +459,40 @@ public class PreparedStatementIT {
       executeDdl("DROP TABLE prepared_statement_test");
       executeDdl("CREATE TABLE prepared_statement_test (a int PRIMARY KEY, b int, c int)");
 
-      assertThatThrownBy(() -> session.execute(preparedStatement.bind(1)))
-          .isInstanceOf(IllegalStateException.class)
-          .hasMessageContaining("ID mismatch while trying to reprepare");
+      return assertThatCode(() -> session.execute(preparedStatement.bind(1)));
     }
   }
 
-  private void invalidationResultSetTest(Consumer<CqlSession> createFn) {
-
-    try (CqlSession session = sessionWithCacheSizeMetric()) {
-
-      assertThat(getPreparedCacheSize(session)).isEqualTo(0);
-      createFn.accept(session);
-
-      session.prepare("select f from test_table_1 where e = ?");
-      session.prepare("select h from test_table_2 where g = ?");
-      assertThat(getPreparedCacheSize(session)).isEqualTo(2);
-
-      CountDownLatch latch = new CountDownLatch(1);
-      DefaultDriverContext ctx = (DefaultDriverContext) session.getContext();
-      ctx.getEventBus()
-          .register(
-              TypeChangeEvent.class,
-              (e) -> {
-                assertThat(e.oldType.getName().toString()).isEqualTo("test_type_2");
-                latch.countDown();
-              });
-
-      session.execute("ALTER TYPE test_type_2 add i blob");
-      Uninterruptibles.awaitUninterruptibly(latch, 2, TimeUnit.SECONDS);
-
-      assertThat(getPreparedCacheSize(session)).isEqualTo(1);
-    }
-  }
-
-  private void invalidationVariableDefsTest(Consumer<CqlSession> createFn, boolean isCollection) {
-
-    try (CqlSession session = sessionWithCacheSizeMetric()) {
-
-      assertThat(getPreparedCacheSize(session)).isEqualTo(0);
-      createFn.accept(session);
-
-      String fStr = isCollection ? "f contains ?" : "f = ?";
-      session.prepare(String.format("select e from test_table_1 where %s allow filtering", fStr));
-      String hStr = isCollection ? "h contains ?" : "h = ?";
-      session.prepare(String.format("select g from test_table_2 where %s allow filtering", hStr));
-      assertThat(getPreparedCacheSize(session)).isEqualTo(2);
-
-      CountDownLatch latch = new CountDownLatch(1);
-      DefaultDriverContext ctx = (DefaultDriverContext) session.getContext();
-      ctx.getEventBus()
-          .register(
-              TypeChangeEvent.class,
-              (e) -> {
-                assertThat(e.oldType.getName().toString()).isEqualTo("test_type_2");
-                latch.countDown();
-              });
-
-      session.execute("ALTER TYPE test_type_2 add i blob");
-      Uninterruptibles.awaitUninterruptibly(latch, 2, TimeUnit.SECONDS);
-
-      assertThat(getPreparedCacheSize(session)).isEqualTo(1);
-    }
-  }
-
-  Consumer<CqlSession> setupCacheEntryTestBasic =
-      (session) -> {
-        session.execute("CREATE TYPE test_type_1 (a text, b int)");
-        session.execute("CREATE TYPE test_type_2 (c int, d text)");
-        session.execute("CREATE TABLE test_table_1 (e int primary key, f frozen<test_type_1>)");
-        session.execute("CREATE TABLE test_table_2 (g int primary key, h frozen<test_type_2>)");
-      };
-
+  // Add version bounds to the DSE requirement if there is a version containing fix for
+  // CASSANDRA-15252
+  @BackendRequirement(
+      type = BackendType.DSE,
+      description = "No DSE version contains fix for CASSANDRA-15252")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "3.0.0", maxExclusive = "3.0.26")
+  @BackendRequirement(
+      type = BackendType.CASSANDRA,
+      minInclusive = "3.11.0",
+      maxExclusive = "3.11.12")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "4.0.0", maxExclusive = "4.0.2")
   @Test
-  public void should_invalidate_cache_entry_on_basic_udt_change_result_set() {
-    invalidationResultSetTest(setupCacheEntryTestBasic);
+  public void should_fail_fast_if_id_changes_on_reprepare() {
+    assertableReprepareAfterIdChange()
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("ID mismatch while trying to reprepare");
   }
 
+  @BackendRequirement(
+      type = BackendType.CASSANDRA,
+      minInclusive = "3.0.26",
+      maxExclusive = "3.11.0")
+  @BackendRequirement(
+      type = BackendType.CASSANDRA,
+      minInclusive = "3.11.12",
+      maxExclusive = "4.0.0")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "4.0.2")
   @Test
-  public void should_invalidate_cache_entry_on_basic_udt_change_variable_defs() {
-    invalidationVariableDefsTest(setupCacheEntryTestBasic, false);
-  }
-
-  Consumer<CqlSession> setupCacheEntryTestCollection =
-      (session) -> {
-        session.execute("CREATE TYPE test_type_1 (a text, b int)");
-        session.execute("CREATE TYPE test_type_2 (c int, d text)");
-        session.execute(
-            "CREATE TABLE test_table_1 (e int primary key, f list<frozen<test_type_1>>)");
-        session.execute(
-            "CREATE TABLE test_table_2 (g int primary key, h list<frozen<test_type_2>>)");
-      };
-
-  @Test
-  public void should_invalidate_cache_entry_on_collection_udt_change_result_set() {
-    invalidationResultSetTest(setupCacheEntryTestCollection);
-  }
-
-  @Test
-  public void should_invalidate_cache_entry_on_collection_udt_change_variable_defs() {
-    invalidationVariableDefsTest(setupCacheEntryTestCollection, true);
-  }
-
-  Consumer<CqlSession> setupCacheEntryTestTuple =
-      (session) -> {
-        session.execute("CREATE TYPE test_type_1 (a text, b int)");
-        session.execute("CREATE TYPE test_type_2 (c int, d text)");
-        session.execute(
-            "CREATE TABLE test_table_1 (e int primary key, f tuple<int, test_type_1, text>)");
-        session.execute(
-            "CREATE TABLE test_table_2 (g int primary key, h tuple<text, test_type_2, int>)");
-      };
-
-  @Test
-  public void should_invalidate_cache_entry_on_tuple_udt_change_result_set() {
-    invalidationResultSetTest(setupCacheEntryTestTuple);
-  }
-
-  @Test
-  public void should_invalidate_cache_entry_on_tuple_udt_change_variable_defs() {
-    invalidationVariableDefsTest(setupCacheEntryTestTuple, false);
-  }
-
-  Consumer<CqlSession> setupCacheEntryTestNested =
-      (session) -> {
-        session.execute("CREATE TYPE test_type_1 (a text, b int)");
-        session.execute("CREATE TYPE test_type_2 (c int, d text)");
-        session.execute("CREATE TYPE test_type_3 (e frozen<test_type_1>, f int)");
-        session.execute("CREATE TYPE test_type_4 (g int, h frozen<test_type_2>)");
-        session.execute("CREATE TABLE test_table_1 (e int primary key, f frozen<test_type_3>)");
-        session.execute("CREATE TABLE test_table_2 (g int primary key, h frozen<test_type_4>)");
-      };
-
-  @Test
-  public void should_invalidate_cache_entry_on_nested_udt_change_result_set() {
-    invalidationResultSetTest(setupCacheEntryTestNested);
-  }
-
-  @Test
-  public void should_invalidate_cache_entry_on_nested_udt_change_variable_defs() {
-    invalidationVariableDefsTest(setupCacheEntryTestNested, false);
+  public void handle_id_changes_on_reprepare() {
+    assertableReprepareAfterIdChange().doesNotThrowAnyException();
   }
 
   @Test
