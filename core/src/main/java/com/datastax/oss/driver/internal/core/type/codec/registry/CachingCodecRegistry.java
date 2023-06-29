@@ -373,11 +373,11 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
         return GenericType.mapOf(keyType, valueType);
       }
     } else if (value instanceof CqlVector) {
-      CqlVector<?> set = (CqlVector<?>) value;
-      if (set.isEmpty()) {
+      CqlVector<?> vector = (CqlVector<?>) value;
+      if (vector.isEmpty()) {
         return cqlType == null ? JAVA_TYPE_FOR_EMPTY_CQLVECTORS : inferJavaTypeFromCqlType(cqlType);
       } else {
-        Object firstElement = set.iterator().next();
+        Object firstElement = vector.iterator().next();
         if (firstElement == null) {
           throw new IllegalArgumentException(
               "Can't infer vector codec because the first element is null "
