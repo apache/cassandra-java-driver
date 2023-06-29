@@ -5,7 +5,7 @@ on:
     types:
       - closed
     branches:
-      - snyk-monitor
+      -  4.x
   workflow_dispatch:
 
 jobs:
