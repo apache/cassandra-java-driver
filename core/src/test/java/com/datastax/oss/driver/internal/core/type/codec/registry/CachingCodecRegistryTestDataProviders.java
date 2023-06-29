@@ -286,7 +286,7 @@ public class CachingCodecRegistryTestDataProviders {
         ImmutableMap.of(
             ImmutableMap.of(udtValue, udtValue), ImmutableMap.of(tupleValue, tupleValue))
       },
-      // vexctors
+      // vectors
       {
         DataTypes.vectorOf(DataTypes.INT, 1),
         GenericType.vectorOf(Integer.class),
