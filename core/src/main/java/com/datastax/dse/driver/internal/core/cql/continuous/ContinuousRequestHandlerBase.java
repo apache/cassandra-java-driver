@@ -489,6 +489,9 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     // Coordinates concurrent accesses between the client and I/O threads
     private final ReentrantLock lock = new ReentrantLock();
 
+    // The execution info for passing to the request tracker.
+    private ExecutionInfo executionInfo;
+
     // The page queue, storing responses that we have received and have not been consumed by the
     // client yet. We instantiate it lazily to avoid unnecessary allocation; this is also used to
     // check if the callback ever tried to enqueue something.
@@ -1445,7 +1448,8 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
         long latencyNanos = System.nanoTime() - this.messageStartTimeNanos;
         context
             .getRequestTracker()
-            .onNodeError(this.statement, error, latencyNanos, executionProfile, node, logPrefix);
+            .onNodeError(
+                this.statement, error, latencyNanos, executionProfile, node, logPrefix, null);
       }
     }
 
@@ -1562,18 +1566,21 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
           if (nodeSuccessReported.compareAndSet(false, true)) {
             context
                 .getRequestTracker()
-                .onNodeSuccess(statement, nodeLatencyNanos, executionProfile, node, logPrefix);
+                .onNodeSuccess(
+                    statement, nodeLatencyNanos, executionProfile, node, logPrefix, executionInfo);
           }
           context
               .getRequestTracker()
-              .onSuccess(statement, totalLatencyNanos, executionProfile, node, logPrefix);
+              .onSuccess(
+                  statement, totalLatencyNanos, executionProfile, node, logPrefix, executionInfo);
         }
       } else {
         Throwable error = (Throwable) pageOrError;
         if (future.completeExceptionally(error)) {
           context
               .getRequestTracker()
-              .onError(statement, error, totalLatencyNanos, executionProfile, node, logPrefix);
+              .onError(
+                  statement, error, totalLatencyNanos, executionProfile, node, logPrefix, null);
           if (error instanceof DriverTimeoutException) {
             throttler.signalTimeout(ContinuousRequestHandlerBase.this);
             session
@@ -1590,18 +1597,20 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     private ExecutionInfo createExecutionInfo(@NonNull Result result, @Nullable Frame response) {
       ByteBuffer pagingState =
           result instanceof Rows ? ((Rows) result).getMetadata().pagingState : null;
-      return new DefaultExecutionInfo(
-          statement,
-          node,
-          startedSpeculativeExecutionsCount.get(),
-          executionIndex,
-          errors,
-          pagingState,
-          response,
-          true,
-          session,
-          context,
-          executionProfile);
+      this.executionInfo =
+          new DefaultExecutionInfo(
+              statement,
+              node,
+              startedSpeculativeExecutionsCount.get(),
+              executionIndex,
+              errors,
+              pagingState,
+              response,
+              true,
+              session,
+              context,
+              executionProfile);
+      return executionInfo;
     }
 
     private void logTimeoutSchedulingError(IllegalStateException timeoutError) {

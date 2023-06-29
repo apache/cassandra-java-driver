@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Duration;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -184,7 +185,8 @@ public class RequestLogger implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix) {
+      @NonNull String logPrefix,
+      @Nullable ExecutionInfo executionInfo) {
     // Nothing to do
   }
 

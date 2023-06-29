@@ -165,12 +165,12 @@ public class MultiplexingRequestTrackerTest {
     MultiplexingRequestTracker tracker = new MultiplexingRequestTracker(child1, child2);
     willThrow(new NullPointerException())
         .given(child1)
-        .onNodeError(request, error, 123456L, profile, node, "test");
+        .onNodeError(request, error, 123456L, profile, node, "test", executionInfo);
     // when
-    tracker.onNodeError(request, error, 123456L, profile, node, "test");
+    tracker.onNodeError(request, error, 123456L, profile, node, "test", executionInfo);
     // then
-    verify(child1).onNodeError(request, error, 123456L, profile, node, "test");
-    verify(child2).onNodeError(request, error, 123456L, profile, node, "test");
+    verify(child1).onNodeError(request, error, 123456L, profile, node, "test", executionInfo);
+    verify(child2).onNodeError(request, error, 123456L, profile, node, "test", executionInfo);
     verify(appender).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getAllValues().stream().map(ILoggingEvent::getFormattedMessage))
         .contains(
