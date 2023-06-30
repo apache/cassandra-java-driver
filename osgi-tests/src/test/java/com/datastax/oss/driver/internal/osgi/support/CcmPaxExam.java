@@ -18,10 +18,9 @@ package com.datastax.oss.driver.internal.osgi.support;
 import static com.datastax.oss.driver.internal.osgi.support.CcmStagedReactor.CCM_BRIDGE;
 
 import com.datastax.oss.driver.api.core.Version;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
-import java.util.Objects;
-import java.util.Optional;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
+import com.datastax.oss.driver.api.testinfra.requirement.VersionRequirement;
+import java.util.Collection;
 import org.junit.AssumptionViolatedException;
 import org.junit.runner.Description;
 import org.junit.runner.notification.Failure;
@@ -38,69 +37,20 @@ public class CcmPaxExam extends PaxExam {
   @Override
   public void run(RunNotifier notifier) {
     Description description = getDescription();
-    CassandraRequirement cassandraRequirement =
-        description.getAnnotation(CassandraRequirement.class);
-    if (cassandraRequirement != null) {
-      if (!cassandraRequirement.min().isEmpty()) {
-        Version minVersion = Objects.requireNonNull(Version.parse(cassandraRequirement.min()));
-        if (minVersion.compareTo(CCM_BRIDGE.getCassandraVersion()) > 0) {
-          fireRequirementsNotMet(notifier, description, cassandraRequirement.min(), false, false);
-          return;
-        }
-      }
-      if (!cassandraRequirement.max().isEmpty()) {
-        Version maxVersion = Objects.requireNonNull(Version.parse(cassandraRequirement.max()));
-        if (maxVersion.compareTo(CCM_BRIDGE.getCassandraVersion()) <= 0) {
-          fireRequirementsNotMet(notifier, description, cassandraRequirement.max(), true, false);
-          return;
-        }
-      }
-    }
-    DseRequirement dseRequirement = description.getAnnotation(DseRequirement.class);
-    if (dseRequirement != null) {
-      Optional<Version> dseVersionOption = CCM_BRIDGE.getDseVersion();
-      if (!dseVersionOption.isPresent()) {
-        notifier.fireTestAssumptionFailed(
-            new Failure(
-                description,
-                new AssumptionViolatedException("Test Requires DSE but C* is configured.")));
-        return;
-      } else {
-        Version dseVersion = dseVersionOption.get();
-        if (!dseRequirement.min().isEmpty()) {
-          Version minVersion = Objects.requireNonNull(Version.parse(dseRequirement.min()));
-          if (minVersion.compareTo(dseVersion) > 0) {
-            fireRequirementsNotMet(notifier, description, dseRequirement.min(), false, true);
-            return;
-          }
-        }
-        if (!dseRequirement.max().isEmpty()) {
-          Version maxVersion = Objects.requireNonNull(Version.parse(dseRequirement.max()));
-          if (maxVersion.compareTo(dseVersion) <= 0) {
-            fireRequirementsNotMet(notifier, description, dseRequirement.min(), true, true);
-            return;
-          }
-        }
-      }
-    }
-    super.run(notifier);
-  }
+    BackendType backend =
+        CCM_BRIDGE.getDseVersion().isPresent() ? BackendType.DSE : BackendType.CASSANDRA;
+    Version version = CCM_BRIDGE.getDseVersion().orElseGet(CCM_BRIDGE::getCassandraVersion);
 
-  private void fireRequirementsNotMet(
-      RunNotifier notifier,
-      Description description,
-      String requirement,
-      boolean lessThan,
-      boolean dse) {
-    AssumptionViolatedException e =
-        new AssumptionViolatedException(
-            String.format(
-                "Test requires %s %s %s but %s is configured.  Description: %s",
-                lessThan ? "less than" : "at least",
-                dse ? "DSE" : "C*",
-                requirement,
-                dse ? CCM_BRIDGE.getDseVersion().orElse(null) : CCM_BRIDGE.getCassandraVersion(),
-                description));
-    notifier.fireTestAssumptionFailed(new Failure(description, e));
+    Collection<VersionRequirement> requirements =
+        VersionRequirement.fromAnnotations(getDescription());
+    if (VersionRequirement.meetsAny(requirements, backend, version)) {
+      super.run(notifier);
+    } else {
+      // requirements not met, throw reasoning assumption to skip test
+      AssumptionViolatedException e =
+          new AssumptionViolatedException(
+              VersionRequirement.buildReasonString(requirements, backend, version));
+      notifier.fireTestAssumptionFailed(new Failure(description, e));
+    }
   }
 }

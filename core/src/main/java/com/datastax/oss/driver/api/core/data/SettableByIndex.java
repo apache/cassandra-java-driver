@@ -415,7 +415,7 @@ public interface SettableByIndex<SelfT extends SettableByIndex<SelfT>> extends A
   }
 
   /**
-   * Sets the {@code i}th value to the provided duration.
+   * Sets the {@code i}th value to the provided vector.
    *
    * <p>By default, this works with CQL type {@code vector}.
    *
@@ -423,8 +423,9 @@ public interface SettableByIndex<SelfT extends SettableByIndex<SelfT>> extends A
    */
   @NonNull
   @CheckReturnValue
-  default SelfT setCqlVector(int i, @Nullable CqlVector<?> v) {
-    return set(i, v, CqlVector.class);
+  default <ElementT> SelfT setVector(
+      int i, @Nullable List<ElementT> v, @NonNull Class<ElementT> elementsClass) {
+    return set(i, v, GenericType.listOf(elementsClass));
   }
 
   /**

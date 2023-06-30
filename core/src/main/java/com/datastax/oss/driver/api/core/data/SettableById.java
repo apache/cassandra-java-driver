@@ -560,7 +560,7 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   }
 
   /**
-   * Sets the value for all occurrences of {@code id} to the provided duration.
+   * Sets the value for all occurrences of {@code id} to the provided {@code vector}.
    *
    * <p>By default, this works with CQL type {@code vector}.
    *
@@ -571,10 +571,13 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    */
   @NonNull
   @CheckReturnValue
-  default SelfT setCqlVector(@NonNull CqlIdentifier id, @Nullable CqlVector<?> v) {
+  default <ElementT> SelfT setVector(
+      @NonNull CqlIdentifier id,
+      @Nullable List<ElementT> v,
+      @NonNull Class<ElementT> elementsClass) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
-      result = (result == null ? this : result).setCqlVector(i, v);
+      result = (result == null ? this : result).setVector(i, v, elementsClass);
     }
     assert result != null; // allIndices throws if there are no results
     return result;

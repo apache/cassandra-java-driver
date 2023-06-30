@@ -13,24 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.api.core.type;
+package com.datastax.oss.driver.api.testinfra.requirement;
 
-import com.datastax.oss.protocol.internal.ProtocolConstants;
-import edu.umd.cs.findbugs.annotations.NonNull;
+public enum BackendType {
+  CASSANDRA("C*"),
+  DSE("Dse"),
+  ;
 
-public interface ListType extends DataType, ContainerType {
+  final String friendlyName;
 
-  boolean isFrozen();
-
-  @NonNull
-  @Override
-  default String asCql(boolean includeFrozen, boolean pretty) {
-    String template = (isFrozen() && includeFrozen) ? "frozen<list<%s>>" : "list<%s>";
-    return String.format(template, getElementType().asCql(includeFrozen, pretty));
+  BackendType(String friendlyName) {
+    this.friendlyName = friendlyName;
   }
 
-  @Override
-  default int getProtocolCode() {
-    return ProtocolConstants.DataType.LIST;
+  public String getFriendlyName() {
+    return friendlyName;
   }
 }
