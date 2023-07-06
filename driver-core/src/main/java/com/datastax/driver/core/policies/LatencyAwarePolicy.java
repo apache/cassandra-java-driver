@@ -709,7 +709,7 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
      *
      * <pre>{@code d = (t - t') / scale
      * alpha = 1 - (ln(d+1) / d)
-     * avg = alpha * l + (1 - alpha * prev)}</pre>
+     * avg = alpha * l + (1 - alpha) * prev}</pre>
      *
      * Typically, with a {@code scale} of 100 milliseconds (the default), if a new latency is
      * measured and the previous measure is 10 millisecond old (so {@code d=0.1}), then {@code
