@@ -37,13 +37,13 @@ public class VectorCodec<SubtypeT extends Number> implements TypeCodec<CqlVector
   private final GenericType<CqlVector<SubtypeT>> javaType;
   private final TypeCodec<SubtypeT> subtypeCodec;
 
-  public VectorCodec(VectorType cqlType, TypeCodec<SubtypeT> subtypeCodec) {
+  public VectorCodec(@NonNull VectorType cqlType, @NonNull TypeCodec<SubtypeT> subtypeCodec) {
     this.cqlType = cqlType;
     this.subtypeCodec = subtypeCodec;
     this.javaType = GenericType.vectorOf(subtypeCodec.getJavaType());
   }
 
-  public VectorCodec(int dimensions, TypeCodec<SubtypeT> subtypeCodec) {
+  public VectorCodec(int dimensions, @NonNull TypeCodec<SubtypeT> subtypeCodec) {
     this(new DefaultVectorType(subtypeCodec.getCqlType(), dimensions), subtypeCodec);
   }
 

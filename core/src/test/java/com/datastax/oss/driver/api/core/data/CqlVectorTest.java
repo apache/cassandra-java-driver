@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
-import com.datastax.oss.driver.internal.core.type.codec.FloatCodec;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,7 +66,7 @@ public class CqlVectorTest {
             () -> {
               CqlVector.from(null, TypeCodecs.FLOAT);
             })
-            .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
@@ -77,10 +76,10 @@ public class CqlVectorTest {
             () -> {
               CqlVector.from("", TypeCodecs.FLOAT);
             })
-            .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
-    @Test
+  @Test
   public void should_throw_when_building_with_nulls() {
 
     assertThatThrownBy(
