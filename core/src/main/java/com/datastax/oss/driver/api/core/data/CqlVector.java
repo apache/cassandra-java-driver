@@ -81,11 +81,13 @@ public class CqlVector<T extends Number> implements Iterable<T> {
    */
   public static <V extends Number> CqlVector<V> from(
       @NonNull String str, @NonNull TypeCodec<V> subtypeCodec) {
+    Preconditions.checkArgument(str != null, "Cannot create CqlVector from null string");
+    Preconditions.checkArgument(!str.isEmpty(), "Cannot create CqlVector from empty string");
     ArrayList<V> vals =
         Streams.stream(Splitter.on(", ").split(str.substring(1, str.length() - 1)))
             .map(subtypeCodec::parse)
             .collect(Collectors.toCollection(ArrayList::new));
-    return CqlVector.newInstance(vals);
+    return new CqlVector(vals);
   }
 
   private final List<T> list;

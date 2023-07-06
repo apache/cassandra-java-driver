@@ -18,6 +18,7 @@ package com.datastax.oss.driver.api.core.data;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.internal.core.type.codec.FloatCodec;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
 import java.util.ArrayList;
@@ -55,11 +56,31 @@ public class CqlVectorTest {
   public void should_build_vector_from_tostring_output() {
 
     CqlVector<Float> vector1 = CqlVector.newInstance(VECTOR_ARGS);
-    CqlVector<Float> vector2 = CqlVector.from(vector1.toString(), new FloatCodec());
+    CqlVector<Float> vector2 = CqlVector.from(vector1.toString(), TypeCodecs.FLOAT);
     assertThat(vector2).isEqualTo(vector1);
   }
 
   @Test
+  public void should_throw_from_null_string() {
+
+    assertThatThrownBy(
+            () -> {
+              CqlVector.from(null, TypeCodecs.FLOAT);
+            })
+            .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  public void should_throw_from_empty_string() {
+
+    assertThatThrownBy(
+            () -> {
+              CqlVector.from("", TypeCodecs.FLOAT);
+            })
+            .isInstanceOf(IllegalArgumentException.class);
+  }
+
+    @Test
   public void should_throw_when_building_with_nulls() {
 
     assertThatThrownBy(
