@@ -52,13 +52,15 @@ public class DefaultProtocolVersionRegistryTest {
     assertThat(registry.fromName("DSE_V1")).isEqualTo(DseProtocolVersion.DSE_V1);
   }
 
-
   @Test
   public void should_fail_to_find_version_by_name_different_case() {
     assertThatThrownBy(() -> registry.fromName("v4")).isInstanceOf(IllegalArgumentException.class);
-    assertThatThrownBy(() -> registry.fromName("dse_v1")).isInstanceOf(IllegalArgumentException.class);
-    assertThatThrownBy(() -> registry.fromName("dDSE_v1")).isInstanceOf(IllegalArgumentException.class);
-    assertThatThrownBy(() -> registry.fromName("dse_v1")).isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> registry.fromName("dse_v1"))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> registry.fromName("dDSE_v1"))
+        .isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> registry.fromName("dse_v1"))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
