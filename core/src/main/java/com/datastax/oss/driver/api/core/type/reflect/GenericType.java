@@ -15,7 +15,11 @@
  */
 package com.datastax.oss.driver.api.core.type.reflect;
 
-import com.datastax.oss.driver.api.core.data.*;
+import com.datastax.oss.driver.api.core.data.CqlDuration;
+import com.datastax.oss.driver.api.core.data.CqlVector;
+import com.datastax.oss.driver.api.core.data.GettableByIndex;
+import com.datastax.oss.driver.api.core.data.TupleValue;
+import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.shaded.guava.common.primitives.Primitives;
 import com.datastax.oss.driver.shaded.guava.common.reflect.TypeParameter;
