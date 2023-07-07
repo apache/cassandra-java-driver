@@ -24,17 +24,14 @@ only available with specific protocol versions.
 Java driver 4 supports protocol versions 3 to 5. By default, the version is negotiated with the
 first node the driver connects to:
 
-| Cassandra version   | Negotiated protocol version with driver 4 ¹     |
-|---------------------|-------------------------------------------------|
-| 2.1.x               | v3                                              |
-| 2.2.x               | v4                                              |
-| 3.x                 | v4                                              |
-| 4.x ²               | v5                                              |
+| Cassandra version | Negotiated protocol version with driver 4 ¹     |
+|-------------------|-------------------------------------------------|
+| 2.1.x             | v3                                              |
+| 2.2.x             | v4                                              |
+| 3.x               | v4                                              |
+| 4.x               | v5                                              |
 
 *(1) for previous driver versions, see the [3.x documentation][driver3]*
-
-*(2) at the time of writing, Cassandra 4 is not released yet. Protocol v5 support is still in beta,
-and must be enabled explicitly (negotiation will yield v4).*
 
 Since version 4.5.0, the driver can also use DSE protocols when all nodes are running a version of
 DSE. The table below shows the protocol matrix for these cases:
