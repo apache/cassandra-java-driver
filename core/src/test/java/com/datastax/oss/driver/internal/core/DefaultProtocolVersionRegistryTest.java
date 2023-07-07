@@ -24,6 +24,7 @@ import static com.datastax.oss.driver.api.core.ProtocolVersion.V6;
 import static com.datastax.oss.driver.internal.core.DefaultProtocolFeature.DATE_TYPE;
 import static com.datastax.oss.driver.internal.core.DefaultProtocolFeature.SMALLINT_AND_TINYINT_TYPES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.api.core.metadata.DseNodeProperties;
@@ -49,6 +50,15 @@ public class DefaultProtocolVersionRegistryTest {
   public void should_find_version_by_name() {
     assertThat(registry.fromName("V4")).isEqualTo(ProtocolVersion.V4);
     assertThat(registry.fromName("DSE_V1")).isEqualTo(DseProtocolVersion.DSE_V1);
+  }
+
+
+  @Test
+  public void should_fail_to_find_version_by_name_different_case() {
+    assertThatThrownBy(() -> registry.fromName("v4")).isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> registry.fromName("dse_v1")).isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> registry.fromName("dDSE_v1")).isInstanceOf(IllegalArgumentException.class);
+    assertThatThrownBy(() -> registry.fromName("dse_v1")).isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
