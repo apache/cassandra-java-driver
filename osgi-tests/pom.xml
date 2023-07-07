@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.15.1-SNAPSHOT</version>
+    <version>4.16.1-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-osgi-tests</artifactId>
   <packaging>jar</packaging>
@@ -220,6 +220,7 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <jvm>${testing.jvm}/bin/java</jvm>
           <systemPropertyVariables>
             <logback.configurationFile>${project.basedir}/src/test/resources/logback-test.xml</logback.configurationFile>
           </systemPropertyVariables>
@@ -237,6 +238,7 @@
           </execution>
         </executions>
         <configuration>
+          <jvm>${testing.jvm}/bin/java</jvm>
           <systemPropertyVariables>
             <logback.configurationFile>${project.basedir}/src/test/resources/logback-test.xml</logback.configurationFile>
           </systemPropertyVariables>

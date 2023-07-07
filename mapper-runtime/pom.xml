@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.15.1-SNAPSHOT</version>
+    <version>4.16.1-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-mapper-runtime</artifactId>
   <packaging>bundle</packaging>
@@ -122,6 +122,7 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <jvm>${testing.jvm}/bin/java</jvm>
           <threadCount>1</threadCount>
           <properties>
             <!-- tell TestNG not to run jUnit tests -->

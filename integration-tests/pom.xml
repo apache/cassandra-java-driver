@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.datastax.oss</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.15.1-SNAPSHOT</version>
+    <version>4.16.1-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-integration-tests</artifactId>
   <packaging>jar</packaging>
@@ -229,6 +229,7 @@
               <goal>integration-test</goal>
             </goals>
             <configuration>
+              <jvm>${testing.jvm}/bin/java</jvm>
               <groups>com.datastax.oss.driver.categories.ParallelizableTests</groups>
               <parallel>classes</parallel>
               <threadCountClasses>8</threadCountClasses>
@@ -245,6 +246,7 @@
               <excludedGroups>com.datastax.oss.driver.categories.ParallelizableTests, com.datastax.oss.driver.categories.IsolatedTests</excludedGroups>
               <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-serial.xml</summaryFile>
               <skipITs>${skipSerialITs}</skipITs>
+              <jvm>${testing.jvm}/bin/java</jvm>
             </configuration>
           </execution>
           <execution>
@@ -260,6 +262,7 @@
               <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-isolated.xml</summaryFile>
               <skipITs>${skipIsolatedITs}</skipITs>
               <argLine>${blockhound.argline}</argLine>
+              <jvm>${testing.jvm}/bin/java</jvm>
             </configuration>
           </execution>
           <execution>
@@ -322,16 +325,4 @@
       </plugin>
     </plugins>
   </build>
-  <profiles>
-    <profile>
-      <id>jdk 13+</id>
-      <activation>
-        <jdk>[13,)</jdk>
-      </activation>
-      <properties>
-        <!-- for DriverBlockHoundIntegrationIT when using JDK 13+, see https://github.com/reactor/BlockHound/issues/33 -->
-        <blockhound.argline>-XX:+AllowRedefinitionToAddDeleteMethods</blockhound.argline>
-      </properties>
-    </profile>
-  </profiles>
 </project>

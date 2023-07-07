@@ -20,7 +20,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.datastax.oss</groupId>
   <artifactId>java-driver-parent</artifactId>
-  <version>4.15.1-SNAPSHOT</version>
+  <version>4.16.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>DataStax Java driver for Apache Cassandra(R)</name>
   <description>A driver for Apache Cassandra(R) 2.1+ that works exclusively with the Cassandra Query Language version 3 (CQL3) and Cassandra's native protocol versions 3 and above.</description>
@@ -47,21 +47,21 @@
     <config.version>1.4.1</config.version>
     <hdrhistogram.version>2.1.12</hdrhistogram.version>
     <metrics.version>4.1.18</metrics.version>
-    <netty.version>4.1.77.Final</netty.version>
+    <netty.version>4.1.94.Final</netty.version>
     <esri.version>1.2.1</esri.version>
     <!--
     When upgrading TinkerPop please upgrade the version matrix in
     manual/core/integration/README.md
     -->
-    <tinkerpop.version>3.5.3</tinkerpop.version>
+    <tinkerpop.version>3.5.6</tinkerpop.version>
     <slf4j.version>1.7.26</slf4j.version>
     <reactive-streams.version>1.0.3</reactive-streams.version>
-    <json.version>20210307</json.version>
+    <json.version>20230227</json.version>
     <jackson.version>2.13.2</jackson.version>
     <jackson-databind.version>2.13.2.2</jackson-databind.version>
     <legacy-jackson.version>1.9.12</legacy-jackson.version>
     <!-- optional dependencies -->
-    <snappy.version>1.1.7.3</snappy.version>
+    <snappy.version>1.1.10.1</snappy.version>
     <lz4.version>1.7.1</lz4.version>
     <!-- test dependencies -->
     <assertj.version>3.19.0</assertj.version>
@@ -73,7 +73,7 @@
     <pax-exam.version>4.13.4</pax-exam.version>
     <simulacron.version>0.11.0</simulacron.version>
     <jsr353-api.version>1.1.4</jsr353-api.version>
-    <jersey.version>2.28</jersey.version>
+    <jersey.version>2.31</jersey.version>
     <hk2.version>2.5.0</hk2.version>
     <jax-rs.version>2.1.1</jax-rs.version>
     <jsr353-ri.version>1.1.4</jsr353-ri.version>
@@ -433,12 +433,12 @@
       <dependency>
         <groupId>io.projectreactor.tools</groupId>
         <artifactId>blockhound</artifactId>
-        <version>1.0.4.RELEASE</version>
+        <version>1.0.8.RELEASE</version>
       </dependency>
       <dependency>
         <groupId>io.projectreactor.tools</groupId>
         <artifactId>blockhound-junit-platform</artifactId>
-        <version>1.0.4.RELEASE</version>
+        <version>1.0.8.RELEASE</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -533,12 +533,12 @@
         <plugin>
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.8.5</version>
+          <version>0.8.10</version>
         </plugin>
         <plugin>
           <groupId>org.apache.felix</groupId>
           <artifactId>maven-bundle-plugin</artifactId>
-          <version>4.2.1</version>
+          <version>5.1.1</version>
         </plugin>
         <plugin>
           <groupId>org.revapi</groupId>
@@ -934,6 +934,57 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <maven.source.skip>true</maven.source.skip>
         <revapi.skip>true</revapi.skip>
+      </properties>
+    </profile>
+    <!-- Use $JAVA_HOME as the default JDK to run surefire/failsafe to maintain portability -->
+    <profile>
+      <id>test-jdk-environment</id>
+      <activation>
+        <property>
+          <name>!testJavaHome</name>
+        </property>
+      </activation>
+      <properties>
+        <testing.jvm>${env.JAVA_HOME}</testing.jvm>
+      </properties>
+    </profile>
+    <!-- set -DtestJavaHome=/path/to/jdk/home to use a different JDK for surefire/failsafe -->
+    <profile>
+      <id>test-jdk-specified</id>
+      <activation>
+        <property>
+          <name>testJavaHome</name>
+        </property>
+      </activation>
+      <properties>
+        <testing.jvm>${testJavaHome}</testing.jvm>
+      </properties>
+    </profile>
+    <profile>
+      <!-- workarounds for running tests with JDK1.8 -->
+      <id>test-jdk-8</id>
+      <activation>
+        <jdk>[8,)</jdk>
+      </activation>
+    </profile>
+    <profile>
+      <!-- workarounds for running tests with JDK11 -->
+      <id>test-jdk-11</id>
+      <activation>
+        <jdk>[11,)</jdk>
+      </activation>
+    </profile>
+    <profile>
+      <!-- workarounds for running tests with JDK17 -->
+      <id>test-jdk-17</id>
+      <activation>
+        <jdk>[17,)</jdk>
+      </activation>
+      <properties>
+        <!-- for DriverBlockHoundIntegrationIT when using JDK 13+, see https://github.com/reactor/BlockHound/issues/33 -->
+        <blockhound.argline>-XX:+AllowRedefinitionToAddDeleteMethods</blockhound.argline>
+        <!-- allow deep reflection for mockito when using JDK 17+, see https://stackoverflow.com/questions/70993863/mockito-can-not-mock-random-in-java-17 -->
+        <mockitoopens.argline>--add-opens java.base/jdk.internal.util.random=ALL-UNNAMED</mockitoopens.argline>
       </properties>
     </profile>
   </profiles>

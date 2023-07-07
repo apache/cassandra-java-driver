@@ -2,6 +2,13 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.16.0
+
+- [improvement] JAVA-3058: Clear prepared statement cache on UDT type change event
+- [improvement] JAVA-3060: Add vector type, codec + support for parsing CQL type
+- [improvement] DOC-2813: Add error handling guidance linking to a helpful blog post
+- [improvement] JAVA-3045: Fix GraalVM native image support for GraalVM 22.2
+
 ### 4.15.0
 
 - [improvement] JAVA-3041: Update Guava session sample code to use ProgrammaticArguments
