@@ -104,8 +104,8 @@ jobs:
         id: fetch-versions
         run: |
           pip3 install -r ci/requirements.txt
-          echo "::set-output name=scylla-integration-tests-versions::$(python3 ci/version_fetch.py scylla-oss-stable:2 scylla-oss-rc scylla-enterprise-stable:2 scylla-enterprise-rc)"
-          echo "::set-output name=cassandra-integration-tests-versions::$(python3 ci/version_fetch.py cassandra3-stable:1 cassandra4-stable:1)"
+          echo "scylla-integration-tests-versions=$(python3 ci/version_fetch.py scylla-oss-stable:2 scylla-oss-rc scylla-enterprise-stable:2 scylla-enterprise-rc)" >> $GITHUB_OUTPUT
+          echo "cassandra-integration-tests-versions=$(python3 ci/version_fetch.py cassandra3-stable:1 cassandra4-stable:1)" >> $GITHUB_OUTPUT
     outputs:
       scylla-integration-tests-versions: ${{ steps.fetch-versions.outputs.scylla-integration-tests-versions }}
       cassandra-integration-tests-versions: ${{ steps.fetch-versions.outputs.cassandra-integration-tests-versions }}
