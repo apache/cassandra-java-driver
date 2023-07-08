@@ -44,7 +44,7 @@ import net.jcip.annotations.ThreadSafe;
  * a reasonable trade-off if the cardinality stays low. This class provides a way to emulate this
  * behavior on the client side.
  *
- * <h3>Performance considerations</h3>
+ * <h2>Performance considerations</h2>
  *
  * For each page that you want to retrieve:
  *
@@ -69,7 +69,7 @@ import net.jcip.annotations.ThreadSafe;
  * OffsetPager.Page&lt;Row&gt; page5 = pager.getPage(rs, 5);
  * </pre>
  *
- * <h3>Establishing application-level guardrails</h3>
+ * <h2>Establishing application-level guardrails</h2>
  *
  * Linear performance should be fine for the values typically encountered in real-world
  * applications: for example, if the page size is 25 and users never go past page 10, the worst case
@@ -79,7 +79,7 @@ import net.jcip.annotations.ThreadSafe;
  * maximum, so that an attacker can't inject a large value that could potentially fetch millions of
  * rows.
  *
- * <h3>Relation with protocol-level paging</h3>
+ * <h2>Relation with protocol-level paging</h2>
  *
  * Protocol-level paging refers to the ability to split large response into multiple network chunks:
  * see {@link Statement#setPageSize(int)} and {@code basic.request.page-size} in the configuration.

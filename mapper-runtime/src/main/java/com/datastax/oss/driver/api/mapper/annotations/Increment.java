@@ -56,7 +56,7 @@ import java.util.function.UnaryOperator;
  * }
  * </pre>
  *
- * <h3>Parameters</h3>
+ * <h2>Parameters</h2>
  *
  * The entity class must be specified with {@link #entityClass()}.
  *
@@ -90,12 +90,12 @@ import java.util.function.UnaryOperator;
  * parameter. It will be applied to the statement before execution. This allows you to customize
  * certain aspects of the request (page size, timeout, etc) at runtime.
  *
- * <h3>Return type</h3>
+ * <h2>Return type</h2>
  *
  * <p>The method can return {@code void}, a void {@link CompletionStage} or {@link
  * CompletableFuture}, or a {@link ReactiveResultSet}.
  *
- * <h3>Target keyspace and table</h3>
+ * <h2>Target keyspace and table</h2>
  *
  * <p>If a keyspace was specified when creating the DAO (see {@link DaoFactory}), then the generated
  * query targets that keyspace. Otherwise, it doesn't specify a keyspace, and will only work if the

@@ -53,7 +53,7 @@ import java.util.function.UnaryOperator;
  *
  * This is the equivalent of what was called "accessor methods" in the driver 3 mapper.
  *
- * <h3>Parameters</h3>
+ * <h2>Parameters</h2>
  *
  * The query string provided in {@link #value()} will typically contain CQL placeholders. The
  * method's parameters must match those placeholders: same name and a compatible Java type.
@@ -68,7 +68,7 @@ import java.util.function.UnaryOperator;
  * parameter. It will be applied to the statement before execution. This allows you to customize
  * certain aspects of the request (page size, timeout, etc) at runtime.
  *
- * <h3>Return type</h3>
+ * <h2>Return type</h2>
  *
  * The method can return:
  *
@@ -98,7 +98,7 @@ import java.util.function.UnaryOperator;
  *   <li>a {@linkplain MapperResultProducer custom type}.
  * </ul>
  *
- * <h3>Target keyspace and table</h3>
+ * <h2>Target keyspace and table</h2>
  *
  * To avoid hard-coding the keyspace and table name, the query string supports 3 additional
  * placeholders: {@code ${keyspaceId}}, {@code ${tableId}} and {@code ${qualifiedTableId}}. They get

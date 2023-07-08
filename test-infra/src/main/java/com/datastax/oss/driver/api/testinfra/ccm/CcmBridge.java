@@ -44,6 +44,7 @@ import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.LogOutputStream;
 import org.apache.commons.exec.PumpStreamHandler;
+import org.apache.commons.exec.environment.EnvironmentUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -378,7 +379,21 @@ public class CcmBridge implements AutoCloseable {
       executor.setStreamHandler(streamHandler);
       executor.setWatchdog(watchDog);
 
-      int retValue = executor.execute(cli);
+      // under java11+, ccm selects wrong java version for dse
+      // force it to use java8 by mapping JAVA8_HOME to JAVA_HOME
+      Map<String, String> ccmEnv = null;
+      String javaVersion = System.getProperty("java.version");
+      if (DSE_ENABLEMENT && !javaVersion.startsWith("1.8")) {
+        String java8Home = System.getenv("JAVA8_HOME");
+        if (java8Home != null && !java8Home.isEmpty()) {
+          ccmEnv = EnvironmentUtils.getProcEnvironment();
+          ccmEnv.put("JAVA_HOME", java8Home);
+          LOG.debug("Setting JAVA_HOME for ccm to " + java8Home);
+        } else {
+          LOG.warn("Dse is enabled but you are not running java8, consider setting JAVA8_HOME");
+        }
+      }
+      int retValue = executor.execute(cli, ccmEnv);
       if (retValue != 0) {
         LOG.error("Non-zero exit code ({}) returned from executing ccm command: {}", retValue, cli);
       }
