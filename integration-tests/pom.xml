@@ -220,6 +220,37 @@
   <build>
     <plugins>
       <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>process-test-annotations</id>
+            <phase>generate-test-resources</phase>
+            <goals>
+              <goal>testCompile</goal>
+            </goals>
+            <configuration>
+              <annotationProcessorPaths>
+                <path>
+                  <groupId>com.datastax.oss</groupId>
+                  <artifactId>java-driver-mapper-processor</artifactId>
+                  <version>${project.version}</version>
+                </path>
+                <path>
+                  <groupId>org.slf4j</groupId>
+                  <artifactId>slf4j-nop</artifactId>
+                  <version>${slf4j.version}</version>
+                </path>
+                <path>
+                  <groupId>org.apache.tinkerpop</groupId>
+                  <artifactId>gremlin-core</artifactId>
+                  <version>${tinkerpop.version}</version>
+                </path>
+              </annotationProcessorPaths>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
         <executions>
