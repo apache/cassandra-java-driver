@@ -525,9 +525,9 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default <ElementT> List<ElementT> getVector(
+  default <ElementT extends Number> CqlVector<ElementT> getVector(
       @NonNull String name, @NonNull Class<ElementT> elementsClass) {
-    return getList(firstIndexOf(name), elementsClass);
+    return getVector(firstIndexOf(name), elementsClass);
   }
 
   /**
