@@ -9,10 +9,8 @@ This part of the code lives in its own project:
 
 The protocol specifications are available in
 [native-protocol/src/main/resources](https://github.com/datastax/native-protocol/tree/1.x/src/main/resources).
-These files originally come from Cassandra, we copy them over for easy access. Note that, if the
-latest version is a beta (this is the case for v5 at the time of writing -- September 2019), the
-specification might not be up to date. Always compare with the latest revision in
-[cassandra/doc](https://github.com/apache/cassandra/tree/trunk/doc).
+These files originally come from Cassandra, we copy them over for easy access. Authoritative specifications can
+always be found in [cassandra/doc](https://github.com/apache/cassandra/tree/trunk/doc).
 
 
 For a broad overview of how protocol types are used in the driver, let's step through an example:
