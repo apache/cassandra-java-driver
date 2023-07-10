@@ -40,10 +40,10 @@ DSE. The table below shows the protocol matrix for these cases:
 |---------------------|-------------------------------------------------|
 | 4.7/4.8             | v3                                              |
 | 5.0                 | v4                                              |
-| 5.1                 | DSE_V1 ³                                        |
-| 6.0/6.7/6.8         | DSE_V2 ³                                        |
+| 5.1                 | DSE_V1 ²                                        |
+| 6.0/6.7/6.8         | DSE_V2 ²                                        |
 
-*(3) DSE Protocols are chosen before other Cassandra native protocols.*
+*(2) DSE Protocols are chosen before other Cassandra native protocols.*
 
 ### Controlling the protocol version
 
