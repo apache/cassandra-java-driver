@@ -59,10 +59,13 @@ the [configuration](../configuration/):
 ```
 datastax-java-driver {
   advanced.protocol {
-    version = v3
+    version = V3
   }
 }
 ```
+
+Note that the protocol version you specify above is case sensitive so make sure to only use uppercase letters.
+"V3" is correct, "v3" is not.
 
 If you force a version that is too high for the server, you'll get an error:
 

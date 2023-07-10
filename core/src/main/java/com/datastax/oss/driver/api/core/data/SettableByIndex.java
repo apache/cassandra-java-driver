@@ -423,9 +423,9 @@ public interface SettableByIndex<SelfT extends SettableByIndex<SelfT>> extends A
    */
   @NonNull
   @CheckReturnValue
-  default <ElementT> SelfT setVector(
-      int i, @Nullable List<ElementT> v, @NonNull Class<ElementT> elementsClass) {
-    return set(i, v, GenericType.listOf(elementsClass));
+  default <ElementT extends Number> SelfT setVector(
+      int i, @Nullable CqlVector<ElementT> v, @NonNull Class<ElementT> elementsClass) {
+    return set(i, v, GenericType.vectorOf(elementsClass));
   }
 
   /**

@@ -571,9 +571,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    */
   @NonNull
   @CheckReturnValue
-  default <ElementT> SelfT setVector(
+  default <ElementT extends Number> SelfT setVector(
       @NonNull CqlIdentifier id,
-      @Nullable List<ElementT> v,
+      @Nullable CqlVector<ElementT> v,
       @NonNull Class<ElementT> elementsClass) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
