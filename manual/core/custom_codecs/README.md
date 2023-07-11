@@ -259,9 +259,7 @@ ObjectMapper)] instead.
 #### Mapping CQL vectors to Java array
 
 By default, the driver maps CQL `vector` to the [CqlVector] value type. If you prefer to deal with
-arrays, the driver offers the following codecs:
-
-1. For primitive types:
+arrays, the driver offers the following codec:
 
 | Codec               | CQL type        | Java type |
 |---------------------|-----------------|-----------|
