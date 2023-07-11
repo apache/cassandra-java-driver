@@ -323,6 +323,7 @@ for (ColumnDefinitions.Definition definition : row.getColumnDefinitions()) {
 [AccessibleByName]:                     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/AccessibleByName.html
 [GenericType]:                          https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
 [CqlDuration]:                          https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/CqlDuration.html
+[CqlVector]:                            https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/CqlVector.html
 [TupleValue]:                           https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/TupleValue.html
 [UdtValue]:                             https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/UdtValue.html
 [SessionBuilder.addContactPoint()]:     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoint-java.net.InetSocketAddress-

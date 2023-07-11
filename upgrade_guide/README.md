@@ -25,17 +25,17 @@ CqlVector value object can be interrogated directly.
 try (CqlSession session = new CqlSessionBuilder().withLocalDatacenter("datacenter1").build()){
 
     session.execute("drop keyspace if exists test");
-    session.execute("create keyspace test WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
-    session.execute("create table test.foo(i int primary key, j vector<float, 3>)");
-    session.execute("create custom index ann_index on test.foo(j) using 'StorageAttachedIndex'");
-    session.execute("insert into test.foo (i, j) values (1, [8, 2.3, 58])");
-    session.execute("insert into test.foo (i, j) values (2, [1.2, 3.4, 5.6])");
-    session.execute("insert into test.foo (i, j) values (5, [23, 18, 3.9])");
-    ResultSet rs=session.execute("select j from test.foo where j ann of [3.4, 7.8, 9.1] limit 1");
-    for(Row row:rs){
+    session.execute("CREATE KEYSPACE test WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
+    session.execute("CREATE TABLE test.foo(i int primary key, j vector<float, 3>)");
+    session.execute("CREAT CUSTOM INDEX ann_index ON test.foo(j) USING 'StorageAttachedIndex'");
+    session.execute("INSERT INTO test.foo (i, j) VALUES (1, [8, 2.3, 58])");
+    session.execute("INSERT INTO test.foo (i, j) VALUES (2, [1.2, 3.4, 5.6])");
+    session.execute("INSERT INTO test.foo (i, j) VALUES (5, [23, 18, 3.9])");
+    ResultSet rs=session.execute("SELECT j FROM test.foo WHERE j ann of [3.4, 7.8, 9.1] limit 1");
+    for (Row row:rs){
         CqlVector<Float> v = row.getVector(0,Float.class);
         System.out.println(v);
-        if(Iterables.size(v) != 3){
+        if (Iterables.size(v) != 3){
             throw new RuntimeException("Expected vector with three dimensions");
         }
     }
@@ -70,7 +70,7 @@ a logic such as below, it won't compile anymore:
 
 ```java
 try {
-  doSomethingWithDriver();
+    doSomethingWithDriver();
 } catch(DriverException e) {
 } catch(CodecNotFoundException e) { 
 }
@@ -80,7 +80,7 @@ You need to either reverse the catch order and catch `CodecNotFoundException` fi
 
 ```java
 try {
-  doSomethingWithDriver();
+    doSomethingWithDriver();
 } catch(CodecNotFoundException e) { 
 } catch(DriverException e) {
 }
@@ -90,7 +90,7 @@ Or catch only `DriverException`:
 
 ```java
 try {
-  doSomethingWithDriver();
+    doSomethingWithDriver();
 } catch(DriverException e) { 
 }
 ```
@@ -284,16 +284,16 @@ The above can also be achieved by an adapter class as shown below:
 ```java
 public class NodeFilterToDistanceEvaluatorAdapter implements NodeDistanceEvaluator {
 
-  private final Predicate<Node> nodeFilter;
+    private final Predicate<Node> nodeFilter;
 
-  public NodeFilterToDistanceEvaluatorAdapter(@NonNull Predicate<Node> nodeFilter) {
-    this.nodeFilter = nodeFilter;
-  }
+    public NodeFilterToDistanceEvaluatorAdapter(@NonNull Predicate<Node> nodeFilter) {
+        this.nodeFilter = nodeFilter;
+    }
 
-  @Nullable @Override
-  public NodeDistance evaluateDistance(@NonNull Node node, @Nullable String localDc) {
-    return nodeFilter.test(node) ? null : NodeDistance.IGNORED;
-  }
+    @Nullable @Override
+    public NodeDistance evaluateDistance(@NonNull Node node, @Nullable String localDc) {
+        return nodeFilter.test(node) ? null : NodeDistance.IGNORED;
+    }
 }
 ```
 
@@ -586,7 +586,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.SimpleStatement;
 
 SimpleStatement statement =
-  new SimpleStatement("SELECT release_version FROM system.local");
+    new SimpleStatement("SELECT release_version FROM system.local");
 ResultSet resultSet = session.execute(statement);
 Row row = resultSet.one();
 System.out.println(row.getString("release_version"));
@@ -598,7 +598,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 
 SimpleStatement statement =
-  SimpleStatement.newInstance("SELECT release_version FROM system.local");
+    SimpleStatement.newInstance("SELECT release_version FROM system.local");
 ResultSet resultSet = session.execute(statement);
 Row row = resultSet.one();
 System.out.println(row.getString("release_version"));
@@ -661,9 +661,9 @@ datastax-java-driver {
 
 // Application code:
 SimpleStatement statement1 =
-  SimpleStatement.newInstance("...").setExecutionProfileName("profile1");
+    SimpleStatement.newInstance("...").setExecutionProfileName("profile1");
 SimpleStatement statement2 =
-  SimpleStatement.newInstance("...").setExecutionProfileName("profile2");
+    SimpleStatement.newInstance("...").setExecutionProfileName("profile2");
 ```
 
 The configuration can be reloaded periodically at runtime:
@@ -782,13 +782,13 @@ propagating its own consistency level to its bound statements:
 
 ```java
 PreparedStatement ps1 =
-  session.prepare(
-      SimpleStatement.newInstance("SELECT * FROM product WHERE sku = ?")
-          .setConsistencyLevel(DefaultConsistencyLevel.ONE));
+    session.prepare(
+        SimpleStatement.newInstance("SELECT * FROM product WHERE sku = ?")
+            .setConsistencyLevel(DefaultConsistencyLevel.ONE));
 PreparedStatement ps2 =
-  session.prepare(
-      SimpleStatement.newInstance("SELECT * FROM product WHERE sku = ?")
-          .setConsistencyLevel(DefaultConsistencyLevel.TWO));
+    session.prepare(
+        SimpleStatement.newInstance("SELECT * FROM product WHERE sku = ?")
+            .setConsistencyLevel(DefaultConsistencyLevel.TWO));
 
 assert ps1 != ps2;
 
@@ -889,8 +889,8 @@ Optional<KeyspaceMetadata> ks = metadata.getKeyspace("test");
 assert !ks.isPresent();
 
 session.execute(
-  "CREATE KEYSPACE IF NOT EXISTS test "
-      + "WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
+    "CREATE KEYSPACE IF NOT EXISTS test "
+        + "WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
 
 // This is still the same metadata from before the CREATE
 ks = metadata.getKeyspace("test");
