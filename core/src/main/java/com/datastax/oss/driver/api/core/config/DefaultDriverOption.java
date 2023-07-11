@@ -267,7 +267,6 @@ public enum DefaultDriverOption implements DriverOption {
    * <p>Value-type: {@link String}
    */
   SSL_TRUSTSTORE_PASSWORD("advanced.ssl-engine-factory.truststore-password"),
-
   /**
    * The class of the generator that assigns a microsecond timestamp to each request.
    *
@@ -982,6 +981,18 @@ public enum DefaultDriverOption implements DriverOption {
    * <p>Value-type: {@link java.time.Duration}
    */
   SSL_KEYSTORE_RELOAD_INTERVAL("advanced.ssl-engine-factory.keystore-reload-interval"),
+  /**
+   * The location of the private key file.
+   *
+   * <p>Value-type: {@link String}
+   */
+  SSL_PRIVATE_KEY_PATH("advanced.ssl-engine-factory.private-key-path"),
+  /**
+   * The location of the client certificate file.
+   *
+   * <p>Value-type: {@link String}
+   */
+  SSL_CLIENT_CERT_PATH("advanced.ssl-engine-factory.client-cert-path"),
   ;
 
   private final String path;
