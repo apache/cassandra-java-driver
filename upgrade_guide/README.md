@@ -1,5 +1,60 @@
 ## Upgrade guide
 
+### 4.17.0
+
+#### Java17 is now a supported platform
+
+With [JAVA-3042](https://datastax-oss.atlassian.net/browse/JAVA-3042) the driver is now tested against Java17 as
+well as the other LTS JVM releases Java8 and Java11.  Based on our testing the Java driver appears to function
+normally on Java17, but of course bugs are always a possibility.  Issues arising from the Java17 platform will be
+triaged and addressed just like any other issue.
+
+#### Updated API for vector search
+
+The 4.16.0 release introduced support for the CQL vector datatype (see
+[JAVA-3060](https://datastax-oss.atlassian.net/browse/JAVA-3060) for more detail).  This release modifies the CqlVector
+value type used to represent a CQL vector to make it easier to use.  CqlVector now implements the Iterable interface
+as well as several methods modelled on the JDK's List interface, so it should have a familiar feel to it.  We've also
+done away with the builder interface, replacing it with some factory methods that resemble similar methods on CqlDuration.
+
+As an example, the following code will create a keyspace and table, populate that table with some data and then execute
+a query which will return a vector type.  This data is retrieved directly via Row.getVector() and the resulting
+CqlVector value object can be interrogated directly.
+
+```java
+try (CqlSession session = new CqlSessionBuilder().withLocalDatacenter("datacenter1").build()){
+
+    session.execute("drop keyspace if exists test");
+    session.execute("create keyspace test WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
+    session.execute("create table test.foo(i int primary key, j vector<float, 3>)");
+    session.execute("create custom index ann_index on test.foo(j) using 'StorageAttachedIndex'");
+    session.execute("insert into test.foo (i, j) values (1, [8, 2.3, 58])");
+    session.execute("insert into test.foo (i, j) values (2, [1.2, 3.4, 5.6])");
+    session.execute("insert into test.foo (i, j) values (5, [23, 18, 3.9])");
+    ResultSet rs=session.execute("select j from test.foo where j ann of [3.4, 7.8, 9.1] limit 1");
+    for(Row row:rs){
+        CqlVector<Float> v = row.getVector(0,Float.class);
+        System.out.println(v);
+        if(Iterables.size(v) != 3){
+            throw new RuntimeException("Expected vector with three dimensions");
+        }
+    }
+}
+```
+
+You can also use the CqlVector type with prepared statements:
+
+```java
+PreparedStatement preparedInsert = session.prepare("insert into test.foo (i, j) values (?,?)");
+CqlVector<Float> vector = CqlVector.newInstance(1.4f, 2.5f, 3.6f);
+session.execute(preparedInsert.bind(3, vector));
+```
+
+In some cases it may be more appropriate to access the vector directly as an array of some numerical type.  This version
+supports such use cases by providing a codec which translates a CQL vector to and from a primitive array.  In this release
+only float arrays are supported but additional codecs may be added for other primitive numerical types in future releases.
+You can find more information about this codec in the manual documentation on [custom codecs](../manual/core/custom_codecs/)
+
 ### 4.15.0
 
 #### CodecNotFoundException now extends DriverException
