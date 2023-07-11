@@ -2,12 +2,15 @@
 
 ### 4.17.0
 
-#### Java17 is now a supported platform
+#### Beta support for Java17
 
-With [JAVA-3042](https://datastax-oss.atlassian.net/browse/JAVA-3042) the driver is now tested against Java17 as
-well as the other LTS JVM releases Java8 and Java11.  Based on our testing the Java driver appears to function
-normally on Java17, but of course bugs are always a possibility.  Issues arising from the Java17 platform will be
-triaged and addressed just like any other issue.
+With the completion of [JAVA-3042](https://datastax-oss.atlassian.net/browse/JAVA-3042) the driver now passes our
+test suite when run on Java17.  We also now include Java17 in our automated test matrix for Java driver releases.
+All features appear to function normally when run with Java17 but we do not want to declare full support for this
+platform until we've received feedback from other users in the ecosystem.
+
+If you discover an issue with the Java driver running on Java17 please let us know!  Java17 issues will be triaged
+and addressed just like issues from any supported Java version.
 
 #### Updated API for vector search
 
