@@ -231,35 +231,35 @@ See [AccessibleByName] for an explanation of the conversion rules.
 
 ##### CQL to Java type mapping
 
-| CQL3 data type     | Getter name    | Java type            | See also                            |
-|--------------------|----------------|----------------------|-------------------------------------|
-| ascii              | getString      | java.lang.String     |                                     |
-| bigint             | getLong        | long                 |                                     |
-| blob               | getByteBuffer  | java.nio.ByteBuffer  |                                     |
-| boolean            | getBoolean     | boolean              |                                     |
-| counter            | getLong        | long                 |                                     |
-| date               | getLocalDate   | java.time.LocalDate  | [Temporal types](temporal_types/)   |
-| decimal            | getBigDecimal  | java.math.BigDecimal |                                     |
-| double             | getDouble      | double               |                                     |
-| duration           | getCqlDuration | [CqlDuration]        | [Temporal types](temporal_types/)   |
-| float              | getFloat       | float                |                                     |
-| inet               | getInetAddress | java.net.InetAddress |                                     |
-| int                | getInt         | int                  |                                     |
-| list               | getList        | java.util.List<T>    |                                     |
-| map                | getMap         | java.util.Map<K, V>  |                                     |
-| set                | getSet         | java.util.Set<T>     |                                     |
-| smallint           | getShort       | short                |                                     |
-| text               | getString      | java.lang.String     |                                     |
-| time               | getLocalTime   | java.time.LocalTime  | [Temporal types](temporal_types/)   |
-| timestamp          | getInstant     | java.time.Instant    | [Temporal types](temporal_types/)   |
-| timeuuid           | getUuid        | java.util.UUID       |                                     |
-| tinyint            | getByte        | byte                 |                                     |
-| tuple              | getTupleValue  | [TupleValue]         | [Tuples](tuples/)                   |
-| user-defined types | getUDTValue    | [UDTValue]           | [User-defined types](udts/)         |
-| uuid               | getUuid        | java.util.UUID       |                                     |
-| varchar            | getString      | java.lang.String     |                                     |
-| varint             | getBigInteger  | java.math.BigInteger |                                     |
-| vector             | getVector      | [CqlVector]          |                                     |
+| CQL3 data type     | Getter name    | Java type            | See also                          |
+|--------------------|----------------|----------------------|-----------------------------------|
+| ascii              | getString      | java.lang.String     |                                   |
+| bigint             | getLong        | long                 |                                   |
+| blob               | getByteBuffer  | java.nio.ByteBuffer  |                                   |
+| boolean            | getBoolean     | boolean              |                                   |
+| counter            | getLong        | long                 |                                   |
+| date               | getLocalDate   | java.time.LocalDate  | [Temporal types](temporal_types/) |
+| decimal            | getBigDecimal  | java.math.BigDecimal |                                   |
+| double             | getDouble      | double               |                                   |
+| duration           | getCqlDuration | [CqlDuration]        | [Temporal types](temporal_types/) |
+| float              | getFloat       | float                |                                   |
+| inet               | getInetAddress | java.net.InetAddress |                                   |
+| int                | getInt         | int                  |                                   |
+| list               | getList        | java.util.List<T>    |                                   |
+| map                | getMap         | java.util.Map<K, V>  |                                   |
+| set                | getSet         | java.util.Set<T>     |                                   |
+| smallint           | getShort       | short                |                                   |
+| text               | getString      | java.lang.String     |                                   |
+| time               | getLocalTime   | java.time.LocalTime  | [Temporal types](temporal_types/) |
+| timestamp          | getInstant     | java.time.Instant    | [Temporal types](temporal_types/) |
+| timeuuid           | getUuid        | java.util.UUID       |                                   |
+| tinyint            | getByte        | byte                 |                                   |
+| tuple              | getTupleValue  | [TupleValue]         | [Tuples](tuples/)                 |
+| user-defined types | getUDTValue    | [UDTValue]           | [User-defined types](udts/)       |
+| uuid               | getUuid        | java.util.UUID       |                                   |
+| varchar            | getString      | java.lang.String     |                                   |
+| varint             | getBigInteger  | java.math.BigInteger |                                   |
+| vector             | getVector      | [CqlVector]          | [Custom Codecs](custom_codecs/)   |
 
 Sometimes the driver has to infer a CQL type from a Java type (for example when handling the values 
 of [simple statements](statements/simple/)); for those that have multiple CQL equivalents, it makes
