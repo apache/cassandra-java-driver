@@ -256,6 +256,20 @@ that maps instances of that class to Json strings, using a newly-allocated, defa
 It is also possible to pass a custom `ObjectMapper` instance using [ExtraTypeCodecs.json(Class,
 ObjectMapper)] instead.
 
+#### Mapping CQL vectors to Java array
+
+By default, the driver maps CQL `vector` to the [CqlVector] value type. If you prefer to deal with
+arrays, the driver offers the following codecs:
+
+1. For primitive types:
+
+| Codec               | CQL type        | Java type |
+|---------------------|-----------------|-----------|
+| [ExtraTypeCodecs.floatVectorToArray(dimensions)] | `vector<float>` | `float[]` |
+
+This release only provides a codec for vectors and arrays containing float values.  Support for other primitive
+numerical types may be added in future releases.
+
 ### Writing codecs
 
 If none of the driver built-in codecs above suits you, it is also possible to roll your own.
