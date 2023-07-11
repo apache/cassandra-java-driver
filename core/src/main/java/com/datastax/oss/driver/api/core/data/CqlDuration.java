@@ -20,6 +20,7 @@ import com.datastax.oss.driver.shaded.guava.common.base.Objects;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.Serializable;
 import java.time.Duration;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
@@ -42,7 +43,9 @@ import net.jcip.annotations.Immutable;
  * in time, regardless of the calendar).
  */
 @Immutable
-public final class CqlDuration implements TemporalAmount {
+public final class CqlDuration implements TemporalAmount, Serializable {
+
+  private static final long serialVersionUID = 1L;
 
   @VisibleForTesting static final long NANOS_PER_MICRO = 1000L;
   @VisibleForTesting static final long NANOS_PER_MILLI = 1000 * NANOS_PER_MICRO;
@@ -75,8 +78,11 @@ public final class CqlDuration implements TemporalAmount {
   private static final ImmutableList<TemporalUnit> TEMPORAL_UNITS =
       ImmutableList.of(ChronoUnit.MONTHS, ChronoUnit.DAYS, ChronoUnit.NANOS);
 
+  /** @serial */
   private final int months;
+  /** @serial */
   private final int days;
+  /** @serial */
   private final long nanoseconds;
 
   private CqlDuration(int months, int days, long nanoseconds) {
