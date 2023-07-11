@@ -1,0 +1,15 @@
+== Manual
+
+Driver modules:
+
+* link:core/[Core]: the main entry point, deals with connectivity and query execution.
+* link:query_builder/[Query builder]: a fluent API to create CQL queries programmatically.
+* link:mapper/[Mapper]: generates the boilerplate to execute queries and convert the results into application-level objects.
+* link:developer/[Developer docs]: explains the codebase and internal extension points for advanced customization.
+
+Common topics:
+
+* link:api_conventions/[API conventions]
+* link:case_sensitivity/[Case sensitivity]
+* link:osgi/[OSGi]
+* link:cloud/[Cloud]

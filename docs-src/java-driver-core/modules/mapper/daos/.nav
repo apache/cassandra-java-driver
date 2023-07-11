@@ -1,0 +1,11 @@
+delete
+getentity
+insert
+query
+queryprovider
+select
+setentity
+update
+increment
+null_saving
+statement_attributes

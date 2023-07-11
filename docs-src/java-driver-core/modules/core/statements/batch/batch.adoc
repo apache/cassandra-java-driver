@@ -1,0 +1,62 @@
+== Batch statements
+
+=== Quick overview
+
+Group a set of statements into an atomic operation.
+
+* create with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/BatchStatement.html#newInstance-com.datastax.oss.driver.api.core.cql.BatchType-[BatchStatement.newInstance()] or https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/BatchStatement.html#builder-com.datastax.oss.driver.api.core.cql.BatchType-[BatchStatement.builder()].
+* built-in implementation is *immutable*.
+Setters always return a new object, don't ignore the result.
+
+'''
+
+Use https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/BatchStatement.html[BatchStatement] to execute a set of queries as an atomic operation (refer to  http://docs.datastax.com/en/dse/6.7/cql/cql/cql_using/useBatch.html[Batching inserts, updates and deletes] to understand how to use batching effectively):
+
+[,java]
+----
+PreparedStatement preparedInsertExpense =
+    session.prepare(
+        "INSERT INTO cyclist_expenses (cyclist_name, expense_id, amount, description, paid) "
+            + "VALUES (:name, :id, :amount, :description, :paid)");
+SimpleStatement simpleInsertBalance =
+    SimpleStatement.newInstance(
+        "INSERT INTO cyclist_expenses (cyclist_name, balance) VALUES (?, 0) IF NOT EXISTS",
+        "Vera ADRIAN");
+
+BatchStatement batch =
+  BatchStatement.newInstance(
+      DefaultBatchType.LOGGED,
+      simpleInsertBalance,
+      preparedInsertExpense.bind("Vera ADRIAN", 1, 7.95f, "Breakfast", false));
+
+session.execute(batch);
+----
+
+To create a new batch statement, use one of the static factory methods (as demonstrated above), or a builder:
+
+[,java]
+----
+BatchStatement batch =
+    BatchStatement.builder(DefaultBatchType.LOGGED)
+        .addStatement(simpleInsertBalance)
+        .addStatement(preparedInsertExpense.bind("Vera ADRIAN", 1, 7.95f, "Breakfast", false))
+        .build();
+----
+
+Keep in mind that batch statements are *immutable*, and every method returns a different instance:
+
+[,java]
+----
+// Won't work: the object is not modified in place:
+batch.setExecutionProfileName("oltp");
+
+// Instead, reassign the statement every time:
+batch = batch.setExecutionProfileName("oltp");
+----
+
+As shown in the examples above, batches can contain any combination of simple statements and bound  statements.
+A given batch can contain at most 65536 statements.
+Past this limit, addition methods throw an `IllegalStateException`.
+
+In addition, simple statements with named parameters are currently not supported in batches (this is due to a https://issues.apache.org/jira/browse/CASSANDRA-10246[protocol limitation] that will be fixed in a future version).
+If you try to execute such a batch, an `IllegalArgumentException` is thrown.

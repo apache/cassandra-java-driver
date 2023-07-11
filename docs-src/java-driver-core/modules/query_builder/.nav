@@ -1,0 +1,11 @@
+select
+insert
+update
+batch
+delete
+truncate
+relation
+condition
+term
+idempotence
+schema
