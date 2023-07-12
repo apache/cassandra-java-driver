@@ -1,0 +1,7 @@
+== Common infrastructure
+
+This covers utilities or concept that are shared throughout the codebase:
+
+* the link:context/[context] is what glues everything together, and your primary entry point to extend the driver.
+* we explain the two major approaches to deal with link:concurrency/[concurrency] in the driver.
+* the link:event_bus/[event bus] is used to decouple some of the internal components through asynchronous messaging.

@@ -265,7 +265,7 @@ See https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/c
 | date
 | getLocalDate
 | java.time.LocalDate
-| link:temporal-types/[Temporal types]
+| link:temporal_types/[Temporal types]
 
 | decimal
 | getBigDecimal
@@ -280,7 +280,7 @@ See https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/c
 | duration
 | getCqlDuration
 | https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/CqlDuration.html[CqlDuration]
-| link:temporal-types/[Temporal types]
+| link:temporal_types/[Temporal types]
 
 | float
 | getFloat
@@ -325,12 +325,12 @@ See https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/c
 | time
 | getLocalTime
 | java.time.LocalTime
-| link:temporal-types/[Temporal types]
+| link:temporal_types/[Temporal types]
 
 | timestamp
 | getInstant
 | java.time.Instant
-| link:temporal-types/[Temporal types]
+| link:temporal_types/[Temporal types]
 
 | timeuuid
 | getUuid

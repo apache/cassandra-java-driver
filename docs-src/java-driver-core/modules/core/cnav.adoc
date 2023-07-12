@@ -1,44 +1,34 @@
 * xref:core:index.adoc[Core driver]
 ** xref:core:address-resolution.adoc[]
-** xref:core:asynchronous-programming.adoc[]
+** xref:core:asynchronous-program.adoc[Asynchronous programming]
 ** xref:core:authentication.adoc[]
 ** xref:core:bill-of-materials.adoc[]
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
-** xref:core:
+** xref:core:compression.adoc[]
+** xref:core:configuration.adoc[]
+** xref:core:connection-pool.adoc[Connection pooling]
+** xref:core:control-connection.adoc[]
+** xref:core:custom-codecs.adoc[]
+** xref:core:detachable-types.adoc[]
+** xref:core:graalvm-native-images.adoc[GraalVM native images]
+** xref:core:integration.adoc[]
+** xref:core:load-balance.adoc[Load balancing]
+** xref:core:log.adoc[Logging]
+** xref:core:metrics.adoc[]
+** xref:core:native-protocol.adoc[]
+** xref:core:non-block-program.adoc[Non-blocking programming]
+** xref:core:page.adoc[Paging]
+** xref:core:performance.adoc[]
+** xref:core:query-idempotence.adoc[]
+** xref:core:query-timestamps.adoc[]
+** xref:core:query-trace.adoc[Query Tracing]
+** xref:core:reactive-style.adoc[Reactive style programming]
+** xref:core:reconnection.adoc[]
+** xref:core:request-throttle.adoc[Request throttling]
+** xref:core:request-tracker.adoc[]
+** xref:core:retries.adoc[retries]
+** xref:core:speculative-query-execution.adoc[]
+** xref:core:secure-sockets-layer.adoc[Secure sockets layer]
+** xref:core:temporal-types.adoc[Temporal types]
+** xref:core:tuples.adoc[Tuples]
+** xref:core:user-defined-types.adoc[User defined types]
+** xref:core:shaded-jar.adoc[Using the shaded JAR]

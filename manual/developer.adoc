@@ -1,0 +1,20 @@
+== Developer docs
+
+This section explains how driver internals work.
+The intended audience is:
+
+* driver developers and contributors;
+* framework authors, or architects who want to write advanced customizations and integrations.
+
+Most of this material will involve "internal" packages;
+see link:../api_conventions/[API conventions] for more explanations.
+
+We recommend reading about the link:common/[common infrastructure] first.
+Then the documentation goes from lowest to highest level:
+
+* link:native_protocol/[Native protocol layer]: binary encoding of the TCP payloads;
+* link:netty_pipeline/[Netty pipeline]: networking and low-level stream management;
+* link:request_execution/[Request execution]: higher-level handling of user requests and responses;
+* link:admin/[Administrative tasks]: everything else (cluster state and metadata).
+
+If you're reading this on GitHub, the `.nav` file in each directory contains a suggested order.
