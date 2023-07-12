@@ -51,9 +51,8 @@ CqlVector<Float> vector = CqlVector.newInstance(1.4f, 2.5f, 3.6f);
 session.execute(preparedInsert.bind(3, vector));
 ```
 
-In some cases it may be more appropriate to access the vector directly as an array of some numerical type.  This version
-supports such use cases by providing a codec which translates a CQL vector to and from a primitive array.  In this release
-only float arrays are supported but additional codecs may be added for other primitive numerical types in future releases.
+In some cases, it makes sense to access the vector directly as an array of some numerical type. This version
+supports such use cases by providing a codec which translates a CQL vector to and from a primitive array. Only float arrays are supported. 
 You can find more information about this codec in the manual documentation on [custom codecs](../manual/core/custom_codecs/)
 
 ### 4.15.0
