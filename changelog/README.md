@@ -2,6 +2,14 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.17.0
+
+- [improvement] JAVA-3070: Make CqlVector and CqlDuration serializable
+- [improvement] JAVA-3085: Initialize c.d.o.d.i.core.util.Dependency at Graal native image build-time
+- [improvement] JAVA-3061: CqlVector API improvements, add support for accessing vectors directly as float arrays
+- [improvement] JAVA-3042: Enable automated testing for Java17
+- [improvement] JAVA-3050: Upgrade Netty to 4.1.94
+
 ### 4.16.0
 
 - [improvement] JAVA-3058: Clear prepared statement cache on UDT type change event
