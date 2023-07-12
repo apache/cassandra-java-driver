@@ -8,7 +8,7 @@ With the completion of [JAVA-3042](https://datastax-oss.atlassian.net/browse/JAV
 While all features function normally when run with Java 17 tests, we do not offer full support for this
 platform until we've received feedback from other users in the ecosystem.
 
-If you discover an issue with the Java driver running on Java 17, please let us know. We will traige and address Java 17 issues.
+If you discover an issue with the Java driver running on Java 17, please let us know. We will triage and address Java 17 issues.
 
 #### Updated API for vector search
 
@@ -23,7 +23,7 @@ a query which will return a `vector` type.  This data is retrieved directly via 
 `CqlVector` value object can be interrogated directly.
 
 ```java
-try (CqlSession session = new CqlSessionBuilder().withLocalDatacenter("datacenter1").build()){
+try (CqlSession session = new CqlSessionBuilder().withLocalDatacenter("datacenter1").build()) {
 
     session.execute("drop keyspace if exists test");
     session.execute("CREATE KEYSPACE test WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
@@ -33,10 +33,10 @@ try (CqlSession session = new CqlSessionBuilder().withLocalDatacenter("datacente
     session.execute("INSERT INTO test.foo (i, j) VALUES (2, [1.2, 3.4, 5.6])");
     session.execute("INSERT INTO test.foo (i, j) VALUES (5, [23, 18, 3.9])");
     ResultSet rs=session.execute("SELECT j FROM test.foo WHERE j ann of [3.4, 7.8, 9.1] limit 1");
-    for (Row row:rs){
-        CqlVector<Float> v = row.getVector(0,Float.class);
+    for (Row row : rs){
+        CqlVector<Float> v = row.getVector(0, Float.class);
         System.out.println(v);
-        if (Iterables.size(v) != 3){
+        if (Iterables.size(v) != 3) {
             throw new RuntimeException("Expected vector with three dimensions");
         }
     }
@@ -46,7 +46,7 @@ try (CqlSession session = new CqlSessionBuilder().withLocalDatacenter("datacente
 You can also use the `CqlVector` type with prepared statements:
 
 ```java
-PreparedStatement preparedInsert = session.prepare("insert into test.foo (i, j) values (?,?)");
+PreparedStatement preparedInsert = session.prepare("INSERT INTO test.foo (i, j) VALUES (?,?)");
 CqlVector<Float> vector = CqlVector.newInstance(1.4f, 2.5f, 3.6f);
 session.execute(preparedInsert.bind(3, vector));
 ```
