@@ -265,8 +265,7 @@ arrays, the driver offers the following codec:
 |-------------------------------------------|-----------------|-----------|
 | [ExtraTypeCodecs.floatVectorToArray(int)] | `vector<float>` | `float[]` |
 
-This release only provides a codec for vectors and arrays containing float values.  Support for other primitive
-numerical types may be added in future releases.
+This release only provides a codec for vectors and arrays containing float values. 
 
 ### Writing codecs
 
