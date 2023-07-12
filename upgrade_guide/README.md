@@ -4,7 +4,7 @@
 
 #### Beta support for Java17
 
-With the completion of [JAVA-3042](https://datastax-oss.atlassian.net/browse/JAVA-3042), the driver now passes our automated test matrix for Java driver releases.
+With the completion of [JAVA-3042](https://datastax-oss.atlassian.net/browse/JAVA-3042) the driver now passes our automated test matrix for Java driver releases.
 While all features function normally when run with Java 17 tests, we do not offer full support for this
 platform until we've received feedback from other users in the ecosystem.
 
@@ -25,7 +25,7 @@ a query that will return a `vector` type.  This data is retrieved directly via `
 ```java
 try (CqlSession session = new CqlSessionBuilder().withLocalDatacenter("datacenter1").build()) {
 
-    session.execute("drop keyspace if exists test");
+    session.execute("DROP KEYSPACE IF EXISTS test");
     session.execute("CREATE KEYSPACE test WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
     session.execute("CREATE TABLE test.foo(i int primary key, j vector<float, 3>)");
     session.execute("CREAT CUSTOM INDEX ann_index ON test.foo(j) USING 'StorageAttachedIndex'");
