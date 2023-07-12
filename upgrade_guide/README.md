@@ -12,15 +12,15 @@ If you discover an issue with the Java driver running on Java 17, please let us 
 
 #### Updated API for vector search
 
-The 4.16.0 release introduced support for the CQL vector datatype (see
-[JAVA-3060](https://datastax-oss.atlassian.net/browse/JAVA-3060) for more detail).  This release modifies the CqlVector
-value type used to represent a CQL vector to make it easier to use.  CqlVector now implements the Iterable interface
-as well as several methods modelled on the JDK's List interface, so it should have a familiar feel to it.  We've also
-done away with the builder interface, replacing it with some factory methods that resemble similar methods on CqlDuration.
+The 4.16.0 release introduced support for the CQL `vector` datatype. This release modifies the `CqlVector`
+value type used to represent a CQL vector to make it easier to use.  `CqlVector` now implements the Iterable interface
+as well as several methods modelled on the JDK's List interface. For more, see
+[JAVA-3060](https://datastax-oss.atlassian.net/browse/JAVA-3060). 
 
-As an example, the following code will create a keyspace and table, populate that table with some data and then execute
-a query which will return a vector type.  This data is retrieved directly via Row.getVector() and the resulting
-CqlVector value object can be interrogated directly.
+The builder interface was replaced with factory methods that resemble similar methods on `CqlDuration`.
+For example, the following code will create a keyspace and table, populate that table with some data, and then execute
+a query which will return a `vector` type.  This data is retrieved directly via `Row.getVector()` and the resulting
+`CqlVector` value object can be interrogated directly.
 
 ```java
 try (CqlSession session = new CqlSessionBuilder().withLocalDatacenter("datacenter1").build()){
