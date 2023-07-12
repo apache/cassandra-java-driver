@@ -19,7 +19,7 @@ as well as several methods modelled on the JDK's List interface. For more, see
 
 The builder interface was replaced with factory methods that resemble similar methods on `CqlDuration`.
 For example, the following code will create a keyspace and table, populate that table with some data, and then execute
-a query which will return a `vector` type.  This data is retrieved directly via `Row.getVector()` and the resulting
+a query that will return a `vector` type.  This data is retrieved directly via `Row.getVector()` and the resulting
 `CqlVector` value object can be interrogated directly.
 
 ```java
