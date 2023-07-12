@@ -21,7 +21,7 @@
   <parent>
     <artifactId>java-driver-parent</artifactId>
     <groupId>com.datastax.oss</groupId>
-    <version>4.17.0</version>
+    <version>4.17.1-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-examples</artifactId>
   <name>DataStax Java driver for Apache Cassandra(R) - examples.</name>
