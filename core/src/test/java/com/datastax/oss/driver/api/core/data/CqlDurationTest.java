@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.oss.driver.TestDataProviders;
+import com.datastax.oss.driver.internal.SerializationHelper;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.time.ZonedDateTime;
@@ -189,5 +190,19 @@ public class CqlDurationTest {
         .isEqualTo("2018-08-04T00:00-07:00[America/Los_Angeles]");
     assertThat(dateTime.minus(CqlDuration.from("1h15s15ns")))
         .isEqualTo("2018-10-03T22:59:44.999999985-07:00[America/Los_Angeles]");
+  }
+
+  @Test
+  public void should_serialize_and_deserialize() throws Exception {
+    CqlDuration initial = CqlDuration.from("3mo2d15s");
+    CqlDuration deserialized = SerializationHelper.serializeAndDeserialize(initial);
+    assertThat(deserialized).isEqualTo(initial);
+  }
+
+  @Test
+  public void should_serialize_and_deserialize_negative() throws Exception {
+    CqlDuration initial = CqlDuration.from("-2d15m");
+    CqlDuration deserialized = SerializationHelper.serializeAndDeserialize(initial);
+    assertThat(deserialized).isEqualTo(initial);
   }
 }
