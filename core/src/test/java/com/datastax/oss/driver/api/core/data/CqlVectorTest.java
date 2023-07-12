@@ -19,9 +19,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
+import com.datastax.oss.driver.internal.SerializationHelper;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.assertj.core.util.Lists;
@@ -194,5 +197,38 @@ public class CqlVectorTest {
     CqlVector<Float> vector5 = CqlVector.newInstance(biggerArgs);
     assertThat(vector1).isNotSameAs(vector5);
     assertThat(vector1).isNotEqualTo(vector5);
+  }
+
+  @Test
+  public void should_serialize_and_deserialize() throws Exception {
+    CqlVector<Float> initial = CqlVector.newInstance(VECTOR_ARGS);
+    CqlVector<Float> deserialized = SerializationHelper.serializeAndDeserialize(initial);
+    assertThat(deserialized).isEqualTo(initial);
+  }
+
+  @Test
+  public void should_serialize_and_deserialize_empty_vector() throws Exception {
+    CqlVector<Float> initial = CqlVector.newInstance(Collections.emptyList());
+    CqlVector<Float> deserialized = SerializationHelper.serializeAndDeserialize(initial);
+    assertThat(deserialized).isEqualTo(initial);
+  }
+
+  @Test
+  public void should_serialize_and_deserialize_unserializable_list() throws Exception {
+    CqlVector<Float> initial =
+        CqlVector.newInstance(
+            new AbstractList<Float>() {
+              @Override
+              public Float get(int index) {
+                return VECTOR_ARGS[index];
+              }
+
+              @Override
+              public int size() {
+                return VECTOR_ARGS.length;
+              }
+            });
+    CqlVector<Float> deserialized = SerializationHelper.serializeAndDeserialize(initial);
+    assertThat(deserialized).isEqualTo(initial);
   }
 }

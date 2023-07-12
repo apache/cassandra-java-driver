@@ -22,6 +22,12 @@ import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -44,7 +50,7 @@ import java.util.stream.Stream;
  * where possible we've tried to make the API of this class similar to the equivalent methods on
  * {@link List}.
  */
-public class CqlVector<T extends Number> implements Iterable<T> {
+public class CqlVector<T extends Number> implements Iterable<T>, Serializable {
 
   /**
    * Create a new CqlVector containing the specified values.
@@ -189,5 +195,59 @@ public class CqlVector<T extends Number> implements Iterable<T> {
   @Override
   public String toString() {
     return Iterables.toString(this.list);
+  }
+
+  /**
+   * Serialization proxy for CqlVector. Allows serialization regardless of implementation of list
+   * field.
+   *
+   * @param <T> inner type of CqlVector, assume Number is always Serializable.
+   */
+  private static class SerializationProxy<T extends Number> implements Serializable {
+
+    private static final long serialVersionUID = 1;
+
+    private transient List<T> list;
+
+    SerializationProxy(CqlVector<T> vector) {
+      this.list = vector.list;
+    }
+
+    // Reconstruct CqlVector's list of elements.
+    private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+      stream.defaultReadObject();
+
+      int size = stream.readInt();
+      list = new ArrayList<>(size);
+      for (int i = 0; i < size; i++) {
+        list.add((T) stream.readObject());
+      }
+    }
+
+    // Return deserialized proxy object as CqlVector.
+    private Object readResolve() throws ObjectStreamException {
+      return new CqlVector(list);
+    }
+
+    // Write size of CqlVector followed by items in order.
+    private void writeObject(ObjectOutputStream stream) throws IOException {
+      stream.defaultWriteObject();
+
+      stream.writeInt(list.size());
+      for (T item : list) {
+        stream.writeObject(item);
+      }
+    }
+  }
+
+  /** @serialData The number of elements in the vector, followed by each element in-order. */
+  private Object writeReplace() {
+    return new SerializationProxy(this);
+  }
+
+  private void readObject(@SuppressWarnings("unused") ObjectInputStream stream)
+      throws InvalidObjectException {
+    // Should never be called since we serialized a proxy
+    throw new InvalidObjectException("Proxy required");
   }
 }
