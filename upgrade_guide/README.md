@@ -4,13 +4,11 @@
 
 #### Beta support for Java17
 
-With the completion of [JAVA-3042](https://datastax-oss.atlassian.net/browse/JAVA-3042) the driver now passes our
-test suite when run on Java17.  We also now include Java17 in our automated test matrix for Java driver releases.
-All features appear to function normally when run with Java17 but we do not want to declare full support for this
+With the completion of [JAVA-3042](https://datastax-oss.atlassian.net/browse/JAVA-3042), the driver now passes our automated test matrix for Java driver releases.
+While all features function normally when run with Java 17 tests, we do not offer full support for this
 platform until we've received feedback from other users in the ecosystem.
 
-If you discover an issue with the Java driver running on Java17 please let us know!  Java17 issues will be triaged
-and addressed just like issues from any supported Java version.
+If you discover an issue with the Java driver running on Java 17, please let us know. We will traige and address Java 17 issues.
 
 #### Updated API for vector search
 
