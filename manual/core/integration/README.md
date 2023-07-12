@@ -562,6 +562,7 @@ Here are the recommended TinkerPop versions for each driver version:
 
 <table>
 <tr><th>Driver version</th><th>TinkerPop version</th></tr>
+<tr><td>4.17.0</td><td>3.5.3</td></tr>
 <tr><td>4.16.0</td><td>3.5.3</td></tr>
 <tr><td>4.15.0</td><td>3.5.3</td></tr>
 <tr><td>4.14.1</td><td>3.5.3</td></tr>
