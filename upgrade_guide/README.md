@@ -43,7 +43,7 @@ try (CqlSession session = new CqlSessionBuilder().withLocalDatacenter("datacente
 }
 ```
 
-You can also use the CqlVector type with prepared statements:
+You can also use the `CqlVector` type with prepared statements:
 
 ```java
 PreparedStatement preparedInsert = session.prepare("insert into test.foo (i, j) values (?,?)");
