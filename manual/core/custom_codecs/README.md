@@ -256,6 +256,17 @@ that maps instances of that class to Json strings, using a newly-allocated, defa
 It is also possible to pass a custom `ObjectMapper` instance using [ExtraTypeCodecs.json(Class,
 ObjectMapper)] instead.
 
+#### Mapping CQL vectors to Java array
+
+By default, the driver maps CQL `vector` to the [CqlVector] value type. If you prefer to deal with
+arrays, the driver offers the following codec:
+
+| Codec                                     | CQL type        | Java type |
+|-------------------------------------------|-----------------|-----------|
+| [ExtraTypeCodecs.floatVectorToArray(int)] | `vector<float>` | `float[]` |
+
+This release only provides a codec for vectors containing float values.
+
 ### Writing codecs
 
 If none of the driver built-in codecs above suits you, it is also possible to roll your own.
@@ -707,6 +718,7 @@ private static String formatRow(Row row) {
 [ExtraTypeCodecs.enumOrdinalsOf(Class)]:     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#enumOrdinalsOf-java.lang.Class-
 [ExtraTypeCodecs.json(Class)]:               https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#json-java.lang.Class-
 [ExtraTypeCodecs.json(Class, ObjectMapper)]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#json-java.lang.Class-com.fasterxml.jackson.databind.ObjectMapper-
+[ExtraTypeCodecs.floatVectorToArray(int)]:   https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#floatVectorToArray-int-
 
 [TypeCodecs.BLOB]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#BLOB
 [TypeCodecs.TIMESTAMP]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#TIMESTAMP
