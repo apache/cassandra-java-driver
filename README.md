@@ -1,4 +1,4 @@
-# DataStax Java Driver for Apache Cassandra®
+# Java Driver for Apache Cassandra®
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.datastax.oss/java-driver-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.datastax.oss/java-driver-core)
 
@@ -66,14 +66,14 @@ offering. See the dedicated [manual page](manual/cloud/) for more details.
 
 ## Migrating from previous versions
 
-Java driver 4 is **not binary compatible** with previous versions. However, most of the concepts
+Java Driver 4 is **not binary compatible** with previous versions. However, most of the concepts
 remain unchanged, and the new API will look very familiar to 2.x and 3.x users.
 
 See the [upgrade guide](upgrade_guide/) for details.
 
 ## Error Handling
 
-See the [Cassandra error handling done right blog](https://www.datastax.com/blog/cassandra-error-handling-done-right) for error handling with the DataStax Java Driver for Apache Cassandra&trade;.
+See the [Cassandra error handling done right blog](https://www.datastax.com/blog/cassandra-error-handling-done-right) for error handling with the Java Driver for Apache Cassandra&trade;.
 
 ## Useful links
 
@@ -81,7 +81,7 @@ See the [Cassandra error handling done right blog](https://www.datastax.com/blog
 * [API docs]
 * Bug tracking: [JIRA]
 * [Mailing list]
-* Twitter: [@dsJavaDriver] tweets Java driver releases and important announcements (low frequency).
+* Twitter: [@dsJavaDriver] tweets Java Driver releases and important announcements (low frequency).
     [@DataStaxEng] has more news, including other drivers, Cassandra, and DSE.
 * [Changelog]
 * [FAQ]

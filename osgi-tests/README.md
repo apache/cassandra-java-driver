@@ -1,4 +1,4 @@
-# DataStax Java Driver OSGi Tests
+# Java Driver OSGi Tests
 
 This module contains OSGi tests for the driver.
 
