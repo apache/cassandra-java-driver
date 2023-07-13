@@ -1,6 +1,6 @@
-# DataStax Java Driver for Apache Cassandra(R) - Examples
+# Java Driver for Apache Cassandra(R) - Examples
 
-This module contains examples of how to use the DataStax Java driver for
+This module contains examples of how to use the Java Driver for
 Apache Cassandra(R).
 
 ## Usage
