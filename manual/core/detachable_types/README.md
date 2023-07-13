@@ -124,7 +124,7 @@ Even then, the defaults used by detached objects might be good enough for you:
 
 * the default codec registry works if you don't have any [custom codec](../custom_codecs/);
 * the binary encoding format is stable across modern protocol versions. The last changes were for
-  collection encoding from v2 to v3; Java driver 4 only supports v3 and above. When in doubt, check
+  collection encoding from v2 to v3; Java Driver 4 only supports v3 and above. When in doubt, check
   the "Changes" section of the [protocol specifications].
   
 Otherwise, just make sure you reattach objects any time you deserialize them or create them from

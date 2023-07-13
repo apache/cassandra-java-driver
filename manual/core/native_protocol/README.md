@@ -7,7 +7,7 @@ only available with specific protocol versions.
 
 ### Compatibility matrix
 
-Java driver 4 supports protocol versions 3 to 5. By default, the version is negotiated with the
+Java Driver 4 supports protocol versions 3 to 5. By default, the version is negotiated with the
 first node the driver connects to:
 
 | Cassandra version   | Negotiated protocol version with driver 4 ¹     |

@@ -1,4 +1,4 @@
-# Datastax Java Driver for Apache Cassandra®
+# Apache Cassandra® Java Driver
 
 *If you're reading this on github.com, please note that this is the readme for the development 
 version and that some features described here might not yet have been released. You can find the
@@ -42,7 +42,7 @@ builder](manual/query_builder/)).
 
 ## Migrating from previous versions
 
-Java driver 4 is **not binary compatible** with previous versions. However, most of the concepts
+Java Driver 4 is **not binary compatible** with previous versions. However, most of the concepts
 remain unchanged, and the new API will look very familiar to 2.x and 3.x users.
 
 See the [upgrade guide](upgrade_guide/) for details.
@@ -53,7 +53,7 @@ See the [upgrade guide](upgrade_guide/) for details.
 * [API docs]
 * Bug tracking: [JIRA]
 * [Mailing list]
-* Twitter: [@dsJavaDriver] tweets Java driver releases and important announcements (low frequency).
+* Twitter: [@dsJavaDriver] tweets Java Driver releases and important announcements (low frequency).
     [@DataStaxEng] has more news, including other drivers, Cassandra, and DSE.
 * [Changelog]
 * [FAQ]
@@ -68,13 +68,15 @@ See the [upgrade guide](upgrade_guide/) for details.
 
 ## License
 
-Copyright DataStax, Inc.
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -83,9 +85,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 ----
-
-DataStax is a registered trademark of DataStax, Inc. and its subsidiaries in the United States 
-and/or other countries.
 
 Apache Cassandra, Apache, Tomcat, Lucene, Solr, Hadoop, Spark, TinkerPop, and Cassandra are 
 trademarks of the [Apache Software Foundation](http://www.apache.org/) or its subsidiaries in
