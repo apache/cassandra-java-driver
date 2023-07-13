@@ -10,7 +10,7 @@ a mix of reads, writes, and deletes.
 
 Duration tests are useful to detect performance regressions between 2 different driver versions.
 
-The Java driver duration tests are stored in a [private
+The Java Driver duration tests are stored in a [private
 repository](https://github.com/riptano/driver-examples/tree/java-driver-4.x/java/durationTest/)
 accessible only to DataStax employees.
 

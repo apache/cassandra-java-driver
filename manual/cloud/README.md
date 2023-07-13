@@ -1,6 +1,6 @@
 ## Connecting to Astra (Cloud)
 
-Using the DataStax Java Driver to connect to a DataStax Astra database is almost identical to using
+Using the Java Driver to connect to a DataStax Astra database is almost identical to using
 the driver to connect to any normal Apache Cassandra® database. The only differences are in how the
 driver is configured in an application and that you will need to obtain a *secure connect bundle*.
 
