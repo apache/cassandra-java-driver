@@ -11,7 +11,7 @@ such as [Vert.x] or [Reactor], along with tools for automatic detection of block
 [Reactor]: https://projectreactor.io
 [BlockHound]: https://github.com/reactor/BlockHound
 
-**In summary, when used properly, the DataStax Java driver offers non-blocking guarantees for most 
+**In summary, when used properly, the Java Driver offers non-blocking guarantees for most 
 of its operations, and during most of the session lifecycle.**
 
 These guarantees and their exceptions are detailed below. A final chapter explains how to use the 

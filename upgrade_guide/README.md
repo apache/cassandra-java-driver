@@ -4,11 +4,11 @@
 
 #### Beta support for Java17
 
-With the completion of [JAVA-3042](https://datastax-oss.atlassian.net/browse/JAVA-3042) the driver now passes our automated test matrix for Java driver releases.
+With the completion of [JAVA-3042](https://datastax-oss.atlassian.net/browse/JAVA-3042) the driver now passes our automated test matrix for Java Driver releases.
 While all features function normally when run with Java 17 tests, we do not offer full support for this
 platform until we've received feedback from other users in the ecosystem.
 
-If you discover an issue with the Java driver running on Java 17, please let us know. We will triage and address Java 17 issues.
+If you discover an issue with the Java Driver running on Java 17, please let us know. We will triage and address Java 17 issues.
 
 #### Updated API for vector search
 
@@ -106,7 +106,7 @@ request cannot be executed because all nodes tried were busy. Previously you wou
 
 #### Esri Geometry dependency now optional
 
-Previous versions of the Java driver defined a mandatory dependency on the Esri geometry library.
+Previous versions of the Java Driver defined a mandatory dependency on the Esri geometry library.
 This library offered support for primitive geometric types supported by DSE.  As of driver 4.14.0
 this dependency is now optional.
 
