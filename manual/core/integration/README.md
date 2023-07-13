@@ -235,7 +235,7 @@ You should see output similar to:
 [INFO] Nothing to compile - all classes are up to date
 [INFO]
 [INFO] --- exec-maven-plugin:1.3.1:java (default-cli) @ yourapp ---
-11:39:45.355 [Main.main()] INFO  c.d.o.d.i.c.DefaultMavenCoordinates - DataStax Java driver for Apache Cassandra(R) (com.datastax.oss:java-driver-core) version 4.0.1
+11:39:45.355 [Main.main()] INFO  c.d.o.d.i.c.DefaultMavenCoordinates - Apache Cassandra Java Driver (com.datastax.oss:java-driver-core) version 4.0.1
 11:39:45.648 [poc-admin-0] INFO  c.d.o.d.internal.core.time.Clock - Using native clock for microsecond precision
 11:39:45.649 [poc-admin-0] INFO  c.d.o.d.i.c.metadata.MetadataManager - [poc] No contact points provided, defaulting to /127.0.0.1:9042
 3.11.2
@@ -305,7 +305,7 @@ $ ./gradlew execute
 :processResources
 :classes
 :execute
-13:32:25.339 [main] INFO  c.d.o.d.i.c.DefaultMavenCoordinates - DataStax Java driver for Apache Cassandra(R) (com.datastax.oss:java-driver-core) version 4.0.1-alpha4-SNAPSHOT
+13:32:25.339 [main] INFO  c.d.o.d.i.c.DefaultMavenCoordinates - Apache Cassandra Java Driver (com.datastax.oss:java-driver-core) version 4.0.1-alpha4-SNAPSHOT
 13:32:25.682 [poc-admin-0] INFO  c.d.o.d.internal.core.time.Clock - Using native clock for microsecond precision
 13:32:25.683 [poc-admin-0] INFO  c.d.o.d.i.c.metadata.MetadataManager - [poc] No contact points provided, defaulting to /127.0.0.1:9042
 3.11.2
