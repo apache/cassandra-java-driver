@@ -49,6 +49,7 @@ links:
   - title: Releases
     href:  http://downloads.datastax.com/java-driver/
 api_docs:
+  '4.17': 'http://docs.datastax.com/en/drivers/java/4.17'
   '4.16': 'http://docs.datastax.com/en/drivers/java/4.16'
   '4.15': 'http://docs.datastax.com/en/drivers/java/4.15'
   '4.14': 'http://docs.datastax.com/en/drivers/java/4.14'
@@ -80,6 +81,8 @@ api_docs:
   2.1: http://docs.datastax.com/en/drivers/java/2.1
   2.0: http://docs.datastax.com/en/drivers/java/2.0
 versions:
+  - name: '4.17'
+    ref: '4.17.0'
   - name: '4.16'
     ref: '4.16.0'
   - name: '4.15'
