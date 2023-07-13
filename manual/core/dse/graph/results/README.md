@@ -109,7 +109,7 @@ translate into specific Java classes when the data is returned from the server.
 
 Here is an exhaustive compatibility matrix (for DSE 6.0):
 
-| DSE graph  | Java driver         |
+| DSE graph  | Java Driver         |
 |------------|---------------------|
 | bigint     | Long                |
 | blob       | byte[]              |

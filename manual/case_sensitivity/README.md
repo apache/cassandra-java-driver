@@ -117,7 +117,7 @@ For "consuming" methods, string overloads are also provided for convenience, for
 As should be clear by now, case sensitivity introduces a lot of extra (and arguably unnecessary)
 complexity.
 
-The Java driver team's recommendation is:
+The Java Driver team's recommendation is:
 
 > **Always use case-insensitive identifiers in your data model.**
 
