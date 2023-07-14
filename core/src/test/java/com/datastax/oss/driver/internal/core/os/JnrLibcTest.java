@@ -15,7 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.os;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

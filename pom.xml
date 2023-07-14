@@ -588,6 +588,7 @@
             <compilerArg>-Xep:FutureReturnValueIgnored:OFF</compilerArg>
             <compilerArg>-Xep:PreferJavaTimeOverload:OFF</compilerArg>
             <compilerArg>-Xep:AnnotateFormatMethod:OFF</compilerArg>
+            <compilerArg>-Xep:WildcardImport:WARN</compilerArg>
             <compilerArg>-XepExcludedPaths:.*/target/(?:generated-sources|generated-test-sources)/.*</compilerArg>
           </compilerArgs>
           <showWarnings>true</showWarnings>

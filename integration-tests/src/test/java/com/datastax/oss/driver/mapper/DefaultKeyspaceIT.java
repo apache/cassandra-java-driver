@@ -15,7 +15,6 @@
  */
 package com.datastax.oss.driver.mapper;
 
-import static com.datastax.oss.driver.api.mapper.MapperBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -25,6 +24,7 @@ import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
+import com.datastax.oss.driver.api.mapper.MapperBuilder;
 import com.datastax.oss.driver.api.mapper.MapperException;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
@@ -122,7 +122,7 @@ public class DefaultKeyspaceIT {
             () -> {
               InventoryMapperKsNotSet mapper =
                   new DefaultKeyspaceIT_InventoryMapperKsNotSetBuilder(SESSION_RULE.session())
-                      .withCustomState(SCHEMA_VALIDATION_ENABLED_SETTING, false)
+                      .withCustomState(MapperBuilder.SCHEMA_VALIDATION_ENABLED_SETTING, false)
                       .build();
               mapper.productDaoDefaultKsNotSet();
             })
