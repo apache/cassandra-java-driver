@@ -93,7 +93,7 @@ public class CqlIdentifier implements Serializable {
   /** @serial */
   private final String internal;
 
-  private CqlIdentifier(String internal) {
+  protected CqlIdentifier(String internal) {
     this.internal = internal;
   }
 
