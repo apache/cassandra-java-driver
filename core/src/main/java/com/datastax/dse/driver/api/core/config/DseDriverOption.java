@@ -288,6 +288,30 @@ public enum DseDriverOption implements DriverOption {
    * <p>Value-type: {@link java.time.Duration Duration}
    */
   METRICS_NODE_GRAPH_MESSAGES_SLO("advanced.metrics.node.graph-messages.slo"),
+  /**
+   * List of percentiles in double to be published by the graph-requests metric. 95th percentile to
+   * represented as 0.95.
+   *
+   * <p>Value type: {@link java.util.List List}&#60;{@link Double}&#62;
+   */
+  METRICS_SESSION_GRAPH_REQUESTS_PUBLISH_PERCENTILES(
+      "advanced.metrics.session.graph-requests.publish-percentiles"),
+  /**
+   * List of percentiles in double to be published by the node graph-messages metric. 95th
+   * percentile to represented as 0.95.
+   *
+   * <p>Value type: {@link java.util.List List}&#60;{@link Double}&#62;
+   */
+  METRICS_NODE_GRAPH_MESSAGES_PUBLISH_PERCENTILES(
+      "advanced.metrics.node.graph-messages.publish-percentiles"),
+  /**
+   * List of percentiles in double to be published by the continuous paging requests metric. 95th
+   * percentile to represented as 0.95.
+   *
+   * <p>Value type: {@link java.util.List List}&#60;{@link Double}&#62;
+   */
+  CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES(
+      "advanced.metrics.session.continuous-cql-requests.publish-percentiles"),
   ;
 
   private final String path;
