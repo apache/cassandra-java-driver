@@ -64,7 +64,7 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
   protected Timer.Builder configureTimer(Timer.Builder builder, SessionMetric metric, MetricId id) {
     DriverExecutionProfile profile = context.getConfig().getDefaultProfile();
     if (metric == DefaultSessionMetric.CQL_REQUESTS) {
-      return builder
+      builder
           .publishPercentileHistogram()
           .minimumExpectedValue(
               profile.getDuration(DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_LOWEST))
@@ -80,8 +80,18 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
               profile.isDefined(DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_DIGITS)
                   ? profile.getInt(DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_DIGITS)
                   : null);
+      if (profile.isDefined(DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES)) {
+        builder.publishPercentiles(
+            profile
+                .getDoubleList(DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES)
+                .stream()
+                .mapToDouble(Double::doubleValue)
+                .toArray());
+      }
+      return builder;
+
     } else if (metric == DefaultSessionMetric.THROTTLING_DELAY) {
-      return builder
+      builder
           .publishPercentileHistogram()
           .minimumExpectedValue(
               profile.getDuration(DefaultDriverOption.METRICS_SESSION_THROTTLING_LOWEST))
@@ -97,8 +107,17 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
               profile.isDefined(DefaultDriverOption.METRICS_SESSION_THROTTLING_DIGITS)
                   ? profile.getInt(DefaultDriverOption.METRICS_SESSION_THROTTLING_DIGITS)
                   : null);
+      if (profile.isDefined(DefaultDriverOption.METRICS_SESSION_THROTTLING_PUBLISH_PERCENTILES)) {
+        builder.publishPercentiles(
+            profile
+                .getDoubleList(DefaultDriverOption.METRICS_SESSION_THROTTLING_PUBLISH_PERCENTILES)
+                .stream()
+                .mapToDouble(Double::doubleValue)
+                .toArray());
+      }
+      return builder;
     } else if (metric == DseSessionMetric.CONTINUOUS_CQL_REQUESTS) {
-      return builder
+      builder
           .publishPercentileHistogram()
           .minimumExpectedValue(
               profile.getDuration(
@@ -119,8 +138,20 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
                   ? profile.getInt(
                       DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_DIGITS)
                   : null);
+      if (profile.isDefined(
+          DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES)) {
+        builder.publishPercentiles(
+            profile
+                .getDoubleList(
+                    DseDriverOption
+                        .CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES)
+                .stream()
+                .mapToDouble(Double::doubleValue)
+                .toArray());
+      }
+      return builder;
     } else if (metric == DseSessionMetric.GRAPH_REQUESTS) {
-      return builder
+      builder
           .publishPercentileHistogram()
           .minimumExpectedValue(
               profile.getDuration(DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_LOWEST))
@@ -136,6 +167,15 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
               profile.isDefined(DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_DIGITS)
                   ? profile.getInt(DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_DIGITS)
                   : null);
+      if (profile.isDefined(DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_PUBLISH_PERCENTILES)) {
+        builder.publishPercentiles(
+            profile
+                .getDoubleList(DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_PUBLISH_PERCENTILES)
+                .stream()
+                .mapToDouble(Double::doubleValue)
+                .toArray());
+      }
+      return builder;
     }
     return super.configureTimer(builder, metric, id);
   }
