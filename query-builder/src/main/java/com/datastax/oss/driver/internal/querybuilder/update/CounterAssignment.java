@@ -27,7 +27,7 @@ public abstract class CounterAssignment implements Assignment {
 
   public enum Operator {
     INCREMENT("%1$s=%1$s+%2$s"),
-    DECREMENT("%1$s=%1$s-%2$s"),
+    DECREMENT("%1$s=%1$s- %2$s"),
     ;
 
     public final String pattern;
