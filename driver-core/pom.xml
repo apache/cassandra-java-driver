@@ -271,6 +271,7 @@
                     <artifactSet>
                         <includes>
                             <include>io.netty:*</include>
+                            <include>io.dropwizard.metrics:metrics-core</include>
                         </includes>
                         <excludes>
                             <exclude>io.netty:netty-transport-native-epoll</exclude>
@@ -280,6 +281,10 @@
                         <relocation>
                             <pattern>io.netty</pattern>
                             <shadedPattern>com.datastax.shaded.netty</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>com.codahale.metrics</pattern>
+                            <shadedPattern>com.datastax.shaded.metrics</shadedPattern>
                         </relocation>
                     </relocations>
                     <transformers>
