@@ -29,7 +29,7 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.MapType;
 import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
-import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
+import com.datastax.oss.driver.internal.core.util.collection.SimpleQueryPlan;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.yugabyte.oss.driver.api.core.DefaultPartitionMetadata;
 import com.yugabyte.oss.driver.api.core.TableSplitMetadata;
@@ -92,7 +92,7 @@ public class PartitionAwarePolicy extends YugabyteDefaultLoadBalancingPolicy
     // could be down.
     // In such cases fallback to the inherited load-balancing logic
     return !CollectionUtils.isEmpty(partitionAwareNodes)
-        ? new QueryPlan(partitionAwareNodes.toArray())
+        ? new SimpleQueryPlan(partitionAwareNodes.toArray())
         : super.newQueryPlan(request, session);
   }
 

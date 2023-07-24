@@ -106,15 +106,15 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
 
   protected final AtomicInteger roundRobinAmount = new AtomicInteger();
 
-  private final int maxNodesPerRemoteDc;
+  protected final int maxNodesPerRemoteDc;
   private final boolean allowDcFailoverForLocalCl;
   private final ConsistencyLevel defaultConsistencyLevel;
 
   // private because they should be set in init() and never be modified after
   private volatile DistanceReporter distanceReporter;
-  private volatile NodeDistanceEvaluator nodeDistanceEvaluator;
+  protected volatile NodeDistanceEvaluator nodeDistanceEvaluator;
   private volatile String localDc;
-  private volatile NodeSet liveNodes;
+  protected volatile NodeSet liveNodes;
 
   public BasicLoadBalancingPolicy(@NonNull DriverContext context, @NonNull String profileName) {
     this.context = (InternalDriverContext) context;
