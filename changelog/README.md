@@ -5,6 +5,11 @@
   3.x versions get published.
 -->
 
+## 3.11.4
+- [improvement] JAVA-3079: Upgrade Netty to 4.1.94, 3.x edition
+- [improvement] JAVA-3082: Fix maven build for Apple-silicon
+- [improvement] PR 1671: Fix LatencyAwarePolicy scale docstring
+
 ## 3.11.3
 - [improvement] JAVA-3023: Upgrade Netty to 4.1.77, 3.x edition
 
