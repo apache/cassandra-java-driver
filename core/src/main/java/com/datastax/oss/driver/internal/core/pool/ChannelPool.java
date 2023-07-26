@@ -340,6 +340,7 @@ public class ChannelPool implements AsyncAutoCloseable {
 
     private void initialize(DriverChannel c) {
       shardingInfo = c.getShardingInfo();
+      ((DefaultNode) node).setShardingInfo(shardingInfo);
       int wanted = getConfiguredSize(distance);
       int shardsCount = shardingInfo == null ? 1 : shardingInfo.getShardsCount();
       wantedCount = wanted / shardsCount + (wanted % shardsCount > 0 ? 1 : 0);

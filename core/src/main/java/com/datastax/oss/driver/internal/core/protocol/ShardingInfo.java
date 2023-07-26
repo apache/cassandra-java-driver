@@ -21,6 +21,7 @@
  */
 package com.datastax.oss.driver.internal.core.protocol;
 
+import com.datastax.oss.driver.api.core.metadata.NodeShardingInfo;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenLong64;
 import java.util.List;
@@ -28,7 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 /** Keeps the information the driver maintains on data layout of a given node. */
-public class ShardingInfo {
+public class ShardingInfo implements NodeShardingInfo {
   private static final String SCYLLA_SHARD_PARAM_KEY = "SCYLLA_SHARD";
   private static final String SCYLLA_NR_SHARDS_PARAM_KEY = "SCYLLA_NR_SHARDS";
   private static final String SCYLLA_PARTITIONER = "SCYLLA_PARTITIONER";
@@ -48,6 +49,7 @@ public class ShardingInfo {
     this.shardingIgnoreMSB = shardingIgnoreMSB;
   }
 
+  @Override
   public int getShardsCount() {
     return shardsCount;
   }
@@ -60,6 +62,7 @@ public class ShardingInfo {
     return shardingAlgorithm;
   }
 
+  @Override
   public int shardId(Token t) {
     if (!(t instanceof TokenLong64)) {
       return ThreadLocalRandom.current().nextInt(shardsCount);

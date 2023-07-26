@@ -214,4 +214,13 @@ public interface Node {
    */
   @Nullable
   UUID getSchemaVersion();
+
+  /**
+   * Node's sharding information.
+   *
+   * <p>May be null if the node is not a Scylla node or the connection pool to the node was never
+   * created.
+   */
+  @Nullable
+  NodeShardingInfo getShardingInfo();
 }

@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.NoopNodeMetricUpdater;
+import com.datastax.oss.driver.internal.core.protocol.ShardingInfo;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.Serializable;
@@ -35,8 +36,8 @@ import java.util.UUID;
 import net.jcip.annotations.ThreadSafe;
 
 /**
- * Implementation note: all the mutable state in this class is read concurrently, but only mutated
- * from {@link MetadataManager}'s admin thread.
+ * Implementation note: (almost) all the mutable state in this class is read concurrently, but only
+ * mutated from {@link MetadataManager}'s admin thread. Node's ShardingInfo is an exception.
  */
 @ThreadSafe
 public class DefaultNode implements Node, Serializable {
@@ -67,6 +68,10 @@ public class DefaultNode implements Node, Serializable {
 
   volatile NodeDistance distance;
 
+  // Initially null. A copy of ShardingInfo. Updated with values by DriverChannel during pool
+  // initialization.
+  private volatile ShardingInfo shardingInfo;
+
   public DefaultNode(EndPoint endPoint, InternalDriverContext context) {
     this.endPoint = endPoint;
     this.state = NodeState.UNKNOWN;
@@ -77,6 +82,7 @@ public class DefaultNode implements Node, Serializable {
     // problem because the node updater only needs the connect address to initialize.
     this.metricUpdater = context.getMetricsFactory().newNodeUpdater(this);
     this.upSinceMillis = -1;
+    this.shardingInfo = null;
   }
 
   @NonNull
@@ -192,5 +198,15 @@ public class DefaultNode implements Node, Serializable {
   /** Note: deliberately not exposed by the public interface. */
   public Set<String> getRawTokens() {
     return rawTokens;
+  }
+
+  @Nullable
+  @Override
+  public ShardingInfo getShardingInfo() {
+    return shardingInfo;
+  }
+
+  public void setShardingInfo(ShardingInfo shardingInfo) {
+    this.shardingInfo = shardingInfo;
   }
 }
