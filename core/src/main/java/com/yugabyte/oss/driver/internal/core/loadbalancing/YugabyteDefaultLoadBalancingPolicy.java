@@ -196,37 +196,6 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
           distanceReporter.setDistance(node, NodeDistance.IGNORED);
         }
       }
-      //      if (filter.test(node)) {
-      //        distanceReporter.setDistance(node, NodeDistance.LOCAL);
-      //        if (node.getState() != NodeState.DOWN) {
-      //          // This includes state == UNKNOWN. If the node turns out to be unreachable, this
-      //          // will be
-      //          // detected when we try to open a pool to it, it will get marked down and this
-      //          // will be
-      //          // signaled back to this policy
-      //          liveNodesInLocalDc.add(node);
-      //          liveNodesInAllDC.add(node);
-      //        }
-      //      } else {
-      //
-      //        // For Multi-DC/Multi-region YugabyteDB Clusters, leader tablets can be present
-      //        // in the DC's
-      //        // other than the DC considered as LOCAL. Hence we'll need to consider the nodes
-      //        // from
-      //        // other DC's as live for routing the YCQL operations.
-      //        if (node.getState() == NodeState.UP || node.getState() == NodeState.UNKNOWN) {
-      //          liveNodes.add(node);
-      //          liveNodesInAllDC.add(node);
-      //          LOG.debug(
-      //              "[{}] Adding {} as it belongs to the {} DC in Multi-DC/Region Setup",
-      //              logPrefix,
-      //              node,
-      //              node.getDatacenter());
-      //          distanceReporter.setDistance(node, NodeDistance.REMOTE);
-      //        } else {
-      //          distanceReporter.setDistance(node, NodeDistance.IGNORED);
-      //        }
-      //      }
     } else {
       // For YCQL, When Local DC is not provided, all the available UP nodes will be
       // considered
@@ -256,7 +225,7 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
       handleSuccess = true;
     }
 
-    liveNodes.remove(node);
+    handleSuccess = liveNodes.remove(node);
 
     return handleSuccess;
   }
