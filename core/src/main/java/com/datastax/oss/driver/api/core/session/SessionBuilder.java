@@ -55,6 +55,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -856,8 +857,16 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
           cloudConfigInputStream = () -> getURL(configUrlString).openStream();
         }
       }
-      List<String> configContactPoints =
-          defaultConfig.getStringList(DefaultDriverOption.CONTACT_POINTS, Collections.emptyList());
+      List<String> configContactPoints;
+      if (defaultConfig.getString(DefaultDriverOption.CONTACT_POINTS).contains(",")) {
+        configContactPoints =
+            Arrays.asList(
+                defaultConfig.getString(DefaultDriverOption.CONTACT_POINTS, "").split(","));
+      } else {
+        configContactPoints =
+            defaultConfig.getStringList(
+                DefaultDriverOption.CONTACT_POINTS, Collections.emptyList());
+      }
       if (cloudConfigInputStream != null) {
         if (!programmaticContactPoints.isEmpty() || !configContactPoints.isEmpty()) {
           LOG.info(
