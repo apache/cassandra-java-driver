@@ -259,7 +259,7 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.REQUEST_SERIAL_CONSISTENCY, "SERIAL");
     map.put(TypedDriverOption.REQUEST_DEFAULT_IDEMPOTENCE, false);
     map.put(TypedDriverOption.GRAPH_TRAVERSAL_SOURCE, "g");
-    map.put(TypedDriverOption.LOAD_BALANCING_POLICY_CLASS, "DefaultLoadBalancingPolicy");
+    map.put(TypedDriverOption.LOAD_BALANCING_POLICY_CLASS, "PartitionAwarePolicy");
     map.put(TypedDriverOption.LOAD_BALANCING_POLICY_SLOW_AVOIDANCE, true);
     map.put(TypedDriverOption.SESSION_LEAK_THRESHOLD, 4);
     map.put(TypedDriverOption.CONNECTION_CONNECT_TIMEOUT, Duration.ofSeconds(5));

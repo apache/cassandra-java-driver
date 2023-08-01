@@ -17,6 +17,21 @@
     },
     "ignore": [
       {
+        "code": "java.class.nonPublicPartOfAPI",
+        "new": "class com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer.TableInfo",
+        "justification": ""
+      },
+      {
+        "code": "java.class.nonPublicPartOfAPI",
+        "new": "class com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer.Bucket",
+        "justification": ""
+      },
+      {
+        "code": "java.class.nonPublicPartOfAPI",
+        "new": "class com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer.TableInfo",
+        "justification": ""
+      },
+      {
         "code": "java.method.removed",
         "old": "method com.datastax.oss.driver.api.core.cql.BatchStatementBuilder com.datastax.oss.driver.api.core.cql.BatchStatementBuilder::withKeyspace(com.datastax.oss.driver.api.core.CqlIdentifier)",
         "justification": "JAVA-2164: Rename statement builder methods to setXxx"
