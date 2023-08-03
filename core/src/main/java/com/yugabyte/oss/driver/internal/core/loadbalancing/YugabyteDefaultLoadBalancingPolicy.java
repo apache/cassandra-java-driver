@@ -225,7 +225,7 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
       handleSuccess = true;
     }
 
-    handleSuccess = liveNodes.remove(node);
+    handleSuccess = liveNodes.remove(node) ? true : handleSuccess;
 
     return handleSuccess;
   }
