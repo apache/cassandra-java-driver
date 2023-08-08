@@ -37,6 +37,7 @@ public class HeapCompressionTest extends CompressionTest {
    */
   @Test(groups = "isolated")
   public void should_function_with_snappy_compression() throws Exception {
+    skipTestWithCassandraVersionOrHigher("4.0.0", "snappy");
     compressionTest(ProtocolOptions.Compression.SNAPPY);
   }
 

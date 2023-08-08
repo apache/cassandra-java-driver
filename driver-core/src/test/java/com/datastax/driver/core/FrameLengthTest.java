@@ -26,6 +26,7 @@ import com.datastax.driver.core.exceptions.FrameTooLongException;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.schemabuilder.Create;
 import com.datastax.driver.core.schemabuilder.SchemaBuilder;
+import com.datastax.driver.core.utils.CassandraVersion;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Random;
@@ -105,22 +106,42 @@ public class FrameLengthTest extends CCMTestsSupport {
    */
   @Test(groups = "isolated")
   public void should_throw_exception_when_frame_exceeds_configured_max() {
+    skipTestWithCassandraVersionOrHigher("4.0.0", "frame-size exceeding with default-protocol");
+    run_frame_size_exceeding_queries(session());
+  }
+
+  /**
+   * With cassandra 4.0.0+, V5 protocol is default which breaks requests into segments. Force V4
+   * protocol to allow us to test frame-size limitation code.
+   */
+  @CassandraVersion("4.0.0")
+  @Test(groups = "isolated")
+  public void should_throw_exception_when_frame_exceeds_configured_max_v4_protocol_cassandra4() {
+    Cluster cluster =
+        register(createClusterBuilder().withProtocolVersion(ProtocolVersion.V4).build());
+    Session session = register(cluster.connect());
+    useKeyspace(session, keyspace);
+
+    run_frame_size_exceeding_queries(session);
+  }
+
+  private void run_frame_size_exceeding_queries(Session session) {
     try {
-      session().execute(select().from(tableName).where(eq("k", 0)));
+      session.execute(select().from(tableName).where(eq("k", 0)));
       fail("Exception expected");
     } catch (FrameTooLongException ftle) {
       // Expected.
     }
 
     // Both hosts should remain up.
-    Collection<Host> hosts = session().getState().getConnectedHosts();
+    Collection<Host> hosts = session.getState().getConnectedHosts();
     assertThat(hosts).hasSize(2).extractingResultOf("isUp").containsOnly(true);
 
     // Should be able to make a query that is less than the max frame size.
     // Execute multiple time to exercise all hosts.
     for (int i = 0; i < 10; i++) {
       ResultSet result =
-          session().execute(select().from(tableName).where(eq("k", 0)).and(eq("c", 0)));
+          session.execute(select().from(tableName).where(eq("k", 0)).and(eq("c", 0)));
       assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
     }
   }
