@@ -15,6 +15,8 @@
  */
 package com.datastax.dse.driver.api.mapper.reactive;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -68,6 +70,9 @@ public class TestSubscriber<T> implements Subscriber<T> {
   }
 
   public void awaitTermination() {
-    Uninterruptibles.awaitUninterruptibly(latch, 1, TimeUnit.MINUTES);
+    assertThat(Uninterruptibles.awaitUninterruptibly(latch, 1, TimeUnit.MINUTES))
+        .withFailMessage("latch await failed, subscriber not terminated")
+        .isTrue();
+    assertThat(latch.getCount()).withFailMessage("subscriber not terminated").isGreaterThan(0);
   }
 }
