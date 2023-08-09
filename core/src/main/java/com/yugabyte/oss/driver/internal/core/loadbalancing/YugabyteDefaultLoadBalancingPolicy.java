@@ -212,8 +212,18 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
   }
 
   private boolean handleNodeDownEvent(Node node) {
-    boolean handleSuccess = liveNodesInAllDC.remove(node);
-    handleSuccess = liveNodesInLocalDc.remove(node) ? true : handleSuccess;
+    boolean handleSuccess = false;
+
+    if (liveNodesInAllDC.contains(node)) {
+      liveNodesInAllDC.remove(node);
+      handleSuccess = true;
+    }
+
+    if (liveNodesInLocalDc.contains(node)) {
+      liveNodesInLocalDc.remove(node);
+      handleSuccess = true;
+    }
+
     handleSuccess = liveNodes.remove(node) ? true : handleSuccess;
 
     return handleSuccess;
