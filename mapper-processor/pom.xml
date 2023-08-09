@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.yugabyte</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.15.0-yb-1-SNAPSHOT</version>
+    <version>4.15.0-yb-1</version>
   </parent>
   <artifactId>java-driver-mapper-processor</artifactId>
   <name>DataStax Java driver for Apache Cassandra(R) - object mapper processor</name>
