@@ -7,7 +7,7 @@ https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/query
 
 To start a `CREATE FUNCTION` query, use `createFunction` in https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html[SchemaBuilder]:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 
@@ -16,7 +16,7 @@ CreateFunctionStart create = createFunction("log");
 
 Like all other `CREATE` queries, one may supply `ifNotExists()` to require that the UDF should only be created if it doesn't already exist, i.e.:
 
-[,java]
+[source,java]
 ----
 CreateFunctionStart create = createFunction("cycling", "log").ifNotExists();
 ----
@@ -24,7 +24,7 @@ CreateFunctionStart create = createFunction("cycling", "log").ifNotExists();
 You may also specify that you would like to replace an existing function by the same signature if it exists.
 In this case, use `orReplace`:
 
-[,java]
+[source,java]
 ----
 CreateFunctionStart create = createFunction("cycling", "log").orReplace();
 ----
@@ -46,7 +46,7 @@ There are a number of steps that must be executed to complete a function:
 
 For example, the following defines a complete `CREATE FUNCTION` statement:
 
-[,java]
+[source,java]
 ----
 createFunction("cycling", "log")
     .withParameter("input", DataTypes.DOUBLE)
@@ -63,7 +63,7 @@ Note that when providing a function body, the `as` method does not implicitly qu
 If you would like to have the API handle this for you, use `asQuoted`.
 This will surround your function body in single quotes if the body itself does not contain a single quote, otherwise it will surround your function body in two dollar signs (`$$`) mimicking a postgres-style string literal, i.e.:
 
-[,java]
+[source,java]
 ----
 createFunction("sayhi")
     .withParameter("input", DataTypes.TEXT)
@@ -78,7 +78,7 @@ createFunction("sayhi")
 
 To create a `DROP FUNCTION` query, use `dropFunction`:
 
-[,java]
+[source,java]
 ----
 dropFunction("cycling", "log");
 // DROP FUNCTION cycling.log
@@ -86,7 +86,7 @@ dropFunction("cycling", "log");
 
 You may also specify `ifExists`:
 
-[,java]
+[source,java]
 ----
 dropFunction("log").ifExists();
 // DROP FUNCTION IF EXISTS log

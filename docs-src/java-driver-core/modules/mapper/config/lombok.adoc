@@ -9,7 +9,7 @@ We have a full example at https://github.com/DataStax-Examples/object-mapper-jvm
 
 You can either map mutable "data" classes:
 
-[,java]
+[source,java]
 ----
 import lombok.Data;
 import com.datastax.oss.driver.api.mapper.annotations.*;
@@ -24,7 +24,7 @@ public class Product {
 
 Or immutable "value" classes:
 
-[,java]
+[source,java]
 ----
 import lombok.Value;
 import com.datastax.oss.driver.api.mapper.annotations.*;
@@ -40,7 +40,7 @@ public class Product {
 
 You can also use Lombok's fluent accessors if you configure the mapper accordingly:
 
-[,java]
+[source,java]
 ----
 import lombok.Data;
 import lombok.experimental.Accessors;

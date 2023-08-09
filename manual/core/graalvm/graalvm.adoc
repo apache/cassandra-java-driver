@@ -30,7 +30,7 @@ But if you intend to use a custom implementation in lieu of a driver built-in cl
 
 For example, assuming that you have the following load balancing policy implementation:
 
-[,java]
+[source,java]
 ----
 
 package com.example.app;
@@ -76,7 +76,7 @@ Then you will have to register that class for reflection:
 NOTE: some frameworks allow you to simplify the registration process.
 For example, Quarkus offers the `io.quarkus.runtime.annotations.RegisterForReflection` annotation that you can use to annotate your class:
 
-[,java]
+[source,java]
 ----
 @RegisterForReflection
 public class CustomLoadBalancingPolicy extends DefaultLoadBalancingPolicy {

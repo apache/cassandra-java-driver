@@ -145,7 +145,7 @@ but the default behavior is a bit verbose.
 `Main.java` is the canonical example introduced in our link:../#quick-start[quick start];
 it connects to Cassandra, queries the server version and prints it:
 
-[,java]
+[source,java]
 ----
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;

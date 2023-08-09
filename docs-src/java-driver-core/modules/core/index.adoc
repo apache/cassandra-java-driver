@@ -18,7 +18,7 @@ It is published under the following coordinates:
 
 Here's a short program that connects to Cassandra and executes a query:
 
-[,java]
+[source,java]
 ----
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.*;
@@ -61,7 +61,7 @@ If you want to retry instead, you can set the link:reconnection/#at-init-time[re
 
 If you don't specify any contact point, the driver defaults to `127.0.0.1:9042`:
 
-[,java]
+[source,java]
 ----
 CqlSession session = CqlSession.builder().build();
 ----
@@ -81,7 +81,7 @@ Again this can be specified either:
 
 Here is a full programmatic example:
 
-[,java]
+[source,java]
 ----
 CqlSession session = CqlSession.builder()
     .addContactPoint(new InetSocketAddress("1.2.3.4", 9042))
@@ -109,7 +109,7 @@ For more details about the local datacenter, refer to the link:load_balancing/#l
 By default, a session isn't tied to any specific keyspace.
 You'll need to prefix table names in your queries:
 
-[,java]
+[source,java]
 ----
 session.execute("SELECT * FROM my_keyspace.my_table WHERE id = 1");
 ----
@@ -124,7 +124,7 @@ datastax-java-driver {
 
 Or with the builder:
 
-[,java]
+[source,java]
 ----
 CqlSession session = CqlSession.builder()
   .withKeyspace(CqlIdentifier.fromCql("my_keyspace"))
@@ -133,7 +133,7 @@ CqlSession session = CqlSession.builder()
 
 That keyspace will be used as the default when table names are not qualified:
 
-[,java]
+[source,java]
 ----
 session.execute("SELECT * FROM my_table WHERE id = 1");
 session.execute("SELECT * FROM other_keyspace.other_table WHERE id = 1");
@@ -142,7 +142,7 @@ session.execute("SELECT * FROM other_keyspace.other_table WHERE id = 1");
 You might be tempted to open a separate session for each keyspace used in your application;
 however, connection pools are created at the session level, so each new session will consume additional system resources:
 
-[,java]
+[source,java]
 ----
 // Anti-pattern: creating two sessions doubles the number of TCP connections opened by the driver
 CqlSession session1 = CqlSession.builder().withKeyspace(CqlIdentifier.fromCql("ks1")).build();
@@ -151,7 +151,7 @@ CqlSession session2 = CqlSession.builder().withKeyspace(CqlIdentifier.fromCql("k
 
 If you issue a `USE` statement, it will change the default keyspace on that session:
 
-[,java]
+[source,java]
 ----
 CqlSession session = CqlSession.builder().build();
 // No default keyspace set, need to prefix:
@@ -166,7 +166,7 @@ Be very careful though: switching the keyspace at runtime is inherently thread-u
 
 Finally, if you're connecting to Cassandra 4 or above, you can specify the keyspace independently for each request:
 
-[,java]
+[source,java]
 ----
 CqlSession session = CqlSession.builder().build();
 session.execute(
@@ -178,7 +178,7 @@ session.execute(
 
 You run queries with the session's `execute*` methods:
 
-[,java]
+[source,java]
 ----
 ResultSet rs = session.execute("SELECT release_version FROM system.local");
 ----
@@ -191,7 +191,7 @@ You can also pass a link:statements/[Statement] instance.
 Executing a query produces a https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/ResultSet.html[ResultSet], which is an iterable of https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/Row.html[Row].
 The basic way to process all rows is to use Java's for-each loop:
 
-[,java]
+[source,java]
 ----
 for (Row row : rs) {
     // process the row
@@ -203,7 +203,7 @@ To handle large result sets, you might want to use a `LIMIT` clause in your CQL 
 
 When you know that there is only one row (or are only interested in the first one), the driver provides a convenience method:
 
-[,java]
+[source,java]
 ----
 Row row = rs.one();
 ----
@@ -213,7 +213,7 @@ Row row = rs.one();
 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/Row.html[Row] provides getters to extract column values;
 they can be either positional or named:
 
-[,java]
+[source,java]
 ----
 Row row = session.execute("SELECT first_name, last_name FROM users WHERE id = 1").one();
 
@@ -225,7 +225,7 @@ String firstName = row.getString(CqlIdentifier.fromCql("first_name"));
 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/CqlIdentifier.html[CqlIdentifier] is a string wrapper that deals with case-sensitivity.
 If you don't want to create an instance for each getter call, the driver also provides convenience methods that take a raw string:
 
-[,java]
+[source,java]
 ----
 String firstName = row.getString("first_name");
 ----
@@ -383,7 +383,7 @@ For performance reasons, the driver uses primitive Java types wherever possible 
 the CQL value `NULL` is encoded as the type's default value (`false`, `0`...), which can be ambiguous.
 To distinguish `NULL` from actual values, use `isNull`:
 
-[,java]
+[source,java]
 ----
 Integer age = row.isNull("age") ? null : row.getInt("age");
 ----
@@ -393,7 +393,7 @@ Integer age = row.isNull("age") ? null : row.getInt("age");
 To ensure type safety, collection getters are generic.
 You need to provide type parameters matching your CQL type when calling the methods:
 
-[,java]
+[source,java]
 ----
 // Assuming given_names is a list<text>:
 List<String> givenNames = row.getList("given_names", String.class);
@@ -402,7 +402,7 @@ List<String> givenNames = row.getList("given_names", String.class);
 For nested collections, element types are generic and cannot be expressed as Java `Class` instances.
 Use https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/reflect/GenericType.html[GenericType] instead:
 
-[,java]
+[source,java]
 ----
 // Assuming teams is a set<list<text>>:
 GenericType<Set<List<String>>> listOfStrings = new GenericType<Set<List<String>>>() {};
@@ -415,7 +415,7 @@ Since generic types are anonymous inner classes, it's recommended to store them 
 
 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/ResultSet.html[ResultSet] and https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/Row.html[Row] expose an API to explore the column metadata at runtime:
 
-[,java]
+[source,java]
 ----
 for (ColumnDefinitions.Definition definition : row.getColumnDefinitions()) {
     System.out.printf("Column %s has type %s%n",

@@ -20,7 +20,7 @@ CREATE TABLE inventory.product(id uuid PRIMARY KEY, description text);
 
 This is a simple data container that will represent a row in the `product` table:
 
-[,java]
+[source,java]
 ----
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
@@ -60,7 +60,7 @@ for more details, see link:entities/[Entities].
 
 A DAO defines a set of query methods:
 
-[,java]
+[source,java]
 ----
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Delete;
@@ -89,7 +89,7 @@ For the full list of available query types, see link:daos/[DAOs].
 
 This is the top-level entry point to mapper features, that allows you to obtain DAO instances:
 
-[,java]
+[source,java]
 ----
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
 import com.datastax.oss.driver.api.mapper.annotations.DaoKeyspace;
@@ -117,7 +117,7 @@ Pay attention to the compiler output: the mapper processor will sometimes genera
 One of the classes generated during annotation processing is `InventoryMapperBuilder`.
 It allows you to initialize a mapper instance by wrapping a core driver session:
 
-[,java]
+[source,java]
 ----
 CqlSession session = CqlSession.builder().build();
 InventoryMapper inventoryMapper = new InventoryMapperBuilder(session).build();
@@ -128,7 +128,7 @@ It is thread-safe.
 
 From the mapper, you can then obtain a DAO instance and execute queries:
 
-[,java]
+[source,java]
 ----
 ProductDao dao = inventoryMapper.productDao(CqlIdentifier.fromCql("inventory"));
 dao.save(new Product(UUID.randomUUID(), "Mechanical keyboard"));

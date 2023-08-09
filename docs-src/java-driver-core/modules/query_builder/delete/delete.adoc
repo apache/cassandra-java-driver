@@ -3,7 +3,7 @@
 To start a DELETE query, use one of the `deleteFrom` methods in https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html[QueryBuilder].
 There are several variants depending on whether your table name is qualified, and whether you use link:../../case_sensitivity/[identifiers] or raw strings:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 
@@ -22,7 +22,7 @@ if you don't provide any, the whole row will be deleted.
 
 The easiest way to add a selector is with a fluent API method:
 
-[,java]
+[source,java]
 ----
 deleteFrom("user").column("v1").column("v2");
 // DELETE v1,v2 FROM user...
@@ -30,7 +30,7 @@ deleteFrom("user").column("v1").column("v2");
 
 You can also create it manually with one of the factory methods in https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/select/Selector.html[Selector], and then pass it to `selector()`:
 
-[,java]
+[source,java]
 ----
 deleteFrom("user").selector(Selector.getColumn("v"))
 // DELETE v FROM user ...
@@ -39,7 +39,7 @@ deleteFrom("user").selector(Selector.getColumn("v"))
 If you have multiple selectors, you can also use `selectors()` to add them all in a single call.
 This is a bit more efficient since it creates less temporary objects:
 
-[,java]
+[source,java]
 ----
 deleteFrom("user").selectors(getColumn("v1"), getColumn("v2"));
 // DELETE v1,v2 FROM user...
@@ -50,7 +50,7 @@ Only 3 types of selectors can be used in DELETE statements:
 * simple columns (as illustrated in the previous examples);
 * fields in non-nested UDT columns:
 +
-[,java]
+[source,java]
 ----
 deleteFrom("user").field("address", "street");
 // DELETE address.street FROM user ...
@@ -58,7 +58,7 @@ deleteFrom("user").field("address", "street");
 
 * elements in non-nested collection columns:
 +
-[,java]
+[source,java]
 ----
 deleteFrom("product").element("features", literal("color"));
 // DELETE features['color'] FROM product ...
@@ -66,7 +66,7 @@ deleteFrom("product").element("features", literal("color"));
 
 You can also pass a raw CQL snippet, that will get appended to the query as-is, without any syntax checking or escaping:
 
-[,java]
+[source,java]
 ----
 deleteFrom("user").raw("v /*some random comment*/")
 // DELETE v /*some random comment*/ FROM user ...
@@ -80,7 +80,7 @@ on the other hand, it can be used as a workaround to handle new CQL features tha
 The USING TIMESTAMP clause specifies the timestamp at which the mutation will be applied.
 You can pass either a literal value:
 
-[,java]
+[source,java]
 ----
 deleteFrom("user").column("v").usingTimestamp(1234)
 // DELETE v FROM user USING TIMESTAMP 1234
@@ -88,7 +88,7 @@ deleteFrom("user").column("v").usingTimestamp(1234)
 
 Or a bind marker:
 
-[,java]
+[source,java]
 ----
 deleteFrom("user").column("v").usingTimestamp(bindMarker())
 // DELETE v FROM user USING TIMESTAMP ?
@@ -100,7 +100,7 @@ If you call the method multiple times, the last value will be used.
 
 Relations get added with the fluent `whereXxx()` methods:
 
-[,java]
+[source,java]
 ----
 deleteFrom("user").whereColumn("k").isEqualTo(bindMarker());
 // DELETE FROM user WHERE k=?
@@ -108,7 +108,7 @@ deleteFrom("user").whereColumn("k").isEqualTo(bindMarker());
 
 Or you can build and add them manually:
 
-[,java]
+[source,java]
 ----
 deleteFrom("user").where(
     Relation.column("k").isEqualTo(bindMarker()));
@@ -117,7 +117,7 @@ deleteFrom("user").where(
 
 Once there is at least one relation, the statement can be built:
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement = deleteFrom("user").whereColumn("k").isEqualTo(bindMarker()).build();
 ----
@@ -128,7 +128,7 @@ Relations are a common feature used by many types of statements, so they have a 
 
 Conditions get added with the fluent `ifXxx()` methods:
 
-[,java]
+[source,java]
 ----
 deleteFrom("user")
     .whereColumn("k").isEqualTo(bindMarker())
@@ -138,7 +138,7 @@ deleteFrom("user")
 
 Or you can build and add them manually:
 
-[,java]
+[source,java]
 ----
 deleteFrom("user")
     .whereColumn("k").isEqualTo(bindMarker())

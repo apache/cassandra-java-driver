@@ -2,7 +2,7 @@
 
 Annotate a DAO method with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Update.html[@Update] to generate a query that updates one or more link:../../entities[entities]:
 
-[,java]
+[source,java]
 ----
 @Dao
 public interface ProductDao {
@@ -22,7 +22,7 @@ The query will update at most one row.
 * If the annotation has a `customWhereClause`, it completely replaces the WHERE clause.
 If the provided string contains placeholders, the method must have corresponding additional parameters (same name, and a compatible Java type):
 +
-[,java]
+[source,java]
 ----
   @Update(customWhereClause = "description LIKE :searchString")
   void updateIfDescriptionMatches(Product product, String searchString);
@@ -33,7 +33,7 @@ Multiple rows may be updated.
 
 If the query has a custom timestamp or TTL with placeholders, the method must have corresponding additional parameters (same name, and a compatible Java type):
 
-[,java]
+[source,java]
 ----
 @Update(timestamp = ":timestamp")
 void updateWithTimestamp(Product product, long timestamp);
@@ -45,7 +45,7 @@ void updateWithTtl(Product product, int ttl);
 An optional IF clause can be appended to the generated query.
 It can contain placeholders, for which the method must have corresponding parameters (same name, and a compatible Java type):
 
-[,java]
+[source,java]
 ----
 @Update(customIfClause = "description = :expectedDescription")
 ResultSet updateIfDescriptionMatches(Product product, String expectedDescription);
@@ -54,7 +54,7 @@ ResultSet updateIfDescriptionMatches(Product product, String expectedDescription
 An optional IF EXISTS clause at the end of the generated UPDATE query.
 This is mutually exclusive with `customIfClause` (if both are set, the mapper processor will generate a compile-time error):
 
-[,java]
+[source,java]
 ----
 @Update(ifExists = true)
 boolean updateIfExists(Product product);
@@ -63,7 +63,7 @@ boolean updateIfExists(Product product);
 The annotation can define a link:../null_saving/[null saving strategy] that applies to the properties of the entity to update.
 This allows you to implement partial updates, by passing a "template" entity that only contains the properties you want to modify:
 
-[,java]
+[source,java]
 ----
 // DAO method definition:
 @Update(customWhereClause = "id IN (:id1, :id2)", nullSavingStrategy = DO_NOT_SET)
@@ -88,7 +88,7 @@ The method can return:
 * a `boolean` or https://docs.oracle.com/javase/8/docs/api/index.html?java/lang/Boolean.html[Boolean], which will be mapped to `ResultSet#wasApplied()`.
 This is intended for conditional queries.
 +
-[,java]
+[source,java]
 ----
   @Update(ifExists = true)
   boolean updateIfExists(Product product);
@@ -99,7 +99,7 @@ The method will return the raw query result, without any conversion.
 This is intended for queries with custom IF clauses;
 when those queries are not applied, they return the actual values of the tested columns.
 +
-[,java]
+[source,java]
 ----
   @Update(customIfClause = "description = :expectedDescription")
   ResultSet updateIfExists(Product product);
@@ -109,7 +109,7 @@ when those queries are not applied, they return the actual values of the tested 
 * a https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/BoundStatement.html[BoundStatement].
 This is intended for queries where you will execute this statement later or in a batch:
 +
-[,java]
+[source,java]
 ----
   @Update
   BoundStatement update(Product product);
@@ -119,7 +119,7 @@ This is intended for queries where you will execute this statement later or in a
 The mapper will execute the query asynchronously.
 Note that for result sets, you need to switch to the asynchronous equivalent https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html[AsyncResultSet].
 +
-[,java]
+[source,java]
 ----
   @Update
   CompletionStage<Void> update(Product product);
@@ -133,7 +133,7 @@ Note that for result sets, you need to switch to the asynchronous equivalent htt
 
 * a https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/cql/reactive/ReactiveResultSet.html[ReactiveResultSet].
 +
-[,java]
+[source,java]
 ----
   @Update
   ReactiveResultSet updateReactive(Product product);

@@ -7,7 +7,7 @@ https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/query
 
 To start a `CREATE KEYSPACE` query, use `createKeyspace` in https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html[SchemaBuilder]:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 
@@ -16,7 +16,7 @@ CreateKeyspaceStart create = createKeyspace("cycling");
 
 Like all other `CREATE` queries, one may supply `ifNotExists()` to require that the keyspace should only be created if it doesn't already exist, i.e.:
 
-[,java]
+[source,java]
 ----
 CreateKeyspaceStart create = createKeyspace("cycling").ifNotExists();
 ----
@@ -33,7 +33,7 @@ To provide a replication strategy, use one of the following API methods on `Crea
 
 For example, the following builds a completed `CreateKeyspace` using `NetworkTopologyStrategy` with a replication factor of 2 in `east` and 3 in `west`:
 
-[,java]
+[source,java]
 ----
 CreateKeyspace create = createKeyspace("cycling")
     .withNetworkTopologyStrategy(ImmutableMap.of("east", 2, "west", 3));
@@ -49,7 +49,7 @@ Optionally, once a replication factor is provided, one may provide additional co
 
 To start an `ALTER KEYSPACE` query, use `alterKeyspace`:
 
-[,java]
+[source,java]
 ----
 AlterKeyspaceStart alterKeyspace = alterKeyspace("cycling");
 ----
@@ -64,7 +64,7 @@ From here, you can modify the keyspace's replication and other settings:
 
 At least one of these operations must be used to return a completed `AlterKeyspace`, i.e.:
 
-[,java]
+[source,java]
 ----
 alterKeyspace("cycling").withDurableWrites(true);
 // ALTER KEYSPACE cycling WITH durable_writes=true
@@ -74,7 +74,7 @@ alterKeyspace("cycling").withDurableWrites(true);
 
 To create a `DROP KEYSPACE` query, use `dropKeyspace`:
 
-[,java]
+[source,java]
 ----
 dropKeyspace("cycling");
 // DROP KEYSPACE cycling
@@ -82,7 +82,7 @@ dropKeyspace("cycling");
 
 You may also specify `ifExists`:
 
-[,java]
+[source,java]
 ----
 dropKeyspace("cycling").ifExists();
 // DROP KEYSPACE IF EXISTS cycling

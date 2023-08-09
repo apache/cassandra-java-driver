@@ -10,7 +10,7 @@ finally, `DefaultDriverContext` is the implementing class.
 Most components initialize lazily (see `LazyReference`).
 They also reference each other, typically by taking the context as a constructor argument, and extracting the dependencies they need:
 
-[,java]
+[source,java]
 ----
 public DefaultTopologyMonitor(InternalDriverContext context) {
   ...
@@ -45,7 +45,7 @@ The basic approach to plug in a custom internal component is to subclass the con
 
 For example, let's say you wrote a custom `NettyOptions` implementation (maybe you have multiple sessions, and want to reuse the event loop groups instead of recreating them every time):
 
-[,java]
+[source,java]
 ----
 public class CustomNettyOptions implements NettyOptions {
   ...
@@ -54,7 +54,7 @@ public class CustomNettyOptions implements NettyOptions {
 
 In the default context, here's how the component is managed:
 
-[,java]
+[source,java]
 ----
 public class DefaultDriverContext {
 
@@ -77,7 +77,7 @@ public class DefaultDriverContext {
 
 To switch in your implementation, you only need to override the build method:
 
-[,java]
+[source,java]
 ----
 public class CustomContext extends DefaultDriverContext {
 
@@ -95,7 +95,7 @@ public class CustomContext extends DefaultDriverContext {
 Then you need a way to create a session that uses your custom context.
 The session builder is extensible as well:
 
-[,java]
+[source,java]
 ----
 public class CustomBuilder extends SessionBuilder<CustomBuilder, CqlSession> {
 
@@ -115,7 +115,7 @@ public class CustomBuilder extends SessionBuilder<CustomBuilder, CqlSession> {
 
 Finally, you can use your custom builder like the regular `CqlSession.builder()`, it inherits all the methods:
 
-[,java]
+[source,java]
 ----
 CqlSession session = new CustomBuilder()
     .addContactPoint(new InetSocketAddress("1.2.3.4", 9042))

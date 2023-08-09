@@ -3,7 +3,7 @@
 The script API handles Gremlin-groovy requests provided as plain Java strings.
 To execute a script, wrap it into a https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/graph/ScriptGraphStatement.html[ScriptGraphStatement] and pass it to the session:
 
-[,java]
+[source,java]
 ----
 CqlSession session = CqlSession.builder().build();
 
@@ -21,7 +21,7 @@ As demonstrated above, the simplest way to create a script statement is to pass 
 The default implementation returned by the driver is *immutable*;
 if you call additional methods on the statement -- for example to set link:../options/[options] -- each method call will create a new copy:
 
-[,java]
+[source,java]
 ----
 ScriptGraphStatement statement =
     ScriptGraphStatement.newInstance("system.graph('demo').ifNotExists().create()");
@@ -39,7 +39,7 @@ Modern VMs are normally good at dealing with such short-lived objects, but if yo
 
 Instead of creating a statement directly, you can pass your Gremlin-groovy string to https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/graph/ScriptGraphStatement.html#builder-java.lang.String-[ScriptGraphStatement.builder], chain method calls to set options, and finally call `build()`:
 
-[,java]
+[source,java]
 ----
 ScriptGraphStatement statement1 =
     ScriptGraphStatement.builder("system.graph('demo').ifNotExists().create()")
@@ -53,7 +53,7 @@ As a consequence, the builder object is *not thread-safe*.
 
 You can also initialize a builder from an existing statement: it will inherit all of its options.
 
-[,java]
+[source,java]
 ----
 ScriptGraphStatement statement2 =
     ScriptGraphStatement.builder(statement1).withTimeout(Duration.ofSeconds(20)).build();
@@ -70,7 +70,7 @@ Note that, unlike in CQL, placeholders are not prefixed with ":".
 
 To manage parameters on an existing statement, use `setQueryParam` / `removeQueryParam`:
 
-[,java]
+[source,java]
 ----
 ScriptGraphStatement statement =
     ScriptGraphStatement.newInstance("g.addV(label, vertexLabel)")
@@ -79,7 +79,7 @@ ScriptGraphStatement statement =
 
 On the builder, use `withQueryParam` / `withoutQueryParams`:
 
-[,java]
+[source,java]
 ----
 ScriptGraphStatement statement =
     ScriptGraphStatement.builder("g.addV(label, vertexLabel)")

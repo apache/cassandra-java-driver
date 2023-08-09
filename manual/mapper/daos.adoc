@@ -17,7 +17,7 @@ In general, those queries will relate to the same link:../entities/[entity] (alt
 
 It must be annotated with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Dao.html[@Dao]:
 
-[,java]
+[source,java]
 ----
 @Dao
 public interface ProductDao {
@@ -53,7 +53,7 @@ The allowed parameters and return type are specific to each annotation.
 
 To obtain a DAO instance, use a link:../mapper/#dao-factory-methods[factory method] on the mapper interface.
 
-[,java]
+[source,java]
 ----
 InventoryMapper inventoryMapper = new InventoryMapperBuilder(session).build();
 ProductDao dao = inventoryMapper.productDao("someKeyspace");
@@ -67,7 +67,7 @@ DAOs can benefit from inheriting methods from other interfaces.
 This is useful when you have a common set of query methods that could be shared between entities.
 For example, using the class hierarchy defined in link:../entities/#inheritance[Entity Inheritance], one may define a set of DAO interfaces in the  following manner:
 
-[,java]
+[source,java]
 ----
 interface BaseDao<T> {
   @Insert
@@ -106,7 +106,7 @@ Note that interfaces that declare generic type variables should not be annotated
 
 In addition to inheriting methods from parent interfaces, interface-level annotations such as https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/DefaultNullSavingStrategy.html[@DefaultNullSavingStrategy] are also inherited:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy.SET_TO_NULL;
 
@@ -121,7 +121,7 @@ interface RectangleDao extends BaseDao {}
 Annotation priority is driven by proximity to the https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Dao.html[@Dao]-annotated interface.
 For example:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy.SET_TO_NULL;
 import static com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy.DO_NOT_SET;
@@ -139,7 +139,7 @@ In this case `@DefaultNullSavingStrategy(DO_NOT_SET)` on `RectangleDao` would ov
 
 If two parent interfaces at the same level declare the same annotation, the priority of annotation  chosen is controlled by the order the interfaces are declared, for example:
 
-[,java]
+[source,java]
 ----
 interface RectangleDao extends Dao1, Dao2 {}
 ----

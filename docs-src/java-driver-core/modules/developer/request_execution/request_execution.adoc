@@ -137,7 +137,7 @@ The goal is to keep the pool at its expected capacity: whenever a connection is 
 The driver can execute different types of requests, in different ways.
 This is abstracted by the top-level `Session` interface, with a very generic execution method:
 
-[,java]
+[source,java]
 ----
 <RequestT extends Request, ResultT> ResultT execute(
       RequestT request, GenericType<ResultT> resultType);
@@ -173,7 +173,7 @@ Each `(RequestT, ResultT)` combination defines an execution model, for example:
 In general, regular client code doesn't use `Session.execute` directly.
 Instead, child interfaces expose more user-friendly shortcuts for a given result type:
 
-[,java]
+[source,java]
 ----
 public interface CqlSession extends Session {
   default ResultSet execute(Statement<?> statement) {
@@ -239,7 +239,7 @@ You can observe this in `CqlRequestSyncProcessor`.
 Note that preparing a statement is treated as just another execution model.
 It has its own processors, that operate on a special `PrepareRequest` type:
 
-[,java]
+[source,java]
 ----
 public interface CqlSession extends Session {
   default PreparedStatement prepare(SimpleStatement statement) {
@@ -277,7 +277,7 @@ If you add or remove execution models, you probably want to expose a session int
 For example, in the https://github.com/datastax/java-driver/blob/4.x/integration-tests/src/test/java/com/datastax/oss/driver/core/session/RequestProcessorIT.java[RequestProcessorIT] example mentioned in the previous section, we remove the ability to return `CompletionStage`, but add the ability to return `ListenableFuture`.
 Therefore we expose a custom https://github.com/datastax/java-driver/blob/4.x/integration-tests/src/test/java/com/datastax/oss/driver/example/guava/api/GuavaSession.java[GuavaSession] with a different return type for async methods:
 
-[,java]
+[source,java]
 ----
 public interface GuavaSession extends Session {
   default ListenableFuture<AsyncResultSet> executeAsync(Statement<?> statement) { ... }
@@ -290,7 +290,7 @@ Our new methods all have default implementations in term of the abstract `Sessio
 The driver provides `SessionWrapper` to that effect.
 See https://github.com/datastax/java-driver/blob/4.x/integration-tests/src/test/java/com/datastax/oss/driver/example/guava/internal/DefaultGuavaSession.java[DefaultGuavaSession]:
 
-[,java]
+[source,java]
 ----
 public class DefaultGuavaSession extends SessionWrapper implements GuavaSession {
   public DefaultGuavaSession(Session delegate) {
@@ -304,7 +304,7 @@ Since we extended the context (see previous section), we already wrote a custom 
 there is another protected method we can override to plug our wrapper.
 See https://github.com/datastax/java-driver/blob/4.x/integration-tests/src/test/java/com/datastax/oss/driver/example/guava/api/GuavaSessionBuilder.java[GuavaSessionBuilder]:
 
-[,java]
+[source,java]
 ----
 public class GuavaSessionBuilder extends SessionBuilder<GuavaSessionBuilder, GuavaSession> {
 
@@ -319,7 +319,7 @@ public class GuavaSessionBuilder extends SessionBuilder<GuavaSessionBuilder, Gua
 
 Client code can now use the familiar pattern to create a session:
 
-[,java]
+[source,java]
 ----
 GuavaSession session = new GuavaSessionBuilder()
     .addContactEndPoints(...)

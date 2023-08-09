@@ -8,7 +8,7 @@ For example it could be used to:
 
 Here is an example that demonstrates creating a keyspace and a table using https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html[SchemaBuilder]:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 

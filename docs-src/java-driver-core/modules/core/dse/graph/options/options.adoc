@@ -22,7 +22,7 @@ datastax-java-driver {
 
 This statement inherits the timeout from the default profile:
 
-[,java]
+[source,java]
 ----
 ScriptGraphStatement statement = ScriptGraphStatement.newInstance("g.V().next()");
 assert statement.getTimeout().equals(Duration.ofSeconds(3));
@@ -30,7 +30,7 @@ assert statement.getTimeout().equals(Duration.ofSeconds(3));
 
 This statement inherits the timeout from a named profile:
 
-[,java]
+[source,java]
 ----
 ScriptGraphStatement statement =
     ScriptGraphStatement.newInstance("g.V().next()").setExecutionProfileName("graph-oltp");
@@ -40,7 +40,7 @@ assert statement.getTimeout().equals(Duration.ofSeconds(30));
 This statement overrides the timeout programmatically;
 that takes precedence over the configuration:
 
-[,java]
+[source,java]
 ----
 ScriptGraphStatement statement =
     ScriptGraphStatement.newInstance("g.V().next()").setTimeout(Duration.ofSeconds(5));
@@ -48,7 +48,7 @@ ScriptGraphStatement statement =
 
 Programmatic overrides are also available in statement builders:
 
-[,java]
+[source,java]
 ----
 ScriptGraphStatement statement =
     ScriptGraphStatement.builder("g.V().next()").withTimeout(Duration.ofSeconds(5)).build();
@@ -68,7 +68,7 @@ This doesn't have to be set all the time.
 In fact, some queries explicitly require no graph name, for example those that access the `system` query.
 If you try to execute them with a graph name set, you'll get an error:
 
-[,java]
+[source,java]
 ----
 // Don't do this: executing a system query with the graph name set
 ScriptGraphStatement statement =
@@ -94,7 +94,7 @@ datastax-java-driver {
 }
 ----
 
-[,java]
+[source,java]
 ----
 ScriptGraphStatement statement =
     ScriptGraphStatement.newInstance("system.graph('demo').ifNotExists().create()")
@@ -140,7 +140,7 @@ It is unset by default, and you should almost never have to change it: the drive
 There is one exception: if you use the link:../script/[script API] against a legacy DSE version (5.0.3 or older), the driver infers the wrong protocol version.
 This manifests as a `ClassCastException` when you try to deserialize complex result objects, such as vertices:
 
-[,java]
+[source,java]
 ----
 GraphResultSet result =
     session.execute(ScriptGraphStatement.newInstance("g.V().next()"));

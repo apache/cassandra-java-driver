@@ -3,7 +3,7 @@
 To start an INSERT query, use one of the `insertInto` methods in https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html[QueryBuilder].
 There are several variants depending on whether your table name is qualified, and whether you use link:../../case_sensitivity/[identifiers] or raw strings:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 
@@ -20,7 +20,7 @@ You need to set at least one value.
 A regular insert (as opposed to a JSON insert, covered in the next section) specifies values for a set of columns.
 In the Query Builder DSL, this is expressed with the `value` method:
 
-[,java]
+[source,java]
 ----
 insertInto("user")
     .value("id", bindMarker())
@@ -37,7 +37,7 @@ The values are link:../term[terms].
 To start a JSON insert, use the `json` method instead.
 It takes the payload as a raw string, that will get inlined as a CQL literal:
 
-[,java]
+[source,java]
 ----
 insertInto("user").json("{\"id\":1, \"first_name\":\"John\", \"last_name\":\"Doe\"}");
 // INSERT INTO user JSON '{"id":1, "first_name":"John", "last_name":"Doe"}'
@@ -47,7 +47,7 @@ In a real application, you'll probably obtain the string from a JSON library suc
 
 You can also bind it as a value:
 
-[,java]
+[source,java]
 ----
 insertInto("user").json(bindMarker());
 // INSERT INTO user JSON ?
@@ -55,7 +55,7 @@ insertInto("user").json(bindMarker());
 
 JSON inserts have extra options to indicate how missing fields should be handled:
 
-[,java]
+[source,java]
 ----
 insertInto("user").json("{\"id\":1}").defaultUnset();
 // INSERT INTO user JSON '{"id":1}' DEFAULT UNSET
@@ -69,7 +69,7 @@ insertInto("user").json("{\"id\":1}").defaultNull();
 For INSERT queries, there is only one possible condition: IF NOT EXISTS.
 It applies to both regular and JSON inserts:
 
-[,java]
+[source,java]
 ----
 insertInto("user").json(bindMarker()).ifNotExists();
 // INSERT INTO user JSON ? IF NOT EXISTS
@@ -80,7 +80,7 @@ insertInto("user").json(bindMarker()).ifNotExists();
 The USING TIMESTAMP clause specifies the timestamp at which the mutation will be applied.
 You can pass either a literal value:
 
-[,java]
+[source,java]
 ----
 insertInto("user").json(bindMarker()).usingTimestamp(1234)
 // INSERT INTO user JSON ? USING TIMESTAMP 1234
@@ -88,7 +88,7 @@ insertInto("user").json(bindMarker()).usingTimestamp(1234)
 
 Or a bind marker:
 
-[,java]
+[source,java]
 ----
 insertInto("user").json(bindMarker()).usingTimestamp(bindMarker())
 // INSERT INTO user JSON ? USING TIMESTAMP ?
@@ -101,7 +101,7 @@ If you call the method multiple times, the last value will be used.
 You can generate a USING TTL clause that will cause column values to be deleted (marked with a tombstone) after the specified time (in seconds) has expired.
 This can be done with a literal:
 
-[,java]
+[source,java]
 ----
 insertInto("user").value("a", bindMarker()).usingTtl(60)
 // INSERT INTO user (a) VALUES (?) USING TTL 60
@@ -109,7 +109,7 @@ insertInto("user").value("a", bindMarker()).usingTtl(60)
 
 Or a bind marker:
 
-[,java]
+[source,java]
 ----
 insertInto("user").value("a", bindMarker()).usingTtl(bindMarker())
 // INSERT INTO user (a) VALUES (?) USING TTL ?

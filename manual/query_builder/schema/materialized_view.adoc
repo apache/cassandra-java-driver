@@ -7,7 +7,7 @@ https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/query
 
 To start a `CREATE MATERIALIZED VIEW` query, use `createMaterializedView` in https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html[SchemaBuilder]:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 
@@ -16,7 +16,7 @@ CreateMaterializedViewStart create = createMaterializedView("cycling", "cyclist_
 
 Like all other `CREATE` queries, one may supply `ifNotExists()` to require that the view should only be created if it doesn't already exist, i.e.:
 
-[,java]
+[source,java]
 ----
 CreateMaterializedViewStart create = createMaterializedView("cycling", "cyclist_by_age").ifNotExists();
 ----
@@ -30,7 +30,7 @@ There are a number of steps that must be executed to complete a materialized vie
 
 For example, the following defines a complete `CREATE MATERIALIZED VIEW` statement:
 
-[,java]
+[source,java]
 ----
 createMaterializedView("cycling", "cyclist_by_age")
     .asSelectFrom("cycling", "cyclist")
@@ -54,7 +54,7 @@ Refer to https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/
 
 To start a `ALTER MATERIALIZED VIEW` query, use `alterMaterializedView`:
 
-[,java]
+[source,java]
 ----
 alterMaterializedView("cycling", "cyclist_by_age");
 ----
@@ -63,7 +63,7 @@ Unlike a table, you may not alter, drop or rename columns on a materialized view
 Instead, one may only alter the options defined in https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/schema/RelationStructure.html[RelationStructure].
 For example:
 
-[,java]
+[source,java]
 ----
 alterMaterializedView("cycling", "cyclist_by_age")
     .withGcGraceSeconds(0)
@@ -75,7 +75,7 @@ alterMaterializedView("cycling", "cyclist_by_age")
 
 To create a `DROP MATERIALIZED VIEW` query, use `dropMaterializedView`:
 
-[,java]
+[source,java]
 ----
 dropMaterializedView("cycling", "cyclist_by_age");
 // DROP MATERIALIZED VIEW cycling.cyclist_by_age
@@ -83,7 +83,7 @@ dropMaterializedView("cycling", "cyclist_by_age");
 
 You may also specify `ifExists`:
 
-[,java]
+[source,java]
 ----
 dropTable("cyclist_by_age").ifExists();
 // DROP MATERIALIZED VIEW IF EXISTS cyclist_by_age

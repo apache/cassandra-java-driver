@@ -42,7 +42,7 @@ CREATE TYPE ks.type2 (v frozen<type1>);
 
 The driver maps UDT columns to the https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/UdtValue.html[UdtValue] class, which exposes getters and setters to access individual fields by index or name:
 
-[,java]
+[source,java]
 ----
 Row row = session.execute("SELECT v FROM ks.collect_things WHERE pk = 1").one();
 
@@ -56,7 +56,7 @@ Float c = udtValue.getFloat(2);
 
 Statements may contain UDTs as bound values:
 
-[,java]
+[source,java]
 ----
 PreparedStatement ps =
   session.prepare(
@@ -68,14 +68,14 @@ There are various ways to get it:
 
 * from the statement's metadata
 +
-[,java]
+[source,java]
 ----
   UserDefinedType udt = (UserDefinedType) ps.getVariableDefinitions().get("v").getType();
 ----
 
 * from the driver's link:../metadata/schema/[schema metadata]:
 +
-[,java]
+[source,java]
 ----
   UserDefinedType udt =
       session.getMetadata()
@@ -86,7 +86,7 @@ There are various ways to get it:
 
 * from another UDT value:
 +
-[,java]
+[source,java]
 ----
   UserDefinedType udt = udtValue.getType();
 ----
@@ -96,7 +96,7 @@ This is because the type's internal definition must precisely match the database
 if it doesn't (for example if the fields are not in the same order), you run the risk of inserting corrupt data, that you won't be able to read back.
 There is still a way to do it with the driver, but it's part of the link:../../api_conventions/[internal API]:
 
-[,java]
+[source,java]
 ----
 // Advanced usage: make sure you understand the risks
 import com.datastax.oss.driver.internal.core.type.UserDefinedTypeBuilder;
@@ -113,7 +113,7 @@ Note that a manually created type is link:../detachable_types[detached].
 
 Once you have the type, call `newValue()` and set the fields:
 
-[,java]
+[source,java]
 ----
 UdtValue udtValue = udt.newValue().setInt(0, 1).setString(1, "hello").setFloat(2, 2.3f);
 
@@ -123,7 +123,7 @@ UdtValue udtValue = udt.newValue(1, "hello", 2.3f);
 
 And bind your UDT value like any other type:
 
-[,java]
+[source,java]
 ----
 BoundStatement bs =
     ps.boundStatementBuilder()

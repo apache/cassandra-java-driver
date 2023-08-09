@@ -14,7 +14,7 @@ https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/
 
 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--[Metadata#getKeyspaces] returns a client-side representation of the database schema:
 
-[,java]
+[source,java]
 ----
 Map<CqlIdentifier, KeyspaceMetadata> keyspaces = session.getMetadata().getKeyspaces();
 KeyspaceMetadata system = keyspaces.get(CqlIdentifier.fromCql("system"));
@@ -35,7 +35,7 @@ if you need to get the latest schema, be sure to call `session.getMetadata().get
 All schema metadata interfaces accessible through `Metadata.getKeyspaces()` have a DSE-specific subtype in the package https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/metadata/schema/package-frame.html[com.datastax.dse.driver.api.core.metadata.schema].
 The objects returned by the DSE driver implement those types, so you can safely cast:
 
-[,java]
+[source,java]
 ----
 for (KeyspaceMetadata keyspace : session.getMetadata().getKeyspaces().values()) {
   DseKeyspaceMetadata dseKeyspace = (DseKeyspaceMetadata) keyspace;
@@ -44,7 +44,7 @@ for (KeyspaceMetadata keyspace : session.getMetadata().getKeyspaces().values()) 
 
 If you're calling a method that returns an optional and want to keep the result wrapped, use this pattern:
 
-[,java]
+[source,java]
 ----
 Optional<DseFunctionMetadata> f =
     session
@@ -67,7 +67,7 @@ All other types (keyspaces, tables, etc.) are identical to their OSS counterpart
 If you need to follow schema changes, you don't need to poll the metadata manually;
 instead, you can register one or more listeners to get notified when changes occur:
 
-[,java]
+[source,java]
 ----
 SchemaChangeListener listener =
     new SchemaChangeListenerBase() {
@@ -119,7 +119,7 @@ You can achieve the same thing programmatically with https://docs.datastax.com/e
 if you pass `null`, it reverts to the value defined in the configuration.
 One case where that could come in handy is if you are sending a large number of DDL statements from your code:
 
-[,java]
+[source,java]
 ----
 // Disable temporarily, we'll do a single refresh once we're done
 session.setSchemaMetadataEnabled(false);
@@ -292,7 +292,7 @@ datastax-java-driver.advanced.control-connection.schema-agreement {
 
 After executing a statement, you can check whether schema agreement was successful or timed out with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#isSchemaInAgreement--[ExecutionInfo#isSchemaInAgreement]:
 
-[,java]
+[source,java]
 ----
 ResultSet rs = session.execute("CREATE TABLE...");
 if (rs.getExecutionInfo().isSchemaInAgreement()) {
@@ -302,7 +302,7 @@ if (rs.getExecutionInfo().isSchemaInAgreement()) {
 
 You can also perform an on-demand check at any time with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/Session.html#checkSchemaAgreementAsync--[Session#checkSchemaAgreementAsync] (or its synchronous counterpart):
 
-[,java]
+[source,java]
 ----
 if (session.checkSchemaAgreement()) {
   ...

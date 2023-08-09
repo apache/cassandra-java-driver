@@ -11,7 +11,7 @@ If the library cannot be found at runtime, geospatial types won't be available a
 Geospatial types can be retrieved from query results like any other value;
 use the "typed" getter that takes the class as a second argument:
 
-[,java]
+[source,java]
 ----
 // Schema: CREATE TABLE poi(id int PRIMARY KEY, location 'PointType', description text);
 
@@ -23,7 +23,7 @@ Point location = row.get(0, Point.class);
 
 The corresponding setter can be used for insertions:
 
-[,java]
+[source,java]
 ----
 PreparedStatement pst =
     session.prepare("INSERT INTO poi (id, location, description) VALUES (?, ?, ?)");
@@ -37,7 +37,7 @@ session.execute(
 
 This also works with the vararg syntax where target CQL types are inferred:
 
-[,java]
+[source,java]
 ----
 session.execute(pst.bind(2, Point.fromCoordinates(2.2945, 48.8584), "Eiffel Tower"));
 ----
@@ -48,7 +48,7 @@ The driver provides methods to create instances or inspect existing ones.
 
 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/data/geometry/Point.html[Point] is a trivial pair of coordinates:
 
-[,java]
+[source,java]
 ----
 Point point = Point.fromCoordinates(2.2945, 48.8584);
 System.out.println(point.X());
@@ -57,7 +57,7 @@ System.out.println(point.Y());
 
 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/data/geometry/LineString.html[LineString] is a series of 2 or more points:
 
-[,java]
+[source,java]
 ----
 LineString lineString =
     LineString.fromPoints(
@@ -73,7 +73,7 @@ for (Point point : lineString.getPoints()) {
 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/data/geometry/Polygon.html[Polygon] is a planar surface in a two-dimensional XY-plane.
 You can build a simple polygon from a list of points:
 
-[,java]
+[source,java]
 ----
 Polygon polygon =
     Polygon.fromPoints(
@@ -86,7 +86,7 @@ Polygon polygon =
 In addition to its exterior boundary, a polygon can have an arbitrary number of interior rings, possibly nested (the first level defines "lakes" in the shape, the next level "islands" in those lakes, etc).
 To create such complex polygons, use the builder:
 
-[,java]
+[source,java]
 ----
 Polygon polygon =
     Polygon.builder()
@@ -110,7 +110,7 @@ Polygon polygon =
 
 You can then retrieve all the points with the following methods:
 
-[,java]
+[source,java]
 ----
 List<Point> exteriorRing = polygon.getExteriorRing();
 
@@ -124,7 +124,7 @@ In addition, points are always ordered counterclockwise for the exterior ring, c
 Again, this is done automatically, so you don't need to sort them beforehand;
 however, be prepared to get a different order when you read them back:
 
-[,java]
+[source,java]
 ----
 Polygon polygon =
     Polygon.fromPoints(
@@ -143,7 +143,7 @@ All geospatial types interoperate with three standard formats:
 
 * https://en.wikipedia.org/wiki/Well-known_text[Well-known text]:
 +
-[,java]
+[source,java]
 ----
   Point point = Point.fromWellKnownText("POINT (0 1)");
   System.out.println(point.asWellKnownText());
@@ -151,7 +151,7 @@ All geospatial types interoperate with three standard formats:
 
 * https://en.wikipedia.org/wiki/Well-known_text#Well-known_binary[Well-known binary]:
 +
-[,java]
+[source,java]
 ----
   import com.datastax.oss.protocol.internal.util.Bytes;
 
@@ -163,7 +163,7 @@ All geospatial types interoperate with three standard formats:
 
 * https://tools.ietf.org/html/rfc7946[GeoJSON]:
 +
-[,java]
+[source,java]
 ----
   Point point = Point.fromGeoJson("{\"type\":\"Point\",\"coordinates\":[0.0,1.0]}");
   System.out.println(point.asGeoJson());

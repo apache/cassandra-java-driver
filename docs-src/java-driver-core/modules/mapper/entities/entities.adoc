@@ -25,7 +25,7 @@ they can also be nested inside other entities (to map UDT columns).
 
 In order to be detected by the mapper, the class must be annotated with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Entity.html[@Entity]:
 
-[,java]
+[source,java]
 ----
 @Entity
 public class Product {
@@ -48,7 +48,7 @@ The way properties are detected is configurable, as explained below:
 
 By default, the mapper expects mutable entity classes:
 
-[,java]
+[source,java]
 ----
 @Entity
 public class Product {
@@ -74,7 +74,7 @@ When the mapper reads a mutable entity from the database, it will invoke the no-
 
 You can switch to an immutable style with the https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/PropertyStrategy.html[@PropertyStrategy] annotation:
 
-[,java]
+[source,java]
 ----
 @Entity
 @PropertyStrategy(mutable = false)
@@ -106,7 +106,7 @@ If things get too complicated, a good trick is to deliberately omit the construc
 
 By default, the mapper looks for JavaBeans-style accessors: getter prefixed with "get" (or "is" for boolean properties) and, if the entity is mutable, setter prefixed with "set":
 
-[,java]
+[source,java]
 ----
 @Entity
 public class Product {
@@ -119,7 +119,7 @@ public class Product {
 
 You can switch to a "fluent" style (no prefixes) with the https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/PropertyStrategy.html[@PropertyStrategy] annotation:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.mapper.entity.naming.GetterStyle;
 import static com.datastax.oss.driver.api.mapper.entity.naming.SetterStyle;
@@ -148,7 +148,7 @@ You can control the details of this conversion by annotating your entity class w
 
 The simplest strategy is to use one of the mapper's built-in conventions:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention.UPPER_SNAKE_CASE;
 
@@ -175,7 +175,7 @@ If you don't annotate your class with https://docs.datastax.com/en/drivers/java/
 
 If none of the built-in conventions work for you, you can provide your own conversion logic by implementing https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/entity/naming/NameConverter.html[NameConverter]:
 
-[,java]
+[source,java]
 ----
 public class MyNameConverter implements NameConverter {
   @Override
@@ -187,7 +187,7 @@ public class MyNameConverter implements NameConverter {
 
 Then pass your converter class to the annotation:
 
-[,java]
+[source,java]
 ----
 @Entity
 @NamingStrategy(customConverterClass = MyNameConverter.class)
@@ -207,7 +207,7 @@ If you want to squeeze the last bit of performance from the mapper, we recommend
 
 Finally, you can override the CQL name manually with the https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/CqlName.html[@CqlName] annotation:
 
-[,java]
+[source,java]
 ----
 @PartitionKey
 @CqlName("id")
@@ -227,7 +227,7 @@ The annotation can be either on the field, or on the getter (if both are specifi
 
 If the entity maps to a table, properties that map to partition key columns must be annotated with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html[@PartitionKey]:
 
-[,java]
+[source,java]
 ----
 // CREATE TABLE sales(countryCode text, areaCode text, sales int,
 //                    PRIMARY KEY((countryCode, areaCode)));
@@ -243,7 +243,7 @@ Note that any values can be used, but for clarity it's probably a good idea to u
 
 Similarly, properties that map to clustering columns must be annotated with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html[@ClusteringColumn]:
 
-[,java]
+[source,java]
 ----
 // CREATE TABLE sensor_reading(id uuid, year int, month int, day int, value double,
 //                             PRIMARY KEY(id, year, month, day));
@@ -264,7 +264,7 @@ for example, link:../daos/select/[@Select]'s default behavior is to generate a s
 
 Annotating an entity property with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Computed.html[@Computed] indicates that when retrieving data with the mapper this property should be set to the result of a computation on the Cassandra side, typically a function call:
 
-[,java]
+[source,java]
 ----
 private int v;
 
@@ -277,7 +277,7 @@ The CQL return type of the formula must match the type of the property, otherwis
 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Computed.html[@Computed] does not support case-sensitivity.
 If the expression contains case-sensitive column or function names, you'll have to escape them:
 
-[,java]
+[source,java]
 ----
 @Computed("\"myFunction\"(\"myColumn\")")
 private int f;
@@ -291,7 +291,7 @@ You may override this behavior using <<user-provided-names,@CqlName>>.
 Mapping computed results to property names is accomplished using http://cassandra.apache.org/doc/latest/cql/dml.html?#aliases[aliases].
 If you wish to use entities with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Computed.html[@Computed] properties with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/GetEntity.html[@GetEntity] or https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Query.html[@Query]-annotated dao methods, you must also do the same:
 
-[,java]
+[source,java]
 ----
 @Entity
 class MyEntity {
@@ -310,7 +310,7 @@ class MyEntity {
 
 would expect a https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Query.html[@Query] such as:
 
-[,java]
+[source,java]
 ----
 @Dao
 class MyDao {
@@ -324,7 +324,7 @@ class MyDao {
 In some cases, one may opt to exclude properties defined on an entity from being considered by the mapper.
 In this case, simply annotate these properties with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Transient.html[@Transient]:
 
-[,java]
+[source,java]
 ----
 @Transient
 private int notAColumn;
@@ -332,7 +332,7 @@ private int notAColumn;
 
 In addition, one may specify transient property names at the entity level by leveraging the https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/TransientProperties.html[@TransientProperties] annotation:
 
-[,java]
+[source,java]
 ----
 @TransientProperties({"notAColumn", "x"})
 @Entity
@@ -347,7 +347,7 @@ public class Product {
 
 Finally, any field including the `transient` keyword modifier will also be considered transient, i.e.:
 
-[,java]
+[source,java]
 ----
 private transient int notAColumn;
 ----
@@ -360,7 +360,7 @@ Override the CQL name manually with https://docs.datastax.com/en/drivers/java/4.
 
 You can specify a default keyspace to use when doing operations on a given entity:
 
-[,java]
+[source,java]
 ----
 @Entity(defaultKeyspace = "inventory")
 public class Product {
@@ -370,7 +370,7 @@ public class Product {
 
 This will be used when you build a DAO without an explicit keyspace parameter:
 
-[,java]
+[source,java]
 ----
 @Mapper
 public interface InventoryMapper {
@@ -390,7 +390,7 @@ productDaoTest.insert(product); // inserts into test.product
 
 The default keyspace optional: if it is not specified, and you build a DAO without a keyspace, then the session *must* have a default keyspace, otherwise an error will be thrown:
 
-[,java]
+[source,java]
 ----
 @Entity
 public class Product { ... }
@@ -406,7 +406,7 @@ productDao.insert(product); // inserts into default_ks.product
 
 If you want the name to be case-sensitive, it must be enclosed in double-quotes, for example:
 
-[,java]
+[source,java]
 ----
 @Entity(defaultKeyspace = "\"defaultKs\"")
 ----
@@ -419,7 +419,7 @@ Each concrete class must be annotated with https://docs.datastax.com/en/drivers/
 
 Here is an example of a polymorphic mapping:
 
-[,java]
+[source,java]
 ----
 @Entity
 static class Point2D {

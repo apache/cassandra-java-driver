@@ -27,7 +27,7 @@ Therefore non-idempotent requests are never speculatively executed.
 
 In most cases, you need to flag your statements manually:
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement =
     SimpleStatement.newInstance("SELECT first_name FROM user WHERE id=1")
@@ -45,7 +45,7 @@ out of the box, it is set to `false`.
 
 When you prepare a statement, its idempotence carries over to bound statements:
 
-[,java]
+[source,java]
 ----
 PreparedStatement pst = session.prepare(
     SimpleStatement.newInstance("SELECT first_name FROM user WHERE id=?")

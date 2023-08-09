@@ -11,7 +11,7 @@ To achieve this, the mapper allows you to plug custom logic that will get invoke
 In the rest of this page, we'll show a simple example that replaces Java's `CompletableFuture` with Guava's `ListenableFuture`.
 Our goal is to have the mapper implement this interface:
 
-[,java]
+[source,java]
 ----
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -39,7 +39,7 @@ So we're going to write two producers:
 
 ==== Future of void
 
-[,java]
+[source,java]
 ----
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.google.common.util.concurrent.Futures;
@@ -97,7 +97,7 @@ This is not strictly necessary (the calling code only knows the parent interface
 
 ==== Future of entity
 
-[,java]
+[source,java]
 ----
 public class FutureOfEntityProducer implements MapperResultProducer {
   @Override
@@ -146,7 +146,7 @@ The two examples above (exact match and matching the raw type) should cover the 
 Occasionally you may encounter cases with deeper level of parameterization, such as `ListenableFuture<Optional<Product>>`.
 To match this you'll have to call `getType()` and switch to the `java.lang.reflect` world:
 
-[,java]
+[source,java]
 ----
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -172,7 +172,7 @@ public boolean canProduce(GenericType<?> genericType) {
 
 Once all the producers are ready, we package them in a class that implements https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/result/MapperResultProducerService.html[MapperResultProducerService]:
 
-[,java]
+[source,java]
 ----
 public class GuavaFutureProducerService implements MapperResultProducerService {
   @Override

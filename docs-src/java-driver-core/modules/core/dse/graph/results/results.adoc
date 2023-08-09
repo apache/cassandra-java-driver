@@ -9,7 +9,7 @@ Like their CQL counterparts, graph result sets come in two forms, depending on t
 * `session.execute` returns a https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/graph/GraphResultSet.html[GraphResultSet].
 It can be iterated directly, and will return the  whole result set, triggering background fetches if the query is paged:
 +
-[,java]
+[source,java]
 ----
   for (GraphNode n : resultSet) {
     System.out.println(n);
@@ -28,7 +28,7 @@ the driver APIs reflect that, to avoid breaking changes when the feature is intr
 
 Both types have a `one()` method, to use when you know there is exactly one node, or are only interested in the first one:
 
-[,java]
+[source,java]
 ----
 GraphNode n = resultSet.one();
 ----
@@ -38,7 +38,7 @@ GraphNode n = resultSet.one();
 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/graph/GraphNode.html[GraphNode] wraps the responses returned by the server.
 Use the `asXxx()` methods to coerce a node to a specific type:
 
-[,java]
+[source,java]
 ----
 FluentGraphStatement statement = FluentGraphStatement.newInstance(g.V().count());
 GraphNode n = session.execute(statement).one();
@@ -47,7 +47,7 @@ System.out.printf("The graph has %s vertices%n", n.asInt());
 
 If the result is an array or "object" (in the JSON sense: a collection of named fields), you can iterate its children:
 
-[,java]
+[source,java]
 ----
 if (n.isList()) {
   for (int i = 0; i < n.size(); i++) {
@@ -73,7 +73,7 @@ if (n.isMap()) {
 
 If the traversal returns graph elements (like vertices and edges), the results can be converted to the corresponding TinkerPop types:
 
-[,java]
+[source,java]
 ----
 GraphNode n = session.execute(FluentGraphStatement.newInstance(
     g.V().hasLabel("test_vertex")
@@ -172,7 +172,7 @@ Here is an exhaustive compatibility matrix (for DSE 6.0):
 
 If a type doesn't have a corresponding `asXxx()` method, use the variant that takes a type token:
 
-[,java]
+[source,java]
 ----
 UUID uuid = graphNode.as(UUID.class);
 ----

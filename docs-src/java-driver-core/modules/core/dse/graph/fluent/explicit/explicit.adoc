@@ -2,7 +2,7 @@
 
 Fluent traversals can be wrapped into a https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/graph/FluentGraphStatement.html[FluentGraphStatement] and passed to the session:
 
-[,java]
+[source,java]
 ----
 // A "dummy", non-connected traversal source that is not meant to be iterated directly, but instead
 // serves as the basis to build fluent statements:
@@ -26,7 +26,7 @@ As shown above, https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/
 The default implementation returned by the driver is *immutable*;
 if you call additional methods on the statement -- for example to set link:../../options/[options] -- each method call will create a new copy:
 
-[,java]
+[source,java]
 ----
 FluentGraphStatement statement = FluentGraphStatement.newInstance(traversal);
 FluentGraphStatement statement2 = statement.setTimeout(Duration.ofSeconds(10));
@@ -46,7 +46,7 @@ This is fine if you just wrap a traversal into a statement and never modify it a
 
 Instead of creating a statement directly, you can pass your traversal to https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/graph/FluentGraphStatement.html#builder-org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal-[FluentGraphStatement.builder], chain method calls to set options, and finally call `build()`:
 
-[,java]
+[source,java]
 ----
 FluentGraphStatement statement1 =
     FluentGraphStatement.builder(traversal)
@@ -60,7 +60,7 @@ As a consequence, the builder object is *not thread-safe*.
 
 You can also initialize a builder from an existing statement: it will inherit all of its options.
 
-[,java]
+[source,java]
 ----
 FluentGraphStatement statement2 =
     FluentGraphStatement.builder(statement1).withTimeout(Duration.ofSeconds(20)).build();
@@ -75,7 +75,7 @@ assert statement2.isIdempotent(); // because statement1 was
 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/graph/BatchGraphStatement.html[BatchGraphStatement] allows you to execute multiple mutating traversals in the same transaction.
 Like other types of statements, it is immutable and thread-safe, and can be created either with a https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/graph/BatchGraphStatement.html#newInstance--[factory method] or a https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/graph/BatchGraphStatement.html#builder--[builder]:
 
-[,java]
+[source,java]
 ----
 GraphTraversal<Vertex, Vertex> traversal1 = g.addV("person").property("name", "batch1").property("age", 1);
 GraphTraversal<Vertex, Vertex> traversal2 = g.addV("person").property("name", "batch2").property("age", 2);

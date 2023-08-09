@@ -16,7 +16,7 @@ Setters always return a new object, don't ignore the result.
 
 Use prepared statements for queries that are executed multiple times in your application:
 
-[,java]
+[source,java]
 ----
 PreparedStatement prepared = session.prepare(
   "insert into product (sku, description) values (?, ?)");
@@ -93,7 +93,7 @@ But note that this should be pretty rare: most client applications typically rep
 `Session.prepare()` accepts either a plain query string, or a `SimpleStatement` object.
 If you use a `SimpleStatement`, its execution parameters will propagate to bound statements:
 
-[,java]
+[source,java]
 ----
 SimpleStatement simpleStatement =
     SimpleStatement.builder("SELECT * FROM product WHERE sku = ?")
@@ -108,7 +108,7 @@ For more details, including the complete list of attributes that are copied, ref
 
 The driver caches prepared statements: if you call `prepare()` multiple times with the same query string (or a `SimpleStatement` with the same execution parameters), you will get the same `PreparedStatement` instance:
 
-[,java]
+[source,java]
 ----
 PreparedStatement ps1 = session.prepare("SELECT * FROM product WHERE sku = ?");
 // The second call hits the cache, nothing is sent to the server:
@@ -132,7 +132,7 @@ The cache uses link:[guava eviction][weak values] eviction, so this represents t
 
 The prepared query string will usually contain placeholders, which can be either anonymous or named:
 
-[,java]
+[source,java]
 ----
 ps1 = session.prepare("insert into product (sku, description) values (?, ?)");
 ps2 = session.prepare("insert into product (sku, description) values (:s, :d)");
@@ -141,7 +141,7 @@ ps2 = session.prepare("insert into product (sku, description) values (:s, :d)");
 To turn the statement into its executable form, you need to _bind_ it in order to create a https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/BoundStatement.html[BoundStatement].
 As shown previously, there is a shorthand to provide the parameters in the same call:
 
-[,java]
+[source,java]
 ----
 BoundStatement bound = ps1.bind("324378", "LCD screen");
 ----
@@ -150,7 +150,7 @@ You can also bind first, then use setters, which is slightly more explicit.
 Bound statements are  *immutable*, so each method returns a new instance;
 make sure you don't accidentally discard the result:
 
-[,java]
+[source,java]
 ----
 // Positional setters:
 BoundStatement bound = ps1.bind()
@@ -165,7 +165,7 @@ BoundStatement bound = ps2.bind()
 
 Finally, you can use a builder to avoid creating intermediary instances, especially if you have a lot of methods to call:
 
-[,java]
+[source,java]
 ----
 BoundStatement bound =
   ps1
@@ -180,7 +180,7 @@ BoundStatement bound =
 You can use named setters even if the query uses anonymous parameters;
 Cassandra names the parameters after the column they apply to:
 
-[,java]
+[source,java]
 ----
 BoundStatement bound = ps1.bind()
   .setString("sku", "324378")
@@ -198,7 +198,7 @@ With link:../../native_protocol/[native protocol] V3, all variables must be boun
 With native protocol V4 (Cassandra 2.2 / DSE 5) or above, variables can be left unset, in which case they will be ignored (no tombstones will be generated).
 If you're reusing a bound statement, you can use the `unset` method to unset variables that were previously set:
 
-[,java]
+[source,java]
 ----
 BoundStatement bound = ps1.bind()
   .setString("sku", "324378")

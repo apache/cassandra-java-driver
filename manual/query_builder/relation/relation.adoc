@@ -11,7 +11,7 @@ Relations are used by the following statements:
 
 The easiest way to add a relation is with a `whereXxx` method in the fluent API:
 
-[,java]
+[source,java]
 ----
 selectFrom("sensor_data").all()
     .whereColumn("id").isEqualTo(bindMarker())
@@ -21,7 +21,7 @@ selectFrom("sensor_data").all()
 
 You can also create it manually with one of the factory methods in https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/relation/Relation.html[Relation], and then pass it to `where()`:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").all().where(
     Relation.column("id").isEqualTo(bindMarker()));
@@ -32,7 +32,7 @@ If you call `where()` multiple times, the clauses will be joined with the AND ke
 You can also add multiple relations in a single call.
 This is a bit more efficient since it creates less temporary objects:
 
-[,java]
+[source,java]
 ----
 selectFrom("sensor_data").all()
     .where(
@@ -77,7 +77,7 @@ See above for comparison operator examples.
 
 If you're using SASI indices, you can also use `like()` for wildcard comparisons:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").all().whereColumn("last_name").like(literal("M%"));
 // SELECT * FROM user WHERE last_name LIKE 'M%'
@@ -86,7 +86,7 @@ selectFrom("user").all().whereColumn("last_name").like(literal("M%"));
 `in()` is like `isEqualTo()`, but with various alternatives.
 You can either provide each alternative as a term:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").all().whereColumn("id").in(literal(1), literal(2), literal(3));
 // SELECT * FROM user WHERE id IN (1,2,3)
@@ -97,7 +97,7 @@ selectFrom("user").all().whereColumn("id").in(bindMarker(), bindMarker(), bindMa
 
 Or bind the whole list of alternatives as a single variable:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").all().whereColumn("id").in(bindMarker());
 // SELECT * FROM user WHERE id IN ?
@@ -105,7 +105,7 @@ selectFrom("user").all().whereColumn("id").in(bindMarker());
 
 For collection columns, you can check for the presence of an element with `contains()` and `containsKey()`:
 
-[,java]
+[source,java]
 ----
 selectFrom("sensor_data")
     .all()
@@ -123,7 +123,7 @@ _Note: we support `IS NOT NULL` because it is present in the CQL grammar but, as
 
 `whereMapValue` operates on an value inside of a map:
 
-[,java]
+[source,java]
 ----
 selectFrom("sensor_data")
     .all()
@@ -141,7 +141,7 @@ Column components support the six basic arithmetic comparison operators.
 `whereToken` hashes one or more columns into a token.
 It is generally used to perform range queries:
 
-[,java]
+[source,java]
 ----
 selectFrom("user")
     .all()
@@ -157,7 +157,7 @@ It supports the six basic arithmetic comparison operators.
 `whereColumns` compares a set of columns to tuple terms of the same arity.
 It supports the six basic arithmetic comparison operators (using lexicographical order):
 
-[,java]
+[source,java]
 ----
 selectFrom("sensor_data")
     .all()
@@ -169,7 +169,7 @@ selectFrom("sensor_data")
 In addition, tuples support the `in()` operator.
 Like with regular columns, bind markers can operate at different levels:
 
-[,java]
+[source,java]
 ----
 // Bind the whole list of alternatives (two-element tuples) as a single value:
 selectFrom("test")
@@ -201,7 +201,7 @@ selectFrom("test")
 `whereCustomIndex` evaluates a custom index.
 The argument is a free-form term (what is a legal value depends on your index implementation):
 
-[,java]
+[source,java]
 ----
 selectFrom("foo")
     .all()
@@ -215,7 +215,7 @@ selectFrom("foo")
 Finally, it is possible to provide a raw CQL snippet with `whereRaw()`;
 it will get appended to the query as-is, without any syntax checking or escaping:
 
-[,java]
+[source,java]
 ----
 selectFrom("foo").all().whereRaw("k = 1 /*some custom comment*/ AND c<2");
 // SELECT * FROM foo WHERE k = 1 /*some custom comment*/ AND c<2

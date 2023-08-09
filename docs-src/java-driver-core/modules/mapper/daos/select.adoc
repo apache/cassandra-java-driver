@@ -2,7 +2,7 @@
 
 Annotate a DAO method with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Select.html[@Select] to generate a query that selects one or more rows, and maps them to link:../../entities[Entities]:
 
-[,java]
+[source,java]
 ----
 @Dao
 public interface ProductDao {
@@ -19,7 +19,7 @@ The parameter names don't necessarily need to match the names of the columns.
 
 To select more than one entity within a partition, a subset of primary key components may be  specified as long as enough parameters are provided to account for the partition key.
 
-[,java]
+[source,java]
 ----
 // given: PRIMARY KEY ((product_id, day), customer_id, ts)
 public interface ProductSaleDao {
@@ -41,7 +41,7 @@ public interface ProductSaleDao {
 
 To select all rows within a table, you may also provide no parameters.
 
-[,java]
+[source,java]
 ----
 @Dao
 public interface ProductDao {
@@ -54,7 +54,7 @@ If the annotation has a https://docs.datastax.com/en/drivers/java/4.14/com/datas
 The provided string can contain named placeholders.
 In that case, the method must have a corresponding parameter for each, with the same name and a compatible Java type.
 
-[,java]
+[source,java]
 ----
 @Select(customWhereClause = "description LIKE :searchString")
 PagingIterable<Product> findByDescription(String searchString);
@@ -66,7 +66,7 @@ Note that it is sometimes not possible to determine if a parameter is a primary 
 therefore the rule is that *if your method takes a partial primary key, the first parameter that is not a primary key component must be explicitly annotated with link:../../entities/#user-provided-names[@CqlName]*.
 For example if the primary key is `((day int, hour int, minute int), ts timestamp)`:
 
-[,java]
+[source,java]
 ----
 // Annotate 'l' so that it's not mistaken for the second PK component
 @Select(limit = ":l")
@@ -86,7 +86,7 @@ In all cases, the method can return:
 If the query returns no rows, the method will return `null`.
 If it returns more than one row, subsequent rows will be discarded.
 +
-[,java]
+[source,java]
 ----
   @Select
   Product findById(UUID productId);
@@ -96,7 +96,7 @@ If it returns more than one row, subsequent rows will be discarded.
 If the query returns no rows, the method will return `Optional.empty()`.
 If it returns more than one row, subsequent rows will be discarded.
 +
-[,java]
+[source,java]
 ----
   @Select
   Optional<Product> findById(UUID productId);
@@ -105,7 +105,7 @@ If it returns more than one row, subsequent rows will be discarded.
 * a https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/PagingIterable.html[PagingIterable] of the entity class.
 It behaves like a result set, except that each element is a mapped entity instead of a row.
 +
-[,java]
+[source,java]
 ----
   @Select(customWhereClause = "description LIKE :searchString")
   PagingIterable<Product> findByDescription(String searchString);
@@ -118,7 +118,7 @@ NOTE: even if streams are lazily evaluated, the query will be executed synchrono
 also, as   the returned stream is traversed, more blocking calls may occur, as more results are fetched   from the server in the background.
 For details about the stream's characteristics, see   https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/PagingIterable.html#spliterator--[PagingIterable.spliterator].
 +
-[,java]
+[source,java]
 ----
   @Select(customWhereClause = "description LIKE :searchString")
   Stream<Product> findByDescription(String searchString);
@@ -128,7 +128,7 @@ For details about the stream's characteristics, see   https://docs.datastax.com/
 The method will execute the query asynchronously.
 Note that for iterables, you need to switch to the asynchronous equivalent https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/MappedAsyncPagingIterable.html[MappedAsyncPagingIterable].
 +
-[,java]
+[source,java]
 ----
   @Select
   CompletionStage<Product> findByIdAsync(UUID productId);
@@ -146,7 +146,7 @@ For this reason, _the usage of   `CompletionStage<Stream<T>>` cannot be consider
 
 * a https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/mapper/reactive/MappedReactiveResultSet.html[MappedReactiveResultSet] of the entity class.
 +
-[,java]
+[source,java]
 ----
   @Select(customWhereClause = "description LIKE :searchString")
   MappedReactiveResultSet<Product> findByDescriptionReactive(String searchString);

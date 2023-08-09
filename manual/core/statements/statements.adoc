@@ -34,7 +34,7 @@ All statement types share a https://docs.datastax.com/en/drivers/java/4.14/com/d
 
 When setting these attributes, keep in mind that statements are *immutable*, and every method returns a different instance:
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement =
     SimpleStatement.newInstance("SELECT release_version FROM system.local");

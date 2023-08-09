@@ -115,7 +115,7 @@ If you need more control than what system properties allow, you need to write yo
 If you just need specific configuration on the `SSLEngine`, you can extend the default factory and override `newSslEngine`.
 For example, here is how you would configure custom `AlgorithmConstraints`:
 
-[,java]
+[source,java]
 ----
 public class CustomSslEngineFactory extends DefaultSslEngineFactory {
 
@@ -149,7 +149,7 @@ datastax-java-driver {
 You can also provide a factory instance programmatically.
 This will take precedence over the configuration:
 
-[,java]
+[source,java]
 ----
 SslEngineFactory yourFactory = ...
 CqlSession session = CqlSession.builder()
@@ -159,7 +159,7 @@ CqlSession session = CqlSession.builder()
 
 If you are reusing code that configures SSL programmatically, you can use https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/ssl/ProgrammaticSslEngineFactory.html[ProgrammaticSslEngineFactory] as an easy way to wrap that into a factory instance:
 
-[,java]
+[source,java]
 ----
 SSLContext sslContext = ...
 String[] cipherSuites = ...
@@ -174,7 +174,7 @@ CqlSession session =
 
 Finally, there is a convenient shortcut on the session builder if you just need to pass an `SSLContext`:
 
-[,java]
+[source,java]
 ----
 SSLContext sslContext = ...
 CqlSession session = CqlSession.builder()

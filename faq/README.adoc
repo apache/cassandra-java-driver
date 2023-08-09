@@ -5,7 +5,7 @@
 In driver 4, statement classes are *immutable*.
 All mutating methods return a new instance, so make sure you don't accidentally ignore their result:
 
-[,java]
+[source,java]
 ----
 BoundStatement boundSelect = preparedSelect.bind();
 
@@ -23,7 +23,7 @@ Some code analysis tools -- such as https://errorprone.info/[ErrorProne] -- can 
 
 The driver also provides builders:
 
-[,java]
+[source,java]
 ----
 BoundStatement boundSelect =
     preparedSelect.boundStatementBuilder()

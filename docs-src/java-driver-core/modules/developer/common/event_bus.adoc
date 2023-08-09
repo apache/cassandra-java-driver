@@ -6,7 +6,7 @@ Producers fire events on the bus;
 consumers register to be notified for a particular event class.
 For example, `DefaultDriverConfigLoader` reloads the config periodically, and fires an event if it detects a change:
 
-[,java]
+[source,java]
 ----
 boolean changed = driverConfig.reload(configSupplier.get());
 if (changed) {
@@ -17,7 +17,7 @@ if (changed) {
 
 This allows other components, such as `ChannelPool`, to react to config changes dynamically:
 
-[,java]
+[source,java]
 ----
 eventBus.register(
     ConfigChangeEvent.class, RunOrSchedule.on(adminExecutor, this::onConfigChanged));

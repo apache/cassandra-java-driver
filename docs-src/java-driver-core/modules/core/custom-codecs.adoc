@@ -9,7 +9,7 @@ Define custom Java to CQL mappings.
  ** at init time: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addTypeCodecs-com.datastax.oss.driver.api.core.type.codec.TypeCodec...-[CqlSession.builder().addTypeCodecs()]
  ** at runtime:
 +
-[,java]
+[source,java]
 ----
 MutableCodecRegistry registry =
     (MutableCodecRegistry) session.getContext().getCodecRegistry();
@@ -24,7 +24,7 @@ registry.register(myCodec);
 Out of the box, the driver comes with link:../#cql-to-java-type-mapping[default CQL to Java mappings].
 For example, if you read a CQL `text` column, it is mapped to its natural counterpart `java.lang.String`:
 
-[,java]
+[source,java]
 ----
 // cqlsh:ks> desc table test;
 // CREATE TABLE ks.test (k int PRIMARY KEY, v text)...
@@ -95,7 +95,7 @@ If you prefer to deal with  arrays, the driver offers the following codecs:
 . For other types, you should use https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#listToArrayOf-com.datastax.oss.driver.api.core.type.codec.TypeCodec-[ExtraTypeCodecs.listToArrayOf(TypeCodec)];
 for example, to map CQL `list<text>` to `String[]`:
 +
-[,java]
+[source,java]
 ----
  TypeCodec<String[]> stringArrayCodec = ExtraTypeCodecs.listToArrayOf(TypeCodecs.TEXT);
 ----
@@ -261,7 +261,7 @@ But note that you can still compare rows on a absolute timeline with the `timest
 
 If you prefer to deal with https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html[java.util.Optional] in your application instead of nulls, then you can  use https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#optionalOf-com.datastax.oss.driver.api.core.type.codec.TypeCodec-[ExtraTypeCodecs.optionalOf(TypeCodec)]:
 
-[,java]
+[source,java]
 ----
 TypeCodec<Optional<UUID>> optionalUuidCodec = ExtraTypeCodecs.optionalOf(TypeCodecs.UUID);
 ----
@@ -287,7 +287,7 @@ It is then fairly straightforward to  implement a codec with <<creating-custom-j
 
 For example, assuming the following enum:
 
-[,java]
+[source,java]
 ----
 public enum WeekDay {
   MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
@@ -296,7 +296,7 @@ public enum WeekDay {
 
 You can define codecs for it the following ways:
 
-[,java]
+[source,java]
 ----
 // MONDAY will be persisted as "MONDAY", TUESDAY as "TUESDAY", etc.
 TypeCodec<String> weekDaysByNameCodec = ExtraTypeCodecs.enumNamesOf(WeekDay.class);
@@ -318,7 +318,7 @@ If none of the driver built-in codecs above suits you, it is also possible to ro
 To write a custom codec, implement the https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html[TypeCodec] interface.
 Here is an example that maps a CQL `int` to a Java string containing its textual representation:
 
-[,java]
+[source,java]
 ----
 public class CqlIntToStringCodec implements TypeCodec<String> {
 
@@ -375,7 +375,7 @@ If you want to handle the binary encoding yourself (maybe to squeeze the last bi
 Once you have your codec, register it when building your session.
 The following example registers `CqlIntToStringCodec` along with a few driver-supplied alternative codecs:
 
-[,java]
+[source,java]
 ----
 enum WeekDay { MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY };
 class Price {
@@ -398,7 +398,7 @@ CqlSession session =
 
 You may also add codecs to an existing session at runtime:
 
-[,java]
+[source,java]
 ----
 // The cast is required for backward compatibility reasons (registry mutability was introduced in
 // 4.3.0). It is safe as long as you didn't write a custom registry implementation.
@@ -410,7 +410,7 @@ registry.register(new CqlIntToStringCodec());
 
 You can now use the new mappings in your code:
 
-[,java]
+[source,java]
 ----
 // cqlsh:ks> desc table test2;
 // CREATE TABLE ks.test2 (k int PRIMARY KEY, v int)...
@@ -434,7 +434,7 @@ for example, there is no  accessor for `ZonedDateTime` or for `Optional<UUID>`, 
 When you want to retrieve such objects, you need a way to tell the driver which Java type you want.
 You do so by using one of the generic `get` and `set` methods:
 
-[,java]
+[source,java]
 ----
 // Assuming that ExtraTypeCodecs.ZONED_TIMESTAMP_PERSISTED was registered
 // Assuming that ExtraTypeCodecs.BLOB_TO_ARRAY was registered
@@ -455,7 +455,7 @@ boundStatement.set("v3", v3, String[].class);
 This is also valid for arbitrary Java types.
 This is particularly useful when dealing with Enums and  JSON mappings, for example our `WeekDay` and `Price` types:
 
-[,java]
+[source,java]
 ----
 // Assuming that TypeCodecs.enumNamesOf(WeekDay.class) was registered
 // Assuming that TypeCodecs.json(Price.class) was registered
@@ -471,7 +471,7 @@ boundStatement.set("v2", v2, Price.class);
 
 Note that, because the underlying CQL type is `text` you can still retrieve the column's contents as a plain string:
 
-[,java]
+[source,java]
 ----
 // Reading
 String enumName = row.getString("v1");
@@ -484,7 +484,7 @@ boundStatement.setString("v2", priceJson);
 
 And finally, for `Optional<UUID>`, you will need the `get` and `set` methods with an extra _type  token_ argument, because `Optional<UUID>` is a parameterized type:
 
-[,java]
+[source,java]
 ----
 // Assuming that TypeCodecs.optionalOf(TypeCodecs.UUID) was registered
 
@@ -500,7 +500,7 @@ They are immutable and thread-safe, you should store them as reusable constants.
 The `GenericType` class itself has constants and factory methods to help creating `GenericType` objects for common types.
 If you don't see the type you are looking for, a type token for any Java type can be created using the following pattern:
 
-[,java]
+[source,java]
 ----
 // Notice the '{}': this is an anonymous inner class
 GenericType<Foo<Bar>> fooBarType = new GenericType<Foo<Bar>>(){};
@@ -511,7 +511,7 @@ Foo<Bar> v = row.get("v", fooBarType);
 Custom codecs are used not only for their base type, but also recursively in collections, tuples and UDTs.
 For example, once your Json codec for the `Price` class is registered, you can also read a CQL `list<text>` as a Java `List<Price>`:
 
-[,java]
+[source,java]
 ----
 // Assuming that TypeCodecs.json(Price.class) was registered
 // Assuming that each element of the list<text> column is a valid Json string
@@ -534,7 +534,7 @@ Note that this means that built-in mappings can't be overridden.
 In rare cases, you might have a codec registered in your application, but have a legitimate reason to use a different mapping in one particular place.
 In that case, you can pass a codec instance  to `get` / `set` instead of a type token:
 
-[,java]
+[source,java]
 ----
 TypeCodec<String> defaultCodec = new CqlIntToStringCodec();
 TypeCodec<String> specialCodec = ...; // a different implementation
@@ -556,7 +556,7 @@ This class has been designed for situations where we want to  represent a CQL ty
 
 All you have to do is extend `MappingCodec` and implement two methods that perform the conversion  between the supported Java type -- or "inner" type -- and the target Java type -- or "outer" type:
 
-[,java]
+[source,java]
 ----
 public class CqlIntToStringCodec extends MappingCodec<Integer, String> {
 
@@ -587,7 +587,7 @@ CREATE TYPE coordinates (x int, y int);
 
 And let's suppose that we want to map it to the following Java class:
 
-[,java]
+[source,java]
 ----
 public class Coordinates {
   public final int x;
@@ -598,7 +598,7 @@ public class Coordinates {
 
 All  you have to do is create a `MappingCodec` subclass that piggybacks on an existing  `TypeCodec<UdtValue>` for the above user-defined type:
 
-[,java]
+[source,java]
 ----
 public class CoordinatesCodec extends MappingCodec<UdtValue, Coordinates> {
 
@@ -622,7 +622,7 @@ public class CoordinatesCodec extends MappingCodec<UdtValue, Coordinates> {
 
 Then the new mapping codec could be registered as follows:
 
-[,java]
+[source,java]
 ----
 CqlSession session = ...
 CodecRegistry codecRegistry = session.getContext().getCodecRegistry();
@@ -642,7 +642,7 @@ CoordinatesCodec coordinatesCodec = new CoordinatesCodec(innerCodec);
 ----
 
 ...and used just like explained above:
-[,java]
+[source,java]
 ----
 BoundStatement stmt = ...;
 stmt.set("coordinates", new Coordinates(10,20), Coordinates.class);
@@ -657,7 +657,7 @@ NOTE: if you need even more advanced mapping capabilities, consider adopting the
 
 Suppose the following class hierarchy:
 
-[,java]
+[source,java]
 ----
 class Animal {}
 class Cat extends Animal {}
@@ -670,7 +670,7 @@ for example, the driver has a built-in codec that handles `List` instances, and 
 
 But this has one caveat: when setting or retrieving values with `get()` and `set()`, _you must pass the exact Java type the codec handles_:
 
-[,java]
+[source,java]
 ----
 BoundStatement bs = ...
 bs.set(0, new Cat(), Animal.class); // works
@@ -685,7 +685,7 @@ Cat    cat    = row.get(0,    Cat.class); // throws CodecNotFoundException
 
 The driver stores all codecs (built-in and custom) in an internal https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html[CodecRegistry]:
 
-[,java]
+[source,java]
 ----
 CodecRegistry getCodecRegistry = session.getContext().getCodecRegistry();
 
@@ -696,7 +696,7 @@ TypeCodec<String> cqlIntToString = codecRegistry.codecFor(DataTypes.INT, Generic
 If all you're doing is executing requests and reading responses, you probably won't ever need to access the registry directly.
 But it's useful if you do some kind of generic processing, for example printing out an arbitrary row when the schema is not known at compile time:
 
-[,java]
+[source,java]
 ----
 private static String formatRow(Row row) {
   StringBuilder result = new StringBuilder();

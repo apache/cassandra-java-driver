@@ -13,7 +13,7 @@ Every request needs one -- even `session.execute(String)` creates a `SimpleState
 Statements are by default implemented with immutable classes: every call to a setter method creates an intermediary copy.
 If you have multiple attributes to set, use a builder instead:
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement = SimpleStatement.builder("SELECT * FROM foo")
     .setPageSize(20)
@@ -39,7 +39,7 @@ The driver caches prepared statements -- see https://docs.datastax.com/en/driver
 However, if the query is static, it's still a good practice to cache your `PreparedStatement` instances to avoid calling `prepare()` every time.
 One common pattern is to use some sort of DAO component:
 
-[,java]
+[source,java]
 ----
 public static class UserDao {
 
@@ -119,7 +119,7 @@ If you reuse the same values often, consider caching them in private fields or c
 The driver uses https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/CqlIdentifier.html[CqlIdentifier] to deal with link:../../case_sensitivity[case sensitivity].
 When you call methods that take raw strings, the driver generally wraps them under the hood:
 
-[,java]
+[source,java]
 ----
 session.getMetadata().getKeyspace("inventory"); // shortcut for getKeyspace(CqlIdentifier.fromCql("inventory")
 
@@ -133,7 +133,7 @@ This also applies to built queries, although it's less important because general
 
 Note however that row getters and bound statement setters do *not* wrap their argument: because those methods are used very often, they handle raw strings with an optimized algorithm that does not require creating an identifier (the rules are detailed https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/AccessibleByName.html[here]).
 
-[,java]
+[source,java]
 ----
 // No need to extract a CqlIdentifier, raw strings are handled efficiently:
 Row row = session.execute("SELECT * FROM user WHERE id = 1").one();
@@ -148,7 +148,7 @@ pst.bind().setInt("age", 25);
 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/reflect/GenericType.html[GenericType] is used to express complex generic types -- such as link:../#collection-types[nested collections] -- in getters and setters.
 These objects are immutable and stateless, so they are good candidates for constants:
 
-[,java]
+[source,java]
 ----
 public static final GenericType<Set<List<String>>> SET_OF_LIST_OF_STRING = new GenericType<Set<List<String>>>() {};
 
@@ -163,7 +163,7 @@ You can create your own utility class to store yours.
 Similarly, link:../../query_builder/[built queries] are immutable and don't need a reference to a live driver instance.
 If you create them statically, they can be stored as constants:
 
-[,java]
+[source,java]
 ----
 public static final BuildableQuery SELECT_SERVER_VERSION =
     selectFrom("system", "local").column("release_version");
@@ -175,7 +175,7 @@ Note that you don't necessarily need to extract `CqlIdentifier` constants since 
 
 The configuration API allows you to build link:../configuration/#derived-profiles[derived profiles] at runtime.
 
-[,java]
+[source,java]
 ----
 DriverExecutionProfile dynamicProfile =
   defaultProfile.withString(

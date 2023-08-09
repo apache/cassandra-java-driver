@@ -7,7 +7,7 @@ https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/query
 
 To start a `CREATE TABLE` query, use `createTable` in https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html[SchemaBuilder]:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 
@@ -16,7 +16,7 @@ CreateTableStart create = createTable("cycling", "cyclist_name");
 
 Like all other `CREATE` queries, one may supply `ifNotExists()` to require that the table should only be created if it doesn't already exist, i.e.:
 
-[,java]
+[source,java]
 ----
 CreateTableStart create = createTable("cycling", "cyclist_name").ifNotExists();
 ----
@@ -24,7 +24,7 @@ CreateTableStart create = createTable("cycling", "cyclist_name").ifNotExists();
 Note that, at this stage, the query cannot be completed yet.
 You need to provide at least one partition key column using `withPartitionKey()`, i.e.:
 
-[,java]
+[source,java]
 ----
 CreateTable create = createTable("cycling", "cyclist_name").withPartitionKey("id", DataTypes.UUID);
 // CREATE TABLE cycling.cyclist_name (id UUID PRIMARY KEY)
@@ -40,7 +40,7 @@ At this point you may provide partition, clustering, regular and static columns 
 
 Primary key precedence is driven by the order of `withPartitionKey` and `withClusteringKey` invocations, for example:
 
-[,java]
+[source,java]
 ----
 CreateTable create = createTable("cycling", "cyclist_by_year_and_name")
     .withPartitionKey("race_year", DataTypes.INT)
@@ -55,7 +55,7 @@ Refer to https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/
 
 The following configures compaction and compression options and includes a clustering order.
 
-[,java]
+[source,java]
 ----
 CreateTableWithOptions create = createTable("cycling", "cyclist_by_year_and_name")
     .withPartitionKey("race_year", DataTypes.INT)
@@ -75,7 +75,7 @@ CreateTableWithOptions create = createTable("cycling", "cyclist_by_year_and_name
 
 To start an `ALTER TABLE` query, use `alterTable`:
 
-[,java]
+[source,java]
 ----
 alterTable("cycling", "cyclist_name");
 ----
@@ -96,7 +96,7 @@ Invoking any of these methods returns a complete query and you may make successi
 
 To create a `DROP TABLE` query, use `dropTable`:
 
-[,java]
+[source,java]
 ----
 dropTable("cycling", "cyclist_name");
 // DROP TABLE cycling.cyclist_name
@@ -104,7 +104,7 @@ dropTable("cycling", "cyclist_name");
 
 You may also specify `ifExists`:
 
-[,java]
+[source,java]
 ----
 dropTable("cyclist_name").ifExists();
 // DROP TABLE IF EXISTS cyclist_name

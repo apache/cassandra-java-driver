@@ -12,7 +12,7 @@ As such the mapper's support for them is also provided as a preview.
 
 Annotate your records like regular classes:
 
-[,java]
+[source,java]
 ----
 @Entity
 record Product(@PartitionKey int id, String description) {}

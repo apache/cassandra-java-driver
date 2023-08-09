@@ -2,7 +2,7 @@
 
 Instead of passing traversals to the driver, you can create a _remote traversal source_ connected to the DSE cluster:
 
-[,java]
+[source,java]
 ----
 CqlSession session = CqlSession.builder().build();
 
@@ -13,7 +13,7 @@ GraphTraversalSource g =
 Then build traversals from that source.
 Whenever you reach a http://tinkerpop.apache.org/docs/current/reference/#terminal-steps[terminal step] (such as `next()`, `toList()`...), the DSE driver will be invoked under the covers:
 
-[,java]
+[source,java]
 ----
 List<Vertex> vertices = g.V().has("name", "marko").toList();
 ----
@@ -37,7 +37,7 @@ datastax-java-driver {
 
 Pass the profile name to the remote connection builder:
 
-[,java]
+[source,java]
 ----
 GraphTraversalSource a = AnonymousTraversalSource.traversal().withRemote(
     DseGraph.remoteConnectionBuilder(session)

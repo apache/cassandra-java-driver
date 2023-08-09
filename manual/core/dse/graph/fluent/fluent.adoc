@@ -3,7 +3,7 @@
 The driver depends on http://tinkerpop.apache.org/[Apache TinkerPop™], a graph computing framework that provides a fluent API to build Gremlin traversals.
 This allows you to write your graph requests directly in Java, like you would in a Gremlin-groovy script:
 
-[,java]
+[source,java]
 ----
 // How this is initialized will depend on the execution model, see details below
 GraphTraversalSource g = ...
@@ -52,7 +52,7 @@ to solve the problem, distribute your `session.executeAsync` calls onto more thr
 Gremlin can be extended with domain specific languages to make traversals more natural to write.
 For example, considering the following query:
 
-[,java]
+[source,java]
 ----
 g.V().hasLabel("person").has("name", "marko").
   out("knows").hasLabel("person").has("name", "josh");
@@ -60,7 +60,7 @@ g.V().hasLabel("person").has("name", "marko").
 
 A "social" DSL could be written to simplify it as:
 
-[,java]
+[source,java]
 ----
 socialG.persons("marko").knows("josh");
 ----
@@ -70,7 +70,7 @@ This is covered in detail in the http://tinkerpop.apache.org/docs/current/refere
 
 Once your custom traversal source is generated, here's how to use it:
 
-[,java]
+[source,java]
 ----
 // Non-connected source for explicit execution:
 SocialTraversalSource socialG = DseGraph.g.getGraph().traversal(SocialTraversalSource.class);
@@ -89,7 +89,7 @@ All the DSE predicates are available on the driver side:
 
 * for https://docs.datastax.com/en/dse/6.0/dse-dev/datastax_enterprise/graph/using/useSearchIndexes.html[search], use the https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/graph/predicates/Search.html[Search] class:
 +
-[,java]
+[source,java]
 ----
   GraphTraversal<Vertex, String> traversal =
       g.V().has("recipe", "instructions", Search.token("Saute")).values("name");
@@ -97,7 +97,7 @@ All the DSE predicates are available on the driver side:
 
 * for https://docs.datastax.com/en/dse/6.0/dse-dev/datastax_enterprise/graph/using/queryGeospatial.html[geospatial queries], use the https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/graph/predicates/Geo.html[Geo] class:
 +
-[,java]
+[source,java]
 ----
   GraphTraversal<Vertex, String> traversal =
       g.V()

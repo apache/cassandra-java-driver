@@ -12,7 +12,7 @@ Setters always return a new object, don't ignore the result.
 
 Use https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/BatchStatement.html[BatchStatement] to execute a set of queries as an atomic operation (refer to  http://docs.datastax.com/en/dse/6.7/cql/cql/cql_using/useBatch.html[Batching inserts, updates and deletes] to understand how to use batching effectively):
 
-[,java]
+[source,java]
 ----
 PreparedStatement preparedInsertExpense =
     session.prepare(
@@ -34,7 +34,7 @@ session.execute(batch);
 
 To create a new batch statement, use one of the static factory methods (as demonstrated above), or a builder:
 
-[,java]
+[source,java]
 ----
 BatchStatement batch =
     BatchStatement.builder(DefaultBatchType.LOGGED)
@@ -45,7 +45,7 @@ BatchStatement batch =
 
 Keep in mind that batch statements are *immutable*, and every method returns a different instance:
 
-[,java]
+[source,java]
 ----
 // Won't work: the object is not modified in place:
 batch.setExecutionProfileName("oltp");

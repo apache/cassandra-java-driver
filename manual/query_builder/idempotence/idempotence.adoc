@@ -2,7 +2,7 @@
 
 When you generate a statement (or a statement builder) from the query builder, it automatically infers the link:../../core/idempotence/[isIdempotent] flag:
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement =
     selectFrom("user").all()
@@ -16,7 +16,7 @@ This can't always be determined accurately;
 when in doubt, the builder is pessimistic and marks the statement as not idempotent.
 If you know otherwise, you can fix it manually:
 
-[,java]
+[source,java]
 ----
 Delete delete =
     deleteFrom("product")
@@ -39,7 +39,7 @@ They're always considered idempotent, regardless of the other rules below.
 
 If you use the result of a user-defined function in an INSERT or UPDATE statement, there is no way of knowing if that function is idempotent:
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement = insertInto("foo").value("k", function("generate_id")).build();
 // INSERT INTO foo (k) VALUES (generate_id())
@@ -48,7 +48,7 @@ assert !statement.isIdempotent();
 
 This extends to arithmetic operations using such terms:
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement =
     insertInto("foo").value("k", add(function("generate_id"), literal(1))).build();
@@ -58,7 +58,7 @@ assert !statement.isIdempotent();
 
 Raw terms could be anything, so they are also considered unsafe by default:
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement =
     insertInto("foo").value("k", raw("generate_id()+1")).build();
@@ -70,7 +70,7 @@ assert !statement.isIdempotent();
 
 If a WHERE clause in an UPDATE or DELETE statement uses a comparison with an unsafe term, it could potentially apply to different rows for each execution:
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement =
     update("foo")
@@ -85,7 +85,7 @@ assert !statement.isIdempotent();
 
 Counter updates are never idempotent:
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement =
     update("foo")
@@ -98,7 +98,7 @@ assert !statement.isIdempotent();
 
 Nor is appending or prepending an element to a list:
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement =
     update("foo")
@@ -111,7 +111,7 @@ assert !statement.isIdempotent();
 
 The generic `append` and `prepend` methods apply to any kind of collection, so we have to consider them unsafe by default too:
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement =
     update("foo")
@@ -124,7 +124,7 @@ assert !statement.isIdempotent();
 
 The generic `remove` method is however safe since collection removals are idempotent:
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement =
     update("foo")
@@ -151,7 +151,7 @@ their idempotence depends on the collection type (list, set or  map), the operat
 In practice, most invocations of the above methods will be idempotent because most collection  elements are.
 For example, the following statement is idempotent since `literal(1)` is also  idempotent:
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement =
     update("foo")
@@ -165,7 +165,7 @@ assert statement.isIdempotent();
 However, in rare cases the resulting statement won't be marked idempotent, e.g.
 if you use a  function to select a collection element:
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement =
     update("foo")
@@ -180,7 +180,7 @@ assert !statement.isIdempotent();
 
 Deleting from a list is not idempotent:
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement =
     deleteFrom("foo")
@@ -201,7 +201,7 @@ All conditional statements are considered non-idempotent:
 This might seem counter-intuitive, as these queries can sometimes be safe to execute multiple times.
 For example, consider the following query:
 
-[,java]
+[source,java]
 ----
 update("foo")
     .setColumn("v", literal(4))

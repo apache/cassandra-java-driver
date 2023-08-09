@@ -67,7 +67,7 @@ _(3) DSE Protocols are chosen before other Cassandra native protocols._
 
 To find out which version you're currently using, use the following:
 
-[,java]
+[source,java]
 ----
 ProtocolVersion currentVersion = session.getContext().getProtocolVersion();
 ----

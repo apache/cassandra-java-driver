@@ -86,7 +86,7 @@ in particular, it does not have a time zone.
 On the downside, this means you can't directly extract calendar fields (year, month, etc.).
 You need to call `atZone` to perform the conversion:
 
-[,java]
+[source,java]
 ----
 Row row = session.execute("SELECT t FROM test").one();
 Instant instant = row.getInstant("t");
@@ -98,7 +98,7 @@ Conversely, you can convert a `ZonedDateTime` back to an `Instant` with `toInsta
 
 If you want to automate those `atZone`/`toInstant` conversions, the driver comes with an optional `ZonedDateTime` codec, that must be registered explicitly with the session:
 
-[,java]
+[source,java]
 ----
 CqlSession session = CqlSession.builder()
     .addTypeCodecs(TypeCodecs.ZONED_TIMESTAMP_UTC)
@@ -123,7 +123,7 @@ we want you to think about time zones explicitly before you decide to use that t
 As already stated, `timestamp` is stored as a number of milliseconds.
 If you try to write an `Instant` or `ZonedDateTime` with higher precision through the driver, the sub-millisecond part will be truncated:
 
-[,java]
+[source,java]
 ----
 CqlSession session =
     CqlSession.builder()
@@ -152,7 +152,7 @@ Thus a `CqlDuration` of "2 months" represents a different amount of time dependi
 
 `CqlDuration` implements `java.time.temporal.TemporalAmount`, so it interoperates nicely with the JDK's built-in temporal types:
 
-[,java]
+[source,java]
 ----
 ZonedDateTime dateTime = ZonedDateTime.parse("2018-10-04T00:00-07:00[America/Los_Angeles]");
 System.out.println(dateTime.minus(CqlDuration.from("1h15s15ns")));

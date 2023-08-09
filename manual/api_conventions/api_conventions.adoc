@@ -17,7 +17,7 @@ You should probably have some familiarity with the source code.
 The public API never exposes internal types (this is enforced automatically by our build).
 You'll generally have to go through an explicit cast:
 
-[,java]
+[source,java]
 ----
 import com.datastax.oss.driver.api.core.context.DriverContext;
 

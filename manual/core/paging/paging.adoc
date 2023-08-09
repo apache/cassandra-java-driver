@@ -36,7 +36,7 @@ The fetch size limits the number of results that are returned in one page;
 if you iterate past that, the driver uses background queries to fetch subsequent pages.
 Here's an example with a fetch size of 20:
 
-[,java]
+[source,java]
 ----
 ResultSet rs = session.execute("SELECT * FROM my_table WHERE k = 1");
 for (Row row : rs) {
@@ -85,7 +85,7 @@ iteration only yields the current page, and the next page must be fetched explic
 To iterate a result set in a fully asynchronous manner, you need to compose page futures using the methods of https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html[CompletionStage].
 Here's an example that prints each row on the command line:
 
-[,java]
+[source,java]
 ----
 CompletionStage<AsyncResultSet> resultSetFuture =
     session.executeAsync("SELECT * FROM myTable WHERE id = 1");
@@ -107,7 +107,7 @@ private CompletionStage<Void> printRows(AsyncResultSet resultSet) {
 If you need to propagate state throughout the iteration, add parameters to the callback.
 Here's an example that counts the number of rows (obviously this is contrived, you would use `SELECT COUNT(*)` instead of doing this client-side, but it illustrates the basic principle):
 
-[,java]
+[source,java]
 ----
 CompletionStage<AsyncResultSet> resultSetFuture =
     session.executeAsync("SELECT * FROM myTable WHERE id = 1");
@@ -137,7 +137,7 @@ When the user clicks that link, we want to run the exact same query, except that
 
 The driver exposes a _paging state_ for that:
 
-[,java]
+[source,java]
 ----
 ResultSet rs = session.execute("your query");
 ByteBuffer pagingState = rs.getExecutionInfo().getPagingState();
@@ -163,7 +163,7 @@ If you try to modify its contents or reuse it with a different statement, the re
 
 If you want additional safety, the driver also provides a "safe" wrapper around the raw value: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/PagingState.html[PagingState].
 
-[,java]
+[source,java]
 ----
 PagingState pagingState = rs.getExecutionInfo().getSafePagingState();
 ----
@@ -173,7 +173,7 @@ This allows you to detect the error early, without a roundtrip to the server.
 
 Note that, if you use a simple statement and one of the bound values requires a link:../custom_codecs[custom codec], you have to provide a reference to the session when reinjecting the paging state:
 
-[,java]
+[source,java]
 ----
 CustomType value = ...
 SimpleStatement statement = SimpleStatement.newInstance("query", value);
@@ -201,7 +201,7 @@ For each page that you want to retrieve:
 * you need to re-execute the query, in order to start with a fresh result set;
 * you then pass the result to `OffsetPager`, which starts iterating from the beginning, and skips rows until it reaches the desired offset.
 
-[,java]
+[source,java]
 ----
 String query = "SELECT ...";
 OffsetPager pager = new OffsetPager(20);

@@ -98,7 +98,7 @@ datastax-java-driver {
 
 You can also pass an authenticator instance while building the session:
 
-[,java]
+[source,java]
 ----
 CqlSession session =
     CqlSession.builder()
@@ -109,7 +109,7 @@ CqlSession session =
 The driver also offers a simple, built-in plain text authentication provider: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/auth/ProgrammaticPlainTextAuthProvider.html[ProgrammaticPlainTextAuthProvider].
 The following is equivalent to using `PlainTextAuthProvider` in the configuration:
 
-[,java]
+[source,java]
 ----
 AuthProvider authProvider = new ProgrammaticPlainTextAuthProvider("user", "pass");
 
@@ -121,7 +121,7 @@ CqlSession session =
 
 For convenience, there are shortcuts that take the credentials directly:
 
-[,java]
+[source,java]
 ----
 CqlSession session =
     CqlSession.builder()
@@ -142,7 +142,7 @@ https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/
 
 Similarly, https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/auth/ProgrammaticDseGssApiAuthProvider.html[ProgrammaticDseGssApiAuthProvider] lets you configure GSSAPI programmatically:
 
-[,java]
+[source,java]
 ----
 import com.datastax.dse.driver.api.core.auth.DseGssApiAuthProviderBase.GssApiOptions;
 
@@ -212,7 +212,7 @@ GRANT PROXY.EXECUTE ON ROLE 'alice' TO 'bob'
 For this scenario, you would *not* add the `authorization-id = alice` to your configuration.
 Instead, use https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/auth/ProxyAuthentication.html#executeAs-java.lang.String-StatementT-[ProxyAuthentication.executeAs] to wrap your query with the correct authorization for the execution:
 
-[,java]
+[source,java]
 ----
 import com.datastax.dse.driver.api.core.auth.ProxyAuthentication;
 

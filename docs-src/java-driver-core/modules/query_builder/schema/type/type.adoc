@@ -7,7 +7,7 @@ https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/query
 
 To start a `CREATE TYPE` query, use `createType` in https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html[SchemaBuilder]:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 
@@ -16,7 +16,7 @@ CreateTypeStart create = createType("mykeyspace", "address");
 
 Like all other `CREATE` queries, one may supply `ifNotExists()` to require that the type should only be created if it doesn't already exist, i.e.:
 
-[,java]
+[source,java]
 ----
 CreateTypeStart create = createType("address").ifNotExists();
 ----
@@ -24,7 +24,7 @@ CreateTypeStart create = createType("address").ifNotExists();
 Note that, at this stage, the query cannot be completed yet.
 You need to provide at least one field using `withField()`, i.e.:
 
-[,java]
+[source,java]
 ----
 CreateType create = createType("mykeyspace", "address").withField("street", DataTypes.TEXT);
 // CREATE TYPE mykeyspace.address (street text)
@@ -33,7 +33,7 @@ CreateType create = createType("mykeyspace", "address").withField("street", Data
 A type with only one field is not entirely useful.
 You may continue to make successive calls to `withField` to specify additional fields, i.e.:
 
-[,java]
+[source,java]
 ----
 CreateType create = createType("mykeyspace", "address")
     .withField("street", DataTypes.TEXT)
@@ -48,7 +48,7 @@ CreateType create = createType("mykeyspace", "address")
 After creating a UDT, one may wonder how to use it in other schema statements.
 To do so, utilize `udt(name,frozen)` from https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html[SchemaBuilder], i.e:
 
-[,java]
+[source,java]
 ----
 CreateTable users = createTable("mykeyspace", "users")
     .withPartitionKey("id", DataTypes.UUID)
@@ -62,7 +62,7 @@ CreateTable users = createTable("mykeyspace", "users")
 
 To start an `ALTER TYPE` query, use `alterType`:
 
-[,java]
+[source,java]
 ----
 alterTable("mykeyspace", "address");
 ----
@@ -81,7 +81,7 @@ You may make successive calls to `renameField`, but not the other methods.
 
 To create a `DROP TYPE` query, use `dropType`:
 
-[,java]
+[source,java]
 ----
 dropType("mykeyspace", "address");
 // DROP TYPE mykeyspace.address
@@ -89,7 +89,7 @@ dropType("mykeyspace", "address");
 
 You may also specify `ifExists`:
 
-[,java]
+[source,java]
 ----
 dropTable("address").ifExists();
 // DROP TYPE IF EXISTS address

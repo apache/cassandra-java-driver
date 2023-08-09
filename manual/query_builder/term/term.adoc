@@ -12,7 +12,7 @@ To create a term, call one of the factory methods in https://docs.datastax.com/e
 
 `literal()` takes a Java object and inlines it as a CQL literal:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").all().whereColumn("id").isEqualTo(literal(1));
 // SELECT * FROM user WHERE id=1
@@ -24,7 +24,7 @@ If there is no default mapping, you will get a `CodecNotFoundException`.
 If you use link:../../core/custom_codecs[custom codecs], you might need to inline a custom Java type.
 You can pass a https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html[CodecRegistry] as the second argument (most likely, this will be the registry of your session):
 
-[,java]
+[source,java]
 ----
 MyCustomId myCustomId = ...;
 CodecRegistry registry = session.getContext().getCodecRegistry();
@@ -33,7 +33,7 @@ selectFrom("user").all().whereColumn("id").isEqualTo(literal(myCustomId, registr
 
 Alternatively, you can pass a codec directly:
 
-[,java]
+[source,java]
 ----
 TypeCodec<MyCustomId> codec = ...;
 selectFrom("user").all().whereColumn("id").isEqualTo(literal(myCustomId, codec));
@@ -44,7 +44,7 @@ selectFrom("user").all().whereColumn("id").isEqualTo(literal(myCustomId, codec))
 `function()` invokes a built-in or user-defined function.
 It takes a function name (optionally qualified with a keyspace), and a list of terms that will be passed as arguments:
 
-[,java]
+[source,java]
 ----
 selectFrom("sensor_data")
     .all()
@@ -79,7 +79,7 @@ Terms can be combined with arithmetic operations.
 | `remainder`
 |===
 
-[,java]
+[source,java]
 ----
 selectFrom("sensor_data")
     .all()
@@ -97,7 +97,7 @@ Operations can be nested, and will get parenthesized according to the usual prec
 `typeHint` forces a term to a particular CQL type.
 For instance, it could be used to ensure that an expression uses floating-point division:
 
-[,java]
+[source,java]
 ----
 selectFrom("test")
     .all()
@@ -113,7 +113,7 @@ selectFrom("test")
 Finally, it is possible to provide a raw CQL snippet with `raw()`;
 it will get appended to the query as-is, without any syntax checking or escaping:
 
-[,java]
+[source,java]
 ----
 selectFrom("sensor_data").all().whereColumn("id").isEqualTo(raw("  1 /*some random comment*/"));
 // SELECT * FROM sensor_data WHERE id=  1 /*some random comment*/

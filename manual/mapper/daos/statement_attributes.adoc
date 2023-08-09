@@ -6,7 +6,7 @@ The link:../delete/[@Delete], link:../insert/[@Insert], link:../query/[@Query], 
 
 If the *last* parameter of any of those methods is a `Function<BoundStatementBuilder, BoundStatementBuilder>` (or `UnaryOperator<BoundStatementBuilder>`), the mapper will apply that function to the statement before executing it:
 
-[,java]
+[source,java]
 ----
 @Dao
 public interface ProductDao {
@@ -29,7 +29,7 @@ If you reuse the same set of attributes often, you can store the function as a c
 
 Attributes can also be provided statically by annotating the method with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/StatementAttributes.html[@StatementAttributes]:
 
-[,java]
+[source,java]
 ----
 @Dao
 public interface ProductDao {
@@ -42,7 +42,7 @@ public interface ProductDao {
 It's possible to have both the annotation and the function parameter;
 in that case, the annotation will be applied first, and the function second:
 
-[,java]
+[source,java]
 ----
 @Dao
 public interface ProductDao {

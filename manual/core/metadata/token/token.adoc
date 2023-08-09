@@ -17,7 +17,7 @@ Another typical use case is data analytics clients, for example fetching a large
 Because token metadata can be disabled, the resulting https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/TokenMap.html[TokenMap] object is wrapped in an `Optional`;
 to access it, you can use either a functional pattern, or more traditionally test first with `isPresent` and then unwrap:
 
-[,java]
+[source,java]
 ----
 Metadata metadata = session.getMetadata();
 
@@ -59,7 +59,7 @@ node2 | 8 |         | 4 | node3
 
 The first thing you can do is retrieve all the ranges, in other words describe the ring:
 
-[,java]
+[source,java]
 ----
 Set<TokenRange> ring = tokenMap.getTokenRanges();
 // Returns [Murmur3TokenRange(Murmur3Token(12), Murmur3Token(2)),
@@ -76,7 +76,7 @@ The actual class depends on the partitioner you configured in Cassandra, but in 
 
 You can also retrieve the ranges and tokens owned by a specific replica:
 
-[,java]
+[source,java]
 ----
 tokenMap.getTokenRanges(node1);
 // [Murmur3TokenRange(Murmur3Token(10), Murmur3Token(12)),
@@ -102,7 +102,7 @@ CREATE KEYSPACE ks2 WITH replication = {'class': 'SimpleStrategy', 'replication_
 
 `getReplicas` finds the nodes that have the data in a given range:
 
-[,java]
+[source,java]
 ----
 TokenRange firstRange = tokenMap.getTokenRanges().iterator().next();
 // Murmur3TokenRange(Murmur3Token(12), Murmur3Token(2))
@@ -117,7 +117,7 @@ Set<Node> nodes2 = tokenMap.getReplicas(CqlIdentifier.fromCql("ks2"), firstRange
 There is a also a variant that takes a primary key, to find the replicas for a particular row.
 In the following example, let's assume that the key hashes to the token "1" with the current partitioner:
 
-[,java]
+[source,java]
 ----
 String pk = "johndoe@example.com";
 // You need to manually encode the key as binary:
@@ -133,7 +133,7 @@ Set<Node> nodes2 = tokenMap.getReplicas(CqlIdentifier.fromCql("ks2"), encodedPk)
 
 Finally, you can go the other way, and find the token ranges that a node stores for a given keyspace:
 
-[,java]
+[source,java]
 ----
 Set<TokenRange> ranges1 = tokenMap.getTokenRanges(CqlIdentifier.fromCql("ks1"), node1);
 // [Murmur3TokenRange(Murmur3Token(4), Murmur3Token(6)),

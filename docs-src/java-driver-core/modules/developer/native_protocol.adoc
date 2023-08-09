@@ -127,7 +127,7 @@ In the driver, this happens to be a Netty `ByteBuf`, but the encoding logic does
 This is expressed by the type parameter `B` in `FrameCodec<B>`.
 `PrimitiveCodec<B>` abstracts the basic primitives to work with a `B`: how to create an instance, read and write data to it, etc.
 
-[,java]
+[source,java]
 ----
 public interface PrimitiveCodec<B> {
   B allocate(int size);

@@ -19,7 +19,7 @@ The driver provides a way to enable tracing on a particular statement, and an AP
 Set the tracing flag on the `Statement` instance.
 There are various ways depending on how you build it (see link:../statements/[statements] for more details):
 
-[,java]
+[source,java]
 ----
 // Setter-based:
 Statement statement =
@@ -37,7 +37,7 @@ Do not enable it on every request, you would risk overwhelming your cluster.
 
 Once you've executed a statement with tracing enabled, tracing data is available through the https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html[ExecutionInfo]:
 
-[,java]
+[source,java]
 ----
 ResultSet rs = session.execute(statement);
 ExecutionInfo executionInfo = rs.getExecutionInfo();
@@ -48,7 +48,7 @@ ExecutionInfo executionInfo = rs.getExecutionInfo();
 Cassandra assigns a unique identifier to each query trace.
 It is returned with the query results, and therefore available immediately:
 
-[,java]
+[source,java]
 ----
 UUID tracingId = executionInfo.getTracingId();
 ----
@@ -61,7 +61,7 @@ If you call `getTracingId()` for a statement that didn't have tracing enabled, t
 
 To get to the details of the trace, retrieve the https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/QueryTrace.html[QueryTrace] instance:
 
-[,java]
+[source,java]
 ----
 QueryTrace trace = executionInfo.getQueryTrace();
 
@@ -93,7 +93,7 @@ datastax-java-driver.advanced.request.trace {
 
 Once you have the `QueryTrace` object, access its properties for relevant information, for example:
 
-[,java]
+[source,java]
 ----
 System.out.printf(
     "'%s' to %s took %dμs%n",

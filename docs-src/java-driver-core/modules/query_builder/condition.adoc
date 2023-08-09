@@ -4,7 +4,7 @@ A condition is a clause that appears after the IF keyword in a conditional link:
 
 The easiest way to add a condition is with an `ifXxx` method in the fluent API:
 
-[,java]
+[source,java]
 ----
 deleteFrom("user")
     .whereColumn("k").isEqualTo(bindMarker())
@@ -15,7 +15,7 @@ deleteFrom("user")
 
 You can also create it manually with one of the factory methods in https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/condition/Condition.html[Condition], and then pass it to `if_()`:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 
@@ -30,7 +30,7 @@ If you call `if_()` multiple times, the clauses will be joined with the AND keyw
 You can also add multiple conditions in a single call.
 This is a bit more efficient since it creates less temporary objects:
 
-[,java]
+[source,java]
 ----
 deleteFrom("user")
     .whereColumn("k").isEqualTo(bindMarker())
@@ -74,7 +74,7 @@ _Note: we support `!=` because it is present in the CQL grammar but, as of Cassa
 In addition, `in()` can test for equality with various alternatives.
 You can either provide each alternative as a term:
 
-[,java]
+[source,java]
 ----
 deleteFrom("user")
     .whereColumn("k").isEqualTo(bindMarker())
@@ -84,7 +84,7 @@ deleteFrom("user")
 
 Or bind the whole list of alternatives as a single variable:
 
-[,java]
+[source,java]
 ----
 deleteFrom("user")
     .whereColumn("k").isEqualTo(bindMarker())
@@ -96,7 +96,7 @@ deleteFrom("user")
 
 `ifField` tests a field in a top-level UDT (nested UDTs are not allowed):
 
-[,java]
+[source,java]
 ----
 deleteFrom("user")
     .whereColumn("k").isEqualTo(bindMarker())
@@ -110,7 +110,7 @@ It supports the same set of operators as simple columns.
 
 `ifElement` tests an element in a top-level collection (nested collections are not allowed):
 
-[,java]
+[source,java]
 ----
 deleteFrom("product")
     .whereColumn("sku").isEqualTo(bindMarker())
@@ -124,7 +124,7 @@ It supports the same set of operators as simple columns.
 
 You can also provide a condition as a raw CQL snippet, that will get appended to the query as-is, without any syntax checking or escaping:
 
-[,java]
+[source,java]
 ----
 deleteFrom("product")
     .whereColumn("sku").isEqualTo(bindMarker())
@@ -139,7 +139,7 @@ on the other hand, it can be used as a workaround to handle new CQL features tha
 
 Finally, you can specify an IF EXISTS clause:
 
-[,java]
+[source,java]
 ----
 deleteFrom("product").whereColumn("sku").isEqualTo(bindMarker()).ifExists();
 // DELETE FROM product WHERE sku=? IF EXISTS

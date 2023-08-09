@@ -19,7 +19,7 @@ To use it in your application, add the following dependency:
 
 Here is our canonical example rewritten with the query builder:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 
@@ -41,7 +41,7 @@ try (CqlSession session = CqlSession.builder().build()) {
 All the starting methods are centralized in the https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html[QueryBuilder] and https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html[SchemaBuilder] classes.
 To get started, add one of the following imports:
 
-[,java]
+[source,java]
 ----
 // For DML queries, such as SELECT
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
@@ -53,7 +53,7 @@ import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 Choose the method matching your desired statement, for example `selectFrom`.
 Then use your IDE's completion and the javadocs to add query parts:
 
-[,java]
+[source,java]
 ----
 Select select =
     selectFrom("ks", "user")
@@ -65,7 +65,7 @@ Select select =
 
 When your query is complete, you can either extract a raw query string, or turn it into a link:../core/statements/simple[simple statement] (or its builder):
 
-[,java]
+[source,java]
 ----
 String cql = select.asCql();
 SimpleStatement statement = select.build();
@@ -82,7 +82,7 @@ they will be enriched in the future if DSE adds custom CQL syntax.
 
 Currently, the only difference is the support for the `DETERMINISTIC` and `MONOTONIC` keywords when generating `CREATE FUNCTION` or `CREATE AGGREGATE` statements:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.dse.driver.api.querybuilder.DseSchemaBuilder.createDseFunction;
 
@@ -100,7 +100,7 @@ createDseFunction("func1")
 All types in the fluent API are immutable.
 This means that every step creates a new object:
 
-[,java]
+[source,java]
 ----
 SelectFrom selectFrom = selectFrom("ks", "user");
 
@@ -121,7 +121,7 @@ Modern garbage collectors are good at handling that, but still we recommend that
 * favor link:../core/statements/prepared[bound statements] for queries that are used often.
 You can still use the query builder and prepare the result:
 +
-[,java]
+[source,java]
 ----
 // During application initialization:
 Select selectUser = selectFrom("user").all().whereColumn("id").isEqualTo(bindMarker());
@@ -159,7 +159,7 @@ You should always start with a clear idea of the CQL query, and write the builde
 The primary use case of the query builder is dynamic generation.
 You will get the most value out of it when you do things like:
 
-[,java]
+[source,java]
 ----
 // The columns to select are only known at runtime:
 for (String columnName : columnNames) {
@@ -174,7 +174,7 @@ if (name != null) {
 
 If all of your queries could also be written as compile-time string constants, ask yourself what the query builder is really buying you:
 
-[,java]
+[source,java]
 ----
 // Built version:
 private static final Statement SELECT_USERS =

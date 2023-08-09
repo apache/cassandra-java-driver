@@ -22,7 +22,7 @@ Metadata is mostly *immutable* (except for the fields of the https://docs.datast
 Each call to `getMetadata()` will return a *new copy* if something has changed since the last call.
 Do not cache the result across usages:
 
-[,java]
+[source,java]
 ----
 Metadata metadata = session.getMetadata();
 
@@ -39,7 +39,7 @@ assert fooMetadata == null;
 On the other hand, the advantage of immutability is that a `Metadata` instance provides a *consistent view* of the cluster at a given point in time.
 In other words, the token map is guaranteed to be in sync with the node and schema metadata:
 
-[,java]
+[source,java]
 ----
 Metadata metadata = session.getMetadata();
 // Pick up any node and keyspace:

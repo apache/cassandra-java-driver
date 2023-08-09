@@ -19,7 +19,7 @@ Then modify `Main.java` using one of the following approaches:
 
 You can pass the connection information directly to `CqlSession.builder()`:
 
-[,java]
+[source,java]
 ----
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
@@ -92,7 +92,7 @@ For more information about the driver configuration mechanism, refer to the link
 
 With the above configuration, your main Java class can be simplified as shown below:
 
-[,java]
+[source,java]
 ----
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;

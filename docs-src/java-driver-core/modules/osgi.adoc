@@ -43,7 +43,7 @@ To overcome these issues, you may specify a `ClassLoader` instance when construc
 
 Alternatively, if you have access to the `BundleContext` (for example, if you are creating the  session in an `Activator` class) you can also obtain the bundle's `ClassLoader` the following way:
 
-[,java]
+[source,java]
 ----
 BundleContext bundleContext = ...;
 Bundle bundle = bundleContext.getBundle();
@@ -61,7 +61,7 @@ This is typically done by including an `application.conf` file in your applicati
 
 For example, you can use https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromDefaults-java.lang.ClassLoader-[DriverConfigLoader.fromDefaults(ClassLoader)] to use the driver's default  configuration mechanism while specifying a different class loader:
 
-[,java]
+[source,java]
 ----
 BundleContext bundleContext = ...;
 Bundle bundle = bundleContext.getBundle();
@@ -78,7 +78,7 @@ The above configuration will look for resources named `application.conf` inside 
 
 Similarly, if you want to use programmatic configuration in you application bundle, but still want to be able to provide some configuration in an `application.conf` file, you can use https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#programmaticBuilder-java.lang.ClassLoader-[DriverConfigLoader.programmaticBuilder(ClassLoader)]:
 
-[,java]
+[source,java]
 ----
 BundleContext bundleContext = ...;
 Bundle bundle = bundleContext.getBundle();

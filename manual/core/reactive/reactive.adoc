@@ -16,7 +16,7 @@ however, reactive queries also work with regular Cassandra.
 
 `ReactiveSession` exposes two public methods:
 
-[,java]
+[source,java]
 ----
 ReactiveResultSet executeReactive(String query);
 ReactiveResultSet executeReactive(Statement<?> statement);
@@ -44,7 +44,7 @@ The examples in this page make usage of https://projectreactor.io/[Reactor], a p
 The following example reads from a table and prints all the returned rows to the console.
 In case of error, a `DriverException` is thrown and its stack trace is printed to standard error:
 
-[,java]
+[source,java]
 ----
 try (CqlSession session = ...) {
       Flux.from(session.executeReactive("SELECT ..."))
@@ -60,7 +60,7 @@ try (CqlSession session = ...) {
 The following example inserts rows into a table after printing the queries to the console, stopping at the first error, if any.
 Again, in case of error, a `DriverException` is thrown:
 
-[,java]
+[source,java]
 ----
 try (CqlSession session = ...) {
   Flux.just("INSERT ...", "INSERT ...", "INSERT ...", ...)
@@ -78,7 +78,7 @@ This is why the write example above uses a `flatMap` operator, which takes care 
 A common pitfall is to use an operator that silently ignores the returned `ReactiveResultSet`;
 for example, the code below seems correct, but will not execute any query:
 
-[,java]
+[source,java]
 ----
 // DON'T DO THIS
 Flux.just("INSERT INTO ...")
@@ -91,7 +91,7 @@ Since a write query does not return any rows, it may appear difficult to count t
 Hopefully most reactive libraries have operators that are useful in these scenarios.
 The following example demonstrates how to achieve this goal with Reactor:
 
-[,java]
+[source,java]
 ----
 Flux<Statement<?>> stmts = ...;
 long count =
@@ -112,7 +112,7 @@ System.out.printf("Executed %d write statements%n", count);
 
 `ReactiveResultSet` exposes useful information about request execution and query metadata:
 
-[,java]
+[source,java]
 ----
 Publisher<? extends ColumnDefinitions> getColumnDefinitions();
 Publisher<? extends ExecutionInfo> getExecutionInfos();
@@ -127,7 +127,7 @@ if the query fails, then these  publishers will fail with the same error.
 
 The following example executes a query, then prints all the available metadata to the console:
 
-[,java]
+[source,java]
 ----
 ReactiveResultSet rs = session.executeReactive("SELECT ...");
 // execute the query first
@@ -146,7 +146,7 @@ Each row returned by a  reactive query execution implements https://docs.datasta
 
 `ReactiveRow` exposes the same kind of query metadata and execution info found in  `ReactiveResultSet`, but for each individual row:
 
-[,java]
+[source,java]
 ----
 ColumnDefinitions getColumnDefinitions();
 ExecutionInfo getExecutionInfo();
@@ -157,7 +157,7 @@ Refer to the javadocs of https://docs.datastax.com/en/drivers/java/4.14/com/data
 
 The following example executes a query and, for each row returned, prints the coordinator that served that row, then retrieves all the coordinators that were contacted to fulfill the query and prints them to the console:
 
-[,java]
+[source,java]
 ----
 Iterable<Node> coordinators = Flux.from(session.executeReactive("SELECT ..."))
     .doOnNext(
@@ -197,7 +197,7 @@ It is strongly advised for users to limit the concurrency at which write stateme
 A simple way to achieve this is to use the `flatMap` operator, which, in most reactive libraries, has an overloaded form that takes a parameter that controls the desired amount of concurrency.
 The following example executes a flow of statements with a maximum concurrency of 10, leveraging the `concurrency` parameter of Reactor's `flatMap` operator:
 
-[,java]
+[source,java]
 ----
 Flux<Statement<?>> stmts = ...;
 stmts.flatMap(session::executeReactive, 10).blockLast();
@@ -220,7 +220,7 @@ This is an intentional design decision, because otherwise users could inadverten
 Let's suppose that we want to compute both the average and the sum of all values from a table column.
 The most naive approach would be to create two flows and subscribe to both:
 
-[,java]
+[source,java]
 ----
 // DON'T DO THIS
 ReactiveResultSet rs = session.executeReactive("SELECT n FROM ...");
@@ -239,7 +239,7 @@ Unfortunately, the second `Flux` above with terminate immediately with an `onErr
 
 To circumvent this limitation, while still avoiding to query the table twice, the easiest technique consists in using the `cache` operator that most reactive libraries offer:
 
-[,java]
+[source,java]
 ----
 Flux<Long> rs = Flux.from(session.executeReactive("SELECT n FROM ..."))
     .map(row -> row.getLong(0))
@@ -261,7 +261,7 @@ If caching is not an option, most reactive libraries also offer operators that m
 
 The above example could be rewritten with a different approach as follows:
 
-[,java]
+[source,java]
 ----
 Flux<Long> rs = Flux.from(session.executeReactive("SELECT n FROM ..."))
     .map(row -> row.getLong(0))
@@ -291,7 +291,7 @@ Consult your reactive library documentation to find out which operators allow yo
 The following example executes a flow of statements;
 for each failed execution, the stack trace is printed to standard error and, thanks to the `onErrorResume` operator, the error is completely ignored and the flow execution resumes normally:
 
-[,java]
+[source,java]
 ----
 Flux<Statement<?>> stmts = ...;
 stmts.flatMap(
@@ -305,7 +305,7 @@ stmts.flatMap(
 The following example expands on the previous one: for each failed execution, at most 3 retries are attempted if the error was an ` UnavailableException`, then, if the query wasn't successful after retrying, a message is logged.
 Finally, all the errors are collected and the total number of failed queries is printed to the console:
 
-[,java]
+[source,java]
 ----
 Flux<Statement<?>> statements = ...;
 long failed = statements.flatMap(

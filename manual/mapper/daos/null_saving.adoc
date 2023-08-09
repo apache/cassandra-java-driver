@@ -7,7 +7,7 @@ Two strategies are available:
 
 * generated code looks approximately like this:
 +
-[,java]
+[source,java]
 ----
   if (entity.getDescription() != null) {
     boundStatement = boundStatement.setString("description", entity.getDescription());
@@ -21,7 +21,7 @@ Note that unset values (https://issues.apache.org/jira/browse/CASSANDRA-7304[CAS
 
 * looks approximately like this:
 +
-[,java]
+[source,java]
 ----
   // Called even if entity.getDescription() == null
   boundStatement = boundStatement.setString("description", entity.getDescription());
@@ -31,7 +31,7 @@ Note that unset values (https://issues.apache.org/jira/browse/CASSANDRA-7304[CAS
 
 Specify `nullSavingStrategy` on the method annotation:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy.SET_TO_NULL;
 
@@ -46,7 +46,7 @@ This applies to link:../insert/[@Insert], link:../query/[@Query], link:../setent
 Annotate your link:../../daos/[DAO] interface with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/DefaultNullSavingStrategy.html[@DefaultNullSavingStrategy].
 Any method that does not explicitly define its strategy inherits the DAO-level one:
 
-[,java]
+[source,java]
 ----
 @Dao
 @DefaultNullSavingStrategy(SET_TO_NULL)
@@ -62,7 +62,7 @@ public interface ProductDao {
 
 If you don't define a DAO-level default, any method that does not declare its own value defaults to https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/entity/saving/NullSavingStrategy.html#DO_NOT_SET[DO_NOT_SET]:
 
-[,java]
+[source,java]
 ----
 @Dao
 public interface ProductDao {
@@ -74,7 +74,7 @@ public interface ProductDao {
 
 Note that you can use inheritance to set a common default for all your DAOs:
 
-[,java]
+[source,java]
 ----
 @DefaultNullSavingStrategy(SET_TO_NULL)
 public interface InventoryDao {}

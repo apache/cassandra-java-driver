@@ -2,7 +2,7 @@
 
 Annotate a DAO method with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/GetEntity.html[@GetEntity] to convert a core driver data structure into one or more link:../../entities[Entities]:
 
-[,java]
+[source,java]
 ----
 @Dao
 public interface ProductDao {
@@ -13,7 +13,7 @@ public interface ProductDao {
 
 The generated code will retrieve each entity property from the source, such as:
 
-[,java]
+[source,java]
 ----
 Product product = new Product();
 product.setId(row.get("id", UUID.class));
@@ -35,7 +35,7 @@ However, _unmatched properties will be left untouched_.
 
 As an example to illustrate how lenient mode works, assume that we have the following entity and DAO:
 
-[,java]
+[source,java]
 ----
 @Entity class Product {
 
@@ -55,7 +55,7 @@ interface ProductDao {
 
 Then the following code would be possible:
 
-[,java]
+[source,java]
 ----
 // row does not contain the price column
 Row row = session.execute("SELECT id, description FROM product").one();
@@ -101,7 +101,7 @@ If the argument is a result set type, the generated code will extract the first 
 In that case, the type of the parameter *must* be https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/ResultSet.html[ResultSet].
 Each row in the result set will be converted into an entity instance.
 +
-[,java]
+[source,java]
 ----
   @GetEntity
   PagingIterable<Product> asProducts(ResultSet resultSet);
@@ -115,7 +115,7 @@ NOTE: even if streams are lazily evaluated, results are fetched synchronously;
 therefore, as the   returned stream is traversed, blocking calls may occur, as more results are fetched from the   server in the background.
 For details about the stream's characteristics, see   https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/PagingIterable.html#spliterator--[PagingIterable.spliterator].
 +
-[,java]
+[source,java]
 ----
   @GetEntity
   Stream<Product> asProducts(ResultSet resultSet);
@@ -125,7 +125,7 @@ For details about the stream's characteristics, see   https://docs.datastax.com/
 In that case, the type of the parameter *must* be https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html[AsyncResultSet].
 Each row in the result set will be converted into an entity instance.
 +
-[,java]
+[source,java]
 ----
   @GetEntity
   MappedAsyncPagingIterable<Product> asProducts(AsyncResultSet resultSet);

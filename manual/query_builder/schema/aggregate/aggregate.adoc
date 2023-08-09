@@ -7,7 +7,7 @@ https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/query
 
 To start a `CREATE AGGREGATE` query, use `createAggregate` in https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html[SchemaBuilder]:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 
@@ -16,7 +16,7 @@ CreateAggregateStart create = createAggregate("average");
 
 Like all other `CREATE` queries, one may supply `ifNotExists()` to require that the aggregate should only be created if it doesn't already exist, i.e.:
 
-[,java]
+[source,java]
 ----
 CreateAggregateStart create = createAggregate("cycling", "average").ifNotExists();
 ----
@@ -24,14 +24,14 @@ CreateAggregateStart create = createAggregate("cycling", "average").ifNotExists(
 You may also specify that you would like to replace an existing aggregate by the same signature if it exists.
 In this case, use `orReplace`:
 
-[,java]
+[source,java]
 ----
 CreateAggregateStart create = createAggregate("cycling", "average").orReplace();
 ----
 
 One may also specify the parameters of an aggregate using `withParameter`:
 
-[,java]
+[source,java]
 ----
 CreateAggregateStart create = createAggregate("cycling", "average")
     .withParameter(DataTypes.INT);
@@ -49,7 +49,7 @@ In addition, while optional, it is typical that the following is also provided:
 
 For example, the following defines a complete `CREATE AGGREGATE` statement:
 
-[,java]
+[source,java]
 ----
 createAggregate("cycling", "average")
     .withParameter(DataTypes.INT)
@@ -65,7 +65,7 @@ createAggregate("cycling", "average")
 
 To create a `DROP AGGREGATE` query, use `dropAggregate`:
 
-[,java]
+[source,java]
 ----
 dropAggregate("cycling", "average");
 // DROP AGGREGATE cycling.average
@@ -73,7 +73,7 @@ dropAggregate("cycling", "average");
 
 You may also specify `ifExists`:
 
-[,java]
+[source,java]
 ----
 dropAggregate("average").ifExists();
 // DROP AGGREGATE IF EXISTS average

@@ -2,7 +2,7 @@
 
 Annotate a DAO method with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Increment.html[@Increment] to generate a query that updates a counter table that is mapped to an entity:
 
-[,java]
+[source,java]
 ----
 // CREATE TABLE votes(article_id int PRIMARY KEY, up_votes counter, down_votes counter);
 
@@ -42,7 +42,7 @@ The name of the parameter must match the name of the entity property that maps t
 Alternatively, you may annotate a parameter with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/CqlName.html[@CqlName] to specify the raw column name directly;
 in that case, the name of the parameter does not matter:
 
-[,java]
+[source,java]
 ----
 @Increment(entityClass = Votes.class)
 void incrementUpVotes(int articleId, @CqlName("up_votes") long foobar);

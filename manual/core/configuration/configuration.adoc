@@ -45,7 +45,7 @@ datastax-java-driver {
 
 Now each request only needs a profile name:
 
-[,java]
+[source,java]
 ----
 SimpleStatement s =
   SimpleStatement.builder("SELECT name FROM user WHERE id = 1")
@@ -137,7 +137,7 @@ For example "config" will try to load `config.conf`, `config.json` or `config.pr
 
 To use any of those loaders, pass it to the session builder:
 
-[,java]
+[source,java]
 ----
 File file = new File("/path/to/application.conf");
 CqlSession session = CqlSession.builder()
@@ -151,7 +151,7 @@ Apart from application-specific configuration, they work exactly like the defaul
 
 Alternatively, you can use https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#programmaticBuilder--[DriverConfigLoader.programmaticBuilder] to specify configuration options programmatically instead of loading them from a static resource:
 
-[,java]
+[source,java]
 ----
 DriverConfigLoader loader =
     DriverConfigLoader.programmaticBuilder()
@@ -177,7 +177,7 @@ You don't need the configuration API for everyday usage of the driver, but it ca
 
 The driver's context exposes a https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverConfig.html[DriverConfig] instance:
 
-[,java]
+[source,java]
 ----
 DriverConfig config = session.getContext().getConfig();
 DriverExecutionProfile defaultProfile = config.getDefaultProfile();
@@ -188,7 +188,7 @@ config.getProfiles().forEach((name, profile) -> ...);
 
 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverExecutionProfile.html[DriverExecutionProfile] has typed option getters:
 
-[,java]
+[source,java]
 ----
 Duration requestTimeout = defaultProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
 int maxRequestsPerConnection = defaultProfile.getInt(DefaultDriverOption.CONNECTION_MAX_REQUESTS);
@@ -199,7 +199,7 @@ int maxRequestsPerConnection = defaultProfile.getInt(DefaultDriverOption.CONNECT
 In addition to periodic reloading, you can trigger a reload programmatically.
 This returns a `CompletionStage` that you can use for example to register a callback when the reload is complete:
 
-[,java]
+[source,java]
 ----
 DriverConfigLoader loader = session.getContext().getConfigLoader();
 if (loader.supportsReloading()) {
@@ -225,7 +225,7 @@ What if you want to adjust an option for a single request, without having a dedi
 
 To allow this, you start from an existing profile in the configuration and build a _derived profile_ that overrides a subset of options:
 
-[,java]
+[source,java]
 ----
 DriverExecutionProfile defaultProfile = session.getContext().getConfig().getDefaultProfile();
 DriverExecutionProfile dynamicProfile =
@@ -270,7 +270,7 @@ session2 {
 
 To achieve that, first write a method that loads the configuration under your prefix, and uses the driver's `reference.conf` as a fallback:
 
-[,java]
+[source,java]
 ----
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -296,7 +296,7 @@ Next, create a `DriverConfigLoader`.
 This is the component that abstracts the configuration implementation to the rest of the driver.
 Here we use the built-in class, but tell it to load the Typesafe Config object with the previous method:
 
-[,java]
+[source,java]
 ----
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
@@ -309,7 +309,7 @@ DriverConfigLoader session1ConfigLoader =
 
 Finally, pass the config loader when building the driver:
 
-[,java]
+[source,java]
 ----
 CqlSession session1 =
     CqlSession.builder()
@@ -324,7 +324,7 @@ If you don't want to use a config file, you can write custom code to create the 
 Then reuse the examples from the previous section to merge it with the driver's reference file, and pass it to the driver.
 Here's a contrived example that loads the configuration from a string:
 
-[,java]
+[source,java]
 ----
 String configSource = "protocol.version = V3";
 DriverConfigLoader loader =
@@ -378,7 +378,7 @@ if your implementation is slow, consider caching the results between reloads.
 If you're writing your own policies, you might want them to be reactive to configuration changes.
 You can register a callback to `ConfigChangeEvent`, which gets emitted any time a manual or periodic reload detects changes since the last reload:
 
-[,java]
+[source,java]
 ----
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
@@ -420,14 +420,14 @@ When the driver encounters such a declaration, it will load the class and use re
 
 * for policies that can be overridden in a profile (load balancing policy, retry policy, speculative execution policy):
 +
-[,java]
+[source,java]
 ----
   public DefaultLoadBalancingPolicy(DriverContext context, String profileName)
 ----
 
 * for session-wide policies (all the others):
 +
-[,java]
+[source,java]
 ----
   public ExponentialReconnectionPolicy(DriverContext context)
 ----
@@ -441,7 +441,7 @@ Study the built-in implementations for reference.
 If for some reason you really can't use reflection, there is a way out;
 subclass `DefaultDriverContext` and override the corresponding method:
 
-[,java]
+[source,java]
 ----
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 
@@ -468,7 +468,7 @@ This is useful for custom components, or even as a way to associate arbitrary ke
 
 First, write an enum that implements https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverOption.html[DriverOption]:
 
-[,java]
+[source,java]
 ----
 public enum MyCustomOption implements DriverOption {
 
@@ -504,7 +504,7 @@ datastax-java-driver {
 
 And access them from the code:
 
-[,java]
+[source,java]
 ----
 DriverConfig config = session.getContext().getConfig();
 config.getDefaultProfile().getString(MyCustomOption.ADMIN_EMAIL);

@@ -21,7 +21,7 @@ There are various ways to assign it:
 
 You can explicitly provide the timestamp in your CQL query:
 
-[,java]
+[source,java]
 ----
 session.execute("INSERT INTO my_table(c1, c2) values (1, 1) " +
     "USING TIMESTAMP 1432815430948040");
@@ -146,7 +146,7 @@ If it doesn't declare any profile, or if the profile doesn't have a dedicated po
 
 Finally, you can assign a timestamp to a statement directly from application code:
 
-[,java]
+[source,java]
 ----
 Statement statement =
     SimpleStatement.builder("UPDATE users SET email = 'x@y.com' where id = 1")

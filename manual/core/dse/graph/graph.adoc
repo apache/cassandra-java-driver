@@ -21,7 +21,7 @@ There are 3 ways to execute graph requests:
 . Passing a Gremlin script directly in a plain Java string.
 We'll refer to this as the link:script/[script API]:
 +
-[,java]
+[source,java]
 ----
  CqlSession session = CqlSession.builder().build();
 
@@ -39,7 +39,7 @@ We'll refer to this as the link:script/[script API]:
 
 . Building a traversal with the link:fluent/[TinkerPop fluent API], and link:fluent/explicit/[executing it explicitly] with the session:
 +
-[,java]
+[source,java]
 ----
  import static com.datastax.dse.driver.api.core.graph.DseGraph.g;
 
@@ -54,7 +54,7 @@ We'll refer to this as the link:script/[script API]:
 
 . Building a connected traversal with the fluent API, and link:fluent/implicit/[executing it implicitly] by invoking a terminal step:
 +
-[,java]
+[source,java]
 ----
  GraphTraversalSource g = DseGraph.g
      .withRemote(DseGraph.remoteConnectionBuilder(session).build());

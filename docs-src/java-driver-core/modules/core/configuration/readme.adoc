@@ -1,0 +1,13 @@
+== Reference configuration
+
+The following is a copy of the `reference.conf` file matching the
+version of this documentation. It is packaged in the `java-driver-core`
+JAR artifact, and used at runtime to provide the default values for all
+configuration options (in the sources, it can be found under
+`core/src/main/resources`).
+
+See the link:../[configuration page] for more explanations.
+
+[source,properties]
+----
+----

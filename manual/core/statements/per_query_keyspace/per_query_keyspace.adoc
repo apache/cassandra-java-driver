@@ -28,7 +28,7 @@ If you want to test those examples against the development version, keep in mind
 
 To use a per-query keyspace, set it on your statement instance:
 
-[,java]
+[source,java]
 ----
 CqlSession session = CqlSession.builder().build();
 CqlIdentifier keyspace = CqlIdentifier.fromCql("test");
@@ -41,7 +41,7 @@ You can do this on link:../simple/[simple], link:../prepared[prepared] or link:.
 
 If the session is connected to another keyspace, the per-query keyspace takes precedence:
 
-[,java]
+[source,java]
 ----
 CqlIdentifier keyspace1 = CqlIdentifier.fromCql("test1");
 CqlIdentifier keyspace2 = CqlIdentifier.fromCql("test2");
@@ -56,7 +56,7 @@ session.execute(statement);
 
 On the other hand, if a keyspace is hard-coded in the query, it takes precedence over the per-query keyspace:
 
-[,java]
+[source,java]
 ----
 // Will query test1.foo:
 SimpleStatement statement =
@@ -68,7 +68,7 @@ SimpleStatement statement =
 Bound statements can't have a per-query keyspace;
 they only inherit the one that was set on the prepared statement:
 
-[,java]
+[source,java]
 ----
 CqlIdentifier keyspace = CqlIdentifier.fromCql("test");
 PreparedStatement pst =
@@ -86,7 +86,7 @@ Therefore you'll have to prepare against every target keyspace.
 A good strategy is to do this lazily with a cache.
 Here is a simple example using Guava:
 
-[,java]
+[source,java]
 ----
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -115,7 +115,7 @@ It does not affect the query string itself.
 
 If you are using a per-query keyspace, the routing keyspace becomes obsolete: the driver will use the per-query keyspace as the routing keyspace.
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement =
     SimpleStatement.newInstance("SELECT * FROM foo WHERE k = 1")

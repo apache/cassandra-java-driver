@@ -12,7 +12,7 @@ This was causing integrators to do workarounds in order to react on all exceptio
 The change introduced by JAVA-2995 shouldn't be a problem for most users.
 But if your code was using a logic such as below, it won't compile anymore:
 
-[,java]
+[source,java]
 ----
 try {
   doSomethingWithDriver();
@@ -23,7 +23,7 @@ try {
 
 You need to either reverse the catch order and catch `CodecNotFoundException` first:
 
-[,java]
+[source,java]
 ----
 try {
   doSomethingWithDriver();
@@ -34,7 +34,7 @@ try {
 
 Or catch only `DriverException`:
 
-[,java]
+[source,java]
 ----
 try {
   doSomethingWithDriver();
@@ -93,7 +93,7 @@ _If both approaches are used, components will add up and will all be registered_
 
 When using the programmatic approach to register multiple components, you should use the new `SessionBuilder` methods `addRequestTracker`, `addNodeStateListener` and  `addSchemaChangeListener`:
 
-[,java]
+[source,java]
 ----
 CqlSessionBuilder builder = CqlSession.builder();
 builder
@@ -190,7 +190,7 @@ As a consequence, all `withNodeFilter` methods in `SessionBuilder` are now depre
 
 If you have an existing node filter implementation, it can be converted to a `NodeDistanceEvaluator` very easily:
 
-[,java]
+[source,java]
 ----
 Predicate<Node> nodeFilter = ...
 NodeDistanceEvaluator nodeEvaluator =
@@ -199,7 +199,7 @@ NodeDistanceEvaluator nodeEvaluator =
 
 The above can also be achieved by an adapter class as shown below:
 
-[,java]
+[source,java]
 ----
 public class NodeFilterToDistanceEvaluatorAdapter implements NodeDistanceEvaluator {
 
@@ -364,7 +364,7 @@ but you will get deprecation warnings:
 * `DseSession`: use `CqlSession` instead, it can now do everything that a DSE session does.
 This also applies to the builder:
 +
-[,java]
+[source,java]
 ----
   // Replace:
   DseSession session = DseSession.builder().build()
@@ -458,7 +458,7 @@ you can use the auto-import or "find class" features of your IDE to discover the
 
 Here's a side-by-side comparison with the legacy driver for a basic example:
 
-[,java]
+[source,java]
 ----
 // Driver 3:
 import com.datastax.driver.core.ResultSet;
@@ -525,7 +525,7 @@ java -Ddatastax-java-driver.basic.request.consistency=ONE MyApp
 
 The configuration also supports _execution profiles_, that allow you to capture and reuse common sets of options:
 
-[,java]
+[source,java]
 ----
 // application.conf:
 datastax-java-driver {
@@ -560,7 +560,7 @@ For more details, refer to the link:../manual/core/configuration[manual].
 `Cluster` does not exist anymore;
 the session is now the main component, initialized in a single step:
 
-[,java]
+[source,java]
 ----
 CqlSession session = CqlSession.builder().build();
 session.execute("...");
@@ -612,7 +612,7 @@ This makes them automatically thread-safe: you don't need to worry anymore about
 
 Note that all mutating methods return a new instance, so *make sure you don't accidentally ignore their result*:
 
-[,java]
+[source,java]
 ----
 BoundStatement boundSelect = preparedSelect.bind();
 
@@ -634,7 +634,7 @@ You can set it with `Statement.setTimeout`, or globally in the configuration wit
 link:../manual/core/statements/prepared/[Prepared statements] are now cached client-side: if you call `session.prepare()` twice with the same query string, it will no longer log a warning.
 The second call will return the same statement instance, without sending anything to the server:
 
-[,java]
+[source,java]
 ----
 PreparedStatement ps1 = session.prepare("SELECT * FROM product WHERE sku = ?");
 PreparedStatement ps2 = session.prepare("SELECT * FROM product WHERE sku = ?");
@@ -644,7 +644,7 @@ assert ps1 == ps2;
 This cache takes into account all execution parameters.
 For example, if you prepare the same query string with different consistency levels, you will get two distinct prepared statements, each propagating its own consistency level to its bound statements:
 
-[,java]
+[source,java]
 ----
 PreparedStatement ps1 =
   session.prepare(
@@ -729,7 +729,7 @@ for example, a keyspace in `metadata.getKeyspaces()` will always have a correspo
 On the other hand, this means you have to call `getMetadata()` again each time you need a fresh copy;
 do not cache the result:
 
-[,java]
+[source,java]
 ----
 Metadata metadata = session.getMetadata();
 Optional<KeyspaceMetadata> ks = metadata.getKeyspace("test");
@@ -778,7 +778,7 @@ The query builder is now distributed as a separate artifact:
 It is more cleanly separated from the core driver, and only focuses on query string generation.
 Built queries are no longer directly executable, you need to convert them into a string or a statement:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 

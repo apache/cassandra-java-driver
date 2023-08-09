@@ -59,7 +59,7 @@ for instance, they might broadcast private IPs because most clients are in the s
 For such cases, you can register a driver-side component that will perform additional address translation.
 Write a class that implements https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/addresstranslation/AddressTranslator.html[AddressTranslator] with the following constructor:
 
-[,java]
+[source,java]
 ----
 public class MyAddressTranslator implements AddressTranslator {
 

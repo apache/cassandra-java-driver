@@ -33,7 +33,7 @@ they must have a public constructor taking a `DriverContext` argument.
 Sometimes you have a tracker instance already in your code, and need to pass it programmatically instead of referencing a class.
 The session builder has a method for that:
 
-[,java]
+[source,java]
 ----
 RequestTracker myTracker1 = ...;
 RequestTracker myTracker2 = ...;

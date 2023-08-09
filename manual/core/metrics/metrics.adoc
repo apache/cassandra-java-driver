@@ -212,7 +212,7 @@ This allows the driver to transparently export its operational metrics to whatev
 
 To pass a metric registry object to the session, use the `CqlSessionBuilder.withMetricRegistry()` method:
 
-[,java]
+[source,java]
 ----
 CqlSessionBuilder builder = CqlSession.builder();
 builder.withMetricRegistry(myRegistryObject);
@@ -264,7 +264,7 @@ Add the following dependency to your application (make sure the version matches 
 
 Then create a JMX reporter for the registry:
 
-[,java]
+[source,java]
 ----
 MetricRegistry registry = session.getMetrics()
     .orElseThrow(() -> new IllegalStateException("Metrics are disabled"))
@@ -280,7 +280,7 @@ reporter.start();
 NOTE: by default, the JMX reporter exposes all metrics in a flat structure (for example, `pool.open-connections` and `pool.in-flight` appear as root elements).
 If you prefer a hierarchical structure (`open-connections` and `in-flight` nested into a `pool` sub-domain), use a custom object factory:
 
-[,java]
+[source,java]
 ----
 import com.codahale.metrics.jmx.JmxReporter;
 import com.codahale.metrics.jmx.ObjectNameFactory;

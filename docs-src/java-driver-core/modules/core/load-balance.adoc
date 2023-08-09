@@ -119,7 +119,7 @@ datastax-java-driver.basic.load-balancing-policy {
 
 Or programmatically when building the session:
 
-[,java]
+[source,java]
 ----
 CqlSession session = CqlSession.builder()
     .withLocalDatacenter("datacenter1")
@@ -252,7 +252,7 @@ CREATE TABLE testKs.sensor_data(id int, year int, ts timestamp, data double,
 
 For link:../statements/simple/[simple statements], routing information is never computed automatically:
 
-[,java]
+[source,java]
 ----
 SimpleStatement statement =
     SimpleStatement.newInstance(
@@ -276,7 +276,7 @@ session.execute(statement);
 For link:../statements/prepared/[bound statements], the keyspace is always available;
 the routing key is only available if all components of the partition key are bound as variables:
 
-[,java]
+[source,java]
 ----
 // All components bound: all info available
 PreparedStatement pst1 =
@@ -333,7 +333,7 @@ The node distance evaluator class must implement https://docs.datastax.com/en/dr
 Sometimes it's more convenient to pass the evaluator programmatically;
 you can do that with `SessionBuilder.withNodeDistanceEvaluator`:
 
-[,java]
+[source,java]
 ----
 Map<Node, NodeDistance> distances = ...
 CqlSession session = CqlSession.builder()

@@ -23,7 +23,7 @@ See the <<bottom-line,bottom line>> at the end of this page for details.
 Detachable components are those that encode or decode their fields themselves.
 For example, when you set a field on a link:../tuples[tuple value]:
 
-[,java]
+[source,java]
 ----
 tupleValue = tupleValue.setString(0, "foo");
 ----
@@ -45,7 +45,7 @@ Whenever you get an object from the driver, it is attached:
 
 * reading a row from a result set:
 +
-[,java]
+[source,java]
 ----
   ResultSet rs = session.execute("SELECT * FROM foo");
   Row row = rs.one();
@@ -54,7 +54,7 @@ Whenever you get an object from the driver, it is attached:
 
 * reading a data type from schema metadata:
 +
-[,java]
+[source,java]
 ----
   UserDefinedType udt = session.getMetadata().getKeyspace("ks").getUserDefinedType("type1");
   assert !udt.isDetached();
@@ -67,7 +67,7 @@ This can only happen when:
 * attaching an object to another session;
 * creating a link:../tuples/[tuple] or link:../udts/[UDT] definition manually:
 +
-[,java]
+[source,java]
 ----
   TupleType tupleType = DataTypes.tupleOf(DataTypes.INT, DataTypes.TEXT, DataTypes.FLOAT);
   assert tupleType.isDetached();
@@ -80,7 +80,7 @@ This might be good enough for you if you don't use any custom codec (the binary 
 
 Use `attach()` to reattach an object to the session:
 
-[,java]
+[source,java]
 ----
 TupleType tupleType = DataTypes.tupleOf(DataTypes.INT, DataTypes.TEXT, DataTypes.FLOAT);
 assert tupleType.isDetached();
@@ -102,7 +102,7 @@ If you're reading data from one session and writing it into another, you should 
 * if the protocol version is different, you should avoid sharing UDT and tuple types;
 keep a separate set of definitions for each session, and copy the values field by field:
 +
-[,java]
+[source,java]
 ----
   Row row = session1.execute("SELECT QUERY...").one();
   UdtValue user1 = row.getUdtValue("user");

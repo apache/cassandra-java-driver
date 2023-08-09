@@ -2,7 +2,7 @@
 
 Annotate a DAO method with https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Query.html[@Query] to provide your own query string:
 
-[,java]
+[source,java]
 ----
 @Dao
 public interface SensorReadingDao {
@@ -18,7 +18,7 @@ This is the equivalent of what was called "accessor methods" in the driver 3 map
 The query string will typically contain CQL placeholders.
 The method's parameters must match those placeholders: same name and a compatible Java type.
 
-[,java]
+[source,java]
 ----
 @Query("SELECT count(*) FROM sensor_readings WHERE id = :id AND year = :year")
 long countByIdAndYear(int id, int year);
@@ -70,7 +70,7 @@ They get substituted at DAO initialization time, with the link:../../mapper/#dao
 
 For example, given the following:
 
-[,java]
+[source,java]
 ----
 @Dao
 public interface TestDao {

@@ -9,7 +9,7 @@ Unlike other schema members, there is no mechanism to alter an index.
 
 To start a `CREATE INDEX` query, use `createIndex` in https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html[SchemaBuilder]:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.*;
 
@@ -23,7 +23,7 @@ Unlike other keyspace elements, there is not option to provide the keyspace name
 
 Like all other `CREATE` queries, one may supply `ifNotExists()` to require that the index should only be created if it doesn't already exist, i.e.:
 
-[,java]
+[source,java]
 ----
 CreateIndexStart create = createIndex("my_idx").ifNotExists();
 ----
@@ -38,7 +38,7 @@ You need to provide at least:
 
 For example:
 
-[,java]
+[source,java]
 ----
 createIndex().onTable("tbl").andColumnKeys("addresses");
 // CREATE INDEX ON tbl (KEYS(addresses))
@@ -50,7 +50,7 @@ createIndex().onTable("tbl").andColumnKeys("addresses");
 Cassandra supports indices with a custom implementation, specified by an input class name.
 The class implementation may be specified using `custom(className)`, for example:
 
-[,java]
+[source,java]
 ----
 createIndex()
     .custom("org.apache.cassandra.index.MyCustomIndex")
@@ -62,7 +62,7 @@ createIndex()
 One popular custom index implementation is SASI (SSTable Attached Secondary Index).
 To use SASI, use `usingSASI` and optionally `withSASIOptions`:
 
-[,java]
+[source,java]
 ----
 createIndex()
     .usingSASI()
@@ -94,7 +94,7 @@ These are really only applicable to custom index implementations.
 
 To create a `DROP INDEX` query, use `dropIndex`:
 
-[,java]
+[source,java]
 ----
 dropIndex("ks", "my_idx");
 // DROP INDEX ks.my_idx
@@ -102,7 +102,7 @@ dropIndex("ks", "my_idx");
 
 You may also specify `ifExists`:
 
-[,java]
+[source,java]
 ----
 dropIndex("my_idx").ifExists();
 // DROP INDEX IF EXISTS my_idx

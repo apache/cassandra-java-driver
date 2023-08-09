@@ -37,7 +37,7 @@ They will typically be way less frequent than user requests, so we can tolerate 
 
 One pattern we use a lot is a confined inner class:
 
-[,java]
+[source,java]
 ----
 public class ControlConnection {
   // some content omitted for brevity
@@ -78,7 +78,7 @@ Examples of this can be found in `ReprepareOnUp` and  `DefaultTopologyMonitor` (
 
 The only place where the driver blocks is when using the synchronous API (methods declared in  https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/SyncCqlSession.html`[`SyncCqlSession`]), and when calling other synchronous wrapper methods in the public API, for example, https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getQueryTrace--[`ExecutionInfo.getQueryTrace()`]:
 
-[,java]
+[source,java]
 ----
 public interface ExecutionInfo {
   // some content omitted for brevity

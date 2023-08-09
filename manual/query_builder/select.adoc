@@ -3,7 +3,7 @@
 Start your SELECT with the `selectFrom` method in https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html[QueryBuilder].
 There are several variants depending on whether your table name is qualified, and whether you use link:../../case_sensitivity/[identifiers] or raw strings:
 
-[,java]
+[source,java]
 ----
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
 
@@ -20,7 +20,7 @@ Its simplest form is a column identifier, but it can be a more complex expressio
 
 The easiest way to add a selector is with one of the fluent shortcuts:
 
-[,java]
+[source,java]
 ----
 selectFrom("user")
     .column("first_name")
@@ -30,7 +30,7 @@ selectFrom("user")
 
 You can also create it manually with one of the factory methods in https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/querybuilder/select/Selector.html[Selector], and then pass it to `selector()`:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").selector(
     Selector.column("first_name"));
@@ -40,7 +40,7 @@ selectFrom("user").selector(
 If you have multiple selectors, you can also use `selectors()` to add them all in a single call.
 This is a bit more efficient since it creates less temporary objects:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").selectors(
     Selector.column("first_name"),
@@ -50,7 +50,7 @@ selectFrom("user").selectors(
 
 Use an alias to give a selector a different name in the result set:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").column("first_name").as("first");
 // SELECT first_name AS first FROM user
@@ -68,7 +68,7 @@ Some of them only work with newer Cassandra versions, always check what your tar
 `all` is the classic "star" selector that returns all columns.
 It cannot be aliased, and must be the only selector:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").all();
 // SELECT * FROM user
@@ -79,7 +79,7 @@ selectFrom("user").all().as("everything");
 
 If you add it to a query that already had other selectors, they will get removed:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").column("first_name").all();
 // SELECT * FROM user
@@ -87,7 +87,7 @@ selectFrom("user").column("first_name").all();
 
 If you add other selectors to a query that already had the star selector, the star selector gets removed:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").all().column("first_name");
 // SELECT first_name FROM user
@@ -95,7 +95,7 @@ selectFrom("user").all().column("first_name");
 
 If you add multiple selectors at once, and one of them is the star selector, an exception is thrown:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").selectors(
     Selector.column("first_name"),
@@ -106,7 +106,7 @@ selectFrom("user").selectors(
 
 `countAll` counts the number of rows:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").countAll();
 // SELECT count(*) FROM user
@@ -116,7 +116,7 @@ selectFrom("user").countAll();
 
 We've already shown how `column` works:
 
-[,java]
+[source,java]
 ----
 selectFrom("user")
     .column("first_name")
@@ -126,7 +126,7 @@ selectFrom("user")
 
 When all your selectors are simple columns, there is a convenience shortcut to add them in one call:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").columns("first_name", "last_name");
 // SELECT first_name,last_name FROM user
@@ -158,7 +158,7 @@ Selectors can be combined with arithmetic operations.
 | `remainder`
 |===
 
-[,java]
+[source,java]
 ----
 selectFrom("rooms")
     .multiply(Selector.column("length"), Selector.column("width"))
@@ -168,7 +168,7 @@ selectFrom("rooms")
 
 Operations can be nested, and will get parenthesized according to the usual precedence rules:
 
-[,java]
+[source,java]
 ----
 selectFrom("foo")
     .multiply(
@@ -180,7 +180,7 @@ selectFrom("foo")
 NOTE: as shown in the examples above, arithmetic operations can get verbose very quickly.
 If you have common expressions that get reused throughout your application code, consider writing your own shortcuts:
 
-[,java]
+[source,java]
 ----
 public static Selector multiplyColumns(String left, String right) {
   return Selector.multiply(Selector.column(left), Selector.column(right));
@@ -198,7 +198,7 @@ Casting is closely related to arithmetic operations;
 it allows you to coerce a selector to a different data type.
 For example, if `height` and `weight` are two `int` columns, the following expression uses integer division and returns an `int`:
 
-[,java]
+[source,java]
 ----
 selectFrom("user")
     .divide(
@@ -211,7 +211,7 @@ selectFrom("user")
 What if you want a floating-point result instead?
 You have to introduce a cast:
 
-[,java]
+[source,java]
 ----
 selectFrom("user")
     .divide(
@@ -225,7 +225,7 @@ selectFrom("user")
 
 Type hints are similar to casts, with a subtle difference: a cast applies to an expression with an already well-established type, whereas a hint is used with a literal, where the type can be ambiguous.
 
-[,java]
+[source,java]
 ----
 selectFrom("foo").divide(
     // A literal 1 can be any numeric type (int, bigint, double, etc.)
@@ -241,7 +241,7 @@ These selectors extract an element from a complex column, for example:
 
 * a field from a user-defined type:
 +
-[,java]
+[source,java]
 ----
 selectFrom("user").field("address", "street");
 // SELECT address.street FROM user
@@ -249,7 +249,7 @@ selectFrom("user").field("address", "street");
 
 * an element, or range of elements, in a set or a map:
 +
-[,java]
+[source,java]
 ----
 selectFrom("product").element("features", literal("color"));
 // SELECT features['color'] FROM product
@@ -271,7 +271,7 @@ Groups of selectors can be extracted as a single collection, such as:
 * a list or set.
 All inner selectors must return the same CQL type:
 +
-[,java]
+[source,java]
 ----
 selectFrom("user").listOf(
     Selector.column("first_name"),
@@ -288,7 +288,7 @@ selectFrom("user").setOf(
 All key and value selectors must have consistent types.
 In most cases, Cassandra will require a type hint for the outer map, so the query builder can generate that for you if you provide the key and value types:
 +
-[,java]
+[source,java]
 ----
 Map<Selector, Selector> mapSelector = new HashMap<>();
 mapSelector.put(literal("first"), Selector.column("first_name"));
@@ -301,7 +301,7 @@ selectFrom("user").mapOf(mapSelector, DataTypes.TEXT, DataTypes.TEXT);
 * a tuple.
 This time the types can be heterogeneous:
 +
-[,java]
+[source,java]
 ----
 selectFrom("user").tupleOf(
     Selector.column("first_name"),
@@ -313,7 +313,7 @@ selectFrom("user").tupleOf(
 
 Function calls take a function name (optionally qualified with a keyspace), and a list of selectors that will be passed as arguments:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").function("utils", "bmi", Selector.column("weight"), Selector.column("height"));
 // SELECT utils.bmi(weight,height) FROM user
@@ -321,7 +321,7 @@ selectFrom("user").function("utils", "bmi", Selector.column("weight"), Selector.
 
 The built-in functions `ttl` and `writetime` have convenience shortcuts:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").writeTime("first_name").ttl("last_name");
 // SELECT writetime(first_name),ttl(last_name) FROM user
@@ -332,7 +332,7 @@ selectFrom("user").writeTime("first_name").ttl("last_name");
 Occasionally, you'll need to inline a CQL literal in your query;
 this is not very useful as a top-level selector, but could happen as part of an arithmetic operation:
 
-[,java]
+[source,java]
 ----
 selectFrom("foo").quotient(literal(1), Selector.column("a"));
 // SELECT 1/a FROM foo
@@ -344,7 +344,7 @@ See the link:../term/#literals[terms] section for more details on literals.
 
 Lastly, a selector can be expressed as a raw CQL snippet, that will get appended to the query as-is, without any syntax checking or escaping:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").raw("first_name, last_name /*some random comment*/");
 // SELECT first_name, last_name /*some random comment*/ FROM user
@@ -357,7 +357,7 @@ on the other hand, it can be used as a workaround to handle new CQL features tha
 
 Relations get added with the `whereXxx()` methods:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").all().whereColumn("id").isEqualTo(literal(1));
 // SELECT * FROM user WHERE id=1
@@ -365,7 +365,7 @@ selectFrom("user").all().whereColumn("id").isEqualTo(literal(1));
 
 You can also create and add them manually:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").all().where(
     Relation.column("id").isEqualTo(literal(1)));
@@ -383,7 +383,7 @@ Refer to the javadocs for the fine print.
 
 Groupings:
 
-[,java]
+[source,java]
 ----
 selectFrom("sensor_data")
     .function("max", Selector.column("reading"))
@@ -394,7 +394,7 @@ selectFrom("sensor_data")
 
 Orderings:
 
-[,java]
+[source,java]
 ----
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 
@@ -407,7 +407,7 @@ selectFrom("sensor_data")
 
 Limits:
 
-[,java]
+[source,java]
 ----
 selectFrom("sensor_data")
     .column("reading")
@@ -424,7 +424,7 @@ selectFrom("sensor_data")
 
 Filtering:
 
-[,java]
+[source,java]
 ----
 selectFrom("user").all().allowFiltering();
 // SELECT * FROM user ALLOW FILTERING

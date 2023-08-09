@@ -71,7 +71,7 @@ This led a lot of internal complexity, and recurring bugs.
 To address this issue, driver 4+ uses a wrapper: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/CqlIdentifier.html[CqlIdentifier].
 Its API methods are always explicit about the form:
 
-[,java]
+[source,java]
 ----
 CqlIdentifier caseInsensitiveId = CqlIdentifier.fromCql("FooBar");
 System.out.println(caseInsensitiveId.asInternal());             // foobar
