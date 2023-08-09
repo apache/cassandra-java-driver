@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOOLEAN;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.BOUND_STATEMENT;
+import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.CUSTOM;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_ASYNC_RESULT_SET;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_BOOLEAN;
 import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoReturnTypeKind.FUTURE_OF_VOID;
@@ -43,13 +44,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.TypeMirror;
 
 public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
 
@@ -71,7 +69,19 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
         RESULT_SET,
         BOUND_STATEMENT,
         FUTURE_OF_ASYNC_RESULT_SET,
-        REACTIVE_RESULT_SET);
+        REACTIVE_RESULT_SET,
+        CUSTOM);
+  }
+
+  @Override
+  public boolean requiresReactive() {
+    // Validate the return type:
+    DaoReturnType returnType =
+        parseAndValidateReturnType(getSupportedReturnTypes(), Delete.class.getSimpleName());
+    if (returnType == null) {
+      return false;
+    }
+    return returnType.requiresReactive();
   }
 
   @Override
@@ -84,7 +94,6 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Invalid annotation parameters: %s cannot have both ifExists and customIfClause",
               Delete.class.getSimpleName());
       return Optional.empty();
@@ -108,7 +117,6 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Wrong number of parameters: %s methods with no custom clause "
                   + "must take either an entity instance, or the primary key components",
               Delete.class.getSimpleName());
@@ -129,7 +137,6 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
             .getMessager()
             .error(
                 methodElement,
-                processedType,
                 "Invalid parameter list: %s methods that have a custom where clause "
                     + "must not take an Entity (%s) as a parameter",
                 Delete.class.getSimpleName(),
@@ -138,13 +145,12 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
       entityDefinition = context.getEntityFactory().getDefinition(entityElement);
       primaryKeyParameterCount = entityDefinition.getPrimaryKey().size();
     } else {
-      entityElement = getEntityFromAnnotation();
+      entityElement = getEntityClassFromAnnotation(Delete.class);
       if (entityElement == null) {
         context
             .getMessager()
             .error(
                 methodElement,
-                processedType,
                 "Missing entity class: %s methods that do not operate on an entity "
                     + "instance must have an 'entityClass' argument",
                 Delete.class.getSimpleName());
@@ -168,7 +174,6 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
                 .getMessager()
                 .error(
                     methodElement,
-                    processedType,
                     "Invalid parameter list: %s methods that have a custom if clause"
                         + "must specify the entire primary key (expected primary keys of %s: %s)",
                     Delete.class.getSimpleName(),
@@ -215,14 +220,14 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
                 generatePrepareRequest(
                     methodBuilder, requestName, helperFieldName, primaryKeyParameterCount));
 
-    CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
+    CodeBlock.Builder createStatementBlock = CodeBlock.builder();
 
-    methodBodyBuilder.addStatement(
+    createStatementBlock.addStatement(
         "$T boundStatementBuilder = $L.boundStatementBuilder()",
         BoundStatementBuilder.class,
         statementName);
-    populateBuilderWithStatementAttributes(methodBodyBuilder, methodElement);
-    populateBuilderWithFunction(methodBodyBuilder, boundStatementFunction);
+    populateBuilderWithStatementAttributes(createStatementBlock, methodElement);
+    populateBuilderWithFunction(createStatementBlock, boundStatementFunction);
 
     int nextParameterIndex = 0;
     if (hasEntityParameter) {
@@ -234,7 +239,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
             property.getType(),
             CodeBlock.of("$L.$L()", firstParameter.getSimpleName(), property.getGetterName()),
             "boundStatementBuilder",
-            methodBodyBuilder,
+            createStatementBlock,
             enclosingClass);
       }
       nextParameterIndex = 1;
@@ -249,7 +254,7 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
       List<? extends VariableElement> bindMarkers = parameters.subList(0, primaryKeyParameterCount);
       warnIfCqlNamePresent(bindMarkers);
       GeneratedCodePatterns.bindParameters(
-          bindMarkers, primaryKeyNames, methodBodyBuilder, enclosingClass, context, false);
+          bindMarkers, primaryKeyNames, createStatementBlock, enclosingClass, context, false);
       nextParameterIndex = primaryKeyNames.size();
     }
 
@@ -260,7 +265,6 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
             .getMessager()
             .error(
                 methodElement,
-                processedType,
                 "Wrong number of parameters: %s methods can only have additional "
                     + "parameters if they specify a custom WHERE or IF clause",
                 Delete.class.getSimpleName());
@@ -269,62 +273,16 @@ public class DaoDeleteMethodGenerator extends DaoMethodGenerator {
           parameters.subList(nextParameterIndex, parameters.size());
       if (validateCqlNamesPresent(bindMarkers)) {
         GeneratedCodePatterns.bindParameters(
-            bindMarkers, methodBodyBuilder, enclosingClass, context, false);
+            bindMarkers, createStatementBlock, enclosingClass, context, false);
       } else {
         return Optional.empty();
       }
     }
 
-    methodBodyBuilder
-        .add("\n")
-        .addStatement("$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
+    createStatementBlock.addStatement(
+        "$T boundStatement = boundStatementBuilder.build()", BoundStatement.class);
 
-    returnType.getKind().addExecuteStatement(methodBodyBuilder, helperFieldName);
-
-    CodeBlock methodBody = returnType.getKind().wrapWithErrorHandling(methodBodyBuilder.build());
-
-    return Optional.of(
-        GeneratedCodePatterns.override(methodElement, typeParameters).addCode(methodBody).build());
-  }
-
-  private TypeElement getEntityFromAnnotation() {
-    // Note: because Delete.entityClass references a class, we can't read it directly through
-    // methodElement.getAnnotation(Delete.class).
-
-    AnnotationMirror annotationMirror = null;
-    for (AnnotationMirror candidate : methodElement.getAnnotationMirrors()) {
-      if (context.getClassUtils().isSame(candidate.getAnnotationType(), Delete.class)) {
-        annotationMirror = candidate;
-        break;
-      }
-    }
-    assert annotationMirror != null;
-
-    for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry :
-        annotationMirror.getElementValues().entrySet()) {
-      if (entry.getKey().getSimpleName().contentEquals("entityClass")) {
-        @SuppressWarnings("unchecked")
-        List<? extends AnnotationValue> values = (List) entry.getValue().getValue();
-        if (values.isEmpty()) {
-          return null;
-        }
-        TypeMirror mirror = (TypeMirror) values.get(0).getValue();
-        TypeElement element = EntityUtils.asEntityElement(mirror, typeParameters);
-        if (values.size() > 1) {
-          context
-              .getMessager()
-              .warn(
-                  methodElement,
-                  processedType,
-                  "Too many entity classes: %s must have at most one 'entityClass' argument "
-                      + "(will use the first one: %s)",
-                  Delete.class.getSimpleName(),
-                  element.getSimpleName());
-        }
-        return element;
-      }
-    }
-    return null;
+    return crudMethod(createStatementBlock, returnType, helperFieldName);
   }
 
   private void generatePrepareRequest(

@@ -25,13 +25,17 @@ import com.datastax.dse.driver.DseTestDataProviders;
 import com.datastax.dse.driver.DseTestFixtures;
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.api.core.cql.continuous.ContinuousAsyncResultSet;
-import com.datastax.oss.driver.api.core.NoNodeAvailableException;
+import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.NodeUnavailableException;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.cql.RequestHandlerTestHarness;
 import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import org.junit.Test;
 import org.mockito.InOrder;
@@ -67,7 +71,12 @@ public class ContinuousCqlRequestHandlerNodeTargetingTest
       assertThatStage(resultSetFuture)
           .isFailed(
               error -> {
-                assertThat(error).isInstanceOf(NoNodeAvailableException.class);
+                assertThat(error).isInstanceOf(AllNodesFailedException.class);
+                Map<Node, List<Throwable>> errors =
+                    ((AllNodesFailedException) error).getAllErrors();
+                assertThat(errors).hasSize(1);
+                List<Throwable> nodeErrors = errors.values().iterator().next();
+                assertThat(nodeErrors).singleElement().isInstanceOf(NodeUnavailableException.class);
                 invocations
                     .verify(loadBalancingPolicy, never())
                     .newQueryPlan(any(Request.class), anyString(), any(Session.class));

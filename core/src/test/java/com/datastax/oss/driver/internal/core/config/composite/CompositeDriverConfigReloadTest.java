@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.config.composite;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -83,9 +84,9 @@ public class CompositeDriverConfigReloadTest {
     if (compositeShouldBeReloadable) {
       assertThat(reloadFuture).isCompletedWithValue(true);
     } else {
-      assertThat(reloadFuture)
-          .hasFailedWithThrowableThat()
-          .isInstanceOf(UnsupportedOperationException.class);
+      assertThat(reloadFuture).isCompletedExceptionally();
+      Throwable t = catchThrowable(() -> reloadFuture.toCompletableFuture().get());
+      assertThat(t).hasRootCauseInstanceOf(UnsupportedOperationException.class);
     }
     verify(primaryLoader, primaryIsReloadable ? times(1) : never()).reload();
     verify(fallbackLoader, fallbackIsReloadable ? times(1) : never()).reload();

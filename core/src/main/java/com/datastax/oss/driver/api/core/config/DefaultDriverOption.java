@@ -97,7 +97,10 @@ public enum DefaultDriverOption implements DriverOption {
    * A custom filter to include/exclude nodes.
    *
    * <p>Value-Type: {@link String}
+   *
+   * @deprecated use {@link #LOAD_BALANCING_DISTANCE_EVALUATOR_CLASS} instead.
    */
+  @Deprecated
   LOAD_BALANCING_FILTER_CLASS("basic.load-balancing-policy.filter.class"),
 
   /**
@@ -293,7 +296,10 @@ public enum DefaultDriverOption implements DriverOption {
    * The class of a session-wide component that tracks the outcome of requests.
    *
    * <p>Value-type: {@link String}
+   *
+   * @deprecated Use {@link #REQUEST_TRACKER_CLASSES} instead.
    */
+  @Deprecated
   REQUEST_TRACKER_CLASS("advanced.request-tracker.class"),
   /**
    * Whether to log successful requests.
@@ -385,14 +391,20 @@ public enum DefaultDriverOption implements DriverOption {
    * The class of a session-wide component that listens for node state changes.
    *
    * <p>Value-type: {@link String}
+   *
+   * @deprecated Use {@link #METADATA_NODE_STATE_LISTENER_CLASSES} instead.
    */
+  @Deprecated
   METADATA_NODE_STATE_LISTENER_CLASS("advanced.node-state-listener.class"),
 
   /**
    * The class of a session-wide component that listens for schema changes.
    *
    * <p>Value-type: {@link String}
+   *
+   * @deprecated Use {@link #METADATA_SCHEMA_CHANGE_LISTENER_CLASSES} instead.
    */
+  @Deprecated
   METADATA_SCHEMA_CHANGE_LISTENER_CLASS("advanced.schema-change-listener.class"),
 
   /**
@@ -823,6 +835,117 @@ public enum DefaultDriverOption implements DriverOption {
    * <p>Value-type: {@link java.time.Duration Duration}
    */
   METRICS_NODE_EXPIRE_AFTER("advanced.metrics.node.expire-after"),
+
+  /**
+   * The classname of the desired MetricsFactory implementation.
+   *
+   * <p>Value-type: {@link String}
+   */
+  METRICS_FACTORY_CLASS("advanced.metrics.factory.class"),
+
+  /**
+   * The maximum number of nodes from remote DCs to include in query plans.
+   *
+   * <p>Value-Type: int
+   */
+  LOAD_BALANCING_DC_FAILOVER_MAX_NODES_PER_REMOTE_DC(
+      "advanced.load-balancing-policy.dc-failover.max-nodes-per-remote-dc"),
+  /**
+   * Whether to consider nodes from remote DCs if the request's consistency level is local.
+   *
+   * <p>Value-Type: boolean
+   */
+  LOAD_BALANCING_DC_FAILOVER_ALLOW_FOR_LOCAL_CONSISTENCY_LEVELS(
+      "advanced.load-balancing-policy.dc-failover.allow-for-local-consistency-levels"),
+
+  /**
+   * The classname of the desired {@code MetricIdGenerator} implementation.
+   *
+   * <p>Value-type: {@link String}
+   */
+  METRICS_ID_GENERATOR_CLASS("advanced.metrics.id-generator.class"),
+
+  /**
+   * The value of the prefix to prepend to all metric names.
+   *
+   * <p>Value-type: {@link String}
+   */
+  METRICS_ID_GENERATOR_PREFIX("advanced.metrics.id-generator.prefix"),
+
+  /**
+   * The class name of a custom {@link
+   * com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator}.
+   *
+   * <p>Value-Type: {@link String}
+   */
+  LOAD_BALANCING_DISTANCE_EVALUATOR_CLASS("basic.load-balancing-policy.evaluator.class"),
+
+  /**
+   * The shortest latency that we expect to record for requests.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_CQL_REQUESTS_LOWEST("advanced.metrics.session.cql-requests.lowest-latency"),
+  /**
+   * Optional service-level objectives to meet, as a list of latencies to track.
+   *
+   * <p>Value-type: List of {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_CQL_REQUESTS_SLO("advanced.metrics.session.cql-requests.slo"),
+
+  /**
+   * The shortest latency that we expect to record for throttling.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_THROTTLING_LOWEST("advanced.metrics.session.throttling.delay.lowest-latency"),
+  /**
+   * Optional service-level objectives to meet, as a list of latencies to track.
+   *
+   * <p>Value-type: List of {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_THROTTLING_SLO("advanced.metrics.session.throttling.delay.slo"),
+
+  /**
+   * The shortest latency that we expect to record for requests.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_NODE_CQL_MESSAGES_LOWEST("advanced.metrics.node.cql-messages.lowest-latency"),
+  /**
+   * Optional service-level objectives to meet, as a list of latencies to track.
+   *
+   * <p>Value-type: List of {@link java.time.Duration Duration}
+   */
+  METRICS_NODE_CQL_MESSAGES_SLO("advanced.metrics.node.cql-messages.slo"),
+
+  /**
+   * Whether the prepared statements cache use weak values.
+   *
+   * <p>Value-type: boolean
+   */
+  PREPARED_CACHE_WEAK_VALUES("advanced.prepared-statements.prepared-cache.weak-values"),
+
+  /**
+   * The classes of session-wide components that track the outcome of requests.
+   *
+   * <p>Value-type: List of {@link String}
+   */
+  REQUEST_TRACKER_CLASSES("advanced.request-tracker.classes"),
+
+  /**
+   * The classes of session-wide components that listen for node state changes.
+   *
+   * <p>Value-type: List of {@link String}
+   */
+  METADATA_NODE_STATE_LISTENER_CLASSES("advanced.node-state-listener.classes"),
+
+  /**
+   * The classes of session-wide components that listen for schema changes.
+   *
+   * <p>Value-type: List of {@link String}
+   */
+  METADATA_SCHEMA_CHANGE_LISTENER_CLASSES("advanced.schema-change-listener.classes"),
   ;
 
   private final String path;

@@ -539,24 +539,16 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
    * node's broadcast RPC address and host ID; otherwise the driver may not work properly.
    */
   protected boolean isPeerValid(AdminRow peerRow) {
-    boolean hasPeersRpcAddress = !peerRow.isNull("rpc_address");
-    boolean hasPeersV2RpcAddress =
-        !peerRow.isNull("native_address") && !peerRow.isNull("native_port");
-    boolean hasRpcAddress = hasPeersV2RpcAddress || hasPeersRpcAddress;
-    boolean valid =
-        hasRpcAddress
-            && !peerRow.isNull("host_id")
-            && !peerRow.isNull("data_center")
-            && !peerRow.isNull("rack")
-            && !peerRow.isNull("tokens");
-    if (!valid) {
+    if (PeerRowValidator.isValid(peerRow)) {
+      return true;
+    } else {
       LOG.warn(
           "[{}] Found invalid row in {} for peer: {}. "
               + "This is likely a gossip or snitch issue, this node will be ignored.",
           logPrefix,
           getPeerTableName(),
           peerRow.getInetAddress("peer"));
+      return false;
     }
-    return valid;
   }
 }

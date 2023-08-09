@@ -26,7 +26,14 @@ import org.slf4j.LoggerFactory;
 public interface Clock {
   Logger LOG = LoggerFactory.getLogger(Clock.class);
 
-  /** Returns the best implementation for the current platform. */
+  /**
+   * Returns the best implementation for the current platform.
+   *
+   * <p>Usage with non-blocking threads: beware that this method may block the calling thread on its
+   * very first invocation, because native libraries used by the driver will be loaded at that
+   * moment. If that is a problem, consider invoking this method once from a thread that is allowed
+   * to block. Subsequent invocations are guaranteed not to block.
+   */
   static Clock getInstance(boolean forceJavaClock) {
     if (forceJavaClock) {
       LOG.info("Using Java system clock because this was explicitly required in the configuration");

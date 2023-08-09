@@ -20,6 +20,7 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.Serializable;
+import java.util.Locale;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -67,7 +68,7 @@ public class PrimitiveType implements DataType, Serializable {
   @NonNull
   @Override
   public String asCql(boolean includeFrozen, boolean pretty) {
-    return codeName(protocolCode).toLowerCase();
+    return codeName(protocolCode).toLowerCase(Locale.ROOT);
   }
 
   @Override

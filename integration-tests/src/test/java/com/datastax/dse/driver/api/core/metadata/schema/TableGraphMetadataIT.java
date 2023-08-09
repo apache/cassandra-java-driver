@@ -48,7 +48,7 @@ public class TableGraphMetadataIT {
   public static void createTables() {
     CqlSession session = SESSION_RULE.session();
 
-    session.execute("CREATE TABLE person (name text PRIMARY KEY) " + "WITH VERTEX LABEL");
+    session.execute("CREATE TABLE person (name text PRIMARY KEY) WITH VERTEX LABEL");
     session.execute(
         "CREATE TABLE software (company text, name text, version int, "
             + "PRIMARY KEY ((company, name), version)) "

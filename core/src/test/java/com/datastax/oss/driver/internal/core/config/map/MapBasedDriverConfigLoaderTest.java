@@ -15,17 +15,24 @@
  */
 package com.datastax.oss.driver.internal.core.config.map;
 
+import static com.typesafe.config.ConfigFactory.defaultReference;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.config.OptionsMap;
+import com.datastax.oss.driver.api.core.config.TypedDriverOption;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.config.MockOptions;
 import com.datastax.oss.driver.internal.core.config.MockTypedOptions;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
-import java.util.Map;
-import java.util.SortedSet;
+import com.typesafe.config.ConfigException;
+import com.typesafe.config.ConfigFactory;
+import java.util.Optional;
 import org.junit.Test;
 
 public class MapBasedDriverConfigLoaderTest {
@@ -49,20 +56,65 @@ public class MapBasedDriverConfigLoaderTest {
    */
   @Test
   public void should_fill_default_profile_like_reference_file() {
-    SortedSet<Map.Entry<String, Object>> memoryBased =
-        DriverConfigLoader.fromMap(OptionsMap.driverDefaults())
+    OptionsMap optionsMap = OptionsMap.driverDefaults();
+    DriverExecutionProfile mapBasedConfig =
+        DriverConfigLoader.fromMap(optionsMap).getInitialConfig().getDefaultProfile();
+    DriverExecutionProfile fileBasedConfig =
+        new DefaultDriverConfigLoader(
+                () -> {
+                  // Only load reference.conf since we are focusing on driver defaults
+                  ConfigFactory.invalidateCaches();
+                  return defaultReference().getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
+                })
             .getInitialConfig()
-            .getDefaultProfile()
-            .entrySet();
-    SortedSet<Map.Entry<String, Object>> fileBased =
-        new DefaultDriverConfigLoader().getInitialConfig().getDefaultProfile().entrySet();
+            .getDefaultProfile();
 
-    for (Map.Entry<String, Object> entry : fileBased) {
-      if (entry.getKey().equals(DefaultDriverOption.CONFIG_RELOAD_INTERVAL.getPath())) {
+    // Make sure we're not missing any options. -1 is for CONFIG_RELOAD_INTERVAL, which is not
+    // defined by OptionsMap because it is irrelevant for the map-based config.
+    assertThat(mapBasedConfig.entrySet()).hasSize(fileBasedConfig.entrySet().size() - 1);
+
+    for (TypedDriverOption<?> option : TypedDriverOption.builtInValues()) {
+      if (option.getRawOption() == DefaultDriverOption.CONFIG_RELOAD_INTERVAL) {
         continue;
       }
-      assertThat(memoryBased).as("Missing entry: " + entry).contains(entry);
+      Optional<Object> fileBasedValue = get(fileBasedConfig, option);
+      Optional<Object> mapBasedValue = get(mapBasedConfig, option);
+      assertThat(mapBasedValue)
+          .as("Wrong value for %s in OptionsMap", option.getRawOption())
+          .isEqualTo(fileBasedValue);
     }
-    assertThat(memoryBased).hasSize(fileBased.size() - 1);
+  }
+
+  private Optional<Object> get(DriverExecutionProfile config, TypedDriverOption<?> typedOption) {
+    DriverOption option = typedOption.getRawOption();
+    GenericType<?> type = typedOption.getExpectedType();
+    Object value = null;
+    if (config.isDefined(option)) {
+      // This is ugly, we have no other way than enumerating all possible types.
+      // This kind of bridging code between OptionsMap and DriverConfig is unlikely to exist
+      // anywhere outside of this test.
+      if (type.equals(GenericType.listOf(String.class))) {
+        value = config.getStringList(option);
+      } else if (type.equals(GenericType.STRING)) {
+        value = config.getString(option);
+      } else if (type.equals(GenericType.DURATION)) {
+        value = config.getDuration(option);
+      } else if (type.equals(GenericType.INTEGER)) {
+        value = config.getInt(option);
+      } else if (type.equals(GenericType.BOOLEAN)) {
+        value = config.getBoolean(option);
+      } else if (type.equals(GenericType.LONG)) {
+        try {
+          value = config.getLong(option);
+        } catch (ConfigException.WrongType e) {
+          value = config.getBytes(option);
+        }
+      } else if (type.equals(GenericType.mapOf(GenericType.STRING, GenericType.STRING))) {
+        value = config.getStringMap(option);
+      } else {
+        fail("Unexpected type " + type);
+      }
+    }
+    return Optional.ofNullable(value);
   }
 }

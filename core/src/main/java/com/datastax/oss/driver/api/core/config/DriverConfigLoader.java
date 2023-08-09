@@ -21,8 +21,6 @@ import com.datastax.oss.driver.internal.core.config.composite.CompositeDriverCon
 import com.datastax.oss.driver.internal.core.config.map.MapBasedDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultProgrammaticDriverConfigLoaderBuilder;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.File;
 import java.net.URL;
@@ -37,8 +35,27 @@ import java.util.concurrent.CompletionStage;
 public interface DriverConfigLoader extends AutoCloseable {
 
   /**
+   * Builds an instance using the driver's default implementation (based on Typesafe config) except
+   * that application-specific classpath resources will be located using the provided {@link
+   * ClassLoader} instead of {@linkplain Thread#getContextClassLoader() the current thread's context
+   * class loader}.
+   *
+   * <p>The returned loader will honor the reload interval defined by the option {@code
+   * basic.config-reload-interval}.
+   */
+  @NonNull
+  static DriverConfigLoader fromDefaults(@NonNull ClassLoader appClassLoader) {
+    return new DefaultDriverConfigLoader(appClassLoader);
+  }
+
+  /**
    * Builds an instance using the driver's default implementation (based on Typesafe config), except
    * that application-specific options are loaded from a classpath resource with a custom name.
+   *
+   * <p>The class loader used to locate application-specific classpath resources is {@linkplain
+   * Thread#getContextClassLoader() the current thread's context class loader}. This might not be
+   * suitable for OSGi deployments, which should use {@link #fromClasspath(String, ClassLoader)}
+   * instead.
    *
    * <p>More precisely, configuration properties are loaded and merged from the following
    * (first-listed are higher priority):
@@ -60,16 +77,18 @@ public interface DriverConfigLoader extends AutoCloseable {
    */
   @NonNull
   static DriverConfigLoader fromClasspath(@NonNull String resourceBaseName) {
-    return new DefaultDriverConfigLoader(
-        () -> {
-          ConfigFactory.invalidateCaches();
-          Config config =
-              ConfigFactory.defaultOverrides()
-                  .withFallback(ConfigFactory.parseResourcesAnySyntax(resourceBaseName))
-                  .withFallback(ConfigFactory.defaultReference())
-                  .resolve();
-          return config.getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
-        });
+    return fromClasspath(resourceBaseName, Thread.currentThread().getContextClassLoader());
+  }
+
+  /**
+   * Just like {@link #fromClasspath(java.lang.String)} except that application-specific classpath
+   * resources will be located using the provided {@link ClassLoader} instead of {@linkplain
+   * Thread#getContextClassLoader() the current thread's context class loader}.
+   */
+  @NonNull
+  static DriverConfigLoader fromClasspath(
+      @NonNull String resourceBaseName, @NonNull ClassLoader appClassLoader) {
+    return DefaultDriverConfigLoader.fromClasspath(resourceBaseName, appClassLoader);
   }
 
   /**
@@ -119,16 +138,7 @@ public interface DriverConfigLoader extends AutoCloseable {
    */
   @NonNull
   static DriverConfigLoader fromFile(@NonNull File file) {
-    return new DefaultDriverConfigLoader(
-        () -> {
-          ConfigFactory.invalidateCaches();
-          Config config =
-              ConfigFactory.defaultOverrides()
-                  .withFallback(ConfigFactory.parseFileAnySyntax(file))
-                  .withFallback(ConfigFactory.defaultReference())
-                  .resolve();
-          return config.getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
-        });
+    return DefaultDriverConfigLoader.fromFile(file);
   }
 
   /**
@@ -153,16 +163,37 @@ public interface DriverConfigLoader extends AutoCloseable {
    */
   @NonNull
   static DriverConfigLoader fromUrl(@NonNull URL url) {
-    return new DefaultDriverConfigLoader(
-        () -> {
-          ConfigFactory.invalidateCaches();
-          Config config =
-              ConfigFactory.defaultOverrides()
-                  .withFallback(ConfigFactory.parseURL(url))
-                  .withFallback(ConfigFactory.defaultReference())
-                  .resolve();
-          return config.getConfig(DefaultDriverConfigLoader.DEFAULT_ROOT_PATH);
-        });
+    return DefaultDriverConfigLoader.fromUrl(url);
+  }
+
+  /**
+   * Builds an instance using the driver's default implementation (based on Typesafe config), except
+   * that application-specific options are parsed from the given string.
+   *
+   * <p>The string must be in HOCON format and contain a {@code datastax-java-driver} section.
+   * Options must be separated by line breaks:
+   *
+   * <pre>
+   * DriverConfigLoader.fromString(
+   *         "datastax-java-driver.basic { session-name = my-app\nrequest.timeout = 1 millisecond }")
+   * </pre>
+   *
+   * <p>More precisely, configuration properties are loaded and merged from the following
+   * (first-listed are higher priority):
+   *
+   * <ul>
+   *   <li>system properties
+   *   <li>the config in {@code contents}
+   *   <li>{@code reference.conf} (all resources on classpath with this name). In particular, this
+   *       will load the {@code reference.conf} included in the core driver JAR, that defines
+   *       default options for all mandatory options.
+   * </ul>
+   *
+   * <p>This loader does not support runtime reloading.
+   */
+  @NonNull
+  static DriverConfigLoader fromString(@NonNull String contents) {
+    return DefaultDriverConfigLoader.fromString(contents);
   }
 
   /**
@@ -214,6 +245,11 @@ public interface DriverConfigLoader extends AutoCloseable {
    * Note that {@code application.*} is entirely optional, you may choose to only rely on the
    * driver's built-in {@code reference.conf} and programmatic overrides.
    *
+   * <p>The class loader used to locate application-specific classpath resources is {@linkplain
+   * Thread#getContextClassLoader() the current thread's context class loader}. This might not be
+   * suitable for OSGi deployments, which should use {@link #programmaticBuilder(ClassLoader)}
+   * instead.
+   *
    * <p>The resulting configuration is expected to contain a {@code datastax-java-driver} section.
    *
    * <p>The loader will honor the reload interval defined by the option {@code
@@ -226,6 +262,17 @@ public interface DriverConfigLoader extends AutoCloseable {
   @NonNull
   static ProgrammaticDriverConfigLoaderBuilder programmaticBuilder() {
     return new DefaultProgrammaticDriverConfigLoaderBuilder();
+  }
+
+  /**
+   * Just like {@link #programmaticBuilder()} except that application-specific classpath resources
+   * will be located using the provided {@link ClassLoader} instead of {@linkplain
+   * Thread#getContextClassLoader() the current thread's context class loader}.
+   */
+  @NonNull
+  static ProgrammaticDriverConfigLoaderBuilder programmaticBuilder(
+      @NonNull ClassLoader appClassLoader) {
+    return new DefaultProgrammaticDriverConfigLoaderBuilder(appClassLoader);
   }
 
   /**
@@ -329,7 +376,7 @@ public interface DriverConfigLoader extends AutoCloseable {
   boolean supportsReloading();
 
   /**
-   * Called when the cluster closes. This is a good time to release any external resource, for
+   * Called when the session closes. This is a good time to release any external resource, for
    * example cancel a scheduled reloading task.
    */
   @Override

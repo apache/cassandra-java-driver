@@ -29,7 +29,7 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.MapType;
 import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
-import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
+import com.datastax.oss.driver.internal.core.util.collection.SimpleQueryPlan;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.yugabyte.oss.driver.api.core.DefaultPartitionMetadata;
 import com.yugabyte.oss.driver.api.core.TableSplitMetadata;
@@ -50,7 +50,6 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.UUID;
 import net.jcip.annotations.ThreadSafe;
-import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,8 +90,8 @@ public class PartitionAwarePolicy extends YugabyteDefaultLoadBalancingPolicy
     // It so happens that the partition aware nodes could be non-empty, but the state of the nodes
     // could be down.
     // In such cases fallback to the inherited load-balancing logic
-    return !CollectionUtils.isEmpty(partitionAwareNodes)
-        ? new QueryPlan(partitionAwareNodes.toArray())
+    return !(partitionAwareNodes == null || partitionAwareNodes.isEmpty())
+        ? new SimpleQueryPlan(partitionAwareNodes.toArray())
         : super.newQueryPlan(request, session);
   }
 

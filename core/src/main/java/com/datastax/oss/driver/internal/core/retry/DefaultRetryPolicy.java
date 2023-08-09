@@ -83,9 +83,7 @@ public class DefaultRetryPolicy implements RetryPolicy {
 
   private final String logPrefix;
 
-  public DefaultRetryPolicy(
-      @SuppressWarnings("unused") DriverContext context,
-      @SuppressWarnings("unused") String profileName) {
+  public DefaultRetryPolicy(DriverContext context, String profileName) {
     this.logPrefix = (context != null ? context.getSessionName() : null) + "|" + profileName;
   }
 
@@ -102,6 +100,7 @@ public class DefaultRetryPolicy implements RetryPolicy {
    * <p>Otherwise, the exception is rethrown.
    */
   @Override
+  @Deprecated
   public RetryDecision onReadTimeout(
       @NonNull Request request,
       @NonNull ConsistencyLevel cl,
@@ -135,6 +134,7 @@ public class DefaultRetryPolicy implements RetryPolicy {
    * <p>Otherwise, the exception is rethrown.
    */
   @Override
+  @Deprecated
   public RetryDecision onWriteTimeout(
       @NonNull Request request,
       @NonNull ConsistencyLevel cl,
@@ -167,6 +167,7 @@ public class DefaultRetryPolicy implements RetryPolicy {
    * <p>Otherwise, the exception is rethrown.
    */
   @Override
+  @Deprecated
   public RetryDecision onUnavailable(
       @NonNull Request request,
       @NonNull ConsistencyLevel cl,
@@ -190,6 +191,7 @@ public class DefaultRetryPolicy implements RetryPolicy {
    * (assuming a driver bug) in all other cases.
    */
   @Override
+  @Deprecated
   public RetryDecision onRequestAborted(
       @NonNull Request request, @NonNull Throwable error, int retryCount) {
 
@@ -212,6 +214,7 @@ public class DefaultRetryPolicy implements RetryPolicy {
    * node.
    */
   @Override
+  @Deprecated
   public RetryDecision onErrorResponse(
       @NonNull Request request, @NonNull CoordinatorException error, int retryCount) {
 

@@ -62,6 +62,8 @@ public abstract class InventoryITBase {
             .add(
                 "CREATE TYPE dimensions(length int, width int, height int)",
                 "CREATE TABLE product(id uuid PRIMARY KEY, description text, dimensions frozen<dimensions>)",
+                "CREATE TYPE dimensions2d(width int, height int)",
+                "CREATE TABLE product2d(id uuid PRIMARY KEY, description text, dimensions frozen<dimensions2d>)",
                 "CREATE TABLE product_without_id(id uuid, clustering int, description text, "
                     + "PRIMARY KEY((id), clustering))",
                 "CREATE TABLE product_sale(id uuid, day text, ts uuid, customer_id int, price "

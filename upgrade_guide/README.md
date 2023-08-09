@@ -1,5 +1,375 @@
 ## Upgrade guide
 
+### 4.15.0
+
+#### CodecNotFoundException now extends DriverException
+
+Before [JAVA-2995](https://datastax-oss.atlassian.net/browse/JAVA-2995), `CodecNotFoundException`
+was extending `RuntimeException`. This is a discrepancy as all other exceptions extend
+`DriverException`, which in turn extends `RuntimeException`.
+
+This was causing integrators to do workarounds in order to react on all exceptions correctly.
+
+The change introduced by JAVA-2995 shouldn't be a problem for most users. But if your code was using
+a logic such as below, it won't compile anymore:
+
+```java
+try {
+  doSomethingWithDriver();
+} catch(DriverException e) {
+} catch(CodecNotFoundException e) { 
+}
+```
+
+You need to either reverse the catch order and catch `CodecNotFoundException` first:
+
+```java
+try {
+  doSomethingWithDriver();
+} catch(CodecNotFoundException e) { 
+} catch(DriverException e) {
+}
+```
+
+Or catch only `DriverException`:
+
+```java
+try {
+  doSomethingWithDriver();
+} catch(DriverException e) { 
+}
+```
+
+### 4.14.0
+
+#### AllNodesFailedException instead of NoNodeAvailableException in certain cases
+
+[JAVA-2959](https://datastax-oss.atlassian.net/browse/JAVA-2959) changed the behavior for when a
+request cannot be executed because all nodes tried were busy. Previously you would get back a
+`NoNodeAvailableException` but you will now get back an `AllNodesFailedException` where the
+`getAllErrors` map contains a `NodeUnavailableException` for that node.
+
+#### Esri Geometry dependency now optional
+
+Previous versions of the Java driver defined a mandatory dependency on the Esri geometry library.
+This library offered support for primitive geometric types supported by DSE.  As of driver 4.14.0
+this dependency is now optional.
+
+If you do not use DSE (or if you do but do not use the support for geometric types within DSE) you
+should experience no disruption.  If you are using geometric types with DSE you'll now need to
+explicitly declare a dependency on the Esri library:
+
+```xml
+<dependency>
+  <groupId>com.esri.geometry</groupId>
+  <artifactId>esri-geometry-api</artifactId>
+  <version>${esri.version}</version>
+</dependency>
+```
+
+See the [integration](../manual/core/integration/#esri) section in the manual for more details.
+
+### 4.13.0
+
+#### Enhanced support for GraalVM native images 
+
+[JAVA-2940](https://datastax-oss.atlassian.net/browse/JAVA-2940) introduced an enhanced support for
+building GraalVM native images. 
+
+If you were building a native image for your application, please verify your native image builder
+configuration. Most of the extra configuration required until now is likely to not be necessary
+anymore.
+
+Refer to this [manual page](../manual/core/graalvm) for details.
+
+#### Registration of multiple listeners and trackers
+
+[JAVA-2951](https://datastax-oss.atlassian.net/browse/JAVA-2951) introduced the ability to register
+more than one instance of the following interfaces:
+
+* [RequestTracker](https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/tracker/RequestTracker.html)
+* [NodeStateListener](https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/metadata/NodeStateListener.html)
+* [SchemaChangeListener](https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListener.html)
+
+Multiple components can now be registered both programmatically and through the configuration. _If
+both approaches are used, components will add up and will all be registered_ (whereas previously,
+the programmatic approach would take precedence over the configuration one).
+
+When using the programmatic approach to register multiple components, you should use the new
+`SessionBuilder` methods `addRequestTracker`, `addNodeStateListener` and  `addSchemaChangeListener`:
+
+```java
+CqlSessionBuilder builder = CqlSession.builder();
+builder
+    .addRequestTracker(tracker1)
+    .addRequestTracker(tracker2);
+builder
+    .addNodeStateListener(nodeStateListener1)
+    .addNodeStateListener(nodeStateListener2);
+builder
+    .addSchemaChangeListener(schemaChangeListener1)
+    .addSchemaChangeListener(schemaChangeListener2);
+```
+
+To support registration of multiple components through the configuration, the following
+configuration options were deprecated because they only allow one component to be declared:
+
+* `advanced.request-tracker.class`
+* `advanced.node-state-listener.class`
+* `advanced.schema-change-listener.class`
+
+They are still honored, but the driver will log a warning if they are used. They should now be
+replaced with the following ones, that accept a list of classes to instantiate, instead of just
+one:
+
+* `advanced.request-tracker.classes`
+* `advanced.node-state-listener.classes`
+* `advanced.schema-change-listener.classes`
+
+Example:
+
+```hocon
+datastax-java-driver {
+  advanced {
+    # RequestLogger is a driver built-in tracker
+    request-tracker.classes = [RequestLogger,com.example.app.MyRequestTracker]
+    node-state-listener.classes = [com.example.app.MyNodeStateListener1,com.example.app.MyNodeStateListener2]
+    schema-change-listener.classes = [com.example.app.MySchemaChangeListener]
+  }
+}
+```
+
+When more than one component of the same type is registered, the driver will distribute received
+signals to all components in sequence, by order of their registration, starting with the
+programmatically-provided ones. If a component throws an error, the error is intercepted and logged.
+
+### 4.12.0
+
+#### MicroProfile Metrics upgraded to 3.0
+
+The MicroProfile Metrics library has been upgraded from version 2.4 to 3.0. Since this upgrade
+involves backwards-incompatible binary changes, users of this library and of the
+`java-driver-metrics-microprofile` module are required to take the appropriate action:
+
+* If your application is still using MicroProfile Metrics < 3.0, you can still upgrade the core
+  driver to 4.12, but you now must keep `java-driver-metrics-microprofile` in version 4.11 or lower,
+  as newer versions will not work.
+    
+* If your application is using MicroProfile Metrics >= 3.0, then you must upgrade to driver 4.12 or
+  higher, as previous versions of `java-driver-metrics-microprofile` will not work.
+
+#### Mapper `@GetEntity` and `@SetEntity` methods can now be lenient
+
+Thanks to [JAVA-2935](https://datastax-oss.atlassian.net/browse/JAVA-2935), `@GetEntity` and
+`@SetEntity` methods now have a new `lenient` attribute.
+
+If the attribute is `false` (the default value), then the source row or the target statement must
+contain a matching column for every property in the entity definition. If such a column is not
+found, an error will be thrown. This corresponds to the mapper's current behavior prior to the
+introduction of the new attribute.
+
+If the new attribute is explicitly set to `true` however, the mapper will operate on a best-effort
+basis and attempt to read or write all entity properties that have a matching column in the source
+row or in the target statement, *leaving unmatched properties untouched*.
+
+This new, lenient behavior allows to achieve the equivalent of driver 3.x 
+[lenient mapping](https://docs.datastax.com/en/developer/java-driver/3.10/manual/object_mapper/using/#manual-mapping).
+
+Read the manual pages on [@GetEntity](../manual/mapper/daos/getentity) methods and
+[@SetEntity](../manual/mapper/daos/setentity) methods for more details and examples of lenient mode.
+
+### 4.11.0
+
+#### Native protocol V5 is now production-ready
+
+Thanks to [JAVA-2704](https://datastax-oss.atlassian.net/browse/JAVA-2704), 4.11.0 is the first
+version in the driver 4.x series to fully support Cassandra's native protocol version 5, which has
+been promoted from beta to production-ready in the upcoming Cassandra 4.0 release.
+
+Users should not experience any disruption. When connecting to Cassandra 4.0, V5 will be
+transparently selected as the protocol version to use.
+
+#### Customizable metric names, support for metric tags
+
+[JAVA-2872](https://datastax-oss.atlassian.net/browse/JAVA-2872) introduced the ability to configure
+how metric identifiers are generated. Metric names can now be configured, but most importantly,
+metric tags are now supported. See the [metrics](../manual/core/metrics/) section of the online
+manual, or the `advanced.metrics.id-generator` section in the
+[reference.conf](../manual/core/configuration/reference/) file for details.
+
+Users should not experience any disruption. However, those using metrics libraries that support tags
+are encouraged to try out the new `TaggingMetricIdGenerator`, as it generates metric names and tags
+that will look more familiar to users of libraries such as Micrometer or MicroProfile Metrics (and
+look nicer when exported to Prometheus or Graphite).
+
+#### New `NodeDistanceEvaluator` API
+
+All driver built-in load-balancing policies now accept a new optional component called
+[NodeDistanceEvaluator]. This component gets invoked each time a node is added to the cluster or
+comes back up. If the evaluator returns a non-null distance for the node, that distance will be
+used, otherwise the driver will use its built-in logic to assign a default distance to it.
+
+[NodeDistanceEvaluator]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/loadbalancing/NodeDistanceEvaluator.html
+
+This component replaces the old "node filter" component. As a consequence, all `withNodeFilter`
+methods in `SessionBuilder` are now deprecated and should be replaced by the equivalent
+`withNodeDistanceEvaluator` methods.
+
+If you have an existing node filter implementation, it can be converted to a `NodeDistanceEvaluator`
+very easily:
+
+```java
+Predicate<Node> nodeFilter = ...
+NodeDistanceEvaluator nodeEvaluator = 
+    (node, dc) -> nodeFilter.test(node) ? null : NodeDistance.IGNORED;
+```
+
+The above can also be achieved by an adapter class as shown below:
+
+```java
+public class NodeFilterToDistanceEvaluatorAdapter implements NodeDistanceEvaluator {
+
+  private final Predicate<Node> nodeFilter;
+
+  public NodeFilterToDistanceEvaluatorAdapter(@NonNull Predicate<Node> nodeFilter) {
+    this.nodeFilter = nodeFilter;
+  }
+
+  @Nullable @Override
+  public NodeDistance evaluateDistance(@NonNull Node node, @Nullable String localDc) {
+    return nodeFilter.test(node) ? null : NodeDistance.IGNORED;
+  }
+}
+```
+
+Finally, the `datastax-java-driver.basic.load-balancing-policy.filter.class` configuration option
+has been deprecated; it should be replaced with a node distance evaluator class defined by the
+`datastax-java-driver.basic.load-balancing-policy.evaluator.class` option instead.
+
+### 4.10.0
+
+#### Cross-datacenter failover
+
+[JAVA-2899](https://datastax-oss.atlassian.net/browse/JAVA-2899) re-introduced the ability to
+perform cross-datacenter failover using the driver's built-in load balancing policies. See [Load
+balancing](../manual/core/loadbalancing/) in the manual for details.
+
+Cross-datacenter failover is disabled by default, therefore existing applications should not
+experience any disruption.
+
+#### New `RetryVerdict` API
+
+[JAVA-2900](https://datastax-oss.atlassian.net/browse/JAVA-2900) introduced [`RetryVerdict`], a new 
+interface that allows custom retry policies to customize the request before it is retried.
+
+For this reason, the following methods in the `RetryPolicy` interface were added; they all return
+a `RetryVerdict` instance:
+
+1. [`onReadTimeoutVerdict`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onReadTimeoutVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-boolean-int-)
+2. [`onWriteTimeoutVerdict`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onWriteTimeoutVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-com.datastax.oss.driver.api.core.servererrors.WriteType-int-int-int-)
+3. [`onUnavailableVerdict`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onUnavailableVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-int-)
+4. [`onRequestAbortedVerdict`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onRequestAbortedVerdict-com.datastax.oss.driver.api.core.session.Request-java.lang.Throwable-int-)
+5. [`onErrorResponseVerdict`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onErrorResponseVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.servererrors.CoordinatorException-int-)
+
+The following methods were deprecated and will be removed in the next major version:
+
+1. [`onReadTimeout`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onReadTimeout-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-boolean-int-)
+2. [`onWriteTimeout`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onWriteTimeout-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-com.datastax.oss.driver.api.core.servererrors.WriteType-int-int-int-)
+3. [`onUnavailable`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onUnavailable-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-int-)
+4. [`onRequestAborted`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onRequestAborted-com.datastax.oss.driver.api.core.session.Request-java.lang.Throwable-int-)
+5. [`onErrorResponse`](https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onErrorResponse-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.servererrors.CoordinatorException-int-)
+
+Driver 4.10.0 also re-introduced a retry policy whose behavior is equivalent to the
+`DowngradingConsistencyRetryPolicy` from driver 3.x. See this
+[FAQ entry](https://docs.datastax.com/en/developer/java-driver/4.11/faq/#where-is-downgrading-consistency-retry-policy)
+for more information.
+
+[`RetryVerdict`]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryVerdict.html
+
+#### Enhancements to the `Uuids` utility class
+
+[JAVA-2449](https://datastax-oss.atlassian.net/browse/JAVA-2449) modified the implementation of
+[Uuids.random()]: this method does not delegate anymore to the JDK's `java.util.UUID.randomUUID()`
+implementation, but instead re-implements random UUID generation using the non-cryptographic
+random number generator `java.util.Random`.
+
+For most users, non-cryptographic strength is enough and this change should translate into better 
+performance when generating UUIDs for database insertion. However, in the unlikely case where your
+application requires cryptographic strength for UUID generation, you should update your code to
+use `java.util.UUID.randomUUID()` instead of `com.datastax.oss.driver.api.core.uuid.Uuids.random()` 
+from now on.
+
+This release also introduces two new methods for random UUID generation:
+
+1. [Uuids.random(Random)]: similar to `Uuids.random()` but allows to pass a custom instance of 
+   `java.util.Random` and/or re-use the same instance across calls.
+2. [Uuids.random(SplittableRandom)]: similar to `Uuids.random()` but uses a 
+   `java.util.SplittableRandom` instead.
+
+[Uuids.random()]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/uuid/Uuids.html#random--
+[Uuids.random(Random)]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/uuid/Uuids.html#random-java.util.Random-
+[Uuids.random(SplittableRandom)]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/uuid/Uuids.html#random-java.util.SplittableRandom-
+
+#### System and DSE keyspaces automatically excluded from metadata and token map computation
+
+[JAVA-2871](https://datastax-oss.atlassian.net/browse/JAVA-2871) now allows for a more fine-grained
+control over which keyspaces should qualify for metadata and token map computation, including the 
+ability to *exclude* keyspaces based on their names.
+
+From now on, the following keyspaces are automatically excluded:
+
+1. The `system` keyspace;
+2. All keyspaces starting with `system_`;
+3. DSE-specific keyspaces: 
+   1. All keyspaces starting with `dse_`;
+   2. The `solr_admin` keyspace;
+   3. The `OpsCenter` keyspace.
+   
+This means that they won't show up anymore in [Metadata.getKeyspaces()], and [TokenMap] will return
+empty replicas and token ranges for them. If you need the driver to keep computing metadata and
+token map for these keyspaces, you now must modify the following configuration option:
+`datastax-java-driver.advanced.metadata.schema.refreshed-keyspaces`.
+
+[Metadata.getKeyspaces()]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
+[TokenMap]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/metadata/TokenMap.html
+
+#### DSE Graph dependencies are now optional
+
+Until driver 4.9.0, the driver declared a mandatory dependency to Apache TinkerPop, a library
+required only when connecting to DSE Graph. The vast majority of Apache Cassandra users did not need
+that library, but were paying the price of having that heavy-weight library in their application's
+classpath. 
+
+_Starting with driver 4.10.0, TinkerPop is now considered an optional dependency_. 
+
+Regular users of Apache Cassandra that do not use DSE Graph will not notice any disruption.
+
+DSE Graph users, however, will now have to explicitly declare a dependency to Apache TinkerPop. This
+can be achieved with Maven by adding the following dependencies to the `<dependencies>` section of
+your POM file:
+
+```xml
+<dependency>
+  <groupId>org.apache.tinkerpop</groupId>
+  <artifactId>gremlin-core</artifactId>
+  <version>${tinkerpop.version}</version>
+</dependency>
+<dependency>
+  <groupId>org.apache.tinkerpop</groupId>
+  <artifactId>tinkergraph-gremlin</artifactId>
+  <version>${tinkerpop.version}</version>
+</dependency>
+```
+
+See the [integration](../manual/core/integration/#tinker-pop) section in the manual for more details
+as well as a driver vs. TinkerPop version compatibility matrix.
+
+### 4.5.x - 4.6.0
+
+These versions are subject to [JAVA-2676](https://datastax-oss.atlassian.net/browse/JAVA-2676), a
+bug that causes performance degradations in certain scenarios. We strongly recommend upgrading to at
+least 4.6.1.
+
 ### 4.4.0
 
 Datastax Enterprise support is now available directly in the main driver. There is no longer a
@@ -14,7 +384,7 @@ Apart from that, the only visible change is that DSE-specific features are now e
 
 * new execution methods: `CqlSession.executeGraph`, `CqlSession.executeContinuously*`. They all
   have default implementations so this doesn't break binary compatibility. You can just ignore them.
-* new driver dependencies: Tinkerpop, ESRI, Reactive Streams. If you want to keep your classpath
+* new driver dependencies: TinkerPop, ESRI, Reactive Streams. If you want to keep your classpath
   lean, you can exclude some dependencies when you don't use the corresponding DSE features; see the 
   [Integration>Driver dependencies](../manual/core/integration/#driver-dependencies) section.
 
@@ -92,7 +462,7 @@ you can obtain in most web environments by calling `Thread.getContextClassLoader
  
 See the javadocs of [SessionBuilder.withClassLoader] for more information.
 
-[SessionBuilder.withClassLoader]: https://docs.datastax.com/en/drivers/java/4.3/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
+[SessionBuilder.withClassLoader]: https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
 
 ### 4.1.0
 

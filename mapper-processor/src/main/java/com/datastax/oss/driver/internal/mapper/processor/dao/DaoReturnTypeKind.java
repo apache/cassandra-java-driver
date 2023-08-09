@@ -16,6 +16,10 @@
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
 import com.squareup.javapoet.CodeBlock;
+import java.util.Map;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
+import javax.lang.model.element.TypeElement;
 
 /**
  * A "kind" of return type of a DAO method.
@@ -33,8 +37,14 @@ public interface DaoReturnTypeKind {
    * @param methodBuilder the method to add the code to.
    * @param helperFieldName the name of the helper for entity conversions (might not get used for
    *     certain kinds, in that case it's ok to pass null).
+   * @param methodElement the return type of the method (in case the result must be cast).
+   * @param typeParameters
    */
-  void addExecuteStatement(CodeBlock.Builder methodBuilder, String helperFieldName);
+  void addExecuteStatement(
+      CodeBlock.Builder methodBuilder,
+      String helperFieldName,
+      ExecutableElement methodElement,
+      Map<Name, TypeElement> typeParameters);
 
   /**
    * Generates a try-catch around the given code block, to translate unchecked exceptions into a
@@ -55,8 +65,18 @@ public interface DaoReturnTypeKind {
    * <p>For some kinds, it's fine to let unchecked exceptions bubble up and no try-catch is
    * necessary; in this case, this method can return {@code innerBlock} unchanged.
    */
-  CodeBlock wrapWithErrorHandling(CodeBlock innerBlock);
+  CodeBlock wrapWithErrorHandling(
+      CodeBlock innerBlock, ExecutableElement methodElement, Map<Name, TypeElement> typeParameters);
 
   /** A short description suitable for error messages. */
   String getDescription();
+
+  /**
+   * Whether this return type kind requires the Reactive Streams API.
+   *
+   * <p>If true, the generated DAO class will inherit from {@link
+   * com.datastax.dse.driver.internal.mapper.reactive.ReactiveDaoBase}, otherwise it will inherit
+   * from {@link com.datastax.oss.driver.internal.mapper.DaoBase}.
+   */
+  boolean requiresReactive();
 }

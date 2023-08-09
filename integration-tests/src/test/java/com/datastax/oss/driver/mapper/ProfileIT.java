@@ -49,8 +49,8 @@ import com.datastax.oss.simulacron.common.cluster.QueryLog;
 import com.datastax.oss.simulacron.common.stubbing.PrimeDsl;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -188,13 +188,6 @@ public class ProfileIT {
     assertClForAllQueries(dao, ConsistencyLevel.LOCAL_ONE);
   }
 
-  @Test(expected = IllegalStateException.class)
-  public void should_fail_if_mapper_provides_both_profile_and_name() {
-    mapperBuilder
-        .withDefaultExecutionProfileName("cl_one")
-        .withDefaultExecutionProfile(clTwoProfile);
-  }
-
   private void assertClForAllQueries(SimpleDao dao, ConsistencyLevel expectedLevel) {
     dao.save(SAMPLE_ENTITY);
     assertServerSideCl(expectedLevel);
@@ -223,9 +216,11 @@ public class ProfileIT {
   }
 
   private static void primeInsertQuery() {
-    Map<String, Object> params =
-        ImmutableMap.of("pk", SAMPLE_ENTITY.getPk(), "data", SAMPLE_ENTITY.getData());
-    Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid", "data", "ascii");
+    LinkedHashMap<String, Object> params =
+        new LinkedHashMap<>(
+            ImmutableMap.of("pk", SAMPLE_ENTITY.getPk(), "data", SAMPLE_ENTITY.getData()));
+    LinkedHashMap<String, String> paramTypes =
+        new LinkedHashMap<>(ImmutableMap.of("pk", "uuid", "data", "ascii"));
     SIMULACRON_RULE
         .cluster()
         .prime(
@@ -241,8 +236,9 @@ public class ProfileIT {
   }
 
   private static void primeDeleteQuery() {
-    Map<String, Object> params = ImmutableMap.of("pk", SAMPLE_ENTITY.getPk());
-    Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid");
+    LinkedHashMap<String, Object> params =
+        new LinkedHashMap<>(ImmutableMap.of("pk", SAMPLE_ENTITY.getPk()));
+    LinkedHashMap<String, String> paramTypes = new LinkedHashMap<>(ImmutableMap.of("pk", "uuid"));
     SIMULACRON_RULE
         .cluster()
         .prime(
@@ -259,8 +255,9 @@ public class ProfileIT {
   }
 
   private static void primeSelectQuery() {
-    Map<String, Object> params = ImmutableMap.of("pk", SAMPLE_ENTITY.getPk());
-    Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid");
+    LinkedHashMap<String, Object> params =
+        new LinkedHashMap<>(ImmutableMap.of("pk", SAMPLE_ENTITY.getPk()));
+    LinkedHashMap<String, String> paramTypes = new LinkedHashMap<>(ImmutableMap.of("pk", "uuid"));
     SIMULACRON_RULE
         .cluster()
         .prime(
@@ -277,8 +274,9 @@ public class ProfileIT {
   }
 
   private static void primeCountQuery() {
-    Map<String, Object> params = ImmutableMap.of("pk", SAMPLE_ENTITY.getPk());
-    Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid");
+    LinkedHashMap<String, Object> params =
+        new LinkedHashMap<>(ImmutableMap.of("pk", SAMPLE_ENTITY.getPk()));
+    LinkedHashMap<String, String> paramTypes = new LinkedHashMap<>(ImmutableMap.of("pk", "uuid"));
     SIMULACRON_RULE
         .cluster()
         .prime(
@@ -295,9 +293,11 @@ public class ProfileIT {
   }
 
   private static void primeUpdateQuery() {
-    Map<String, Object> params =
-        ImmutableMap.of("pk", SAMPLE_ENTITY.getPk(), "data", SAMPLE_ENTITY.getData());
-    Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid", "data", "ascii");
+    LinkedHashMap<String, Object> params =
+        new LinkedHashMap<>(
+            ImmutableMap.of("pk", SAMPLE_ENTITY.getPk(), "data", SAMPLE_ENTITY.getData()));
+    LinkedHashMap<String, String> paramTypes =
+        new LinkedHashMap<>(ImmutableMap.of("pk", "uuid", "data", "ascii"));
     SIMULACRON_RULE
         .cluster()
         .prime(
@@ -336,6 +336,7 @@ public class ProfileIT {
     void delete(Simple simple);
 
     @Select
+    @SuppressWarnings("UnusedReturnValue")
     Simple findByPk(UUID pk);
 
     @Query("SELECT count(*) FROM ks.simple WHERE pk=:pk")

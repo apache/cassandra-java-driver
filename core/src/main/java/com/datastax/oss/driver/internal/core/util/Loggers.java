@@ -15,7 +15,12 @@
  */
 package com.datastax.oss.driver.internal.core.util;
 
+import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
+import com.datastax.oss.driver.api.core.data.AccessibleById;
+import com.datastax.oss.driver.api.core.data.AccessibleByName;
+import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Loggers {
 
@@ -38,4 +43,10 @@ public class Loggers {
       }
     }
   }
+
+  // Loggers for API interfaces, declared here in order to keep them internal.
+  public static Logger COLUMN_DEFINITIONS = LoggerFactory.getLogger(ColumnDefinitions.class);
+  public static Logger ACCESSIBLE_BY_ID = LoggerFactory.getLogger(AccessibleById.class);
+  public static Logger ACCESSIBLE_BY_NAME = LoggerFactory.getLogger(AccessibleByName.class);
+  public static Logger USER_DEFINED_TYPE = LoggerFactory.getLogger(UserDefinedType.class);
 }

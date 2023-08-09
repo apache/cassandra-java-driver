@@ -23,8 +23,9 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 /**
  * Tracks schema changes.
  *
- * <p>An implementation of this interface can be registered in the configuration, or with {@link
- * SessionBuilder#withSchemaChangeListener(SchemaChangeListener)}.
+ * <p>Implementations of this interface can be registered either via the configuration (see {@code
+ * reference.conf} in the manual or core driver JAR), or programmatically via {@link
+ * SessionBuilder#addSchemaChangeListener(SchemaChangeListener)}.
  *
  * <p>Note that the methods defined by this interface will be executed by internal driver threads,
  * and are therefore expected to have short execution times. If you need to perform long

@@ -154,6 +154,17 @@ public interface SettableByIndex<SelfT extends SettableByIndex<SelfT>> extends A
   }
 
   /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #setBoolean(int, boolean)}.
+   */
+  @Deprecated
+  @NonNull
+  @CheckReturnValue
+  default SelfT setBool(int i, boolean v) {
+    return setBoolean(i, v);
+  }
+
+  /**
    * Sets the {@code i}th value to the provided Java primitive byte.
    *
    * <p>By default, this works with CQL type {@code tinyint}.

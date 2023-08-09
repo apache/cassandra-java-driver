@@ -20,6 +20,7 @@ import com.datastax.dse.driver.api.core.cql.continuous.ContinuousAsyncResultSet;
 import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.dse.driver.internal.core.cql.DseConversions;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
@@ -27,6 +28,7 @@ import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.cql.Conversions;
 import com.datastax.oss.driver.internal.core.cql.DefaultRow;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
@@ -45,13 +47,7 @@ import net.jcip.annotations.ThreadSafe;
  */
 @ThreadSafe
 public class ContinuousCqlRequestHandler
-    extends ContinuousRequestHandlerBase<Statement, ContinuousAsyncResultSet> {
-
-  private final Message message;
-  private final Duration firstPageTimeout;
-  private final Duration otherPagesTimeout;
-  private final int maxEnqueuedPages;
-  private final int maxPages;
+    extends ContinuousRequestHandlerBase<Statement<?>, ContinuousAsyncResultSet> {
 
   ContinuousCqlRequestHandler(
       @NonNull Statement<?> statement,
@@ -68,14 +64,6 @@ public class ContinuousCqlRequestHandler
         DefaultSessionMetric.CQL_CLIENT_TIMEOUTS,
         DseSessionMetric.CONTINUOUS_CQL_REQUESTS,
         DefaultNodeMetric.CQL_MESSAGES);
-    message = DseConversions.toContinuousPagingMessage(statement, executionProfile, context);
-    firstPageTimeout =
-        executionProfile.getDuration(DseDriverOption.CONTINUOUS_PAGING_TIMEOUT_FIRST_PAGE);
-    otherPagesTimeout =
-        executionProfile.getDuration(DseDriverOption.CONTINUOUS_PAGING_TIMEOUT_OTHER_PAGES);
-    maxEnqueuedPages =
-        executionProfile.getInt(DseDriverOption.CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES);
-    maxPages = executionProfile.getInt(DseDriverOption.CONTINUOUS_PAGING_MAX_PAGES);
     // NOTE that ordering of the following statement matters.
     // We should register this request after all fields have been initialized.
     throttler.register(this);
@@ -89,40 +77,54 @@ public class ContinuousCqlRequestHandler
 
   @NonNull
   @Override
-  protected Duration getPageTimeout(int pageNumber) {
-    return pageNumber == 1 ? firstPageTimeout : otherPagesTimeout;
+  protected Duration getPageTimeout(@NonNull Statement<?> statement, int pageNumber) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(statement, context);
+    if (pageNumber == 1) {
+      return executionProfile.getDuration(DseDriverOption.CONTINUOUS_PAGING_TIMEOUT_FIRST_PAGE);
+    } else {
+      return executionProfile.getDuration(DseDriverOption.CONTINUOUS_PAGING_TIMEOUT_OTHER_PAGES);
+    }
   }
 
   @NonNull
   @Override
-  protected Duration getReviseRequestTimeout() {
-    return otherPagesTimeout;
+  protected Duration getReviseRequestTimeout(@NonNull Statement<?> statement) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(statement, context);
+    return executionProfile.getDuration(DseDriverOption.CONTINUOUS_PAGING_TIMEOUT_OTHER_PAGES);
   }
 
   @Override
-  protected int getMaxEnqueuedPages() {
-    return maxEnqueuedPages;
+  protected int getMaxEnqueuedPages(@NonNull Statement<?> statement) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(statement, context);
+    return executionProfile.getInt(DseDriverOption.CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES);
   }
 
   @Override
-  protected int getMaxPages() {
-    return maxPages;
+  protected int getMaxPages(@NonNull Statement<?> statement) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(statement, context);
+    return executionProfile.getInt(DseDriverOption.CONTINUOUS_PAGING_MAX_PAGES);
   }
 
   @NonNull
   @Override
-  protected Message getMessage() {
-    return message;
+  protected Message getMessage(@NonNull Statement<?> statement) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(statement, context);
+    return DseConversions.toContinuousPagingMessage(statement, executionProfile, context);
   }
 
   @Override
-  protected boolean isTracingEnabled() {
+  protected boolean isTracingEnabled(@NonNull Statement<?> statement) {
     return false;
   }
 
   @NonNull
   @Override
-  protected Map<String, ByteBuffer> createPayload() {
+  protected Map<String, ByteBuffer> createPayload(@NonNull Statement<?> statement) {
     return statement.getCustomPayload();
   }
 
@@ -135,6 +137,7 @@ public class ContinuousCqlRequestHandler
   @NonNull
   @Override
   protected DefaultContinuousAsyncResultSet createResultSet(
+      @NonNull Statement<?> statement,
       @NonNull Rows rows,
       @NonNull ExecutionInfo executionInfo,
       @NonNull ColumnDefinitions columnDefinitions) {

@@ -185,7 +185,7 @@ public class DefaultDriverConfigLoaderTest {
     DriverExecutionProfile config = loader.getInitialConfig().getDefaultProfile();
     // From customApplication.conf:
     assertThat(config.getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
-        .isEqualTo(Duration.ofMillis(500));
+        .isEqualTo(Duration.ofSeconds(5));
     // From customApplication.json:
     assertThat(config.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE)).isEqualTo(2000);
     // From customApplication.properties:
@@ -204,10 +204,29 @@ public class DefaultDriverConfigLoaderTest {
     DriverExecutionProfile config = loader.getInitialConfig().getDefaultProfile();
     // From customApplication.conf:
     assertThat(config.getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
-        .isEqualTo(Duration.ofMillis(500));
+        .isEqualTo(Duration.ofSeconds(5));
     // From reference.conf:
     assertThat(config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
         .isEqualTo(DefaultConsistencyLevel.SERIAL.name());
+  }
+
+  @Test
+  public void should_load_from_file_with_system_property() {
+    File file = new File("src/test/resources/config/customApplication.conf");
+    assertThat(file).exists();
+    System.setProperty("config.file", file.getAbsolutePath());
+    try {
+      DriverConfigLoader loader = new DefaultDriverConfigLoader();
+      DriverExecutionProfile config = loader.getInitialConfig().getDefaultProfile();
+      // From customApplication.conf:
+      assertThat(config.getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
+          .isEqualTo(Duration.ofSeconds(5));
+      // From reference.conf:
+      assertThat(config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
+          .isEqualTo(DefaultConsistencyLevel.SERIAL.name());
+    } finally {
+      System.clearProperty("config.file");
+    }
   }
 
   @Test
@@ -223,5 +242,71 @@ public class DefaultDriverConfigLoaderTest {
                     .isInstanceOf(UnsupportedOperationException.class)
                     .hasMessage(
                         "This instance of DefaultDriverConfigLoader does not support reloading"));
+  }
+
+  /** Test for JAVA-2846. */
+  @Test
+  public void should_load_setting_from_system_property_when_application_conf_is_also_provided() {
+    System.setProperty("datastax-java-driver.basic.request.timeout", "1 millisecond");
+    try {
+      assertThat(
+              new DefaultDriverConfigLoader()
+                  .getInitialConfig()
+                  .getDefaultProfile()
+                  .getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
+          .isEqualTo(Duration.ofMillis(1));
+    } finally {
+      System.clearProperty("datastax-java-driver.basic.request.timeout");
+    }
+  }
+
+  /** Test for JAVA-2846. */
+  @Test
+  public void
+      should_load_and_resolve_setting_from_system_property_when_application_conf_is_also_provided() {
+    System.setProperty(
+        "datastax-java-driver.advanced.connection.init-query-timeout", "1234 milliseconds");
+    try {
+      assertThat(
+              new DefaultDriverConfigLoader()
+                  .getInitialConfig()
+                  .getDefaultProfile()
+                  .getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
+          .isEqualTo(Duration.ofMillis(1234));
+    } finally {
+      System.clearProperty("datastax-java-driver.advanced.connection.init-query-timeout");
+    }
+  }
+
+  /** Test for JAVA-2846. */
+  @Test
+  public void
+      should_load_setting_from_system_property_when_application_conf_is_also_provided_for_custom_classloader() {
+    System.setProperty("datastax-java-driver.basic.request.timeout", "1 millisecond");
+    try {
+      assertThat(
+              new DefaultDriverConfigLoader(Thread.currentThread().getContextClassLoader())
+                  .getInitialConfig()
+                  .getDefaultProfile()
+                  .getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
+          .isEqualTo(Duration.ofMillis(1));
+    } finally {
+      System.clearProperty("datastax-java-driver.basic.request.timeout");
+    }
+  }
+
+  @Test
+  public void should_create_from_string() {
+    DriverExecutionProfile config =
+        DriverConfigLoader.fromString(
+                "datastax-java-driver.basic { session-name = my-app\nrequest.timeout = 1 millisecond }")
+            .getInitialConfig()
+            .getDefaultProfile();
+
+    assertThat(config.getString(DefaultDriverOption.SESSION_NAME)).isEqualTo("my-app");
+    assertThat(config.getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
+        .isEqualTo(Duration.ofMillis(1));
+    // Any option not in the string should be pulled from reference.conf
+    assertThat(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY)).isEqualTo("LOCAL_ONE");
   }
 }

@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /** An object where config options can be set programmatically. */
 public interface OngoingConfigOptions<SelfT extends OngoingConfigOptions<SelfT>> {
@@ -57,6 +58,15 @@ public interface OngoingConfigOptions<SelfT extends OngoingConfigOptions<SelfT>>
   @NonNull
   default SelfT withClass(@NonNull DriverOption option, @NonNull Class<?> value) {
     return withString(option, value.getName());
+  }
+
+  /**
+   * Note that this is just a shortcut to call {@link #withStringList(DriverOption, List)} with
+   * class names obtained from {@link Class#getName()}.
+   */
+  @NonNull
+  default SelfT withClassList(@NonNull DriverOption option, @NonNull List<Class<?>> values) {
+    return withStringList(option, values.stream().map(Class::getName).collect(Collectors.toList()));
   }
 
   @NonNull

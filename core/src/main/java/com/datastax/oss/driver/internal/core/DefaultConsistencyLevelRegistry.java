@@ -47,6 +47,11 @@ public class DefaultConsistencyLevelRegistry implements ConsistencyLevelRegistry
   }
 
   @Override
+  public ConsistencyLevel nameToLevel(String name) {
+    return DefaultConsistencyLevel.valueOf(name);
+  }
+
+  @Override
   public Iterable<ConsistencyLevel> getValues() {
     return VALUES;
   }

@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metrics;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -25,21 +26,22 @@ import java.util.concurrent.TimeUnit;
  */
 public interface MetricUpdater<MetricT> {
 
-  void incrementCounter(MetricT metric, String profileName, long amount);
+  void incrementCounter(MetricT metric, @Nullable String profileName, long amount);
 
-  default void incrementCounter(MetricT metric, String profileName) {
+  default void incrementCounter(MetricT metric, @Nullable String profileName) {
     incrementCounter(metric, profileName, 1);
   }
 
-  void updateHistogram(MetricT metric, String profileName, long value);
+  // note: currently unused
+  void updateHistogram(MetricT metric, @Nullable String profileName, long value);
 
-  void markMeter(MetricT metric, String profileName, long amount);
+  void markMeter(MetricT metric, @Nullable String profileName, long amount);
 
-  default void markMeter(MetricT metric, String profileName) {
+  default void markMeter(MetricT metric, @Nullable String profileName) {
     markMeter(metric, profileName, 1);
   }
 
-  void updateTimer(MetricT metric, String profileName, long duration, TimeUnit unit);
+  void updateTimer(MetricT metric, @Nullable String profileName, long duration, TimeUnit unit);
 
-  boolean isEnabled(MetricT metric, String profileName);
+  boolean isEnabled(MetricT metric, @Nullable String profileName);
 }

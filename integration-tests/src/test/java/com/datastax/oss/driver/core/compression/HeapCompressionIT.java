@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
@@ -30,6 +31,7 @@ import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
 import java.time.Duration;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -73,6 +75,10 @@ public class HeapCompressionIT {
    */
   @Test
   public void should_execute_queries_with_snappy_compression() throws Exception {
+    Assume.assumeTrue(
+        "Snappy is not supported in OSS C* 4.0+ with protocol v5",
+        CCM_RULE.getDseVersion().isPresent()
+            || CCM_RULE.getCassandraVersion().nextStable().compareTo(Version.V4_0_0) < 0);
     createAndCheckCluster("snappy");
   }
 
@@ -115,7 +121,12 @@ public class HeapCompressionIT {
       // We are testing with small responses, so the compressed payload is not even guaranteed to be
       // smaller.
       assertThat(executionInfo.getResponseSizeInBytes()).isGreaterThan(0);
-      assertThat(executionInfo.getCompressedResponseSizeInBytes()).isGreaterThan(0);
+      if (session.getContext().getProtocolVersion().getCode() == 5) {
+        // in protocol v5, compression is done at segment level
+        assertThat(executionInfo.getCompressedResponseSizeInBytes()).isEqualTo(-1);
+      } else {
+        assertThat(executionInfo.getCompressedResponseSizeInBytes()).isGreaterThan(0);
+      }
     }
   }
 }

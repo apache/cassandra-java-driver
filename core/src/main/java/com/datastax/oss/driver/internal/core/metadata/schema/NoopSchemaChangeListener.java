@@ -16,29 +16,12 @@
 package com.datastax.oss.driver.internal.core.metadata.schema;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListenerBase;
-import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import net.jcip.annotations.ThreadSafe;
 
 /**
- * Default schema change listener implementation with empty methods.
- *
- * <p>To activate this listener, modify the {@code advanced.schema-change-listener} section in the
- * driver configuration, for example:
- *
- * <pre>
- * datastax-java-driver {
- *   advanced.schema-change-listener {
- *     class = NoopSchemaChangeListener
- *   }
- * }
- * </pre>
- *
- * See {@code reference.conf} (in the manual or core driver JAR) for more details.
- *
- * <p>Note that if a listener is specified programmatically with {@link
- * SessionBuilder#withSchemaChangeListener(SchemaChangeListener)}, the configuration is ignored.
+ * Default schema change listener implementation with empty methods. This implementation is used
+ * when no listeners were registered, neither programmatically nor through the configuration.
  */
 @ThreadSafe
 public class NoopSchemaChangeListener extends SchemaChangeListenerBase {

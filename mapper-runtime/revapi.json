@@ -67,6 +67,11 @@
         "code": "java.method.addedToInterface",
         "new": "method com.datastax.oss.driver.api.core.config.DriverExecutionProfile com.datastax.oss.driver.api.mapper.MapperContext::getExecutionProfile()",
         "justification": "JAVA-2633: Add execution profile argument to DAO factory method (accept API break -- it's unlikely that MapperContext will be implemented outside of the driver)"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method com.datastax.oss.driver.api.mapper.result.MapperResultProducer com.datastax.oss.driver.api.mapper.MapperContext::getResultProducer(com.datastax.oss.driver.api.core.type.reflect.GenericType<?>)",
+        "justification": "JAVA-2792: Allow custom results in the mapper (accept API break -- it's unlikely that MapperContext will be implemented outside of the driver)"
       }
     ]
   }

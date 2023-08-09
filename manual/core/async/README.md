@@ -61,8 +61,12 @@ resultStage.thenAccept(resultSet -> System.out.println(Thread.currentThread().ge
 // prints s0-io-n (I/O pool thread)
 ```
 
-As long as you use the asynchronous API, the driver never blocks. You can safely call a driver
-method from inside a callback:
+As long as you use the asynchronous API, the driver will behave in a non-blocking manner: its 
+internal threads will almost never block. There are a few exceptions to the rule though: see the 
+manual page on [non-blocking programming](../non_blocking) for details. 
+
+Because the asynchronous API is non-blocking, you can safely call a driver method from inside a 
+callback, even when the callback's execution is triggered by a future returned by the driver:
 
 ```java
 // Get the department id for a given user:
@@ -203,4 +207,4 @@ documentation for more details and an example.
 
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
 
-[AsyncResultSet]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
+[AsyncResultSet]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html

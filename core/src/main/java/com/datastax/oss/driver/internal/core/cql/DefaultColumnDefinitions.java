@@ -74,9 +74,21 @@ public class DefaultColumnDefinitions implements ColumnDefinitions, Serializable
     return index.firstIndexOf(id) >= 0;
   }
 
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull String name) {
+    return index.allIndicesOf(name);
+  }
+
   @Override
   public int firstIndexOf(@NonNull String name) {
     return index.firstIndexOf(name);
+  }
+
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+    return index.allIndicesOf(id);
   }
 
   @Override

@@ -15,7 +15,11 @@
  */
 package com.datastax.oss.driver.api.core.retry;
 
-/** A decision from the {@link RetryPolicy} on how to handle a retry. */
+/**
+ * A decision from the {@link RetryPolicy} on how to handle a retry.
+ *
+ * @see RetryVerdict#getRetryDecision()
+ */
 public enum RetryDecision {
   /** Retry the operation on the same node. */
   RETRY_SAME,

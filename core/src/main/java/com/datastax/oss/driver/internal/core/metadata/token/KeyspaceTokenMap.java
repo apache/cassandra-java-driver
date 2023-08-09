@@ -52,8 +52,7 @@ class KeyspaceTokenMap {
     try {
       ReplicationStrategy strategy = replicationStrategyFactory.newInstance(replicationConfig);
 
-      SetMultimap<Token, Node> replicasByToken =
-          strategy.computeReplicasByToken(tokenToPrimary, ring);
+      Map<Token, Set<Node>> replicasByToken = strategy.computeReplicasByToken(tokenToPrimary, ring);
       SetMultimap<Node, TokenRange> tokenRangesByNode;
       if (ring.size() == 1) {
         // We forced the single range to ]minToken,minToken], make sure to use that instead of
@@ -79,13 +78,13 @@ class KeyspaceTokenMap {
 
   private final List<Token> ring;
   private final SetMultimap<Node, TokenRange> tokenRangesByNode;
-  private final SetMultimap<Token, Node> replicasByToken;
+  private final Map<Token, Set<Node>> replicasByToken;
   private final TokenFactory tokenFactory;
 
   private KeyspaceTokenMap(
       List<Token> ring,
       SetMultimap<Node, TokenRange> tokenRangesByNode,
-      SetMultimap<Token, Node> replicasByToken,
+      Map<Token, Set<Node>> replicasByToken,
       TokenFactory tokenFactory) {
     this.ring = ring;
     this.tokenRangesByNode = tokenRangesByNode;
@@ -104,7 +103,7 @@ class KeyspaceTokenMap {
   Set<Node> getReplicas(Token token) {
     // If the token happens to be one of the "primary" tokens, get result directly
     Set<Node> nodes = replicasByToken.get(token);
-    if (!nodes.isEmpty()) {
+    if (nodes != null) {
       return nodes;
     }
     // Otherwise, find the closest "primary" token on the ring
@@ -119,7 +118,7 @@ class KeyspaceTokenMap {
   }
 
   private static SetMultimap<Node, TokenRange> buildTokenRangesByNode(
-      Set<TokenRange> tokenRanges, SetMultimap<Token, Node> replicasByToken) {
+      Set<TokenRange> tokenRanges, Map<Token, Set<Node>> replicasByToken) {
     ImmutableSetMultimap.Builder<Node, TokenRange> result = ImmutableSetMultimap.builder();
     for (TokenRange range : tokenRanges) {
       for (Node node : replicasByToken.get(range.getEnd())) {

@@ -127,6 +127,15 @@ The method can return:
     @Delete(entityClass = Product.class, customIfClause = "description = :expectedDescription")
     CompletionStage<AsyncResultSet> deleteIfDescriptionMatchesAsync(UUID productId, String expectedDescription);
     ```
+  
+* a [ReactiveResultSet].
+
+    ```java
+    @Delete
+    ReactiveResultSet deleteReactive(Product product);
+    ```
+
+* a [custom type](../custom_types).
 
 Note that you can also return a boolean or result set for non-conditional queries, but there's no
 practical purpose for that since those queries always return `wasApplied = true` and an empty result
@@ -142,14 +151,16 @@ If a table was specified when creating the DAO, then the generated query targets
 Otherwise, it uses the default table name for the entity (which is determined by the name of the
 entity class and the [naming strategy](../../entities/#naming-strategy)).
 
-[default keyspace]:       https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
-[AsyncResultSet]:         https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
-[@ClusteringColumn]:      https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
-[@Delete]:                https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/Delete.html
-[@PartitionKey]:          https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
-[ResultSet]:              https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/ResultSet.html
-[ResultSet#wasApplied()]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/ResultSet.html#wasApplied--
-[BoundStatement]:         https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/cql/BoundStatement.html
+[default keyspace]:       https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
+[AsyncResultSet]:         https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html
+[@ClusteringColumn]:      https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html
+[@Delete]:                https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/Delete.html
+[@PartitionKey]:          https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/mapper/annotations/PartitionKey.html
+[ResultSet]:              https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[ResultSet#wasApplied()]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/ResultSet.html#wasApplied--
+[BoundStatement]:         https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/BoundStatement.html
+[ReactiveResultSet]:      https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/cql/reactive/ReactiveResultSet.html
+
 
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html
 [CompletableFuture]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html

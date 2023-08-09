@@ -15,7 +15,11 @@
  */
 package com.datastax.dse.driver.api.core.graph;
 
-import static com.datastax.oss.driver.api.core.type.DataTypes.*;
+import static com.datastax.oss.driver.api.core.type.DataTypes.BIGINT;
+import static com.datastax.oss.driver.api.core.type.DataTypes.INT;
+import static com.datastax.oss.driver.api.core.type.DataTypes.TEXT;
+import static com.datastax.oss.driver.api.core.type.DataTypes.listOf;
+import static com.datastax.oss.driver.api.core.type.DataTypes.tupleOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.dse.driver.api.core.data.geometry.LineString;
@@ -40,6 +44,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Map;
 import org.junit.Test;
@@ -79,7 +84,7 @@ public abstract class CoreGraphDataTypeITBase {
             .put("Text", "test")
             .put("Time", LocalTime.now(ZoneId.systemDefault()))
             .put("Timeuuid", Uuids.timeBased())
-            .put("Timestamp", Instant.now())
+            .put("Timestamp", Instant.now().truncatedTo(ChronoUnit.MILLIS))
             .put("Uuid", java.util.UUID.randomUUID())
             .put("Varint", BigInteger.valueOf(3234))
             .put("Blob", ByteBuffer.wrap(new byte[] {1, 2, 3}))
@@ -97,9 +102,8 @@ public abstract class CoreGraphDataTypeITBase {
                 session
                     .getMetadata()
                     .getKeyspace(graphName())
-                    .get()
-                    .getUserDefinedType("udt_graphbinary")
-                    .get()
+                    .flatMap(keyspace -> keyspace.getUserDefinedType("udt_graphbinary"))
+                    .orElseThrow(IllegalStateException::new)
                     .newValue(
                         "some text", tupleOf(INT, TEXT).newValue(5, "Bar"), "some missing text"))
             .put(
@@ -107,9 +111,10 @@ public abstract class CoreGraphDataTypeITBase {
                 session
                     .getMetadata()
                     .getKeyspace(graphName())
-                    .get()
-                    .getUserDefinedType("udt_graphbinarygeo")
-                    .get()
+                    .flatMap(
+                        keyspaceMetadata ->
+                            keyspaceMetadata.getUserDefinedType("udt_graphbinarygeo"))
+                    .orElseThrow(IllegalStateException::new)
                     .newValue(
                         Point.fromCoordinates(3.3, 4.4),
                         LineString.fromPoints(
@@ -148,8 +153,7 @@ public abstract class CoreGraphDataTypeITBase {
     CqlSession session = session();
 
     // use CQL to create type for now because DSP-17567 is not in yet, so this is more stable
-    session.execute(
-        String.format("CREATE TYPE %s.udt1(" + "a int" + ", b text" + ")", graphName()));
+    session.execute(String.format("CREATE TYPE %s.udt1(a int, b text)", graphName()));
 
     session.execute(
         String.format(
@@ -175,11 +179,19 @@ public abstract class CoreGraphDataTypeITBase {
             graphName()));
 
     UserDefinedType udt1 =
-        session.getMetadata().getKeyspace(graphName()).get().getUserDefinedType("udt1").get();
+        session
+            .getMetadata()
+            .getKeyspace(graphName())
+            .flatMap(keyspace -> keyspace.getUserDefinedType("udt1"))
+            .orElseThrow(IllegalStateException::new);
     UdtValue udtValue1 = udt1.newValue(1, "2");
 
     UserDefinedType udt2 =
-        session.getMetadata().getKeyspace(graphName()).get().getUserDefinedType("udt2").get();
+        session
+            .getMetadata()
+            .getKeyspace(graphName())
+            .flatMap(keyspace -> keyspace.getUserDefinedType("udt2"))
+            .orElseThrow(IllegalStateException::new);
     TupleType secondNested = tupleOf(BIGINT, listOf(BIGINT));
     TupleType firstNested = tupleOf(TEXT, secondNested);
     UdtValue udtValue2 =
@@ -191,7 +203,11 @@ public abstract class CoreGraphDataTypeITBase {
             firstNested.newValue("6", secondNested.newValue(7L, ImmutableList.of(8L))));
 
     UserDefinedType udt3 =
-        session.getMetadata().getKeyspace(graphName()).get().getUserDefinedType("udt3").get();
+        session
+            .getMetadata()
+            .getKeyspace(graphName())
+            .flatMap(keyspace -> keyspace.getUserDefinedType("udt3"))
+            .orElseThrow(IllegalStateException::new);
     UdtValue udtValue3 =
         udt3.newValue(
             ImmutableList.of(1),
@@ -225,7 +241,7 @@ public abstract class CoreGraphDataTypeITBase {
     properties.forEach((k, v) -> assertThat(results.get(formatPropertyName(k))).isEqualTo(v));
   }
 
-  private static GraphStatement createVertexLabelStatement(
+  private static GraphStatement<?> createVertexLabelStatement(
       Map<String, Object> properties, String vertexLabel) {
     StringBuilder ddl =
         new StringBuilder("schema.vertexLabel(vertexLabel).ifNotExists().partitionBy('id', Int)");

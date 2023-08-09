@@ -26,7 +26,12 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.ConnectionInitException;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
+import com.datastax.oss.driver.internal.core.DefaultProtocolFeature;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.protocol.BytesToSegmentDecoder;
+import com.datastax.oss.driver.internal.core.protocol.FrameToSegmentEncoder;
+import com.datastax.oss.driver.internal.core.protocol.SegmentToBytesEncoder;
+import com.datastax.oss.driver.internal.core.protocol.SegmentToFrameDecoder;
 import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.protocol.internal.Message;
@@ -46,6 +51,7 @@ import com.datastax.oss.protocol.internal.response.Supported;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipeline;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Objects;
@@ -73,7 +79,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
   private final HeartbeatHandler heartbeatHandler;
   private String logPrefix;
   private ChannelHandlerContext ctx;
-  private boolean querySupportedOptions;
+  private final boolean querySupportedOptions;
 
   /**
    * @param querySupportedOptions whether to send OPTIONS as the first message, to request which
@@ -123,7 +129,11 @@ class ProtocolInitHandler extends ConnectInitHandler {
     boolean result = super.setConnectSuccess();
     if (result) {
       // add heartbeat to pipeline now that protocol is initialized.
-      ctx.pipeline().addBefore("inflight", "heartbeat", heartbeatHandler);
+      ctx.pipeline()
+          .addBefore(
+              ChannelFactory.INFLIGHT_HANDLER_NAME,
+              ChannelFactory.HEARTBEAT_HANDLER_NAME,
+              heartbeatHandler);
     }
     return result;
   }
@@ -196,10 +206,12 @@ class ProtocolInitHandler extends ConnectInitHandler {
           step = Step.STARTUP;
           send();
         } else if (step == Step.STARTUP && response instanceof Ready) {
+          maybeSwitchToModernFraming();
           context.getAuthProvider().ifPresent(provider -> provider.onMissingChallenge(endPoint));
           step = Step.GET_CLUSTER_NAME;
           send();
         } else if (step == Step.STARTUP && response instanceof Authenticate) {
+          maybeSwitchToModernFraming();
           Authenticate authenticate = (Authenticate) response;
           authenticator = buildAuthenticator(endPoint, authenticate.authenticator);
           authenticator
@@ -314,9 +326,11 @@ class ProtocolInitHandler extends ConnectInitHandler {
               (step == Step.OPTIONS && querySupportedOptions) || step == Step.STARTUP;
           boolean serverOrProtocolError =
               error.code == ErrorCode.PROTOCOL_ERROR || error.code == ErrorCode.SERVER_ERROR;
-          if (firstRequest
-              && serverOrProtocolError
-              && error.message.contains("Invalid or unsupported protocol version")) {
+          boolean badProtocolVersionMessage =
+              error.message.contains("Invalid or unsupported protocol version")
+                  // JAVA-2925: server is behind driver and considers the proposed version as beta
+                  || error.message.contains("Beta version of the protocol used");
+          if (firstRequest && serverOrProtocolError && badProtocolVersionMessage) {
             fail(
                 UnsupportedProtocolVersionException.forSingleAttempt(
                     endPoint, initialProtocolVersion));
@@ -359,6 +373,42 @@ class ProtocolInitHandler extends ConnectInitHandler {
     @Override
     public String toString() {
       return "init query " + step;
+    }
+  }
+
+  /**
+   * Rearranges the pipeline to deal with the new framing structure in protocol v5 and above. The
+   * first messages still use the legacy format, we only do this after a successful response to the
+   * first STARTUP message.
+   */
+  private void maybeSwitchToModernFraming() {
+    if (context
+        .getProtocolVersionRegistry()
+        .supports(initialProtocolVersion, DefaultProtocolFeature.MODERN_FRAMING)) {
+
+      ChannelPipeline pipeline = ctx.pipeline();
+
+      // We basically add one conversion step in the middle: frames <-> *segments* <-> bytes
+      // Outbound:
+      pipeline.replace(
+          ChannelFactory.FRAME_TO_BYTES_ENCODER_NAME,
+          ChannelFactory.FRAME_TO_SEGMENT_ENCODER_NAME,
+          new FrameToSegmentEncoder(
+              context.getPrimitiveCodec(), context.getFrameCodec(), logPrefix));
+      pipeline.addBefore(
+          ChannelFactory.FRAME_TO_SEGMENT_ENCODER_NAME,
+          ChannelFactory.SEGMENT_TO_BYTES_ENCODER_NAME,
+          new SegmentToBytesEncoder(context.getSegmentCodec()));
+
+      // Inbound:
+      pipeline.replace(
+          ChannelFactory.BYTES_TO_FRAME_DECODER_NAME,
+          ChannelFactory.BYTES_TO_SEGMENT_DECODER_NAME,
+          new BytesToSegmentDecoder(context.getSegmentCodec()));
+      pipeline.addAfter(
+          ChannelFactory.BYTES_TO_SEGMENT_DECODER_NAME,
+          ChannelFactory.SEGMENT_TO_FRAME_DECODER_NAME,
+          new SegmentToFrameDecoder(context.getFrameCodec(), logPrefix));
     }
   }
 

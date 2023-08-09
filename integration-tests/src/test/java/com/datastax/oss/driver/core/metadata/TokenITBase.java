@@ -102,6 +102,7 @@ public abstract class TokenITBase {
     int key = 1;
     ProtocolVersion protocolVersion = session().getContext().getProtocolVersion();
     ByteBuffer serializedKey = TypeCodecs.INT.encodePrimitive(key, protocolVersion);
+    assertThat(serializedKey).isNotNull();
     Set<Node> replicas = tokenMap.getReplicas(KS1, serializedKey);
     assertThat(replicas).hasSize(1);
     Node replica = replicas.iterator().next();
@@ -133,7 +134,7 @@ public abstract class TokenITBase {
   private List<Row> rangeQuery(PreparedStatement rangeStatement, TokenRange range) {
     List<Row> rows = Lists.newArrayList();
     for (TokenRange subRange : range.unwrap()) {
-      Statement statement = rangeStatement.bind(subRange.getStart(), subRange.getEnd());
+      Statement<?> statement = rangeStatement.bind(subRange.getStart(), subRange.getEnd());
       session().execute(statement).forEach(rows::add);
     }
     return rows;
@@ -156,10 +157,11 @@ public abstract class TokenITBase {
   public void should_get_token_from_row_and_set_token_in_query() {
     ResultSet rs = session().execute("SELECT token(i) FROM foo WHERE i = 1");
     Row row = rs.one();
+    assertThat(row).isNotNull();
 
     // Get by index:
     Token token = row.getToken(0);
-    assertThat(token).isInstanceOf(expectedTokenType);
+    assertThat(token).isNotNull().isInstanceOf(expectedTokenType);
 
     // Get by name: the generated column name depends on the Cassandra version.
     String tokenColumnName =
@@ -173,10 +175,12 @@ public abstract class TokenITBase {
 
     // Bind with setToken by index
     row = session().execute(pst.bind().setToken(0, token)).one();
+    assertThat(row).isNotNull();
     assertThat(row.getInt(0)).isEqualTo(1);
 
     // Bind with setToken by name
     row = session().execute(pst.bind().setToken("partition key token", token)).one();
+    assertThat(row).isNotNull();
     assertThat(row.getInt(0)).isEqualTo(1);
   }
 
@@ -190,17 +194,20 @@ public abstract class TokenITBase {
   @Test
   public void should_get_token_from_row_and_set_token_in_query_with_binding_and_aliasing() {
     Row row = session().execute("SELECT token(i) AS t FROM foo WHERE i = 1").one();
+    assertThat(row).isNotNull();
     Token token = row.getToken("t");
-    assertThat(token).isInstanceOf(expectedTokenType);
+    assertThat(token).isNotNull().isInstanceOf(expectedTokenType);
 
     PreparedStatement pst = session().prepare("SELECT * FROM foo WHERE token(i) = :myToken");
     row = session().execute(pst.bind().setToken("myToken", token)).one();
+    assertThat(row).isNotNull();
     assertThat(row.getInt(0)).isEqualTo(1);
 
     row =
         session()
             .execute(SimpleStatement.newInstance("SELECT * FROM foo WHERE token(i) = ?", token))
             .one();
+    assertThat(row).isNotNull();
     assertThat(row.getInt(0)).isEqualTo(1);
   }
 
@@ -216,6 +223,7 @@ public abstract class TokenITBase {
   @Test(expected = IllegalArgumentException.class)
   public void should_raise_exception_when_getting_token_on_non_token_column() {
     Row row = session().execute("SELECT i FROM foo WHERE i = 1").one();
+    assertThat(row).isNotNull();
     row.getToken(0);
   }
 
@@ -237,11 +245,13 @@ public abstract class TokenITBase {
   }
 
   private void checkRanges(Session session) {
+    assertThat(session.getMetadata().getTokenMap()).isPresent();
     TokenMap tokenMap = session.getMetadata().getTokenMap().get();
     checkRanges(tokenMap.getTokenRanges());
   }
 
   private void checkRanges(Session session, CqlIdentifier keyspace, int replicationFactor) {
+    assertThat(session.getMetadata().getTokenMap()).isPresent();
     TokenMap tokenMap = session.getMetadata().getTokenMap().get();
     List<TokenRange> allRangesWithDuplicates = Lists.newArrayList();
 
@@ -250,17 +260,27 @@ public abstract class TokenITBase {
       Set<TokenRange> hostRanges = tokenMap.getTokenRanges(keyspace, node);
       // Special case: When using vnodes the tokens are not evenly assigned to each replica.
       if (!useVnodes) {
-        assertThat(hostRanges).hasSize(replicationFactor * tokensPerNode);
+        assertThat(hostRanges)
+            .as(
+                "Node %s: expected %d ranges, got %d",
+                node, replicationFactor * tokensPerNode, hostRanges.size())
+            .hasSize(replicationFactor * tokensPerNode);
       }
       allRangesWithDuplicates.addAll(hostRanges);
     }
 
     // Special case check for vnodes to ensure that total number of replicated ranges is correct.
-    assertThat(allRangesWithDuplicates).hasSize(3 * tokensPerNode * replicationFactor);
+    assertThat(allRangesWithDuplicates)
+        .as(
+            "Expected %d total replicated ranges with duplicates, got %d",
+            3 * replicationFactor * tokensPerNode, allRangesWithDuplicates.size())
+        .hasSize(3 * replicationFactor * tokensPerNode);
 
     // Once we ignore duplicates, the number of ranges should match the number of nodes.
     Set<TokenRange> allRanges = new TreeSet<>(allRangesWithDuplicates);
-    assertThat(allRanges).hasSize(3 * tokensPerNode);
+    assertThat(allRanges)
+        .as("Expected %d total replicated ranges, got %d", 3 * tokensPerNode, allRanges.size())
+        .hasSize(3 * tokensPerNode);
 
     // And the ranges should cover the whole ring and no ranges intersect.
     checkRanges(allRanges);
@@ -269,7 +289,7 @@ public abstract class TokenITBase {
   // Ensures that no ranges intersect and that they cover the entire ring.
   private void checkRanges(Collection<TokenRange> ranges) {
     // Ensure no ranges intersect.
-    TokenRange[] rangesArray = ranges.toArray(new TokenRange[ranges.size()]);
+    TokenRange[] rangesArray = ranges.toArray(new TokenRange[0]);
     for (int i = 0; i < rangesArray.length; i++) {
       TokenRange rangeI = rangesArray[i];
       for (int j = i + 1; j < rangesArray.length; j++) {
@@ -337,6 +357,7 @@ public abstract class TokenITBase {
     TokenMap tokenMap = getTokenMap();
 
     Row row = session().execute("SELECT token(i) FROM foo WHERE i = 1").one();
+    assertThat(row).isNotNull();
     Token expected = row.getToken(0);
 
     ProtocolVersion protocolVersion = session().getContext().getProtocolVersion();

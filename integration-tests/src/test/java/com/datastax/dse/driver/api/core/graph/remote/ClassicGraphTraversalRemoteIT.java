@@ -15,6 +15,8 @@
  */
 package com.datastax.dse.driver.api.core.graph.remote;
 
+import static org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource.traversal;
+
 import com.datastax.dse.driver.api.core.graph.DseGraph;
 import com.datastax.dse.driver.api.core.graph.GraphTestSupport;
 import com.datastax.dse.driver.api.core.graph.SampleGraphScripts;
@@ -24,9 +26,7 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
-import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.structure.util.empty.EmptyGraph;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.RuleChain;
@@ -70,14 +70,12 @@ public class ClassicGraphTraversalRemoteIT extends GraphTraversalRemoteITBase {
 
   @Override
   protected GraphTraversalSource graphTraversalSource() {
-    return AnonymousTraversalSource.traversal()
-        .withRemote(DseGraph.remoteConnectionBuilder(session()).build());
+    return traversal().withRemote(DseGraph.remoteConnectionBuilder(session()).build());
   }
 
   @Override
   protected SocialTraversalSource socialTraversalSource() {
-    return EmptyGraph.instance()
-        .traversal(SocialTraversalSource.class)
+    return traversal(SocialTraversalSource.class)
         .withRemote(DseGraph.remoteConnectionBuilder(session()).build());
   }
 

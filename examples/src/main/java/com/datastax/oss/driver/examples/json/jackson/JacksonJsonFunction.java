@@ -27,10 +27,10 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.type.codec.ExtraTypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.examples.json.PlainTextJson;
-import com.datastax.oss.driver.examples.json.codecs.JacksonJsonCodec;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -42,8 +42,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * href="http://wiki.fasterxml.com/JacksonHome">Jackson</a> library, and leveraging the {@code
  * toJson()} and {@code fromJson()} functions introduced in Cassandra 2.2.
  *
- * <p>This example makes usage of a custom {@link TypeCodec codec}, {@link JacksonJsonCodec}. If you
- * plan to follow this example, make sure to include the following Maven dependencies in your
+ * <p>This example makes usage of a {@linkplain ExtraTypeCodecs#json(Class) custom codec for JSON}.
+ * If you plan to follow this example, make sure to include the following Maven dependencies in your
  * project:
  *
  * <pre>{@code
@@ -82,10 +82,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class JacksonJsonFunction {
 
   // A codec to convert JSON payloads into User instances;
-  private static final TypeCodec<User> USER_CODEC = new JacksonJsonCodec<>(User.class);
+  private static final TypeCodec<User> USER_CODEC = ExtraTypeCodecs.json(User.class);
 
   // A codec to convert generic JSON payloads into JsonNode instances
-  private static final TypeCodec<JsonNode> JSON_NODE_CODEC = new JacksonJsonCodec<>(JsonNode.class);
+  private static final TypeCodec<JsonNode> JSON_NODE_CODEC = ExtraTypeCodecs.json(JsonNode.class);
 
   public static void main(String[] args) {
     try (CqlSession session =

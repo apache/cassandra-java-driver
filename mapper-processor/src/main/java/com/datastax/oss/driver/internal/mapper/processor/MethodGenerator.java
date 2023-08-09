@@ -27,4 +27,19 @@ public interface MethodGenerator {
    *     DecoratedMessager}.
    */
   Optional<MethodSpec> generate();
+
+  /**
+   * Whether the generated method requires the Reactive Streams API.
+   *
+   * <p>If true, the generated DAO class will inherit from {@link
+   * com.datastax.dse.driver.internal.mapper.reactive.ReactiveDaoBase}, otherwise it will inherit
+   * from {@link com.datastax.oss.driver.internal.mapper.DaoBase}.
+   *
+   * <p>Only generated methods returning {@link
+   * com.datastax.dse.driver.api.core.cql.reactive.ReactiveResultSet} and {@link
+   * com.datastax.dse.driver.api.mapper.reactive.MappedReactiveResultSet} should return true here.
+   */
+  default boolean requiresReactive() {
+    return false;
+  }
 }

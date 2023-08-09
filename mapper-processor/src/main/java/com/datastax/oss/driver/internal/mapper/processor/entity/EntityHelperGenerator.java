@@ -21,10 +21,12 @@ import com.datastax.oss.driver.internal.mapper.processor.GeneratedNames;
 import com.datastax.oss.driver.internal.mapper.processor.MethodGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.SingleFileCodeGenerator;
+import com.datastax.oss.driver.internal.mapper.processor.util.Capitalizer;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.BindableHandlingSharedCode;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -33,7 +35,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import java.beans.Introspector;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +77,7 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
     return childHelpers.computeIfAbsent(
         childEntityName,
         k -> {
-          String baseName = Introspector.decapitalize(childEntityName.simpleName()) + "Helper";
+          String baseName = Capitalizer.decapitalize(childEntityName.simpleName()) + "Helper";
           return nameIndex.uniqueField(baseName);
         });
   }
@@ -87,6 +88,10 @@ public class EntityHelperGenerator extends SingleFileCodeGenerator
     TypeSpec.Builder classContents =
         TypeSpec.classBuilder(helperName)
             .addJavadoc(JAVADOC_GENERATED_WARNING)
+            .addAnnotation(
+                AnnotationSpec.builder(SuppressWarnings.class)
+                    .addMember("value", "\"all\"")
+                    .build())
             .addModifiers(Modifier.PUBLIC)
             .superclass(
                 ParameterizedTypeName.get(

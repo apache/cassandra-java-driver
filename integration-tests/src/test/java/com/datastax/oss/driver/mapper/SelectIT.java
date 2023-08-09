@@ -18,6 +18,7 @@ package com.datastax.oss.driver.mapper;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
@@ -35,6 +36,7 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -100,6 +102,21 @@ public class SelectIT extends InventoryITBase {
   }
 
   @Test
+  public void should_select_all_async() {
+    assertThat(CompletableFutures.getUninterruptibly(dao.allAsync()).currentPage()).hasSize(2);
+  }
+
+  @Test
+  public void should_select_all_stream() {
+    assertThat(dao.stream()).hasSize(2);
+  }
+
+  @Test
+  public void should_select_all_stream_async() {
+    assertThat(CompletableFutures.getUninterruptibly(dao.streamAsync())).hasSize(2);
+  }
+
+  @Test
   public void should_select_by_primary_key_asynchronously() {
     assertThat(CompletableFutures.getUninterruptibly(dao.findByIdAsync(FLAMETHROWER.getId())))
         .isEqualTo(FLAMETHROWER);
@@ -142,6 +159,18 @@ public class SelectIT extends InventoryITBase {
   }
 
   @Test
+  public void should_select_all_sales_stream() {
+    assertThat(saleDao.stream())
+        .containsOnly(
+            FLAMETHROWER_SALE_1,
+            FLAMETHROWER_SALE_3,
+            FLAMETHROWER_SALE_4,
+            FLAMETHROWER_SALE_2,
+            FLAMETHROWER_SALE_5,
+            MP3_DOWNLOAD_SALE_1);
+  }
+
+  @Test
   public void should_select_by_partition_key() {
     assertThat(saleDao.salesByIdForDay(FLAMETHROWER.getId(), DATE_1).all())
         .containsOnly(
@@ -149,8 +178,21 @@ public class SelectIT extends InventoryITBase {
   }
 
   @Test
+  public void should_select_by_partition_key_stream() {
+    assertThat(saleDao.salesByIdForDayStream(FLAMETHROWER.getId(), DATE_1))
+        .containsOnly(
+            FLAMETHROWER_SALE_1, FLAMETHROWER_SALE_3, FLAMETHROWER_SALE_2, FLAMETHROWER_SALE_4);
+  }
+
+  @Test
   public void should_select_by_partition_key_and_partial_clustering() {
     assertThat(saleDao.salesByIdForCustomer(FLAMETHROWER.getId(), DATE_1, 1).all())
+        .containsOnly(FLAMETHROWER_SALE_1, FLAMETHROWER_SALE_3, FLAMETHROWER_SALE_4);
+  }
+
+  @Test
+  public void should_select_by_partition_key_and_partial_clustering_stream() {
+    assertThat(saleDao.salesByIdForCustomerStream(FLAMETHROWER.getId(), DATE_1, 1))
         .containsOnly(FLAMETHROWER_SALE_1, FLAMETHROWER_SALE_3, FLAMETHROWER_SALE_4);
   }
 
@@ -181,6 +223,15 @@ public class SelectIT extends InventoryITBase {
     PagingIterable<Product> all();
 
     @Select
+    CompletionStage<MappedAsyncPagingIterable<Product>> allAsync();
+
+    @Select
+    Stream<Product> stream();
+
+    @Select
+    CompletionStage<Stream<Product>> streamAsync();
+
+    @Select
     Optional<Product> findOptionalById(UUID productId);
 
     @Select
@@ -203,13 +254,22 @@ public class SelectIT extends InventoryITBase {
     @Select
     PagingIterable<ProductSale> all();
 
+    @Select
+    Stream<ProductSale> stream();
+
     // partition key provided
     @Select
     PagingIterable<ProductSale> salesByIdForDay(UUID id, String day);
 
+    @Select
+    Stream<ProductSale> salesByIdForDayStream(UUID id, String day);
+
     // partition key and partial clustering key
     @Select
     PagingIterable<ProductSale> salesByIdForCustomer(UUID id, String day, int customerId);
+
+    @Select
+    Stream<ProductSale> salesByIdForCustomerStream(UUID id, String day, int customerId);
 
     // full primary key
     @Select

@@ -62,7 +62,7 @@ class LoginQueryProvider {
                   throw new IllegalStateException(
                       "Should have found matching row for userid " + userid);
                 } else {
-                  return Optional.of(userHelper.get(userRow));
+                  return Optional.of(userHelper.get(userRow, false));
                 }
               } else {
                 return Optional.empty();

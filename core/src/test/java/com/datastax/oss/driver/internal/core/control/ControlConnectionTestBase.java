@@ -58,7 +58,6 @@ import org.mockito.verification.VerificationWithTimeout;
 
 abstract class ControlConnectionTestBase {
   protected static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
-  protected static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
 
   /** How long we wait when verifying mocks for async invocations */
   protected static final VerificationWithTimeout VERIFY_TIMEOUT = timeout(500);

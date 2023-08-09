@@ -30,7 +30,6 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -278,7 +277,7 @@ public abstract class TypesafeDriverExecutionProfile implements DriverExecutionP
   @Override
   public SortedSet<Map.Entry<String, Object>> entrySet() {
     ImmutableSortedSet.Builder<Map.Entry<String, Object>> builder =
-        ImmutableSortedSet.orderedBy(Comparator.comparing(Map.Entry::getKey));
+        ImmutableSortedSet.orderedBy(Map.Entry.comparingByKey());
     for (Map.Entry<String, ConfigValue> entry : getEffectiveOptions().entrySet()) {
       builder.add(new AbstractMap.SimpleEntry<>(entry.getKey(), entry.getValue().unwrapped()));
     }

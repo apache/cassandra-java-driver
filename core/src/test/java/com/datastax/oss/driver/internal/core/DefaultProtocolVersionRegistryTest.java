@@ -20,6 +20,7 @@ import static com.datastax.dse.driver.api.core.DseProtocolVersion.DSE_V2;
 import static com.datastax.oss.driver.api.core.ProtocolVersion.V3;
 import static com.datastax.oss.driver.api.core.ProtocolVersion.V4;
 import static com.datastax.oss.driver.api.core.ProtocolVersion.V5;
+import static com.datastax.oss.driver.api.core.ProtocolVersion.V6;
 import static com.datastax.oss.driver.internal.core.DefaultProtocolFeature.DATE_TYPE;
 import static com.datastax.oss.driver.internal.core.DefaultProtocolFeature.SMALLINT_AND_TINYINT_TYPES;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,7 +65,13 @@ public class DefaultProtocolVersionRegistryTest {
 
   @Test
   public void should_downgrade_from_dse_to_oss() {
-    assertThat(registry.downgrade(DseProtocolVersion.DSE_V1).get()).isEqualTo(ProtocolVersion.V4);
+    assertThat(registry.downgrade(DseProtocolVersion.DSE_V1).get()).isEqualTo(ProtocolVersion.V5);
+  }
+
+  @Test
+  public void should_pick_dse_v2_as_highest_common_when_all_nodes_are_dse_7() {
+    assertThat(registry.highestCommon(ImmutableList.of(mockDseNode("7.0"), mockDseNode("7.1"))))
+        .isEqualTo(DseProtocolVersion.DSE_V2);
   }
 
   @Test
@@ -124,6 +131,7 @@ public class DefaultProtocolVersionRegistryTest {
     assertThat(registry.supports(V3, DATE_TYPE)).isFalse();
     assertThat(registry.supports(V4, DATE_TYPE)).isTrue();
     assertThat(registry.supports(V5, DATE_TYPE)).isTrue();
+    assertThat(registry.supports(V6, DATE_TYPE)).isTrue();
     assertThat(registry.supports(DSE_V1, DATE_TYPE)).isTrue();
     assertThat(registry.supports(DSE_V2, DATE_TYPE)).isTrue();
   }
@@ -133,6 +141,7 @@ public class DefaultProtocolVersionRegistryTest {
     assertThat(registry.supports(V3, SMALLINT_AND_TINYINT_TYPES)).isFalse();
     assertThat(registry.supports(V4, SMALLINT_AND_TINYINT_TYPES)).isTrue();
     assertThat(registry.supports(V5, SMALLINT_AND_TINYINT_TYPES)).isTrue();
+    assertThat(registry.supports(V6, SMALLINT_AND_TINYINT_TYPES)).isTrue();
     assertThat(registry.supports(DSE_V1, SMALLINT_AND_TINYINT_TYPES)).isTrue();
     assertThat(registry.supports(DSE_V2, SMALLINT_AND_TINYINT_TYPES)).isTrue();
   }
@@ -152,7 +161,9 @@ public class DefaultProtocolVersionRegistryTest {
         .thenReturn(ImmutableMap.of(DseNodeProperties.DSE_VERSION, dseVersion));
 
     Version cassandraVersion;
-    if (dseVersion.compareTo(DefaultProtocolVersionRegistry.DSE_6_0_0) >= 0) {
+    if (dseVersion.compareTo(DefaultProtocolVersionRegistry.DSE_7_0_0) >= 0) {
+      cassandraVersion = Version.parse("5.0");
+    } else if (dseVersion.compareTo(DefaultProtocolVersionRegistry.DSE_6_0_0) >= 0) {
       cassandraVersion = Version.parse("4.0");
     } else if (dseVersion.compareTo(DefaultProtocolVersionRegistry.DSE_5_1_0) >= 0) {
       cassandraVersion = Version.parse("3.11");

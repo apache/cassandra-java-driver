@@ -82,7 +82,6 @@ public class PerProfileRetryPolicyIT {
   private static String QUERY_STRING = "select * from foo";
   private static final SimpleStatement QUERY = SimpleStatement.newInstance(QUERY_STRING);
 
-  @SuppressWarnings("deprecation")
   private final QueryCounter counter =
       QueryCounter.builder(SIMULACRON_RULE.cluster())
           .withFilter((l) -> l.getQuery().equals(QUERY_STRING))
@@ -149,9 +148,11 @@ public class PerProfileRetryPolicyIT {
   // A policy that simply rethrows always.
   public static class NoRetryPolicy implements RetryPolicy {
 
+    @SuppressWarnings("unused")
     public NoRetryPolicy(DriverContext context, String profileName) {}
 
     @Override
+    @Deprecated
     public RetryDecision onReadTimeout(
         @NonNull Request request,
         @NonNull ConsistencyLevel cl,
@@ -163,6 +164,7 @@ public class PerProfileRetryPolicyIT {
     }
 
     @Override
+    @Deprecated
     public RetryDecision onWriteTimeout(
         @NonNull Request request,
         @NonNull ConsistencyLevel cl,
@@ -174,6 +176,7 @@ public class PerProfileRetryPolicyIT {
     }
 
     @Override
+    @Deprecated
     public RetryDecision onUnavailable(
         @NonNull Request request,
         @NonNull ConsistencyLevel cl,
@@ -184,12 +187,14 @@ public class PerProfileRetryPolicyIT {
     }
 
     @Override
+    @Deprecated
     public RetryDecision onRequestAborted(
         @NonNull Request request, @NonNull Throwable error, int retryCount) {
       return RetryDecision.RETHROW;
     }
 
     @Override
+    @Deprecated
     public RetryDecision onErrorResponse(
         @NonNull Request request, @NonNull CoordinatorException error, int retryCount) {
       return RetryDecision.RETHROW;

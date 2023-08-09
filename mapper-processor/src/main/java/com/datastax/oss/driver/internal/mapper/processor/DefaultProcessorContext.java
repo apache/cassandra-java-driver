@@ -16,7 +16,6 @@
 package com.datastax.oss.driver.internal.mapper.processor;
 
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
-import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
 import com.datastax.oss.driver.internal.mapper.processor.dao.LoggingGenerator;
 import com.datastax.oss.driver.internal.mapper.processor.entity.DefaultEntityFactory;
@@ -29,14 +28,11 @@ import javax.lang.model.util.Types;
 /** This follows the same principles as {@link DefaultDriverContext}. */
 public class DefaultProcessorContext implements ProcessorContext {
 
-  private final CycleDetector cycleDetector =
-      new CycleDetector("Detected cycle in context initialization");
-
   private final LazyReference<CodeGeneratorFactory> codeGeneratorFactoryRef =
-      new LazyReference<>("codeGeneratorFactory", this::buildCodeGeneratorFactory, cycleDetector);
+      new LazyReference<>(this::buildCodeGeneratorFactory);
 
   private final LazyReference<EntityFactory> entityFactoryRef =
-      new LazyReference<>("entityFactory", this::buildEntityFactory, cycleDetector);
+      new LazyReference<>(this::buildEntityFactory);
 
   private final DecoratedMessager messager;
   private final Types typeUtils;
@@ -44,6 +40,7 @@ public class DefaultProcessorContext implements ProcessorContext {
   private final Classes classUtils;
   private final JavaPoetFiler filer;
   private final LoggingGenerator loggingGenerator;
+  private final boolean customResultsEnabled;
 
   public DefaultProcessorContext(
       DecoratedMessager messager,
@@ -51,13 +48,15 @@ public class DefaultProcessorContext implements ProcessorContext {
       Elements elementUtils,
       Filer filer,
       String indent,
-      boolean logsEnabled) {
+      boolean logsEnabled,
+      boolean customResultsEnabled) {
     this.messager = messager;
     this.typeUtils = typeUtils;
     this.elementUtils = elementUtils;
     this.classUtils = new Classes(typeUtils, elementUtils);
     this.filer = new JavaPoetFiler(filer, indent);
     this.loggingGenerator = new LoggingGenerator(logsEnabled);
+    this.customResultsEnabled = customResultsEnabled;
   }
 
   protected CodeGeneratorFactory buildCodeGeneratorFactory() {
@@ -106,5 +105,10 @@ public class DefaultProcessorContext implements ProcessorContext {
   @Override
   public LoggingGenerator getLoggingGenerator() {
     return loggingGenerator;
+  }
+
+  @Override
+  public boolean areCustomResultsEnabled() {
+    return customResultsEnabled;
   }
 }

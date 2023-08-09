@@ -35,6 +35,7 @@ import javax.lang.model.type.TypeMirror;
 public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
 
   private final NullSavingStrategyValidation nullSavingStrategyValidation;
+  private final boolean lenient;
 
   public DaoSetEntityMethodGenerator(
       ExecutableElement methodElement,
@@ -44,6 +45,7 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
       ProcessorContext context) {
     super(methodElement, typeParameters, processedType, enclosingClass, context);
     nullSavingStrategyValidation = new NullSavingStrategyValidation(context);
+    lenient = methodElement.getAnnotation(SetEntity.class).lenient();
   }
 
   @Override
@@ -60,7 +62,6 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Wrong number of parameters: %s methods must have two",
               SetEntity.class.getSimpleName());
       return Optional.empty();
@@ -86,7 +87,6 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Wrong parameter types: %s methods must take a %s "
                   + "and an annotated entity (in any order)",
               SetEntity.class.getSimpleName(),
@@ -103,7 +103,6 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
             .getMessager()
             .warn(
                 methodElement,
-                processedType,
                 "BoundStatement is immutable, "
                     + "this method will not modify '%s' in place. "
                     + "It should probably return BoundStatement rather than void",
@@ -114,7 +113,6 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
           .getMessager()
           .error(
               methodElement,
-              processedType,
               "Invalid return type: %s methods must either be void, or return the same "
                   + "type as their settable parameter (in this case, %s to match '%s')",
               SetEntity.class.getSimpleName(),
@@ -134,13 +132,14 @@ public class DaoSetEntityMethodGenerator extends DaoMethodGenerator {
     return Optional.of(
         GeneratedCodePatterns.override(methodElement, typeParameters)
             .addStatement(
-                "$1L$2L.set($3L, $4L, $5T.$6L)",
+                "$1L$2L.set($3L, $4L, $5T.$6L, $7L)",
                 isVoid ? "" : "return ",
                 helperFieldName,
                 entityParameterName,
                 targetParameterName,
                 NullSavingStrategy.class,
-                nullSavingStrategy)
+                nullSavingStrategy,
+                lenient)
             .build());
   }
 }

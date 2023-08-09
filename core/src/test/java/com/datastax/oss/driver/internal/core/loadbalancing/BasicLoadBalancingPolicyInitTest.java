@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.filter;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -39,14 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 // TODO fix unnecessary stubbing of config option in parent class (and stop using "silent" runner)
 @RunWith(MockitoJUnitRunner.Silent.class)
-public class BasicLoadBalancingPolicyInitTest extends DefaultLoadBalancingPolicyTestBase {
-
-  @Override
-  public void setup() {
-    super.setup();
-    reset(defaultProfile);
-    when(defaultProfile.getName()).thenReturn(DriverExecutionProfile.DEFAULT_NAME);
-  }
+public class BasicLoadBalancingPolicyInitTest extends LoadBalancingPolicyTestBase {
 
   @Test
   public void should_use_local_dc_if_provided_via_config() {
@@ -63,7 +55,7 @@ public class BasicLoadBalancingPolicyInitTest extends DefaultLoadBalancingPolicy
     policy.init(ImmutableMap.of(UUID.randomUUID(), node1), distanceReporter);
 
     // Then
-    assertThat(policy.getLocalDatacenter()).contains("dc1");
+    assertThat(policy.getLocalDatacenter()).isEqualTo("dc1");
   }
 
   @Test
@@ -79,7 +71,7 @@ public class BasicLoadBalancingPolicyInitTest extends DefaultLoadBalancingPolicy
     policy.init(ImmutableMap.of(UUID.randomUUID(), node1), distanceReporter);
 
     // Then
-    assertThat(policy.getLocalDatacenter()).contains("dc1");
+    assertThat(policy.getLocalDatacenter()).isEqualTo("dc1");
     verify(defaultProfile, never())
         .getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null);
   }
@@ -89,15 +81,22 @@ public class BasicLoadBalancingPolicyInitTest extends DefaultLoadBalancingPolicy
     // Given
     when(defaultProfile.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER))
         .thenReturn(false);
+    when(node1.getDatacenter()).thenReturn("dc1");
+    when(node2.getDatacenter()).thenReturn("dc2");
+    when(node3.getDatacenter()).thenReturn("dc3");
     BasicLoadBalancingPolicy policy =
         new BasicLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME) {};
 
     // When
     policy.init(
-        ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2), distanceReporter);
+        ImmutableMap.of(
+            UUID.randomUUID(), node1, UUID.randomUUID(), node2, UUID.randomUUID(), node3),
+        distanceReporter);
 
     // Then
-    assertThat(policy.getLocalDatacenter()).isEmpty();
+    assertThat(policy.getLocalDatacenter()).isNull();
+    // should not warn about contact points not being in the same DC
+    verify(appender, never()).doAppend(loggingEventCaptor.capture());
   }
 
   @Test
@@ -148,13 +147,12 @@ public class BasicLoadBalancingPolicyInitTest extends DefaultLoadBalancingPolicy
     verify(distanceReporter).setDistance(node2, NodeDistance.LOCAL);
     verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
     // But only include UP or UNKNOWN nodes in the live set
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1, node3);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1, node3);
   }
 
   @Test
   public void should_ignore_nodes_from_remote_dcs_if_local_dc_set() {
     // Given
-    when(context.getLocalDatacenter(DriverExecutionProfile.DEFAULT_NAME)).thenReturn("dc1");
     when(node2.getDatacenter()).thenReturn("dc2");
     when(node3.getDatacenter()).thenReturn("dc3");
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2));
@@ -170,12 +168,17 @@ public class BasicLoadBalancingPolicyInitTest extends DefaultLoadBalancingPolicy
     verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
     verify(distanceReporter).setDistance(node2, NodeDistance.IGNORED);
     verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1);
   }
 
   @Test
   public void should_not_ignore_nodes_from_remote_dcs_if_local_dc_not_set() {
     // Given
+    when(defaultProfile.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER))
+        .thenReturn(false);
+    when(node2.getDatacenter()).thenReturn("dc2");
+    when(node3.getDatacenter()).thenReturn("dc3");
+    when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2));
     BasicLoadBalancingPolicy policy = createPolicy();
 
     // When
@@ -188,14 +191,15 @@ public class BasicLoadBalancingPolicyInitTest extends DefaultLoadBalancingPolicy
     verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
     verify(distanceReporter).setDistance(node2, NodeDistance.LOCAL);
     verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1, node2, node3);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1, node2, node3);
   }
 
   @Test
-  public void should_ignore_nodes_excluded_by_filter() {
+  public void should_ignore_nodes_excluded_by_distance_reporter() {
     // Given
-    when(context.getNodeFilter(DriverExecutionProfile.DEFAULT_NAME))
-        .thenReturn(node -> node.equals(node1));
+    when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2));
+    when(context.getNodeDistanceEvaluator(DriverExecutionProfile.DEFAULT_NAME))
+        .thenReturn((node, dc) -> node.equals(node1) ? NodeDistance.IGNORED : null);
 
     BasicLoadBalancingPolicy policy = createPolicy();
 
@@ -206,10 +210,10 @@ public class BasicLoadBalancingPolicyInitTest extends DefaultLoadBalancingPolicy
         distanceReporter);
 
     // Then
-    verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
-    verify(distanceReporter).setDistance(node2, NodeDistance.IGNORED);
-    verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1);
+    verify(distanceReporter).setDistance(node1, NodeDistance.IGNORED);
+    verify(distanceReporter).setDistance(node2, NodeDistance.LOCAL);
+    verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node2, node3);
   }
 
   @NonNull

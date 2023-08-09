@@ -17,6 +17,7 @@ package com.datastax.oss.driver.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.codahale.metrics.Gauge;
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -51,7 +52,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
@@ -78,8 +78,6 @@ public class PreparedStatementIT {
           .build();
 
   @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Before
   public void setupSchema() {
@@ -277,11 +275,13 @@ public class PreparedStatementIT {
         session.prepare("SELECT a, b, c, d FROM prepared_statement_test WHERE a = ?");
     session.execute("ALTER TABLE prepared_statement_test DROP d");
 
-    thrown.expect(InvalidQueryException.class);
-    thrown.expectMessage("Undefined column name d");
-
     // When
-    session.execute(ps.bind());
+    Throwable t = catchThrowable(() -> session.execute(ps.bind()));
+
+    // Then
+    assertThat(t)
+        .isInstanceOf(InvalidQueryException.class)
+        .hasMessageContaining("Undefined column name d");
   }
 
   @Test

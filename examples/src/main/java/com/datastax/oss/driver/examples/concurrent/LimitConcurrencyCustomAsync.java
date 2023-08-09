@@ -22,9 +22,9 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.CqlSessionBuilder;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -124,7 +124,7 @@ public class LimitConcurrencyCustomAsync {
       CqlSession session, PreparedStatement pst, int counter) {
 
     return session
-        .executeAsync(pst.bind().setUuid("id", UUID.randomUUID()).setInt("value", counter))
+        .executeAsync(pst.bind().setUuid("id", Uuids.random()).setInt("value", counter))
         .toCompletableFuture()
         .whenComplete(
             (BiConsumer<AsyncResultSet, Throwable>)

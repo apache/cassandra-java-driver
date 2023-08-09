@@ -16,8 +16,8 @@
 package com.datastax.oss.driver.internal.core.loadbalancing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.Assertions.filter;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -25,7 +25,6 @@ import static org.mockito.Mockito.when;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
@@ -34,17 +33,9 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.UUID;
-import org.junit.Before;
 import org.junit.Test;
 
-public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancingPolicyTestBase {
-
-  @Override
-  @Before
-  public void setup() {
-    given(context.getRequestTracker()).willReturn(new MultiplexingRequestTracker());
-    super.setup();
-  }
+public class DcInferringLoadBalancingPolicyInitTest extends LoadBalancingPolicyTestBase {
 
   @Test
   public void should_use_local_dc_if_provided_via_config() {
@@ -57,7 +48,7 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
     policy.init(ImmutableMap.of(UUID.randomUUID(), node1), distanceReporter);
 
     // Then
-    assertThat(policy.getLocalDatacenter()).contains("dc1");
+    assertThat(policy.getLocalDatacenter()).isEqualTo("dc1");
   }
 
   @Test
@@ -73,7 +64,7 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
     policy.init(ImmutableMap.of(UUID.randomUUID(), node1), distanceReporter);
 
     // Then
-    assertThat(policy.getLocalDatacenter()).contains("dc1");
+    assertThat(policy.getLocalDatacenter()).isEqualTo("dc1");
     verify(defaultProfile, never())
         .getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER, null);
   }
@@ -90,7 +81,7 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
     policy.init(ImmutableMap.of(UUID.randomUUID(), node1), distanceReporter);
 
     // Then
-    assertThat(policy.getLocalDatacenter()).contains("dc1");
+    assertThat(policy.getLocalDatacenter()).isEqualTo("dc1");
   }
 
   @Test
@@ -102,13 +93,19 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
     when(node2.getDatacenter()).thenReturn("dc2");
     BasicLoadBalancingPolicy policy = createPolicy();
 
-    thrown.expect(IllegalStateException.class);
-    thrown.expectMessage(
-        "No local DC was provided, but the contact points are from different DCs: node1=dc1, node2=dc2");
-
     // When
-    policy.init(
-        ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2), distanceReporter);
+    Throwable t =
+        catchThrowable(
+            () ->
+                policy.init(
+                    ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2),
+                    distanceReporter));
+
+    // Then
+    assertThat(t)
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining(
+            "No local DC was provided, but the contact points are from different DCs: node1=dc1, node2=dc2");
   }
 
   @Test
@@ -121,13 +118,19 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
     when(node2.getDatacenter()).thenReturn(null);
     BasicLoadBalancingPolicy policy = createPolicy();
 
-    thrown.expect(IllegalStateException.class);
-    thrown.expectMessage(
-        "The local DC could not be inferred from contact points, please set it explicitly");
-
     // When
-    policy.init(
-        ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2), distanceReporter);
+    Throwable t =
+        catchThrowable(
+            () ->
+                policy.init(
+                    ImmutableMap.of(UUID.randomUUID(), node1, UUID.randomUUID(), node2),
+                    distanceReporter));
+
+    // Then
+    assertThat(t)
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining(
+            "The local DC could not be inferred from contact points, please set it explicitly");
   }
 
   @Test
@@ -177,7 +180,7 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
     verify(distanceReporter).setDistance(node2, NodeDistance.LOCAL);
     verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
     // But only include UP or UNKNOWN nodes in the live set
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1, node3);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1, node3);
   }
 
   @Test
@@ -198,15 +201,15 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
     verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
     verify(distanceReporter).setDistance(node2, NodeDistance.IGNORED);
     verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node1);
   }
 
   @Test
-  public void should_ignore_nodes_excluded_by_filter() {
+  public void should_ignore_nodes_excluded_by_distance_reporter() {
     // Given
     when(metadataManager.getContactPoints()).thenReturn(ImmutableSet.of(node1, node2));
-    when(context.getNodeFilter(DriverExecutionProfile.DEFAULT_NAME))
-        .thenReturn(node -> node.equals(node1));
+    when(context.getNodeDistanceEvaluator(DriverExecutionProfile.DEFAULT_NAME))
+        .thenReturn((node, dc) -> node.equals(node1) ? NodeDistance.IGNORED : null);
 
     BasicLoadBalancingPolicy policy = createPolicy();
 
@@ -217,10 +220,10 @@ public class DcInferringLoadBalancingPolicyInitTest extends DefaultLoadBalancing
         distanceReporter);
 
     // Then
-    verify(distanceReporter).setDistance(node1, NodeDistance.LOCAL);
-    verify(distanceReporter).setDistance(node2, NodeDistance.IGNORED);
-    verify(distanceReporter).setDistance(node3, NodeDistance.IGNORED);
-    assertThat(policy.getLiveNodes()).containsExactlyInAnyOrder(node1);
+    verify(distanceReporter).setDistance(node1, NodeDistance.IGNORED);
+    verify(distanceReporter).setDistance(node2, NodeDistance.LOCAL);
+    verify(distanceReporter).setDistance(node3, NodeDistance.LOCAL);
+    assertThat(policy.getLiveNodes().dc("dc1")).containsExactly(node2, node3);
   }
 
   @NonNull

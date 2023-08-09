@@ -18,7 +18,6 @@ package com.datastax.oss.driver.internal.core.loadbalancing;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
-import com.datastax.dse.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
@@ -31,6 +30,7 @@ import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.ArrayUtils;
 import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
+import com.datastax.oss.driver.internal.core.util.collection.SimpleQueryPlan;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.BitSet;
@@ -104,11 +104,13 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
         profile.getBoolean(DefaultDriverOption.LOAD_BALANCING_POLICY_SLOW_AVOIDANCE, true);
   }
 
+  @NonNull
   @Override
-  public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
-    super.init(nodes, distanceReporter);
+  public Optional<RequestTracker> getRequestTracker() {
     if (avoidSlowReplicas) {
-      ((MultiplexingRequestTracker) context.getRequestTracker()).register(this);
+      return Optional.of(this);
+    } else {
+      return Optional.empty();
     }
   }
 
@@ -126,7 +128,7 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
     }
 
     // Take a snapshot since the set is concurrent:
-    Object[] currentNodes = liveNodes.toArray();
+    Object[] currentNodes = getLiveNodes().dc(getLocalDatacenter()).toArray();
 
     Set<Node> allReplicas = getReplicas(request, session);
     int replicaCount = 0; // in currentNodes
@@ -157,6 +159,7 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
           long now = nanoTime();
           for (int i = 0; i < replicaCount; i++) {
             Node node = (Node) currentNodes[i];
+            assert node != null;
             Long upTimeNanos = upTimes.get(node);
             if (upTimeNanos != null
                 && now - upTimeNanos - NEWLY_UP_INTERVAL_NANOS < 0
@@ -225,7 +228,8 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
         currentNodes.length - replicaCount,
         roundRobinAmount.getAndUpdate(INCREMENT));
 
-    return new QueryPlan(currentNodes);
+    QueryPlan plan = currentNodes.length == 0 ? QueryPlan.EMPTY : new SimpleQueryPlan(currentNodes);
+    return maybeAddDcFailover(request, plan);
   }
 
   @Override
@@ -247,12 +251,6 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
       @NonNull Node node,
       @NonNull String logPrefix) {
     updateResponseTimes(node);
-  }
-
-  /** Exposed as a protected method so that it can be accessed by tests */
-  @Override
-  protected void shuffleHead(Object[] currentNodes, int replicaCount) {
-    super.shuffleHead(currentNodes, replicaCount);
   }
 
   /** Exposed as a protected method so that it can be accessed by tests */

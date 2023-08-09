@@ -31,6 +31,7 @@ public class DefaultEntityDefinition implements EntityDefinition {
   private final ImmutableList<PropertyDefinition> regularColumns;
   private final ImmutableList<PropertyDefinition> computedValues;
   private final String defaultKeyspace;
+  private final boolean mutable;
 
   public DefaultEntityDefinition(
       ClassName className,
@@ -41,7 +42,8 @@ public class DefaultEntityDefinition implements EntityDefinition {
       List<PropertyDefinition> clusteringColumns,
       List<PropertyDefinition> regularColumns,
       List<PropertyDefinition> computedValues,
-      CqlNameGenerator cqlNameGenerator) {
+      CqlNameGenerator cqlNameGenerator,
+      boolean mutable) {
     this.className = className;
     this.cqlName =
         customCqlName
@@ -52,6 +54,7 @@ public class DefaultEntityDefinition implements EntityDefinition {
     this.clusteringColumns = clusteringColumns;
     this.regularColumns = ImmutableList.copyOf(regularColumns);
     this.computedValues = ImmutableList.copyOf(computedValues);
+    this.mutable = mutable;
   }
 
   @Override
@@ -88,5 +91,10 @@ public class DefaultEntityDefinition implements EntityDefinition {
   @Override
   public Iterable<PropertyDefinition> getComputedValues() {
     return computedValues;
+  }
+
+  @Override
+  public boolean isMutable() {
+    return mutable;
   }
 }

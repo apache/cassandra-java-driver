@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.context;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.internal.core.ConsistencyLevelRegistry;
@@ -30,6 +31,7 @@ import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParse
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
+import com.datastax.oss.driver.internal.core.metrics.MetricIdGenerator;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.servererrors.WriteTypeRegistry;
@@ -39,6 +41,8 @@ import com.datastax.oss.driver.internal.core.ssl.SslHandlerFactory;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogFormatter;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
+import com.datastax.oss.protocol.internal.PrimitiveCodec;
+import com.datastax.oss.protocol.internal.SegmentCodec;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.buffer.ByteBuf;
@@ -58,7 +62,13 @@ public interface InternalDriverContext extends DriverContext {
   Compressor<ByteBuf> getCompressor();
 
   @NonNull
+  PrimitiveCodec<ByteBuf> getPrimitiveCodec();
+
+  @NonNull
   FrameCodec<ByteBuf> getFrameCodec();
+
+  @NonNull
+  SegmentCodec<ByteBuf> getSegmentCodec();
 
   @NonNull
   ProtocolVersionRegistry getProtocolVersionRegistry();
@@ -117,6 +127,9 @@ public interface InternalDriverContext extends DriverContext {
   @NonNull
   MetricsFactory getMetricsFactory();
 
+  @NonNull
+  MetricIdGenerator getMetricIdGenerator();
+
   /**
    * The value that was passed to {@link SessionBuilder#withLocalDatacenter(String,String)} for this
    * particular profile. If it was specified through the configuration instead, this method will
@@ -129,9 +142,21 @@ public interface InternalDriverContext extends DriverContext {
    * This is the filter from {@link SessionBuilder#withNodeFilter(String, Predicate)}. If the filter
    * for this profile was specified through the configuration instead, this method will return
    * {@code null}.
+   *
+   * @deprecated Use {@link #getNodeDistanceEvaluator(String)} instead.
    */
   @Nullable
+  @Deprecated
   Predicate<Node> getNodeFilter(@NonNull String profileName);
+
+  /**
+   * This is the node distance evaluator from {@link
+   * SessionBuilder#withNodeDistanceEvaluator(String, NodeDistanceEvaluator)}. If the evaluator for
+   * this profile was specified through the configuration instead, this method will return {@code
+   * null}.
+   */
+  @Nullable
+  NodeDistanceEvaluator getNodeDistanceEvaluator(@NonNull String profileName);
 
   /**
    * The {@link ClassLoader} to use to reflectively load class names defined in configuration. If
@@ -172,4 +197,20 @@ public interface InternalDriverContext extends DriverContext {
    */
   @NonNull
   RequestLogFormatter getRequestLogFormatter();
+
+  /**
+   * A metric registry for storing metrics.
+   *
+   * <p>This will return the object from {@link
+   * SessionBuilder#withMetricRegistry(java.lang.Object)}. Access to this registry object is only
+   * intended for {@link MetricsFactory} implementations that need to expose a way to specify the
+   * registry external to the Factory implementation itself.
+   *
+   * <p>The default metrics framework used by the Driver is DropWizard and does not need an external
+   * metrics registry object.
+   */
+  @Nullable
+  default Object getMetricRegistry() {
+    return null;
+  }
 }

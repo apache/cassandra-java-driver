@@ -46,7 +46,7 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class AtomicTimestampGenerator extends MonotonicTimestampGenerator {
 
-  private AtomicLong lastRef = new AtomicLong(0);
+  private final AtomicLong lastRef = new AtomicLong(0);
 
   public AtomicTimestampGenerator(DriverContext context) {
     super(context);

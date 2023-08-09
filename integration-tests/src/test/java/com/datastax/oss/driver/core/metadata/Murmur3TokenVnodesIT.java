@@ -17,6 +17,7 @@ package com.datastax.oss.driver.core.metadata;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -27,10 +28,21 @@ import org.junit.ClassRule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
+@CassandraRequirement(
+    max = "4.0-beta4",
+    // TODO Re-enable when CASSANDRA-16364 is fixed
+    description = "TODO Re-enable when CASSANDRA-16364 is fixed")
 public class Murmur3TokenVnodesIT extends TokenITBase {
 
   private static final CustomCcmRule CCM_RULE =
-      CustomCcmRule.builder().withNodes(3).withCreateOption("--vnodes").build();
+      CustomCcmRule.builder()
+          .withNodes(3)
+          .withCreateOption("--vnodes")
+          .withCassandraConfiguration("range_request_timeout_in_ms", 45_000)
+          .withCassandraConfiguration("read_request_timeout_in_ms", 45_000)
+          .withCassandraConfiguration("write_request_timeout_in_ms", 45_000)
+          .withCassandraConfiguration("request_timeout_in_ms", 45_000)
+          .build();
 
   private static final SessionRule<CqlSession> SESSION_RULE =
       SessionRule.builder(CCM_RULE)

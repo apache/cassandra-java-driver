@@ -197,6 +197,15 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
   }
 
   /**
+   * @deprecated this method only exists to ease the transition from driver 3, it is an alias for
+   *     {@link #getBoolean(String)}.
+   */
+  @Deprecated
+  default boolean getBool(@NonNull String name) {
+    return getBoolean(name);
+  }
+
+  /**
    * Returns the value for the first occurrence of {@code name} as a Java primitive byte.
    *
    * <p>By default, this works with CQL type {@code tinyint}.

@@ -53,10 +53,10 @@ public interface Metrics {
    *
    * <pre>{@code
    * // Correct:
-   * Gauge<Integer> connectedNodes = getNodeMetric(node, DefaultSessionMetric.CONNECTED_NODES);
+   * Gauge<Integer> connectedNodes = getSessionMetric(DefaultSessionMetric.CONNECTED_NODES);
    *
    * // Wrong, will throw CCE:
-   * Counter connectedNodes = getNodeMetric(node, DefaultSessionMetric.CONNECTED_NODES);
+   * Counter connectedNodes = getSessionMetric(DefaultSessionMetric.CONNECTED_NODES);
    * }</pre>
    *
    * @param profileName the name of the execution profile, or {@code null} if the metric is not

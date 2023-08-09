@@ -29,6 +29,8 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.cql.EmptyColumnDefinitions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.List;
 
 class MockRow implements Row {
 
@@ -61,9 +63,21 @@ class MockRow implements Row {
     return EmptyColumnDefinitions.INSTANCE;
   }
 
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull String name) {
+    return Collections.singletonList(0);
+  }
+
   @Override
   public int firstIndexOf(@NonNull String name) {
     return 0;
+  }
+
+  @NonNull
+  @Override
+  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+    return Collections.singletonList(0);
   }
 
   @Override

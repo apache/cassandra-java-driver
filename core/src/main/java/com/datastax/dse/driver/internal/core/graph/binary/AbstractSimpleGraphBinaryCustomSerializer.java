@@ -17,7 +17,6 @@ package com.datastax.dse.driver.internal.core.graph.binary;
 
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import java.io.IOException;
-import org.apache.tinkerpop.gremlin.driver.ser.SerializationException;
 import org.apache.tinkerpop.gremlin.structure.io.Buffer;
 import org.apache.tinkerpop.gremlin.structure.io.binary.DataType;
 import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryReader;
@@ -78,8 +77,7 @@ abstract class AbstractSimpleGraphBinaryCustomSerializer<T> implements CustomTyp
     // read {custom_type_info_length} and verify it is 0.
     // See #write(T, ByteBuf, GraphBinaryWriter) for why it is set to 0
     if (context.readValue(buffer, Integer.class, false) != 0) {
-      throw new SerializationException(
-          "{custom_type_info} should not be provided for this custom type");
+      throw new IOException("{custom_type_info} should not be provided for this custom type");
     }
 
     return readValue(buffer, context, true);
@@ -105,11 +103,11 @@ abstract class AbstractSimpleGraphBinaryCustomSerializer<T> implements CustomTyp
     final int valueLength = buffer.readInt();
 
     if (valueLength <= 0) {
-      throw new SerializationException(String.format("Unexpected value length: %d", valueLength));
+      throw new IOException(String.format("Unexpected value length: %d", valueLength));
     }
 
     if (valueLength > buffer.readableBytes()) {
-      throw new SerializationException(
+      throw new IOException(
           String.format(
               "Not enough readable bytes: %d bytes required for value (%d bytes available)",
               valueLength, buffer.readableBytes()));
@@ -134,7 +132,7 @@ abstract class AbstractSimpleGraphBinaryCustomSerializer<T> implements CustomTyp
       throws IOException {
     if (value == null) {
       if (!nullable) {
-        throw new SerializationException("Unexpected null value when nullable is false");
+        throw new IOException("Unexpected null value when nullable is false");
       }
 
       // writes {value_flag} to "1" which means "the value is null"

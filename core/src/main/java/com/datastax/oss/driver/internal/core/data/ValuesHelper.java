@@ -119,4 +119,21 @@ public class ValuesHelper {
     }
     return encodedValues;
   }
+
+  public static ByteBuffer encodeToDefaultCqlMapping(
+      Object value, CodecRegistry codecRegistry, ProtocolVersion protocolVersion) {
+    if (value instanceof Token) {
+      if (value instanceof Murmur3Token) {
+        return TypeCodecs.BIGINT.encode(((Murmur3Token) value).getValue(), protocolVersion);
+      } else if (value instanceof ByteOrderedToken) {
+        return TypeCodecs.BLOB.encode(((ByteOrderedToken) value).getValue(), protocolVersion);
+      } else if (value instanceof RandomToken) {
+        return TypeCodecs.VARINT.encode(((RandomToken) value).getValue(), protocolVersion);
+      } else {
+        throw new IllegalArgumentException("Unsupported token type " + value.getClass());
+      }
+    } else {
+      return codecRegistry.codecFor(value).encode(value, protocolVersion);
+    }
+  }
 }

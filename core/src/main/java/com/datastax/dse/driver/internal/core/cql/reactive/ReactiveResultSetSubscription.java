@@ -277,13 +277,10 @@ public class ReactiveResultSetSubscription<ResultSetT extends AsyncPagingIterabl
         if (pages.poll() == null) {
           throw new AssertionError("Queue is empty, this should not happen");
         }
-        current = pages.peek();
         // if the next page is readily available,
         // serve its first row now, no need to wait
         // for the next drain.
-        if (current != null && current.hasMoreRows()) {
-          return current.nextRow();
-        }
+        return tryNext();
       }
     }
     // No items available right now.

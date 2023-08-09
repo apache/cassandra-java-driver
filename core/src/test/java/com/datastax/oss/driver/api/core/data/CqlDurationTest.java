@@ -19,92 +19,119 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
+import com.datastax.oss.driver.TestDataProviders;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
+import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.UnsupportedTemporalTypeException;
+import java.util.Locale;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(DataProviderRunner.class)
 public class CqlDurationTest {
 
   @Test
-  public void should_parse_from_string_with_standard_pattern() {
-    assertThat(CqlDuration.from("1y2mo")).isEqualTo(CqlDuration.newInstance(14, 0, 0));
-    assertThat(CqlDuration.from("-1y2mo")).isEqualTo(CqlDuration.newInstance(-14, 0, 0));
-    assertThat(CqlDuration.from("1Y2MO")).isEqualTo(CqlDuration.newInstance(14, 0, 0));
-    assertThat(CqlDuration.from("2w")).isEqualTo(CqlDuration.newInstance(0, 14, 0));
-    assertThat(CqlDuration.from("2d10h"))
-        .isEqualTo(CqlDuration.newInstance(0, 2, 10 * CqlDuration.NANOS_PER_HOUR));
-    assertThat(CqlDuration.from("2d")).isEqualTo(CqlDuration.newInstance(0, 2, 0));
-    assertThat(CqlDuration.from("30h"))
-        .isEqualTo(CqlDuration.newInstance(0, 0, 30 * CqlDuration.NANOS_PER_HOUR));
-    assertThat(CqlDuration.from("30h20m"))
-        .isEqualTo(
-            CqlDuration.newInstance(
-                0, 0, 30 * CqlDuration.NANOS_PER_HOUR + 20 * CqlDuration.NANOS_PER_MINUTE));
-    assertThat(CqlDuration.from("20m"))
-        .isEqualTo(CqlDuration.newInstance(0, 0, 20 * CqlDuration.NANOS_PER_MINUTE));
-    assertThat(CqlDuration.from("56s"))
-        .isEqualTo(CqlDuration.newInstance(0, 0, 56 * CqlDuration.NANOS_PER_SECOND));
-    assertThat(CqlDuration.from("567ms"))
-        .isEqualTo(CqlDuration.newInstance(0, 0, 567 * CqlDuration.NANOS_PER_MILLI));
-    assertThat(CqlDuration.from("1950us"))
-        .isEqualTo(CqlDuration.newInstance(0, 0, 1950 * CqlDuration.NANOS_PER_MICRO));
-    assertThat(CqlDuration.from("1950µs"))
-        .isEqualTo(CqlDuration.newInstance(0, 0, 1950 * CqlDuration.NANOS_PER_MICRO));
-    assertThat(CqlDuration.from("1950000ns")).isEqualTo(CqlDuration.newInstance(0, 0, 1950000));
-    assertThat(CqlDuration.from("1950000NS")).isEqualTo(CqlDuration.newInstance(0, 0, 1950000));
-    assertThat(CqlDuration.from("-1950000ns")).isEqualTo(CqlDuration.newInstance(0, 0, -1950000));
-    assertThat(CqlDuration.from("1y3mo2h10m"))
-        .isEqualTo(CqlDuration.newInstance(15, 0, 130 * CqlDuration.NANOS_PER_MINUTE));
+  @UseDataProvider(location = TestDataProviders.class, value = "locales")
+  public void should_parse_from_string_with_standard_pattern(Locale locale) {
+    Locale def = Locale.getDefault();
+    try {
+      Locale.setDefault(locale);
+      assertThat(CqlDuration.from("1y2mo")).isEqualTo(CqlDuration.newInstance(14, 0, 0));
+      assertThat(CqlDuration.from("-1y2mo")).isEqualTo(CqlDuration.newInstance(-14, 0, 0));
+      assertThat(CqlDuration.from("1Y2MO")).isEqualTo(CqlDuration.newInstance(14, 0, 0));
+      assertThat(CqlDuration.from("2w")).isEqualTo(CqlDuration.newInstance(0, 14, 0));
+      assertThat(CqlDuration.from("2d10h"))
+          .isEqualTo(CqlDuration.newInstance(0, 2, 10 * CqlDuration.NANOS_PER_HOUR));
+      assertThat(CqlDuration.from("2d")).isEqualTo(CqlDuration.newInstance(0, 2, 0));
+      assertThat(CqlDuration.from("30h"))
+          .isEqualTo(CqlDuration.newInstance(0, 0, 30 * CqlDuration.NANOS_PER_HOUR));
+      assertThat(CqlDuration.from("30h20m"))
+          .isEqualTo(
+              CqlDuration.newInstance(
+                  0, 0, 30 * CqlDuration.NANOS_PER_HOUR + 20 * CqlDuration.NANOS_PER_MINUTE));
+      assertThat(CqlDuration.from("20m"))
+          .isEqualTo(CqlDuration.newInstance(0, 0, 20 * CqlDuration.NANOS_PER_MINUTE));
+      assertThat(CqlDuration.from("56s"))
+          .isEqualTo(CqlDuration.newInstance(0, 0, 56 * CqlDuration.NANOS_PER_SECOND));
+      assertThat(CqlDuration.from("567ms"))
+          .isEqualTo(CqlDuration.newInstance(0, 0, 567 * CqlDuration.NANOS_PER_MILLI));
+      assertThat(CqlDuration.from("1950us"))
+          .isEqualTo(CqlDuration.newInstance(0, 0, 1950 * CqlDuration.NANOS_PER_MICRO));
+      assertThat(CqlDuration.from("1950µs"))
+          .isEqualTo(CqlDuration.newInstance(0, 0, 1950 * CqlDuration.NANOS_PER_MICRO));
+      assertThat(CqlDuration.from("1950000ns")).isEqualTo(CqlDuration.newInstance(0, 0, 1950000));
+      assertThat(CqlDuration.from("1950000NS")).isEqualTo(CqlDuration.newInstance(0, 0, 1950000));
+      assertThat(CqlDuration.from("-1950000ns")).isEqualTo(CqlDuration.newInstance(0, 0, -1950000));
+      assertThat(CqlDuration.from("1y3mo2h10m"))
+          .isEqualTo(CqlDuration.newInstance(15, 0, 130 * CqlDuration.NANOS_PER_MINUTE));
+    } finally {
+      Locale.setDefault(def);
+    }
   }
 
   @Test
-  public void should_parse_from_string_with_iso8601_pattern() {
-    assertThat(CqlDuration.from("P1Y2D")).isEqualTo(CqlDuration.newInstance(12, 2, 0));
-    assertThat(CqlDuration.from("P1Y2M")).isEqualTo(CqlDuration.newInstance(14, 0, 0));
-    assertThat(CqlDuration.from("P2W")).isEqualTo(CqlDuration.newInstance(0, 14, 0));
-    assertThat(CqlDuration.from("P1YT2H"))
-        .isEqualTo(CqlDuration.newInstance(12, 0, 2 * CqlDuration.NANOS_PER_HOUR));
-    assertThat(CqlDuration.from("-P1Y2M")).isEqualTo(CqlDuration.newInstance(-14, 0, 0));
-    assertThat(CqlDuration.from("P2D")).isEqualTo(CqlDuration.newInstance(0, 2, 0));
-    assertThat(CqlDuration.from("PT30H"))
-        .isEqualTo(CqlDuration.newInstance(0, 0, 30 * CqlDuration.NANOS_PER_HOUR));
-    assertThat(CqlDuration.from("PT30H20M"))
-        .isEqualTo(
-            CqlDuration.newInstance(
-                0, 0, 30 * CqlDuration.NANOS_PER_HOUR + 20 * CqlDuration.NANOS_PER_MINUTE));
-    assertThat(CqlDuration.from("PT20M"))
-        .isEqualTo(CqlDuration.newInstance(0, 0, 20 * CqlDuration.NANOS_PER_MINUTE));
-    assertThat(CqlDuration.from("PT56S"))
-        .isEqualTo(CqlDuration.newInstance(0, 0, 56 * CqlDuration.NANOS_PER_SECOND));
-    assertThat(CqlDuration.from("P1Y3MT2H10M"))
-        .isEqualTo(CqlDuration.newInstance(15, 0, 130 * CqlDuration.NANOS_PER_MINUTE));
+  @UseDataProvider(location = TestDataProviders.class, value = "locales")
+  public void should_parse_from_string_with_iso8601_pattern(Locale locale) {
+    Locale def = Locale.getDefault();
+    try {
+      Locale.setDefault(locale);
+      assertThat(CqlDuration.from("P1Y2D")).isEqualTo(CqlDuration.newInstance(12, 2, 0));
+      assertThat(CqlDuration.from("P1Y2M")).isEqualTo(CqlDuration.newInstance(14, 0, 0));
+      assertThat(CqlDuration.from("P2W")).isEqualTo(CqlDuration.newInstance(0, 14, 0));
+      assertThat(CqlDuration.from("P1YT2H"))
+          .isEqualTo(CqlDuration.newInstance(12, 0, 2 * CqlDuration.NANOS_PER_HOUR));
+      assertThat(CqlDuration.from("-P1Y2M")).isEqualTo(CqlDuration.newInstance(-14, 0, 0));
+      assertThat(CqlDuration.from("P2D")).isEqualTo(CqlDuration.newInstance(0, 2, 0));
+      assertThat(CqlDuration.from("PT30H"))
+          .isEqualTo(CqlDuration.newInstance(0, 0, 30 * CqlDuration.NANOS_PER_HOUR));
+      assertThat(CqlDuration.from("PT30H20M"))
+          .isEqualTo(
+              CqlDuration.newInstance(
+                  0, 0, 30 * CqlDuration.NANOS_PER_HOUR + 20 * CqlDuration.NANOS_PER_MINUTE));
+      assertThat(CqlDuration.from("PT20M"))
+          .isEqualTo(CqlDuration.newInstance(0, 0, 20 * CqlDuration.NANOS_PER_MINUTE));
+      assertThat(CqlDuration.from("PT56S"))
+          .isEqualTo(CqlDuration.newInstance(0, 0, 56 * CqlDuration.NANOS_PER_SECOND));
+      assertThat(CqlDuration.from("P1Y3MT2H10M"))
+          .isEqualTo(CqlDuration.newInstance(15, 0, 130 * CqlDuration.NANOS_PER_MINUTE));
+    } finally {
+      Locale.setDefault(def);
+    }
   }
 
   @Test
-  public void should_parse_from_string_with_iso8601_alternative_pattern() {
-    assertThat(CqlDuration.from("P0001-00-02T00:00:00"))
-        .isEqualTo(CqlDuration.newInstance(12, 2, 0));
-    assertThat(CqlDuration.from("P0001-02-00T00:00:00"))
-        .isEqualTo(CqlDuration.newInstance(14, 0, 0));
-    assertThat(CqlDuration.from("P0001-00-00T02:00:00"))
-        .isEqualTo(CqlDuration.newInstance(12, 0, 2 * CqlDuration.NANOS_PER_HOUR));
-    assertThat(CqlDuration.from("-P0001-02-00T00:00:00"))
-        .isEqualTo(CqlDuration.newInstance(-14, 0, 0));
-    assertThat(CqlDuration.from("P0000-00-02T00:00:00"))
-        .isEqualTo(CqlDuration.newInstance(0, 2, 0));
-    assertThat(CqlDuration.from("P0000-00-00T30:00:00"))
-        .isEqualTo(CqlDuration.newInstance(0, 0, 30 * CqlDuration.NANOS_PER_HOUR));
-    assertThat(CqlDuration.from("P0000-00-00T30:20:00"))
-        .isEqualTo(
-            CqlDuration.newInstance(
-                0, 0, 30 * CqlDuration.NANOS_PER_HOUR + 20 * CqlDuration.NANOS_PER_MINUTE));
-    assertThat(CqlDuration.from("P0000-00-00T00:20:00"))
-        .isEqualTo(CqlDuration.newInstance(0, 0, 20 * CqlDuration.NANOS_PER_MINUTE));
-    assertThat(CqlDuration.from("P0000-00-00T00:00:56"))
-        .isEqualTo(CqlDuration.newInstance(0, 0, 56 * CqlDuration.NANOS_PER_SECOND));
-    assertThat(CqlDuration.from("P0001-03-00T02:10:00"))
-        .isEqualTo(CqlDuration.newInstance(15, 0, 130 * CqlDuration.NANOS_PER_MINUTE));
+  @UseDataProvider(location = TestDataProviders.class, value = "locales")
+  public void should_parse_from_string_with_iso8601_alternative_pattern(Locale locale) {
+    Locale def = Locale.getDefault();
+    try {
+      Locale.setDefault(locale);
+      assertThat(CqlDuration.from("P0001-00-02T00:00:00"))
+          .isEqualTo(CqlDuration.newInstance(12, 2, 0));
+      assertThat(CqlDuration.from("P0001-02-00T00:00:00"))
+          .isEqualTo(CqlDuration.newInstance(14, 0, 0));
+      assertThat(CqlDuration.from("P0001-00-00T02:00:00"))
+          .isEqualTo(CqlDuration.newInstance(12, 0, 2 * CqlDuration.NANOS_PER_HOUR));
+      assertThat(CqlDuration.from("-P0001-02-00T00:00:00"))
+          .isEqualTo(CqlDuration.newInstance(-14, 0, 0));
+      assertThat(CqlDuration.from("P0000-00-02T00:00:00"))
+          .isEqualTo(CqlDuration.newInstance(0, 2, 0));
+      assertThat(CqlDuration.from("P0000-00-00T30:00:00"))
+          .isEqualTo(CqlDuration.newInstance(0, 0, 30 * CqlDuration.NANOS_PER_HOUR));
+      assertThat(CqlDuration.from("P0000-00-00T30:20:00"))
+          .isEqualTo(
+              CqlDuration.newInstance(
+                  0, 0, 30 * CqlDuration.NANOS_PER_HOUR + 20 * CqlDuration.NANOS_PER_MINUTE));
+      assertThat(CqlDuration.from("P0000-00-00T00:20:00"))
+          .isEqualTo(CqlDuration.newInstance(0, 0, 20 * CqlDuration.NANOS_PER_MINUTE));
+      assertThat(CqlDuration.from("P0000-00-00T00:00:56"))
+          .isEqualTo(CqlDuration.newInstance(0, 0, 56 * CqlDuration.NANOS_PER_SECOND));
+      assertThat(CqlDuration.from("P0001-03-00T02:10:00"))
+          .isEqualTo(CqlDuration.newInstance(15, 0, 130 * CqlDuration.NANOS_PER_MINUTE));
+    } finally {
+      Locale.setDefault(def);
+    }
   }
 
   @Test

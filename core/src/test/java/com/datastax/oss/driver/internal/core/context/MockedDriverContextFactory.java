@@ -48,6 +48,10 @@ public class MockedDriverContextFactory {
                   .thenReturn("none");
               when(blankProfile.getDuration(DefaultDriverOption.METRICS_NODE_EXPIRE_AFTER))
                   .thenReturn(Duration.ofMinutes(5));
+              when(blankProfile.isDefined(DefaultDriverOption.METRICS_FACTORY_CLASS))
+                  .thenReturn(true);
+              when(blankProfile.getString(DefaultDriverOption.METRICS_FACTORY_CLASS))
+                  .thenReturn("DefaultMetricsFactory");
               return blankProfile;
             });
 
@@ -63,7 +67,7 @@ public class MockedDriverContextFactory {
             .withSchemaChangeListener(mock(SchemaChangeListener.class))
             .withRequestTracker(mock(RequestTracker.class))
             .withLocalDatacenters(Maps.newHashMap())
-            .withNodeFilters(Maps.newHashMap())
+            .withNodeDistanceEvaluators(Maps.newHashMap())
             .build();
     return new DefaultDriverContext(configLoader, args);
   }

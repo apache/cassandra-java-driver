@@ -24,9 +24,11 @@ import com.datastax.dse.driver.api.core.metrics.DseSessionMetric;
 import com.datastax.dse.driver.internal.core.cql.continuous.ContinuousRequestHandlerBase;
 import com.datastax.dse.driver.internal.core.graph.binary.GraphBinaryModule;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.cql.Conversions;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.shaded.guava.common.base.MoreObjects;
 import com.datastax.oss.protocol.internal.Message;
@@ -49,12 +51,9 @@ import net.jcip.annotations.ThreadSafe;
 public class ContinuousGraphRequestHandler
     extends ContinuousRequestHandlerBase<GraphStatement<?>, AsyncGraphResultSet> {
 
-  private final Message message;
-  private final GraphProtocol subProtocol;
   private final GraphBinaryModule graphBinaryModule;
+  private final GraphSupportChecker graphSupportChecker;
   private final Duration globalTimeout;
-  private final int maxEnqueuedPages;
-  private final int maxPages;
 
   ContinuousGraphRequestHandler(
       @NonNull GraphStatement<?> statement,
@@ -74,17 +73,13 @@ public class ContinuousGraphRequestHandler
         DseSessionMetric.GRAPH_REQUESTS,
         DseNodeMetric.GRAPH_MESSAGES);
     this.graphBinaryModule = graphBinaryModule;
-    subProtocol = graphSupportChecker.inferGraphProtocol(statement, executionProfile, context);
-    message =
-        GraphConversions.createContinuousMessageFromGraphStatement(
-            statement, subProtocol, executionProfile, context, graphBinaryModule);
+    this.graphSupportChecker = graphSupportChecker;
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(statement, context);
     globalTimeout =
         MoreObjects.firstNonNull(
             statement.getTimeout(),
             executionProfile.getDuration(DseDriverOption.GRAPH_TIMEOUT, Duration.ZERO));
-    maxEnqueuedPages =
-        executionProfile.getInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES);
-    maxPages = executionProfile.getInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_PAGES);
     // NOTE that ordering of the following statement matters.
     // We should register this request after all fields have been initialized.
     throttler.register(this);
@@ -98,40 +93,53 @@ public class ContinuousGraphRequestHandler
 
   @NonNull
   @Override
-  protected Duration getPageTimeout(int pageNumber) {
+  protected Duration getPageTimeout(@NonNull GraphStatement<?> statement, int pageNumber) {
     return Duration.ZERO;
   }
 
   @NonNull
   @Override
-  protected Duration getReviseRequestTimeout() {
+  protected Duration getReviseRequestTimeout(@NonNull GraphStatement<?> statement) {
     return Duration.ZERO;
   }
 
   @Override
-  protected int getMaxEnqueuedPages() {
-    return maxEnqueuedPages;
+  protected int getMaxEnqueuedPages(@NonNull GraphStatement<?> statement) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(statement, context);
+    return executionProfile.getInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES);
   }
 
   @Override
-  protected int getMaxPages() {
-    return maxPages;
+  protected int getMaxPages(@NonNull GraphStatement<?> statement) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(statement, context);
+    return executionProfile.getInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_PAGES);
   }
 
   @NonNull
   @Override
-  protected Message getMessage() {
-    return message;
+  protected Message getMessage(@NonNull GraphStatement<?> statement) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(statement, context);
+    GraphProtocol subProtocol =
+        graphSupportChecker.inferGraphProtocol(statement, executionProfile, context);
+    return GraphConversions.createContinuousMessageFromGraphStatement(
+        statement, subProtocol, executionProfile, context, graphBinaryModule);
   }
 
   @Override
-  protected boolean isTracingEnabled() {
+  protected boolean isTracingEnabled(@NonNull GraphStatement<?> statement) {
     return statement.isTracing();
   }
 
   @NonNull
   @Override
-  protected Map<String, ByteBuffer> createPayload() {
+  protected Map<String, ByteBuffer> createPayload(@NonNull GraphStatement<?> statement) {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(statement, context);
+    GraphProtocol subProtocol =
+        graphSupportChecker.inferGraphProtocol(statement, executionProfile, context);
     return GraphConversions.createCustomPayload(
         statement, subProtocol, executionProfile, context, graphBinaryModule);
   }
@@ -145,10 +153,15 @@ public class ContinuousGraphRequestHandler
   @NonNull
   @Override
   protected ContinuousAsyncGraphResultSet createResultSet(
+      @NonNull GraphStatement<?> statement,
       @NonNull Rows rows,
       @NonNull ExecutionInfo executionInfo,
       @NonNull ColumnDefinitions columnDefinitions)
       throws IOException {
+    DriverExecutionProfile executionProfile =
+        Conversions.resolveExecutionProfile(statement, context);
+    GraphProtocol subProtocol =
+        graphSupportChecker.inferGraphProtocol(statement, executionProfile, context);
 
     Queue<GraphNode> graphNodes = new ArrayDeque<>();
     for (List<ByteBuffer> row : rows.getData()) {

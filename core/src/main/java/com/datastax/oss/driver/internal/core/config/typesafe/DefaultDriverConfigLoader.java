@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.config.typesafe;
 
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
@@ -29,12 +30,16 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigParseOptions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.ScheduledFuture;
+import java.io.File;
+import java.net.URL;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import net.jcip.annotations.ThreadSafe;
@@ -55,8 +60,75 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
   public static final Supplier<Config> DEFAULT_CONFIG_SUPPLIER =
       () -> {
         ConfigFactory.invalidateCaches();
-        return ConfigFactory.load().getConfig(DEFAULT_ROOT_PATH);
+        // The thread's context class loader will be used for application classpath resources,
+        // while the driver class loader will be used for reference classpath resources.
+        return ConfigFactory.defaultOverrides()
+            .withFallback(ConfigFactory.defaultApplication())
+            .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+            .resolve()
+            .getConfig(DEFAULT_ROOT_PATH);
       };
+
+  @NonNull
+  public static DefaultDriverConfigLoader fromClasspath(
+      @NonNull String resourceBaseName, @NonNull ClassLoader appClassLoader) {
+    return new DefaultDriverConfigLoader(
+        () -> {
+          ConfigFactory.invalidateCaches();
+          Config config =
+              ConfigFactory.defaultOverrides()
+                  .withFallback(
+                      ConfigFactory.parseResourcesAnySyntax(
+                          resourceBaseName,
+                          ConfigParseOptions.defaults().setClassLoader(appClassLoader)))
+                  .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+                  .resolve();
+          return config.getConfig(DEFAULT_ROOT_PATH);
+        });
+  }
+
+  @NonNull
+  public static DriverConfigLoader fromFile(@NonNull File file) {
+    return new DefaultDriverConfigLoader(
+        () -> {
+          ConfigFactory.invalidateCaches();
+          Config config =
+              ConfigFactory.defaultOverrides()
+                  .withFallback(ConfigFactory.parseFileAnySyntax(file))
+                  .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+                  .resolve();
+          return config.getConfig(DEFAULT_ROOT_PATH);
+        });
+  }
+
+  @NonNull
+  public static DriverConfigLoader fromUrl(@NonNull URL url) {
+    return new DefaultDriverConfigLoader(
+        () -> {
+          ConfigFactory.invalidateCaches();
+          Config config =
+              ConfigFactory.defaultOverrides()
+                  .withFallback(ConfigFactory.parseURL(url))
+                  .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+                  .resolve();
+          return config.getConfig(DEFAULT_ROOT_PATH);
+        });
+  }
+
+  @NonNull
+  public static DefaultDriverConfigLoader fromString(@NonNull String contents) {
+    return new DefaultDriverConfigLoader(
+        () -> {
+          ConfigFactory.invalidateCaches();
+          Config config =
+              ConfigFactory.defaultOverrides()
+                  .withFallback(ConfigFactory.parseString(contents))
+                  .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+                  .resolve();
+          return config.getConfig(DEFAULT_ROOT_PATH);
+        },
+        false);
+  }
 
   private final Supplier<Config> configSupplier;
   private final TypesafeDriverConfig driverConfig;
@@ -68,9 +140,34 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
    * Builds a new instance with the default Typesafe config loading rules (documented in {@link
    * SessionBuilder#withConfigLoader(DriverConfigLoader)}) and the core driver options. This
    * constructor enables config reloading (that is, {@link #supportsReloading} will return true).
+   *
+   * <p>Application-specific classpath resources will be located using the {@linkplain
+   * Thread#getContextClassLoader() the current thread's context class loader}. This might not be
+   * suitable for OSGi deployments, which should use {@link #DefaultDriverConfigLoader(ClassLoader)}
+   * instead.
    */
   public DefaultDriverConfigLoader() {
     this(DEFAULT_CONFIG_SUPPLIER);
+  }
+
+  /**
+   * Builds a new instance with the default Typesafe config loading rules (documented in {@link
+   * SessionBuilder#withConfigLoader(DriverConfigLoader)}) and the core driver options, except that
+   * application-specific classpath resources will be located using the provided {@link ClassLoader}
+   * instead of {@linkplain Thread#getContextClassLoader() the current thread's context class
+   * loader}. This constructor enables config reloading (that is, {@link #supportsReloading} will
+   * return true).
+   */
+  public DefaultDriverConfigLoader(@NonNull ClassLoader appClassLoader) {
+    this(
+        () -> {
+          ConfigFactory.invalidateCaches();
+          return ConfigFactory.defaultOverrides()
+              .withFallback(ConfigFactory.defaultApplication(appClassLoader))
+              .withFallback(ConfigFactory.defaultReference(CqlSession.class.getClassLoader()))
+              .resolve()
+              .getConfig(DEFAULT_ROOT_PATH);
+        });
   }
 
   /**
@@ -81,7 +178,7 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
    * @param configSupplier A supplier for the Typesafe {@link Config}; it will be invoked once when
    *     this object is instantiated, and at each reload attempt, if reloading is enabled.
    */
-  public DefaultDriverConfigLoader(Supplier<Config> configSupplier) {
+  public DefaultDriverConfigLoader(@NonNull Supplier<Config> configSupplier) {
     this(configSupplier, true);
   }
 
@@ -93,7 +190,8 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
    *     this object is instantiated, and at each reload attempt, if reloading is enabled.
    * @param supportsReloading Whether config reloading should be enabled or not.
    */
-  public DefaultDriverConfigLoader(Supplier<Config> configSupplier, boolean supportsReloading) {
+  public DefaultDriverConfigLoader(
+      @NonNull Supplier<Config> configSupplier, boolean supportsReloading) {
     this.configSupplier = configSupplier;
     this.driverConfig = new TypesafeDriverConfig(configSupplier.get());
     this.supportsReloading = supportsReloading;
@@ -138,8 +236,14 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
   @Override
   public void close() {
     SingleThreaded singleThreaded = this.singleThreaded;
-    if (singleThreaded != null) {
-      RunOrSchedule.on(singleThreaded.adminExecutor, singleThreaded::close);
+    if (singleThreaded != null && !singleThreaded.adminExecutor.terminationFuture().isDone()) {
+      try {
+        RunOrSchedule.on(singleThreaded.adminExecutor, singleThreaded::close);
+      } catch (RejectedExecutionException e) {
+        // Checking the future is racy, there is still a tiny window that could get us here.
+        // We can safely ignore this error because, if the execution is rejected, the periodic
+        // reload task, if any, has been already cancelled.
+      }
     }
   }
 

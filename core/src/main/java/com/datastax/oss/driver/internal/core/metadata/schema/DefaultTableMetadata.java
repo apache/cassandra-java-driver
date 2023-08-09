@@ -142,7 +142,8 @@ public class DefaultTableMetadata implements TableMetadata, Serializable {
           && Objects.equals(this.partitionKey, that.getPartitionKey())
           && Objects.equals(this.clusteringColumns, that.getClusteringColumns())
           && Objects.equals(this.columns, that.getColumns())
-          && Objects.equals(this.indexes, that.getIndexes());
+          && Objects.equals(this.indexes, that.getIndexes())
+          && Objects.equals(this.options, that.getOptions());
     } else {
       return false;
     }
@@ -159,7 +160,8 @@ public class DefaultTableMetadata implements TableMetadata, Serializable {
         partitionKey,
         clusteringColumns,
         columns,
-        indexes);
+        indexes,
+        options);
   }
 
   @Override

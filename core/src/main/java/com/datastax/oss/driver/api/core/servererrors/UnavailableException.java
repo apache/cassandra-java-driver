@@ -28,10 +28,10 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * Thrown when the coordinator knows there is not enough replicas alive to perform a query with the
  * requested consistency level.
  *
- * <p>This exception is processed by {@link RetryPolicy#onUnavailable(Request, ConsistencyLevel,
- * int, int, int)}, which will decide if it is rethrown directly to the client or if the request
- * should be retried. If all other tried nodes also fail, this exception will appear in the {@link
- * AllNodesFailedException} thrown to the client.
+ * <p>This exception is processed by {@link RetryPolicy#onUnavailableVerdict(Request,
+ * ConsistencyLevel, int, int, int)}, which will decide if it is rethrown directly to the client or
+ * if the request should be retried. If all other tried nodes also fail, this exception will appear
+ * in the {@link AllNodesFailedException} thrown to the client.
  */
 public class UnavailableException extends QueryExecutionException {
   private final ConsistencyLevel consistencyLevel;

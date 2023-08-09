@@ -20,6 +20,7 @@ import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.query;
 import static com.datastax.oss.simulacron.common.stubbing.PrimeDsl.when;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
@@ -37,6 +38,7 @@ import com.datastax.oss.driver.api.mapper.annotations.StatementAttributes;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
+import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Execute;
 import com.datastax.oss.simulacron.common.cluster.ClusterQueryLogReport;
@@ -46,7 +48,7 @@ import com.datastax.oss.simulacron.common.stubbing.PrimeDsl;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import java.nio.ByteBuffer;
-import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -54,12 +56,12 @@ import java.util.function.Function;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
+@Category(ParallelizableTests.class)
 public class StatementAttributesIT {
 
   private static final SimulacronRule SIMULACRON_RULE =
@@ -69,8 +71,6 @@ public class StatementAttributesIT {
 
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(SIMULACRON_RULE).around(SESSION_RULE);
-
-  @Rule public ExpectedException thrown = ExpectedException.none();
 
   private static String PAGING_STATE = "paging_state";
   private static int PAGE_SIZE = 13;
@@ -192,14 +192,15 @@ public class StatementAttributesIT {
 
   @Test
   public void should_fail_runtime_attributes_bad() {
-    thrown.expect(IllegalStateException.class);
-    thrown.expectMessage("mock error");
-    dao.save(simple, badStatementFunction);
+    Throwable t = catchThrowable(() -> dao.save(simple, badStatementFunction));
+    assertThat(t).isInstanceOf(IllegalStateException.class).hasMessage("mock error");
   }
 
   private static void primeInsertQuery() {
-    Map<String, Object> params = ImmutableMap.of("pk", simple.getPk(), "data", simple.getData());
-    Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid", "data", "ascii");
+    LinkedHashMap<String, Object> params =
+        new LinkedHashMap<>(ImmutableMap.of("pk", simple.getPk(), "data", simple.getData()));
+    LinkedHashMap<String, String> paramTypes =
+        new LinkedHashMap<>(ImmutableMap.of("pk", "uuid", "data", "ascii"));
     SIMULACRON_RULE
         .cluster()
         .prime(
@@ -214,8 +215,9 @@ public class StatementAttributesIT {
   }
 
   private static void primeDeleteQuery() {
-    Map<String, Object> params = ImmutableMap.of("pk", simple.getPk());
-    Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid");
+    LinkedHashMap<String, Object> params =
+        new LinkedHashMap<>(ImmutableMap.of("pk", simple.getPk()));
+    LinkedHashMap<String, String> paramTypes = new LinkedHashMap<>(ImmutableMap.of("pk", "uuid"));
     SIMULACRON_RULE
         .cluster()
         .prime(
@@ -231,8 +233,9 @@ public class StatementAttributesIT {
   }
 
   private static void primeSelectQuery() {
-    Map<String, Object> params = ImmutableMap.of("pk", simple.getPk());
-    Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid");
+    LinkedHashMap<String, Object> params =
+        new LinkedHashMap<>(ImmutableMap.of("pk", simple.getPk()));
+    LinkedHashMap<String, String> paramTypes = new LinkedHashMap<>(ImmutableMap.of("pk", "uuid"));
     SIMULACRON_RULE
         .cluster()
         .prime(
@@ -248,8 +251,9 @@ public class StatementAttributesIT {
   }
 
   private static void primeCountQuery() {
-    Map<String, Object> params = ImmutableMap.of("pk", simple.getPk());
-    Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid");
+    LinkedHashMap<String, Object> params =
+        new LinkedHashMap<>(ImmutableMap.of("pk", simple.getPk()));
+    LinkedHashMap<String, String> paramTypes = new LinkedHashMap<>(ImmutableMap.of("pk", "uuid"));
     SIMULACRON_RULE
         .cluster()
         .prime(
@@ -265,8 +269,10 @@ public class StatementAttributesIT {
   }
 
   private static void primeUpdateQuery() {
-    Map<String, Object> params = ImmutableMap.of("pk", simple.getPk(), "data", simple.getData());
-    Map<String, String> paramTypes = ImmutableMap.of("pk", "uuid", "data", "ascii");
+    LinkedHashMap<String, Object> params =
+        new LinkedHashMap<>(ImmutableMap.of("pk", simple.getPk(), "data", simple.getData()));
+    LinkedHashMap<String, String> paramTypes =
+        new LinkedHashMap<>(ImmutableMap.of("pk", "uuid", "data", "ascii"));
     SIMULACRON_RULE
         .cluster()
         .prime(
@@ -323,10 +329,12 @@ public class StatementAttributesIT {
     void delete2(Simple simple);
 
     @Select
+    @SuppressWarnings("UnusedReturnValue")
     Simple findByPk(UUID pk, Function<BoundStatementBuilder, BoundStatementBuilder> function);
 
     @Select
     @StatementAttributes(consistencyLevel = "ANY", serialConsistencyLevel = "QUORUM", pageSize = 13)
+    @SuppressWarnings("UnusedReturnValue")
     Simple findByPk2(UUID pk);
 
     @Query("SELECT count(*) FROM ks.simple WHERE pk=:pk")
@@ -334,6 +342,7 @@ public class StatementAttributesIT {
 
     @Query("SELECT count(*) FROM ks.simple WHERE pk=:pk")
     @StatementAttributes(consistencyLevel = "ANY", serialConsistencyLevel = "QUORUM", pageSize = 13)
+    @SuppressWarnings("UnusedReturnValue")
     long count2(UUID pk);
 
     @Update

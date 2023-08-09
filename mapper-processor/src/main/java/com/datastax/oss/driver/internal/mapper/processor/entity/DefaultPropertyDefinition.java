@@ -21,6 +21,7 @@ import java.util.Optional;
 
 public class DefaultPropertyDefinition implements PropertyDefinition {
 
+  private final String javaName;
   private final CodeBlock selector;
   private final CodeBlock cqlName;
   private final String getterName;
@@ -35,6 +36,7 @@ public class DefaultPropertyDefinition implements PropertyDefinition {
       String setterName,
       PropertyType type,
       CqlNameGenerator cqlNameGenerator) {
+    this.javaName = javaName;
 
     this.cqlName =
         customCqlName
@@ -53,6 +55,11 @@ public class DefaultPropertyDefinition implements PropertyDefinition {
     this.getterName = getterName;
     this.setterName = setterName;
     this.type = type;
+  }
+
+  @Override
+  public String getJavaName() {
+    return javaName;
   }
 
   @Override

@@ -170,6 +170,7 @@ public class CassandraSchemaRows implements SchemaRows {
     private final Node node;
     private final DataTypeParser dataTypeParser;
     private final String tableNameColumn;
+    private final KeyspaceFilter keyspaceFilter;
     private final String logPrefix;
     private final ImmutableList.Builder<AdminRow> keyspacesBuilder = ImmutableList.builder();
     private final ImmutableList.Builder<AdminRow> virtualKeyspacesBuilder = ImmutableList.builder();
@@ -196,8 +197,9 @@ public class CassandraSchemaRows implements SchemaRows {
     private final Map<CqlIdentifier, ImmutableMultimap.Builder<CqlIdentifier, AdminRow>>
         edgesBuilders = new LinkedHashMap<>();
 
-    public Builder(Node node, String logPrefix) {
+    public Builder(Node node, KeyspaceFilter keyspaceFilter, String logPrefix) {
       this.node = node;
+      this.keyspaceFilter = keyspaceFilter;
       this.logPrefix = logPrefix;
       if (isCassandraV3OrAbove(node)) {
         this.tableNameColumn = "table_name";
@@ -229,12 +231,16 @@ public class CassandraSchemaRows implements SchemaRows {
     }
 
     public Builder withKeyspaces(Iterable<AdminRow> rows) {
-      keyspacesBuilder.addAll(rows);
+      for (AdminRow row : rows) {
+        put(keyspacesBuilder, row);
+      }
       return this;
     }
 
     public Builder withVirtualKeyspaces(Iterable<AdminRow> rows) {
-      virtualKeyspacesBuilder.addAll(rows);
+      for (AdminRow row : rows) {
+        put(virtualKeyspacesBuilder, row);
+      }
       return this;
     }
 
@@ -315,12 +321,21 @@ public class CassandraSchemaRows implements SchemaRows {
       return this;
     }
 
+    private void put(ImmutableList.Builder<AdminRow> builder, AdminRow row) {
+      String keyspace = row.getString("keyspace_name");
+      if (keyspace == null) {
+        LOG.warn("[{}] Skipping system row with missing keyspace name", logPrefix);
+      } else if (keyspaceFilter.includes(keyspace)) {
+        builder.add(row);
+      }
+    }
+
     private void putByKeyspace(
         AdminRow row, ImmutableMultimap.Builder<CqlIdentifier, AdminRow> builder) {
       String keyspace = row.getString("keyspace_name");
       if (keyspace == null) {
         LOG.warn("[{}] Skipping system row with missing keyspace name", logPrefix);
-      } else {
+      } else if (keyspaceFilter.includes(keyspace)) {
         builder.put(CqlIdentifier.fromInternal(keyspace), row);
       }
     }
@@ -334,7 +349,7 @@ public class CassandraSchemaRows implements SchemaRows {
         LOG.warn("[{}] Skipping system row with missing keyspace name", logPrefix);
       } else if (table == null) {
         LOG.warn("[{}] Skipping system row with missing table name", logPrefix);
-      } else {
+      } else if (keyspaceFilter.includes(keyspace)) {
         ImmutableMultimap.Builder<CqlIdentifier, AdminRow> builder =
             builders.computeIfAbsent(
                 CqlIdentifier.fromInternal(keyspace), s -> ImmutableListMultimap.builder());

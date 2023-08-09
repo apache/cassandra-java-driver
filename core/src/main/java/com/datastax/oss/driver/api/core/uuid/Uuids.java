@@ -28,7 +28,6 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -36,7 +35,7 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
-import java.util.TimeZone;
+import java.util.SplittableRandom;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
@@ -112,8 +111,45 @@ public final class Uuids {
 
   private Uuids() {}
 
-  private static final long START_EPOCH = makeEpoch();
-  private static final long CLOCK_SEQ_AND_NODE = makeClockSeqAndNode();
+  /**
+   * UUID v1 timestamps must be expressed relatively to October 15th, 1582 – the day when Gregorian
+   * calendar was introduced. This constant captures that moment in time expressed in milliseconds
+   * before the Unix epoch. It can be obtained by calling:
+   *
+   * <pre>
+   *   Instant.parse("1582-10-15T00:00:00Z").toEpochMilli();
+   * </pre>
+   */
+  private static final long START_EPOCH_MILLIS = -12219292800000L;
+
+  // Lazily initialize clock seq + node value at time of first access.  Quarkus will attempt to
+  // initialize this class at deployment time which prevents us from just setting this value
+  // directly.  The "node" part of the clock seq + node includes the current PID which (for
+  // GraalVM users) we obtain via the LLVM interop.  That infrastructure isn't setup at Quarkus
+  // deployment time, however, thus we can't just call makeClockSeqAndNode() in an initializer.
+  // See JAVA-2663 for more detail on this point.
+  //
+  // Container impl adapted from Guava's memoized Supplier impl.
+  private static class ClockSeqAndNodeContainer {
+
+    private volatile boolean initialized = false;
+    private long val;
+
+    private long get() {
+      if (!initialized) {
+        synchronized (ClockSeqAndNodeContainer.class) {
+          if (!initialized) {
+
+            initialized = true;
+            val = makeClockSeqAndNode();
+          }
+        }
+      }
+      return val;
+    }
+  }
+
+  private static final ClockSeqAndNodeContainer CLOCK_SEQ_AND_NODE = new ClockSeqAndNodeContainer();
 
   // The min and max possible lsb for a UUID.
   //
@@ -127,19 +163,6 @@ public final class Uuids {
   private static final long MAX_CLOCK_SEQ_AND_NODE = 0x7f7f7f7f7f7f7f7fL;
 
   private static final AtomicLong lastTimestamp = new AtomicLong(0L);
-
-  private static long makeEpoch() {
-    // UUID v1 timestamps must be in 100-nanoseconds interval since 00:00:00.000 15 Oct 1582.
-    Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT-0"));
-    c.set(Calendar.YEAR, 1582);
-    c.set(Calendar.MONTH, Calendar.OCTOBER);
-    c.set(Calendar.DAY_OF_MONTH, 15);
-    c.set(Calendar.HOUR_OF_DAY, 0);
-    c.set(Calendar.MINUTE, 0);
-    c.set(Calendar.SECOND, 0);
-    c.set(Calendar.MILLISECOND, 0);
-    return c.getTimeInMillis();
-  }
 
   private static long makeNode() {
 
@@ -235,11 +258,61 @@ public final class Uuids {
   /**
    * Creates a new random (version 4) UUID.
    *
-   * <p>This method is just a convenience for {@link UUID#randomUUID()}.
+   * <p><b>This method has received a new implementation as of driver 4.10.</b> Unlike the JDK's
+   * {@link UUID#randomUUID()} method, it does not use anymore the cryptographic {@link
+   * java.security.SecureRandom} number generator. Instead, it uses the non-cryptographic {@link
+   * Random} class, with a different seed at every invocation.
+   *
+   * <p>Using a non-cryptographic generator has two advantages:
+   *
+   * <ol>
+   *   <li>UUID generation is much faster than with {@link UUID#randomUUID()};
+   *   <li>Contrary to {@link UUID#randomUUID()}, UUID generation with this method does not require
+   *       I/O and is not a blocking call, which makes this method better suited for non-blocking
+   *       applications.
+   * </ol>
+   *
+   * Of course, this method is intended for usage where cryptographic strength is not required, such
+   * as when generating row identifiers for insertion in the database. If you still need
+   * cryptographic strength, consider using {@link Uuids#random(Random)} instead, and pass an
+   * instance of {@link java.security.SecureRandom}.
    */
   @NonNull
   public static UUID random() {
-    return UUID.randomUUID();
+    return random(new Random());
+  }
+
+  /**
+   * Creates a new random (version 4) UUID using the provided {@link Random} instance.
+   *
+   * <p>This method offers more flexibility than {@link #random()} as it allows to customize the
+   * {@link Random} instance to use, and also offers the possibility to reuse instances across
+   * successive calls. Reusing Random instances is the norm when using {@link
+   * java.util.concurrent.ThreadLocalRandom}, for instance; however other Random implementations may
+   * perform poorly under heavy thread contention.
+   *
+   * <p>Note: some Random implementations, such as {@link java.security.SecureRandom}, may trigger
+   * I/O activity during random number generation; these instances should not be used in
+   * non-blocking contexts.
+   */
+  @NonNull
+  public static UUID random(@NonNull Random random) {
+    byte[] data = new byte[16];
+    random.nextBytes(data);
+    return buildUuid(data, 4);
+  }
+
+  /**
+   * Creates a new random (version 4) UUID using the provided {@link SplittableRandom} instance.
+   *
+   * <p>This method should be preferred to {@link #random()} when UUID generation happens in massive
+   * parallel computations, such as when using the ForkJoin framework. Note that {@link
+   * SplittableRandom} instances are not thread-safe.
+   */
+  @NonNull
+  public static UUID random(@NonNull SplittableRandom random) {
+    byte[] data = toBytes(random.nextLong(), random.nextLong());
+    return buildUuid(data, 4);
   }
 
   /**
@@ -316,7 +389,7 @@ public final class Uuids {
     MessageDigest md = newMessageDigest(version);
     md.update(toBytes(namespace));
     md.update(name);
-    return buildNamedUuid(md.digest(), version);
+    return buildUuid(md.digest(), version);
   }
 
   /**
@@ -362,7 +435,7 @@ public final class Uuids {
     }
     MessageDigest md = newMessageDigest(version);
     md.update(namespaceAndName);
-    return buildNamedUuid(md.digest(), version);
+    return buildUuid(md.digest(), version);
   }
 
   @NonNull
@@ -380,7 +453,7 @@ public final class Uuids {
   }
 
   @NonNull
-  private static UUID buildNamedUuid(@NonNull byte[] data, int version) {
+  private static UUID buildUuid(@NonNull byte[] data, int version) {
     // clear and set version
     data[6] &= (byte) 0x0f;
     data[6] |= (byte) (version << 4);
@@ -405,12 +478,16 @@ public final class Uuids {
   }
 
   private static byte[] toBytes(UUID uuid) {
-    byte[] out = new byte[16];
     long msb = uuid.getMostSignificantBits();
+    long lsb = uuid.getLeastSignificantBits();
+    return toBytes(msb, lsb);
+  }
+
+  private static byte[] toBytes(long msb, long lsb) {
+    byte[] out = new byte[16];
     for (int i = 0; i < 8; i++) {
       out[i] = (byte) (msb >> ((7 - i) * 8));
     }
-    long lsb = uuid.getLeastSignificantBits();
     for (int i = 8; i < 16; i++) {
       out[i] = (byte) (lsb >> ((15 - i) * 8));
     }
@@ -434,10 +511,16 @@ public final class Uuids {
    *
    * If you simply need to perform a range query on a {@code timeuuid} column, use the "fake" UUID
    * generated by {@link #startOf(long)} and {@link #endOf(long)}.
+   *
+   * <p>Usage with non-blocking threads: beware that this method may block the calling thread on its
+   * very first invocation, because the node part of time-based UUIDs needs to be computed at that
+   * moment, and the computation may require the loading of native libraries. If that is a problem,
+   * consider invoking this method once from a thread that is allowed to block. Subsequent
+   * invocations are guaranteed not to block.
    */
   @NonNull
   public static UUID timeBased() {
-    return new UUID(makeMsb(getCurrentTimestamp()), CLOCK_SEQ_AND_NODE);
+    return new UUID(makeMsb(getCurrentTimestamp()), CLOCK_SEQ_AND_NODE.get());
   }
 
   /**
@@ -507,7 +590,7 @@ public final class Uuids {
               uuid.version()));
     }
     long timestamp = uuid.timestamp();
-    return (timestamp / 10000) + START_EPOCH;
+    return (timestamp / 10000) + START_EPOCH_MILLIS;
   }
 
   // Use {@link System#currentTimeMillis} for a base time in milliseconds, and if we are in the same
@@ -544,7 +627,7 @@ public final class Uuids {
 
   @VisibleForTesting
   static long fromUnixTimestamp(long tstamp) {
-    return (tstamp - START_EPOCH) * 10000;
+    return (tstamp - START_EPOCH_MILLIS) * 10000;
   }
 
   private static long millisOf(long timestamp) {

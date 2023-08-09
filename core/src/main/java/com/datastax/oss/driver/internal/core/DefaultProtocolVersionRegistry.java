@@ -61,6 +61,9 @@ public class DefaultProtocolVersionRegistry implements ProtocolVersionRegistry {
   @VisibleForTesting
   static final Version DSE_6_0_0 = Objects.requireNonNull(Version.parse("6.0.0"));
 
+  @VisibleForTesting
+  static final Version DSE_7_0_0 = Objects.requireNonNull(Version.parse("7.0.0"));
+
   private final String logPrefix;
 
   public DefaultProtocolVersionRegistry(String logPrefix) {
@@ -150,9 +153,12 @@ public class DefaultProtocolVersionRegistry implements ProtocolVersionRegistry {
         } else if (dseVersion.compareTo(DSE_6_0_0) < 0) {
           // DSE 5.1
           removeHigherThan(DefaultProtocolVersion.V4, DseProtocolVersion.DSE_V1, candidates);
-        } else {
+        } else if (dseVersion.compareTo(DSE_7_0_0) < 0) {
           // DSE 6
           removeHigherThan(DefaultProtocolVersion.V4, DseProtocolVersion.DSE_V2, candidates);
+        } else {
+          // DSE 7.0
+          removeHigherThan(DefaultProtocolVersion.V5, DseProtocolVersion.DSE_V2, candidates);
         }
       } else { // not DSE
         Version cassandraVersion = node.getCassandraVersion();
@@ -181,9 +187,12 @@ public class DefaultProtocolVersionRegistry implements ProtocolVersionRegistry {
         } else if (cassandraVersion.compareTo(Version.V2_2_0) < 0) {
           // 2.1.0
           removeHigherThan(DefaultProtocolVersion.V3, null, candidates);
-        } else {
+        } else if (cassandraVersion.compareTo(Version.V4_0_0) < 0) {
           // 2.2, 3.x
           removeHigherThan(DefaultProtocolVersion.V4, null, candidates);
+        } else {
+          // 4.0
+          removeHigherThan(DefaultProtocolVersion.V5, null, candidates);
         }
       }
     }
@@ -240,7 +249,8 @@ public class DefaultProtocolVersionRegistry implements ProtocolVersionRegistry {
       return (DefaultProtocolVersion.V5.getCode() <= code
               && code < DseProtocolVersion.DSE_V1.getCode())
           || DseProtocolVersion.DSE_V2.getCode() <= code;
-    } else if (DefaultProtocolFeature.NOW_IN_SECONDS.equals(feature)) {
+    } else if (DefaultProtocolFeature.NOW_IN_SECONDS.equals(feature)
+        || DefaultProtocolFeature.MODERN_FRAMING.equals(feature)) {
       // OSS only, V5+
       return DefaultProtocolVersion.V5.getCode() <= code
           && code < DseProtocolVersion.DSE_V1.getCode();

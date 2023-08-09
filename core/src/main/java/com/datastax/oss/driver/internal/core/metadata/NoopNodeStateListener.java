@@ -16,29 +16,12 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListenerBase;
-import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import net.jcip.annotations.ThreadSafe;
 
 /**
- * Default node state listener implementation with empty methods.
- *
- * <p>To activate this listener, modify the {@code advanced.node-state-listener} section in the
- * driver configuration, for example:
- *
- * <pre>
- * datastax-java-driver {
- *   advanced.node-state-listener {
- *     class = NoopNodeStateListener
- *   }
- * }
- * </pre>
- *
- * See {@code reference.conf} (in the manual or core driver JAR) for more details.
- *
- * <p>Note that if a listener is specified programmatically with {@link
- * SessionBuilder#withNodeStateListener(NodeStateListener)}, the configuration is ignored.
+ * Default node state listener implementation with empty methods. This implementation is used when
+ * no listeners were registered, neither programmatically nor through the configuration.
  */
 @ThreadSafe
 public class NoopNodeStateListener extends NodeStateListenerBase {

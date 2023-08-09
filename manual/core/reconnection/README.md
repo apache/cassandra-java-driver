@@ -7,11 +7,15 @@ When a connection is lost, try to reestablish it at configured intervals.
 * `advanced.reconnection-policy` in the configuration; defaults to exponential backoff, also
   available: constant delay, write your own.
 * applies to connection pools and the control connection.
+* `advanced.reconnect-on-init` (false by default) controls whether the session tries to reconnect
+  when it is first created
 
 -----
 
-If the driver loses a connection to a node, it tries to re-establish it according to a configurable
-policy. This is used in two places:
+### At runtime
+
+If a running session loses a connection to a node, it tries to re-establish it according to a
+configurable policy. This is used in two places:
 
 * [connection pools](../pooling/): for each node, a session has a fixed-size pool of connections to
   execute user requests. If one or more connections drop, a reconnection gets started for the pool;
@@ -64,9 +68,23 @@ is the exponential one with the default values, and the control connection is in
   [load balancing policy](../load_balancing/) to get a query plan, which happens to start with
   node4. The connection succeeds, node4 is now the control node and the reconnection stops;
 * [t = 3] node2's pool tries to open the last missing connection, which succeeds. The pool is back
-  to its expected size, node2's reconnection stops. 
+  to its expected size, node2's reconnection stops.
 
-[ConstantReconnectionPolicy]:    https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/internal/core/connection/ConstantReconnectionPolicy.html
-[DriverContext]:                 https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/context/DriverContext.html
-[ExponentialReconnectionPolicy]: https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/internal/core/connection/ExponentialReconnectionPolicy.html
-[ReconnectionPolicy]:            https://docs.datastax.com/en/drivers/java/4.6/com/datastax/oss/driver/api/core/connection/ReconnectionPolicy.html
+### At init time
+
+If a session fails to connect when it is first created, the default behavior is to abort and throw
+an error immediately.
+
+If you prefer to retry, you can set the configuration option `advanced.reconnect-on-init` to true.
+Instead of failing, the driver will keep attempting to initialize the session at regular intervals,
+according to the reconnection policy, until at least one contact point replies. This can be useful
+when dealing with containers and microservices.
+
+Note that the session is not accessible until it is fully ready: the `CqlSessionBuilder.build()`
+call &mdash; or the future returned by `buildAsync()` &mdash; will not complete until the connection
+was established.
+
+[ConstantReconnectionPolicy]:    https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/internal/core/connection/ConstantReconnectionPolicy.html
+[DriverContext]:                 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/context/DriverContext.html
+[ExponentialReconnectionPolicy]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/internal/core/connection/ExponentialReconnectionPolicy.html
+[ReconnectionPolicy]:            https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/connection/ReconnectionPolicy.html

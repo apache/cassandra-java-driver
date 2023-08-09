@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.yugabyte</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.6.0-yb-13-SNAPSHOT</version>
+    <version>4.15.0-yb-1-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-bom</artifactId>
   <packaging>pom</packaging>
@@ -31,42 +31,52 @@
       <dependency>
         <groupId>com.yugabyte</groupId>
         <artifactId>java-driver-core</artifactId>
-        <version>4.6.0-yb-13-SNAPSHOT</version>
+        <version>4.15.0-yb-1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>com.yugabyte</groupId>
         <artifactId>java-driver-core-shaded</artifactId>
-        <version>4.6.0-yb-13-SNAPSHOT</version>
+        <version>4.15.0-yb-1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>com.yugabyte</groupId>
         <artifactId>java-driver-mapper-processor</artifactId>
-        <version>4.6.0-yb-13-SNAPSHOT</version>
+        <version>4.15.0-yb-1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>com.yugabyte</groupId>
         <artifactId>java-driver-mapper-runtime</artifactId>
-        <version>4.6.0-yb-13-SNAPSHOT</version>
+        <version>4.15.0-yb-1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>com.yugabyte</groupId>
         <artifactId>java-driver-query-builder</artifactId>
-        <version>4.6.0-yb-13-SNAPSHOT</version>
+        <version>4.15.0-yb-1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>com.yugabyte</groupId>
         <artifactId>java-driver-test-infra</artifactId>
-        <version>4.6.0-yb-13-SNAPSHOT</version>
+        <version>4.15.0-yb-1-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>com.yugabyte</groupId>
+        <artifactId>java-driver-metrics-micrometer</artifactId>
+        <version>4.15.0-yb-1-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>com.yugabyte</groupId>
+        <artifactId>java-driver-metrics-microprofile</artifactId>
+        <version>4.15.0-yb-1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>com.yugabyte</groupId>
         <artifactId>native-protocol</artifactId>
-        <version>1.4.11-yb-3</version>
+        <version>1.5.1-yb-2</version>
       </dependency>
       <dependency>
         <groupId>com.datastax.oss</groupId>
         <artifactId>java-driver-shaded-guava</artifactId>
-        <version>25.1-jre</version>
+        <version>25.1-jre-graal-sub-1</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

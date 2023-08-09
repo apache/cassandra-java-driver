@@ -103,7 +103,6 @@ public class DefaultRetryPolicyIT {
   private Level oldLevel;
   private String logPrefix;
 
-  @SuppressWarnings("deprecation")
   private final QueryCounter counter =
       QueryCounter.builder(SIMULACRON_RULE.cluster())
           .withFilter((l) -> l.getQuery().equals(queryStr))

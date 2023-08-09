@@ -34,7 +34,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.yugabyte</groupId>
   <artifactId>java-driver-parent</artifactId>
-  <version>4.6.0-yb-13-SNAPSHOT</version>
+  <version>4.15.0-yb-1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Java Driver for YugaByteDB</name>
   <description>Java Driver for YugaByteDB; derived from DataStax Java Driver for Apache Cassandra.</description>
@@ -46,47 +46,56 @@
     <module>query-builder</module>
     <module>mapper-runtime</module>
     <module>mapper-processor</module>
+    <module>metrics/micrometer</module>
+    <module>metrics/microprofile</module>
     <module>test-infra</module>
-    <!--    <module>integration-tests</module> -->
+    <!--module>integration-tests</module-->
+    <module>osgi-tests</module>
     <module>distribution</module>
     <module>examples</module>
     <module>bom</module>
   </modules>
   <properties>
-    <format.validateOnly>true</format.validateOnly>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <config.version>1.3.4</config.version>
-    <hdrhistogram.version>2.1.11</hdrhistogram.version>
-    <metrics.version>4.1.8</metrics.version>
-    <netty.version>4.1.60.Final</netty.version>
+    <config.version>1.4.1</config.version>
+    <hdrhistogram.version>2.1.12</hdrhistogram.version>
+    <metrics.version>4.1.18</metrics.version>
+    <netty.version>4.1.77.Final</netty.version>
     <esri.version>1.2.1</esri.version>
-    <tinkerpop.version>3.4.10</tinkerpop.version>
+    <!--
+    When upgrading TinkerPop please upgrade the version matrix in
+    manual/core/integration/README.md
+    -->
+    <tinkerpop.version>3.5.3</tinkerpop.version>
     <slf4j.version>1.7.26</slf4j.version>
-    <reactive-streams.version>1.0.2</reactive-streams.version>
+    <reactive-streams.version>1.0.3</reactive-streams.version>
     <json.version>20210307</json.version>
-    <jackson.version>2.12.2</jackson.version>
-    <jackson-databind.version>2.14.2</jackson-databind.version>
+    <jackson.version>2.13.2</jackson.version>
+    <jackson-databind.version>2.13.2.2</jackson-databind.version>
     <legacy-jackson.version>1.9.12</legacy-jackson.version>
     <!-- optional dependencies -->
     <snappy.version>1.1.7.3</snappy.version>
-    <lz4.version>1.6.0</lz4.version>
+    <lz4.version>1.7.1</lz4.version>
     <!-- test dependencies -->
     <assertj.version>3.19.0</assertj.version>
     <commons-exec.version>1.3</commons-exec.version>
     <junit.version>4.13.2</junit.version>
     <logback.version>1.2.3</logback.version>
-    <pax-exam.version>4.12.0</pax-exam.version>
-    <simulacron.version>0.8.9</simulacron.version>
-    <jsr353-api.version>1.0</jsr353-api.version>
+    <osgi.version>6.0.0</osgi.version>
+    <felix.version>6.0.3</felix.version>
+    <pax-exam.version>4.13.4</pax-exam.version>
+    <simulacron.version>0.11.0</simulacron.version>
+    <jsr353-api.version>1.1.4</jsr353-api.version>
     <jersey.version>2.28</jersey.version>
     <hk2.version>2.5.0</hk2.version>
-    <jax-rs.version>2.0.1</jax-rs.version>
+    <jax-rs.version>2.1.1</jax-rs.version>
     <jsr353-ri.version>1.1.4</jsr353-ri.version>
     <rxjava.version>2.2.2</rxjava.version>
-    <awaitility.version>4.0.2</awaitility.version>
+    <awaitility.version>4.0.3</awaitility.version>
     <apacheds.version>2.0.0-M19</apacheds.version>
     <surefire.version>2.22.2</surefire.version>
+    <graalapi.version>22.0.0.2</graalapi.version>
     <skipTests>false</skipTests>
     <skipUnitTests>${skipTests}</skipUnitTests>
   </properties>
@@ -137,7 +146,7 @@
       <dependency>
         <groupId>com.github.jnr</groupId>
         <artifactId>jnr-posix</artifactId>
-        <version>3.1.5</version>
+        <version>3.1.15</version>
       </dependency>
       <dependency>
         <groupId>io.dropwizard.metrics</groupId>
@@ -163,22 +172,29 @@
         <groupId>org.apache.tinkerpop</groupId>
         <artifactId>gremlin-core</artifactId>
         <version>${tinkerpop.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.carrotsearch</groupId>
+            <artifactId>hppc</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.jcabi</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>net.objecthunter</groupId>
+            <artifactId>exp4j</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.tinkerpop</groupId>
         <artifactId>tinkergraph-gremlin</artifactId>
         <version>${tinkerpop.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.tinkerpop</groupId>
-        <artifactId>gremlin-driver</artifactId>
-        <version>${tinkerpop.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.reactivestreams</groupId>
@@ -201,14 +217,9 @@
         <version>3.1.12</version>
       </dependency>
       <dependency>
-        <groupId>org.javatuples</groupId>
-        <artifactId>javatuples</artifactId>
-        <version>1.2</version>
-      </dependency>
-      <dependency>
         <groupId>com.squareup</groupId>
         <artifactId>javapoet</artifactId>
-        <version>1.11.1</version>
+        <version>1.13.0</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
@@ -246,13 +257,23 @@
         <version>${commons-exec.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.osgi</groupId>
+        <artifactId>org.osgi.core</artifactId>
+        <version>${osgi.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>org.apache.felix.framework</artifactId>
+        <version>${felix.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.ops4j.pax.exam</groupId>
         <artifactId>pax-exam-junit4</artifactId>
         <version>${pax-exam.version}</version>
       </dependency>
       <dependency>
         <groupId>org.ops4j.pax.exam</groupId>
-        <artifactId>pax-exam-container-native</artifactId>
+        <artifactId>pax-exam-container-forked</artifactId>
         <version>${pax-exam.version}</version>
       </dependency>
       <dependency>
@@ -263,12 +284,12 @@
       <dependency>
         <groupId>org.ops4j.pax.url</groupId>
         <artifactId>pax-url-wrap</artifactId>
-        <version>2.5.4</version>
+        <version>2.6.3</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>org.apache.felix.framework</artifactId>
-        <version>6.0.0</version>
+        <groupId>org.ops4j.pax.url</groupId>
+        <artifactId>pax-url-reference</artifactId>
+        <version>2.6.2</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish</groupId>
@@ -318,7 +339,7 @@
       <dependency>
         <groupId>javax.annotation</groupId>
         <artifactId>javax.annotation-api</artifactId>
-        <version>1.2</version>
+        <version>1.3.2</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
@@ -333,7 +354,7 @@
       <dependency>
         <groupId>com.google.testing.compile</groupId>
         <artifactId>compile-testing</artifactId>
-        <version>0.18</version>
+        <version>0.19</version>
       </dependency>
       <dependency>
         <groupId>org.awaitility</groupId>
@@ -343,7 +364,7 @@
       <dependency>
         <groupId>org.testng</groupId>
         <artifactId>testng</artifactId>
-        <version>6.14.3</version>
+        <version>7.3.0</version>
       </dependency>
       <dependency>
         <groupId>org.apache.directory.server</groupId>
@@ -391,6 +412,48 @@
         <artifactId>wiremock</artifactId>
         <version>2.25.0</version>
       </dependency>
+      <dependency>
+        <groupId>org.graalvm.sdk</groupId>
+        <artifactId>graal-sdk</artifactId>
+        <version>${graalapi.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.graalvm.nativeimage</groupId>
+        <artifactId>svm</artifactId>
+        <version>${graalapi.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>micrometer-core</artifactId>
+        <version>1.6.5</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.microprofile.metrics</groupId>
+        <artifactId>microprofile-metrics-api</artifactId>
+        <version>3.0</version>
+      </dependency>
+      <dependency>
+        <groupId>io.smallrye</groupId>
+        <artifactId>smallrye-metrics</artifactId>
+        <version>3.0.3</version>
+      </dependency>
+      <dependency>
+        <groupId>io.projectreactor</groupId>
+        <artifactId>reactor-bom</artifactId>
+        <version>2020.0.5</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>io.projectreactor.tools</groupId>
+        <artifactId>blockhound</artifactId>
+        <version>1.0.4.RELEASE</version>
+      </dependency>
+      <dependency>
+        <groupId>io.projectreactor.tools</groupId>
+        <artifactId>blockhound-junit-platform</artifactId>
+        <version>1.0.4.RELEASE</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
   <build>
@@ -398,7 +461,7 @@
       <plugins>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.6.1</version>
+          <version>3.8.1</version>
         </plugin>
         <plugin>
           <groupId>com.coveo</groupId>
@@ -425,11 +488,11 @@
         </plugin>
         <plugin>
           <artifactId>maven-shade-plugin</artifactId>
-          <version>3.1.1</version>
+          <version>3.2.3</version>
         </plugin>
         <plugin>
           <artifactId>maven-assembly-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.3.0</version>
         </plugin>
         <!-- See console.scala in the submodules -->
         <plugin>
@@ -446,15 +509,15 @@
         </plugin>
         <plugin>
           <artifactId>maven-source-plugin</artifactId>
-          <version>3.0.1</version>
+          <version>3.1.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.1.1</version>
+          <version>3.2.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
-          <version>3.0.2</version>
+          <version>3.2.0</version>
         </plugin>
         <plugin>
           <groupId>org.sonatype.plugins</groupId>
@@ -463,7 +526,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-gpg-plugin</artifactId>
-          <version>1.5</version>
+          <version>1.6</version>
         </plugin>
         <plugin>
           <artifactId>maven-release-plugin</artifactId>
@@ -471,25 +534,25 @@
         </plugin>
         <plugin>
           <artifactId>maven-install-plugin</artifactId>
-          <version>2.4</version>
+          <version>2.5.2</version>
         </plugin>
         <plugin>
           <artifactId>maven-deploy-plugin</artifactId>
-          <version>2.7</version>
+          <version>2.8.2</version>
         </plugin>
         <plugin>
           <artifactId>maven-dependency-plugin</artifactId>
-          <version>3.1.1</version>
+          <version>3.1.2</version>
         </plugin>
         <plugin>
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.8.3</version>
+          <version>0.8.5</version>
         </plugin>
         <plugin>
           <groupId>org.apache.felix</groupId>
           <artifactId>maven-bundle-plugin</artifactId>
-          <version>3.5.1</version>
+          <version>4.2.1</version>
         </plugin>
         <plugin>
           <groupId>org.revapi</groupId>
@@ -511,7 +574,7 @@
             <dependency>
               <groupId>org.revapi</groupId>
               <artifactId>revapi-java</artifactId>
-              <version>0.19.1</version>
+              <version>0.22.1</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -615,6 +678,7 @@ limitations under the License.]]></inlineHeader>
             <include>**/pom.xml</include>
           </includes>
           <excludes>
+            <exclude>src/**/native-image.properties</exclude>
             <exclude>**/src/main/config/ide/**</exclude>
           </excludes>
           <mapping>
@@ -704,6 +768,11 @@ limitations under the License.]]></inlineHeader>
           <doclint>all,-missing</doclint>
           <excludePackageNames>com.datastax.*.driver.internal*:com.yugabyte.*</excludePackageNames>
           <tags>
+            <tag>
+              <name>apiNote</name>
+              <placement>a</placement>
+              <head>API note:</head>
+            </tag>
             <!--
               For custom `leaks-private-api` tag (apparently dash separators are not handled
               correctly)
@@ -886,7 +955,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <connection>scm:git:git@github.com:YugaByte/cassandra-java-driver.git</connection>
     <developerConnection>scm:git:git@github.com:YugaByte/cassandra-java-driver.git</developerConnection>
     <url>https://github.com/yugabyte/cassandra-java-driver</url>
-    <tag>4.6.0-yb-8</tag>
+    <tag>4.15.0-yb-1-SNAPSHOT</tag>
   </scm>
   <developers>
     <developer>

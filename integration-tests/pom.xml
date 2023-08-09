@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.yugabyte</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.6.0-yb-4-SNAPSHOT</version>
+    <version>4.15.0-yb-1-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-integration-tests</artifactId>
   <packaging>jar</packaging>
@@ -69,6 +69,16 @@
       <groupId>com.yugabyte</groupId>
       <artifactId>java-driver-core</artifactId>
       <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.yugabyte</groupId>
+      <artifactId>java-driver-metrics-micrometer</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.yugabyte</groupId>
+      <artifactId>java-driver-metrics-microprofile</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -122,6 +132,16 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.apache.tinkerpop</groupId>
+      <artifactId>gremlin-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.tinkerpop</groupId>
+      <artifactId>tinkergraph-gremlin</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.directory.server</groupId>
       <artifactId>apacheds-core</artifactId>
       <scope>test</scope>
@@ -154,32 +174,6 @@
     <dependency>
       <groupId>org.apache.directory.api</groupId>
       <artifactId>api-ldap-codec-standalone</artifactId>
-      <version>1.0.0-M26</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.ops4j.pax.exam</groupId>
-      <artifactId>pax-exam-junit4</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.ops4j.pax.exam</groupId>
-      <artifactId>pax-exam-container-native</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.ops4j.pax.exam</groupId>
-      <artifactId>pax-exam-link-mvn</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.ops4j.pax.url</groupId>
-      <artifactId>pax-url-wrap</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.felix</groupId>
-      <artifactId>org.apache.felix.framework</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -187,90 +181,47 @@
       <artifactId>wiremock</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.datastax.oss.simulacron</groupId>
+      <artifactId>simulacron-native-server</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-exec</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.smallrye</groupId>
+      <artifactId>smallrye-metrics</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor.tools</groupId>
+      <artifactId>blockhound-junit-platform</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.esri.geometry</groupId>
+      <artifactId>esri-geometry-api</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
       <plugin>
-        <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifestEntries>
-              <Automatic-Module-Name>com.datastax.oss.driver.tests.integration</Automatic-Module-Name>
-            </manifestEntries>
-          </archive>
-        </configuration>
-        <executions>
-          <execution>
-            <id>test-jar</id>
-            <goals>
-              <goal>test-jar</goal>
-            </goals>
-            <configuration>
-              <excludes>
-                <exclude>logback-test.xml</exclude>
-              </excludes>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <!-- Not needed for maven build but useful for testing from intellij -->
-          <systemPropertyVariables>
-            <project.version>${project.version}</project.version>
-            <assertj.version>${assertj.version}</assertj.version>
-            <config.version>${config.version}</config.version>
-            <commons-exec.version>${commons-exec.version}</commons-exec.version>
-            <hdrhistogram.version>${hdrhistogram.version}</hdrhistogram.version>
-            <jackson.version>${jackson.version}</jackson.version>
-            <jackson-databind.version>${jackson-databind.version}</jackson-databind.version>
-            <logback.version>${logback.version}</logback.version>
-            <lz4.version>${lz4.version}</lz4.version>
-            <metrics.version>${metrics.version}</metrics.version>
-            <netty.version>${netty.version}</netty.version>
-            <simulacron.version>${simulacron.version}</simulacron.version>
-            <slf4j.version>${slf4j.version}</slf4j.version>
-            <snappy.version>${snappy.version}</snappy.version>
-            <esri.version>${esri.version}</esri.version>
-            <json.version>${json.version}</json.version>
-            <legacy-jackson.version>${legacy-jackson.version}</legacy-jackson.version>
-            <reactive-streams.version>${reactive-streams.version}</reactive-streams.version>
-            <rxjava.version>${rxjava.version}</rxjava.version>
-            <tinkerpop.version>${tinkerpop.version}</tinkerpop.version>
-          </systemPropertyVariables>
-        </configuration>
-      </plugin>
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <configuration>
-          <!-- provide version properties for OSGi tests -->
-          <systemPropertyVariables>
-            <project.version>${project.version}</project.version>
-            <assertj.version>${assertj.version}</assertj.version>
-            <config.version>${config.version}</config.version>
-            <commons-exec.version>${commons-exec.version}</commons-exec.version>
-            <hdrhistogram.version>${hdrhistogram.version}</hdrhistogram.version>
-            <jackson.version>${jackson.version}</jackson.version>
-            <jackson-databind.version>${jackson-databind.version}</jackson-databind.version>
-            <logback.version>${logback.version}</logback.version>
-            <lz4.version>${lz4.version}</lz4.version>
-            <metrics.version>${metrics.version}</metrics.version>
-            <netty.version>${netty.version}</netty.version>
-            <simulacron.version>${simulacron.version}</simulacron.version>
-            <slf4j.version>${slf4j.version}</slf4j.version>
-            <snappy.version>${snappy.version}</snappy.version>
-            <esri.version>${esri.version}</esri.version>
-            <json.version>${json.version}</json.version>
-            <legacy-jackson.version>${legacy-jackson.version}</legacy-jackson.version>
-            <reactive-streams.version>${reactive-streams.version}</reactive-streams.version>
-            <rxjava.version>${rxjava.version}</rxjava.version>
-            <tinkerpop.version>${tinkerpop.version}</tinkerpop.version>
-            <awaitility.version>${awaitility.version}</awaitility.version>
-          </systemPropertyVariables>
-        </configuration>
         <executions>
           <execution>
             <id>parallelizable-tests</id>
@@ -308,19 +259,37 @@
               <reuseForks>false</reuseForks>
               <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-isolated.xml</summaryFile>
               <skipITs>${skipIsolatedITs}</skipITs>
+              <argLine>${blockhound.argline}</argLine>
             </configuration>
           </execution>
           <execution>
-            <id>verify</id>
+            <id>verify-parallelized</id>
             <goals>
               <goal>verify</goal>
             </goals>
             <configuration>
-              <summaryFiles>
-                <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-parallelized.xml</summaryFile>
-                <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-serial.xml</summaryFile>
-                <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-isolated.xml</summaryFile>
-              </summaryFiles>
+              <skipITs>${skipParallelizableITs}</skipITs>
+              <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-parallelized.xml</summaryFile>
+            </configuration>
+          </execution>
+          <execution>
+            <id>verify-serial</id>
+            <goals>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <skipITs>${skipSerialITs}</skipITs>
+              <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-serial.xml</summaryFile>
+            </configuration>
+          </execution>
+          <execution>
+            <id>verify-isolated</id>
+            <goals>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <skipITs>${skipIsolatedITs}</skipITs>
+              <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-isolated.xml</summaryFile>
             </configuration>
           </execution>
         </executions>
@@ -332,10 +301,37 @@
           <skip>true</skip>
         </configuration>
       </plugin>
-      <!--
-        Don't disable the install or deploy plugins as downstream projects may rely on running
-        these integration tests as well.
-      -->
+      <plugin>
+        <artifactId>maven-install-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <configuration>
+          <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>jdk 13+</id>
+      <activation>
+        <jdk>[13,)</jdk>
+      </activation>
+      <properties>
+        <!-- for DriverBlockHoundIntegrationIT when using JDK 13+, see https://github.com/reactor/BlockHound/issues/33 -->
+        <blockhound.argline>-XX:+AllowRedefinitionToAddDeleteMethods</blockhound.argline>
+      </properties>
+    </profile>
+  </profiles>
 </project>

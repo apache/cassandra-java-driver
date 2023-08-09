@@ -24,18 +24,17 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.internal.core.loadbalancing.BasicLoadBalancingPolicy;
+import com.datastax.oss.driver.internal.core.loadbalancing.nodeset.DcAgnosticNodeSet;
+import com.datastax.oss.driver.internal.core.loadbalancing.nodeset.MultiDcNodeSet;
+import com.datastax.oss.driver.internal.core.loadbalancing.nodeset.SingleDcNodeSet;
 import com.datastax.oss.driver.internal.core.util.ArrayUtils;
-import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
+import com.datastax.oss.driver.internal.core.util.collection.SimpleQueryPlan;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import java.util.Map;
-import java.util.Queue;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicLongArray;
-import java.util.function.Predicate;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +45,6 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
       LoggerFactory.getLogger(YugabyteDefaultLoadBalancingPolicy.class);
 
   private volatile DistanceReporter distanceReporter;
-  private volatile Predicate<Node> filter;
   private volatile String localDc;
 
   protected final CopyOnWriteArraySet<Node> liveNodesInLocalDc = new CopyOnWriteArraySet<>();
@@ -61,7 +59,11 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
   public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
     this.distanceReporter = distanceReporter;
     localDc = discoverLocalDc(nodes).orElse(null);
-    filter = createNodeFilter(localDc, nodes);
+    nodeDistanceEvaluator = createNodeDistanceEvaluator(localDc, nodes);
+    liveNodes =
+        localDc == null
+            ? new DcAgnosticNodeSet()
+            : maxNodesPerRemoteDc <= 0 ? new SingleDcNodeSet(localDc) : new MultiDcNodeSet();
 
     for (Node node : nodes.values()) {
       addToLiveNodeLists(node);
@@ -77,7 +79,7 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
     ConsistencyLevel requestConsistencyLevel = findConsistencyLevelForRequest(request);
 
     // LocalDC: Requests will routed to local DC only for CL.ONE or CL.YB_CONSISTENT_PREFIX
-    if (!StringUtils.isBlank(localDc)
+    if (!(localDc == null || localDc.trim().isEmpty())
         && requestConsistencyLevel == ConsistencyLevel.YB_CONSISTENT_PREFIX) {
 
       currentNodes = liveNodesInLocalDc.toArray();
@@ -89,7 +91,13 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
             "[{}] No nodes available in Local DC {}, falling back on to liveNodes",
             logPrefix,
             localDc);
-        currentNodes = liveNodes.toArray();
+        Set<Node> nodes = new HashSet<>();
+        for (String dc : liveNodes.dcs()) {
+          if (!dc.equalsIgnoreCase(localDc)) {
+            nodes.addAll(liveNodes.dc(dc));
+          }
+        }
+        currentNodes = nodes.toArray();
       }
 
     } else {
@@ -102,7 +110,7 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
     ArrayUtils.rotate(
         currentNodes, 0, currentNodes.length, roundRobinAmount.getAndUpdate(INCREMENT));
 
-    return new QueryPlan(currentNodes);
+    return new SimpleQueryPlan(currentNodes);
   }
 
   @Override
@@ -154,10 +162,10 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
 
     // For YCQL, when localDC is provided, use the DefaultNodeFilterHelper to find
     // out the local nodes and also maintain list of all the live nodes in every DC.
-    if (!StringUtils.isBlank(localDc)) {
-
-      if (filter.test(node)) {
-        distanceReporter.setDistance(node, NodeDistance.LOCAL);
+    if (!(localDc == null || localDc.trim().isEmpty())) {
+      NodeDistance distance = computeNodeDistance(node);
+      distanceReporter.setDistance(node, distance);
+      if (distance == NodeDistance.LOCAL) {
         if (node.getState() != NodeState.DOWN) {
           // This includes state == UNKNOWN. If the node turns out to be unreachable, this
           // will be
@@ -216,10 +224,7 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
       handleSuccess = true;
     }
 
-    if (liveNodes.contains(node)) {
-      liveNodes.remove(node);
-      handleSuccess = true;
-    }
+    handleSuccess = liveNodes.remove(node) ? true : handleSuccess;
 
     return handleSuccess;
   }

@@ -21,9 +21,11 @@ import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.metadata.schema.Describable;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
+import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.util.Collections;
 import java.util.List;
 
 public interface UserDefinedType extends DataType, Describable {
@@ -39,9 +41,41 @@ public interface UserDefinedType extends DataType, Describable {
   @NonNull
   List<CqlIdentifier> getFieldNames();
 
-  int firstIndexOf(CqlIdentifier id);
+  /**
+   * @apiNote the default implementation only exists for backward compatibility. It wraps the result
+   *     of {@link #firstIndexOf(CqlIdentifier)} in a singleton list, which is not entirely correct,
+   *     as it will only return the first occurrence. Therefore it also logs a warning.
+   *     <p>Implementors should always override this method (all built-in driver implementations
+   *     do).
+   */
+  @NonNull
+  default List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+    Loggers.USER_DEFINED_TYPE.warn(
+        "{} should override allIndicesOf(CqlIdentifier), the default implementation is a "
+            + "workaround for backward compatibility, it only returns the first occurrence",
+        getClass().getName());
+    return Collections.singletonList(firstIndexOf(id));
+  }
 
-  int firstIndexOf(String name);
+  int firstIndexOf(@NonNull CqlIdentifier id);
+
+  /**
+   * @apiNote the default implementation only exists for backward compatibility. It wraps the result
+   *     of {@link #firstIndexOf(String)} in a singleton list, which is not entirely correct, as it
+   *     will only return the first occurrence. Therefore it also logs a warning.
+   *     <p>Implementors should always override this method (all built-in driver implementations
+   *     do).
+   */
+  @NonNull
+  default List<Integer> allIndicesOf(@NonNull String name) {
+    Loggers.USER_DEFINED_TYPE.warn(
+        "{} should override allIndicesOf(String), the default implementation is a "
+            + "workaround for backward compatibility, it only returns the first occurrence",
+        getClass().getName());
+    return Collections.singletonList(firstIndexOf(name));
+  }
+
+  int firstIndexOf(@NonNull String name);
 
   default boolean contains(@NonNull CqlIdentifier id) {
     return firstIndexOf(id) >= 0;

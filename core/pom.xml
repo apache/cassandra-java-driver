@@ -21,7 +21,7 @@
   <parent>
     <groupId>com.yugabyte</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.6.0-yb-13-SNAPSHOT</version>
+    <version>4.15.0-yb-1-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-core</artifactId>
   <!-- <packaging>bundle</packaging> -->
@@ -66,10 +66,6 @@
       <artifactId>jnr-posix</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.javatuples</groupId>
-      <artifactId>javatuples</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.xerial.snappy</groupId>
       <artifactId>snappy-java</artifactId>
       <optional>true</optional>
@@ -94,18 +90,17 @@
     <dependency>
       <groupId>com.esri.geometry</groupId>
       <artifactId>esri-geometry-api</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.tinkerpop</groupId>
       <artifactId>gremlin-core</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.tinkerpop</groupId>
       <artifactId>tinkergraph-gremlin</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.tinkerpop</groupId>
-      <artifactId>gremlin-driver</artifactId>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -126,6 +121,21 @@
     <dependency>
       <groupId>com.github.spotbugs</groupId>
       <artifactId>spotbugs-annotations</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.graalvm.sdk</groupId>
+      <artifactId>graal-sdk</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.graalvm.nativeimage</groupId>
+      <artifactId>svm</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor.tools</groupId>
+      <artifactId>blockhound</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
@@ -291,13 +301,16 @@
                   not required at runtime.
                   -->!net.jcip.annotations.*, !edu.umd.cs.findbugs.annotations.*,
                   <!--
-                  2) Use resolution:=optional for optional dependencies in order to make it possible
+                  2) Don't include GraalVM.
+                  -->!org.graalvm.*, !com.oracle.svm.*,
+                  <!--
+                  3) Use resolution:=optional for optional dependencies in order to make it possible
                   to use the driver without such dependencies in an OSGi environment, as long as
                   the application does not attempt to access their packages.
                   Note: dependencies marked as optional are by default included with optional
                   resolution in the manifest; we only need to manually set the resolution to
                   optional for dependencies declared as non-optional in the pom files.
-                  -->jnr.*;resolution:=optional, com.esri.core.geometry.*;resolution:=optional, org.reactivestreams.*;resolution:=optional, org.apache.tinkerpop.*;resolution:=optional, org.javatuples.*;resolution:=optional, *
+                  -->jnr.*;resolution:=optional, com.esri.core.geometry.*;resolution:=optional, org.reactivestreams.*;resolution:=optional, org.apache.tinkerpop.*;resolution:=optional, org.javatuples.*;resolution:=optional, reactor.blockhound.*;resolution:=optional, *
                 </Import-Package>
                 <Export-Package>com.datastax.oss.driver.*.core.*, com.datastax.dse.driver.*.core.*</Export-Package>
               </instructions>

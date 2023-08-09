@@ -15,12 +15,14 @@
  */
 package com.datastax.oss.driver.api.mapper.annotations;
 
+import com.datastax.dse.driver.api.core.cql.reactive.ReactiveResultSet;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
+import com.datastax.oss.driver.api.mapper.result.MapperResultProducer;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -110,6 +112,12 @@ import java.util.function.UnaryOperator;
  * &#64;Insert(ifNotExists = true)
  * CompletableFuture&lt;Optional&lt;Product&gt;&gt; insertIfNotExists(Product product);
  *       </pre>
+ *   <li>a {@link ReactiveResultSet}.
+ *       <pre>
+ * &#64;Insert
+ * ReactiveResultSet insertReactive(Product product);
+ *       </pre>
+ *   <li>a {@linkplain MapperResultProducer custom type}.
  * </ul>
  *
  * <h3>Target keyspace and table</h3>
