@@ -35,7 +35,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicLongArray;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +79,7 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
     ConsistencyLevel requestConsistencyLevel = findConsistencyLevelForRequest(request);
 
     // LocalDC: Requests will routed to local DC only for CL.ONE or CL.YB_CONSISTENT_PREFIX
-    if (!StringUtils.isBlank(localDc)
+    if (!(localDc == null || localDc.trim().isEmpty())
         && requestConsistencyLevel == ConsistencyLevel.YB_CONSISTENT_PREFIX) {
 
       currentNodes = liveNodesInLocalDc.toArray();
@@ -163,7 +162,7 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
 
     // For YCQL, when localDC is provided, use the DefaultNodeFilterHelper to find
     // out the local nodes and also maintain list of all the live nodes in every DC.
-    if (!StringUtils.isBlank(localDc)) {
+    if (!(localDc == null || localDc.trim().isEmpty())) {
       NodeDistance distance = computeNodeDistance(node);
       distanceReporter.setDistance(node, distance);
       if (distance == NodeDistance.LOCAL) {
