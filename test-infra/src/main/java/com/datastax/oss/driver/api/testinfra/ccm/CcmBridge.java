@@ -44,7 +44,7 @@ import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.LogOutputStream;
 import org.apache.commons.exec.PumpStreamHandler;
-import org.apache.commons.exec.environment.EnvironmentUtils;
+import org.assertj.core.util.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -259,7 +259,12 @@ public class CcmBridge implements AutoCloseable {
   }
 
   public void dsetool(int node, String... args) {
-    execute(String.format("node%d dsetool %s", node, Joiner.on(" ").join(args)));
+    List<String> cmdAndArgs = Lists.newArrayList(String.format("node%d", node), "dsetool");
+    cmdAndArgs.addAll(Arrays.asList(args));
+    overrideJvmVersionForDseWorkloads()
+        .ifPresent(jvmVersion -> cmdAndArgs.add(String.format("--jvm_version=%d", jvmVersion)));
+    LOG.info(String.join(" ", cmdAndArgs));
+    execute(cmdAndArgs.toArray(new String[0]));
   }
 
   public void reloadCore(int node, String keyspace, String table, boolean reindex) {
@@ -268,8 +273,11 @@ public class CcmBridge implements AutoCloseable {
 
   public void start() {
     if (started.compareAndSet(false, true)) {
+      List<String> cmdAndArgs = Lists.newArrayList("start", jvmArgs, "--wait-for-binary-proto");
+      overrideJvmVersionForDseWorkloads()
+          .ifPresent(jvmVersion -> cmdAndArgs.add(String.format("--jvm_version=%d", jvmVersion)));
       try {
-        execute("start", jvmArgs, "--wait-for-binary-proto");
+        execute(cmdAndArgs.toArray(new String[0]));
       } catch (RuntimeException re) {
         // if something went wrong starting CCM, see if we can also dump the error
         executeCheckLogError();
@@ -297,7 +305,10 @@ public class CcmBridge implements AutoCloseable {
   }
 
   public void start(int n) {
-    execute("node" + n, "start");
+    List<String> cmdAndArgs = Lists.newArrayList("node" + n, "start");
+    overrideJvmVersionForDseWorkloads()
+        .ifPresent(jvmVersion -> cmdAndArgs.add(String.format("--jvm_version=%d", jvmVersion)));
+    execute(cmdAndArgs.toArray(new String[0]));
   }
 
   public void stop(int n) {
@@ -379,21 +390,7 @@ public class CcmBridge implements AutoCloseable {
       executor.setStreamHandler(streamHandler);
       executor.setWatchdog(watchDog);
 
-      // under java11+, ccm selects wrong java version for dse
-      // force it to use java8 by mapping JAVA8_HOME to JAVA_HOME
-      Map<String, String> ccmEnv = null;
-      String javaVersion = System.getProperty("java.version");
-      if (DSE_ENABLEMENT && !javaVersion.startsWith("1.8")) {
-        String java8Home = System.getenv("JAVA8_HOME");
-        if (java8Home != null && !java8Home.isEmpty()) {
-          ccmEnv = EnvironmentUtils.getProcEnvironment();
-          ccmEnv.put("JAVA_HOME", java8Home);
-          LOG.debug("Setting JAVA_HOME for ccm to " + java8Home);
-        } else {
-          LOG.warn("Dse is enabled but you are not running java8, consider setting JAVA8_HOME");
-        }
-      }
-      int retValue = executor.execute(cli, ccmEnv);
+      int retValue = executor.execute(cli);
       if (retValue != 0) {
         LOG.error("Non-zero exit code ({}) returned from executing ccm command: {}", retValue, cli);
       }
@@ -429,6 +426,44 @@ public class CcmBridge implements AutoCloseable {
       LOG.warn("Failure to write keystore, SSL-enabled servers may fail to start.", e);
     }
     return f;
+  }
+
+  /**
+   * Get the current JVM major version (1.8.0_372 -> 8, 11.0.19 -> 11)
+   *
+   * @return major version of current JVM
+   */
+  private static int getCurrentJvmMajorVersion() {
+    String version = System.getProperty("java.version");
+    if (version.startsWith("1.")) {
+      version = version.substring(2, 3);
+    } else {
+      int dot = version.indexOf(".");
+      if (dot != -1) {
+        version = version.substring(0, dot);
+      }
+    }
+    return Integer.parseInt(version);
+  }
+
+  private Optional<Integer> overrideJvmVersionForDseWorkloads() {
+    if (getCurrentJvmMajorVersion() <= 8) {
+      return Optional.empty();
+    }
+
+    if (!DSE_ENABLEMENT || !getDseVersion().isPresent()) {
+      return Optional.empty();
+    }
+
+    if (getDseVersion().get().compareTo(Version.parse("6.8.19")) < 0) {
+      return Optional.empty();
+    }
+
+    if (dseWorkloads.contains("graph")) {
+      return Optional.of(8);
+    }
+
+    return Optional.empty();
   }
 
   public static Builder builder() {
