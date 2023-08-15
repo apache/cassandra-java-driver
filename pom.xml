@@ -903,7 +903,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </plugin>
     </plugins>
   </build>
-  <!-- another interesting comment reviewer will ask me to remove -->
   <profiles>
     <profile>
       <id>release</id>
