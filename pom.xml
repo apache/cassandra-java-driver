@@ -83,6 +83,7 @@
     <graalapi.version>22.0.0.2</graalapi.version>
     <skipTests>false</skipTests>
     <skipUnitTests>${skipTests}</skipUnitTests>
+    <!-- some interesting change to code which reviewer will comment on -->
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -902,6 +903,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </plugin>
     </plugins>
   </build>
+  <!-- another interesting comment reviewer will ask me to remove -->
   <profiles>
     <profile>
       <id>release</id>
