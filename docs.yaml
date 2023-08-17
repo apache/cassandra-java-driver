@@ -126,7 +126,7 @@ versions:
   - name: '3.7'
     ref: '3.7.2'
   - name: '3.6'
-    ref: '3.6.0_docs'
+    ref: 'b10ea1828'
   - name: '3.5'
     ref: '3.5.x'
   - name: '3.4'
