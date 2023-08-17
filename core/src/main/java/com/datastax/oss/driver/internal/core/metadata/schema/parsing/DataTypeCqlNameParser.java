@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.schema.ShallowUserDefinedType;
 import com.datastax.oss.driver.internal.core.type.DefaultTupleType;
+import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import com.datastax.oss.driver.internal.core.type.codec.ParseUtils;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -135,6 +136,16 @@ public class DataTypeCqlNameParser implements DataTypeParser {
         componentTypesBuilder.add(parse(rawType, keyspaceId, false, userTypes, context));
       }
       return new DefaultTupleType(componentTypesBuilder.build(), context);
+    }
+
+    if (type.equalsIgnoreCase("vector")) {
+      if (parameters.size() != 2) {
+        throw new IllegalArgumentException(
+            String.format("Expecting two parameters for vector custom type, got %s", parameters));
+      }
+      DataType subType = parse(parameters.get(0), keyspaceId, false, userTypes, context);
+      int dimensions = Integer.parseInt(parameters.get(1));
+      return new DefaultVectorType(subType, dimensions);
     }
 
     throw new IllegalArgumentException("Could not parse type name " + toParse);

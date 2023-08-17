@@ -25,6 +25,10 @@ import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.testinfra.*;
+import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
+import com.datastax.oss.driver.api.testinfra.requirement.VersionRequirement;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 import org.junit.AssumptionViolatedException;
@@ -84,6 +88,25 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
 
   @Override
   public Statement apply(Statement base, Description description) {
+    BackendType backend =
+        ccmBridge.getDseVersion().isPresent() ? BackendType.DSE : BackendType.CASSANDRA;
+    Version version = ccmBridge.getDseVersion().orElseGet(ccmBridge::getCassandraVersion);
+    Collection<VersionRequirement> requirements = VersionRequirement.fromAnnotations(description);
+
+    if (!VersionRequirement.meetsAny(requirements, backend, version)) {
+      // requirements not met, throw reasoning assumption to skip test
+      return new Statement() {
+        @Override
+        public void evaluate() {
+          throw new AssumptionViolatedException(
+              VersionRequirement.buildReasonString(requirements, backend, version));
+        }
+      };
+    }
+
+    // Legacy skipping:
+    // TODO: Use only VersionRequirement
+
     // Scylla-specific annotations
     ScyllaSkip scyllaSkip = description.getAnnotation(ScyllaSkip.class);
     if (scyllaSkip != null) {

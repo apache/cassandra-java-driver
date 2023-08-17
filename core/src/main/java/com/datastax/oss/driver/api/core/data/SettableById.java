@@ -560,6 +560,30 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
   }
 
   /**
+   * Sets the value for all occurrences of {@code id} to the provided {@code vector}.
+   *
+   * <p>By default, this works with CQL type {@code vector}.
+   *
+   * <p>If you want to avoid the overhead of building a {@code CqlIdentifier}, use the variant of
+   * this method that takes a string argument.
+   *
+   * @throws IllegalArgumentException if the id is invalid.
+   */
+  @NonNull
+  @CheckReturnValue
+  default <ElementT extends Number> SelfT setVector(
+      @NonNull CqlIdentifier id,
+      @Nullable CqlVector<ElementT> v,
+      @NonNull Class<ElementT> elementsClass) {
+    SelfT result = null;
+    for (Integer i : allIndicesOf(id)) {
+      result = (result == null ? this : result).setVector(i, v, elementsClass);
+    }
+    assert result != null; // allIndices throws if there are no results
+    return result;
+  }
+
+  /**
    * Sets the value for all occurrences of {@code id} to the provided token.
    *
    * <p>This works with the CQL type matching the partitioner in use for this cluster: {@code

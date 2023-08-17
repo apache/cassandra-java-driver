@@ -22,6 +22,7 @@
 package com.datastax.oss.driver.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
@@ -134,20 +135,26 @@ public class BoundStatementCcmIT {
                 .build());
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   @Ignore("@IntegrationTestDisabledCassandra4Failure")
   public void should_not_allow_unset_value_when_protocol_less_than_v4() {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V3")
             .build();
-    try (CqlSession v3Session = SessionUtils.newSession(ccmRule, sessionRule.keyspace(), loader)) {
-      PreparedStatement prepared = v3Session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
+    try (CqlSession v3Session = SessionUtils.newSession(ccmRule, loader)) {
+      // Intentionally use fully qualified table here to avoid warnings as these are not supported
+      // by v3 protocol version, see JAVA-3068
+      PreparedStatement prepared =
+          v3Session.prepare(
+              String.format("INSERT INTO %s.test2 (k, v0) values (?, ?)", sessionRule.keyspace()));
 
       BoundStatement boundStatement =
           prepared.boundStatementBuilder().setString(0, name.getMethodName()).unset(1).build();
 
-      v3Session.execute(boundStatement);
+      assertThatThrownBy(() -> v3Session.execute(boundStatement))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining("Unset value at index");
     }
   }
 

@@ -17,6 +17,7 @@ package com.datastax.oss.driver.internal.core.type.codec.registry;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.data.CqlDuration;
+import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.type.DataTypes;
@@ -284,6 +285,55 @@ public class CachingCodecRegistryTestDataProviders {
             GenericType.mapOf(DefaultTupleValue.class, DefaultTupleValue.class)),
         ImmutableMap.of(
             ImmutableMap.of(udtValue, udtValue), ImmutableMap.of(tupleValue, tupleValue))
+      },
+      // vectors
+      {
+        DataTypes.vectorOf(DataTypes.INT, 1),
+        GenericType.vectorOf(Integer.class),
+        GenericType.vectorOf(Integer.class),
+        CqlVector.newInstance(1)
+      },
+      {
+        DataTypes.vectorOf(DataTypes.BIGINT, 1),
+        GenericType.vectorOf(Long.class),
+        GenericType.vectorOf(Long.class),
+        CqlVector.newInstance(1l)
+      },
+      {
+        DataTypes.vectorOf(DataTypes.SMALLINT, 1),
+        GenericType.vectorOf(Short.class),
+        GenericType.vectorOf(Short.class),
+        CqlVector.newInstance((short) 1)
+      },
+      {
+        DataTypes.vectorOf(DataTypes.TINYINT, 1),
+        GenericType.vectorOf(Byte.class),
+        GenericType.vectorOf(Byte.class),
+        CqlVector.newInstance((byte) 1)
+      },
+      {
+        DataTypes.vectorOf(DataTypes.FLOAT, 1),
+        GenericType.vectorOf(Float.class),
+        GenericType.vectorOf(Float.class),
+        CqlVector.newInstance(1.0f)
+      },
+      {
+        DataTypes.vectorOf(DataTypes.DOUBLE, 1),
+        GenericType.vectorOf(Double.class),
+        GenericType.vectorOf(Double.class),
+        CqlVector.newInstance(1.0d)
+      },
+      {
+        DataTypes.vectorOf(DataTypes.DECIMAL, 1),
+        GenericType.vectorOf(BigDecimal.class),
+        GenericType.vectorOf(BigDecimal.class),
+        CqlVector.newInstance(BigDecimal.ONE)
+      },
+      {
+        DataTypes.vectorOf(DataTypes.VARINT, 1),
+        GenericType.vectorOf(BigInteger.class),
+        GenericType.vectorOf(BigInteger.class),
+        CqlVector.newInstance(BigInteger.ONE)
       },
     };
   }

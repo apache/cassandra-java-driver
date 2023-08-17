@@ -22,7 +22,7 @@
 package com.datastax.oss.driver.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.codahale.metrics.Gauge;
@@ -45,6 +45,8 @@ import com.datastax.oss.driver.api.testinfra.CassandraSkip;
 import com.datastax.oss.driver.api.testinfra.ScyllaRequirement;
 import com.datastax.oss.driver.api.testinfra.ScyllaSkip;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -57,6 +59,7 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 import junit.framework.TestCase;
+import org.assertj.core.api.AbstractThrowableAssert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -387,9 +390,15 @@ public class PreparedStatementIT {
       assertThat(getPreparedCacheSize(session)).isEqualTo(0);
       String query = "SELECT * FROM prepared_statement_test WHERE a = ?";
 
-      // When
-      PreparedStatement preparedStatement1 = session.prepare(query);
-      PreparedStatement preparedStatement2 = session.prepare(query);
+      // Send prepare requests, keep hold of CompletionStage objects to prevent them being removed
+      // from CqlPrepareAsyncProcessor#cache, see JAVA-3062
+      CompletionStage<PreparedStatement> preparedStatement1Future = session.prepareAsync(query);
+      CompletionStage<PreparedStatement> preparedStatement2Future = session.prepareAsync(query);
+
+      PreparedStatement preparedStatement1 =
+          CompletableFutures.getUninterruptibly(preparedStatement1Future);
+      PreparedStatement preparedStatement2 =
+          CompletableFutures.getUninterruptibly(preparedStatement2Future);
 
       // Then
       assertThat(preparedStatement1).isSameAs(preparedStatement2);
@@ -404,11 +413,17 @@ public class PreparedStatementIT {
       // Given
       assertThat(getPreparedCacheSize(session)).isEqualTo(0);
 
-      // When
+      // Send prepare requests, keep hold of CompletionStage objects to prevent them being removed
+      // from CqlPrepareAsyncProcessor#cache, see JAVA-3062
+      CompletionStage<PreparedStatement> preparedStatement1Future =
+          session.prepareAsync("SELECT * FROM prepared_statement_test WHERE a = ?");
+      CompletionStage<PreparedStatement> preparedStatement2Future =
+          session.prepareAsync("select * from prepared_statement_test where a = ?");
+
       PreparedStatement preparedStatement1 =
-          session.prepare("SELECT * FROM prepared_statement_test WHERE a = ?");
+          CompletableFutures.getUninterruptibly(preparedStatement1Future);
       PreparedStatement preparedStatement2 =
-          session.prepare("select * from prepared_statement_test where a = ?");
+          CompletableFutures.getUninterruptibly(preparedStatement2Future);
 
       // Then
       assertThat(preparedStatement1).isNotSameAs(preparedStatement2);
@@ -424,9 +439,17 @@ public class PreparedStatementIT {
       SimpleStatement statement =
           SimpleStatement.newInstance("SELECT * FROM prepared_statement_test");
 
-      // When
-      PreparedStatement preparedStatement1 = session.prepare(statement.setPageSize(1));
-      PreparedStatement preparedStatement2 = session.prepare(statement.setPageSize(4));
+      // Send prepare requests, keep hold of CompletionStage objects to prevent them being removed
+      // from CqlPrepareAsyncProcessor#cache, see JAVA-3062
+      CompletionStage<PreparedStatement> preparedStatement1Future =
+          session.prepareAsync(statement.setPageSize(1));
+      CompletionStage<PreparedStatement> preparedStatement2Future =
+          session.prepareAsync(statement.setPageSize(4));
+
+      PreparedStatement preparedStatement1 =
+          CompletableFutures.getUninterruptibly(preparedStatement1Future);
+      PreparedStatement preparedStatement2 =
+          CompletableFutures.getUninterruptibly(preparedStatement2Future);
 
       // Then
       assertThat(preparedStatement1).isNotSameAs(preparedStatement2);
@@ -438,14 +461,11 @@ public class PreparedStatementIT {
   }
 
   /**
-   * This test relies on CASSANDRA-15252 to reproduce the error condition. If the bug gets fixed in
-   * Cassandra, we'll need to add a version restriction.
+   * This method reproduces CASSANDRA-15252 which is fixed in 3.0.26/3.11.12/4.0.2.
    *
    * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-15252">CASSANDRA-15252</a>
    */
-  @Test
-  @Ignore("@IntegrationTestDisabledCassandra3Failure")
-  public void should_fail_fast_if_id_changes_on_reprepare() {
+  private AbstractThrowableAssert<?, ? extends Throwable> assertableReprepareAfterIdChange() {
     try (CqlSession session = SessionUtils.newSession(ccmRule)) {
       PreparedStatement preparedStatement =
           session.prepare(
@@ -458,10 +478,41 @@ public class PreparedStatementIT {
       executeDdl("DROP TABLE prepared_statement_test");
       executeDdl("CREATE TABLE prepared_statement_test (a int PRIMARY KEY, b int, c int)");
 
-      assertThatThrownBy(() -> session.execute(preparedStatement.bind(1)))
-          .isInstanceOf(IllegalStateException.class)
-          .hasMessageContaining("ID mismatch while trying to reprepare");
+      return assertThatCode(() -> session.execute(preparedStatement.bind(1)));
     }
+  }
+
+  // Add version bounds to the DSE requirement if there is a version containing fix for
+  // CASSANDRA-15252
+  @BackendRequirement(
+      type = BackendType.DSE,
+      description = "No DSE version contains fix for CASSANDRA-15252")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "3.0.0", maxExclusive = "3.0.26")
+  @BackendRequirement(
+      type = BackendType.CASSANDRA,
+      minInclusive = "3.11.0",
+      maxExclusive = "3.11.12")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "4.0.0", maxExclusive = "4.0.2")
+  @Test
+  @Ignore("@IntegrationTestDisabledCassandra3Failure")
+  public void should_fail_fast_if_id_changes_on_reprepare() {
+    assertableReprepareAfterIdChange()
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("ID mismatch while trying to reprepare");
+  }
+
+  @BackendRequirement(
+      type = BackendType.CASSANDRA,
+      minInclusive = "3.0.26",
+      maxExclusive = "3.11.0")
+  @BackendRequirement(
+      type = BackendType.CASSANDRA,
+      minInclusive = "3.11.12",
+      maxExclusive = "4.0.0")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "4.0.2")
+  @Test
+  public void handle_id_changes_on_reprepare() {
+    assertableReprepareAfterIdChange().doesNotThrowAnyException();
   }
 
   @Test

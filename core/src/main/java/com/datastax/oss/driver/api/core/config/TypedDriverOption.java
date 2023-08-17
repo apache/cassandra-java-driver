@@ -620,7 +620,7 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<Boolean> NETTY_DAEMON =
       new TypedDriverOption<>(DefaultDriverOption.NETTY_DAEMON, GenericType.BOOLEAN);
   /**
-   * The location of the cloud secure bundle used to connect to Datastax Apache Cassandra as a
+   * The location of the cloud secure bundle used to connect to DataStax Apache Cassandra as a
    * service.
    */
   public static final TypedDriverOption<String> CLOUD_SECURE_CONNECT_BUNDLE =

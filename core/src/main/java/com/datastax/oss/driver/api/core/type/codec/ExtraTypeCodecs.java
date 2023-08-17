@@ -16,8 +16,10 @@
 package com.datastax.oss.driver.api.core.type.codec;
 
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
+import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import com.datastax.oss.driver.internal.core.type.codec.SimpleBlobCodec;
 import com.datastax.oss.driver.internal.core.type.codec.TimestampCodec;
 import com.datastax.oss.driver.internal.core.type.codec.extras.OptionalCodec;
@@ -36,6 +38,7 @@ import com.datastax.oss.driver.internal.core.type.codec.extras.time.LocalTimesta
 import com.datastax.oss.driver.internal.core.type.codec.extras.time.PersistentZonedTimestampCodec;
 import com.datastax.oss.driver.internal.core.type.codec.extras.time.TimestampMillisCodec;
 import com.datastax.oss.driver.internal.core.type.codec.extras.time.ZonedTimestampCodec;
+import com.datastax.oss.driver.internal.core.type.codec.extras.vector.FloatVectorToArrayCodec;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
@@ -478,5 +481,10 @@ public class ExtraTypeCodecs {
   public static <T> TypeCodec<T> json(
       @NonNull Class<T> javaType, @NonNull ObjectMapper objectMapper) {
     return new JsonCodec<>(javaType, objectMapper);
+  }
+
+  /** Builds a new codec that maps CQL float vectors of the specified size to an array of floats. */
+  public static TypeCodec<float[]> floatVectorToArray(int dimensions) {
+    return new FloatVectorToArrayCodec(new DefaultVectorType(DataTypes.FLOAT, dimensions));
   }
 }

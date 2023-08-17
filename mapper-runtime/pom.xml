@@ -26,7 +26,7 @@
   <parent>
     <groupId>com.scylladb</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.15.0.2-SNAPSHOT</version>
+    <version>4.17.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-mapper-runtime</artifactId>
   <packaging>bundle</packaging>
@@ -127,6 +127,7 @@
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <jvm>${testing.jvm}/bin/java</jvm>
           <threadCount>1</threadCount>
           <properties>
             <!-- tell TestNG not to run jUnit tests -->

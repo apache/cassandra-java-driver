@@ -171,6 +171,14 @@ public class TypesafeDriverConfigTest {
             entry("int1", 45));
   }
 
+  @Test
+  public void should_update_default_profile_on_reload() {
+    TypesafeDriverConfig config = parse("int1 = 42\n profiles { profile1 { int1 = 43 } }");
+    assertThat(config.getDefaultProfile().getInt(MockOptions.INT1)).isEqualTo(42);
+    config.reload(ConfigFactory.parseString("int1 = 44\n profiles { profile1 { int1 = 45 } }"));
+    assertThat(config.getDefaultProfile().getInt(MockOptions.INT1)).isEqualTo(44);
+  }
+
   private TypesafeDriverConfig parse(String configString) {
     Config config = ConfigFactory.parseString(configString);
     return new TypesafeDriverConfig(config);

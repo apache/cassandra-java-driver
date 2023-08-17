@@ -512,6 +512,25 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
   }
 
   /**
+   * Returns the value for the first occurrence of {@code name} as a vector.
+   *
+   * <p>By default, this works with CQL type {@code vector}.
+   *
+   * <p>If an identifier appears multiple times, this can only be used to access the first value.
+   * For the other ones, use positional getters.
+   *
+   * <p>This method deals with case sensitivity in the way explained in the documentation of {@link
+   * AccessibleByName}.
+   *
+   * @throws IllegalArgumentException if the name is invalid.
+   */
+  @Nullable
+  default <ElementT extends Number> CqlVector<ElementT> getVector(
+      @NonNull String name, @NonNull Class<ElementT> elementsClass) {
+    return getVector(firstIndexOf(name), elementsClass);
+  }
+
+  /**
    * Returns the value for the first occurrence of {@code name} as a token.
    *
    * <p>Note that, for simplicity, this method relies on the CQL type of the column to pick the

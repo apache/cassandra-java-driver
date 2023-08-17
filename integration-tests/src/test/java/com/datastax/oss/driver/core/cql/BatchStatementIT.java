@@ -22,6 +22,7 @@
 package com.datastax.oss.driver.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -345,7 +346,7 @@ public class BatchStatementIT {
     sessionRule.session().execute(batchStatement);
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   @Ignore("@IntegrationTestDisabledCassandra4Failure")
   public void should_not_allow_unset_value_when_protocol_less_than_v4() {
     //    CREATE TABLE test (k0 text, k1 int, v int, PRIMARY KEY (k0, k1))
@@ -353,9 +354,13 @@ public class BatchStatementIT {
         SessionUtils.configLoaderBuilder()
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V3")
             .build();
-    try (CqlSession v3Session = SessionUtils.newSession(ccmRule, sessionRule.keyspace(), loader)) {
+    try (CqlSession v3Session = SessionUtils.newSession(ccmRule, loader)) {
+      // Intentionally use fully qualified table here to avoid warnings as these are not supported
+      // by v3 protocol version, see JAVA-3068
       PreparedStatement prepared =
-          v3Session.prepare("INSERT INTO test (k0, k1, v) values (?, ?, ?)");
+          v3Session.prepare(
+              String.format(
+                  "INSERT INTO %s.test (k0, k1, v) values (?, ?, ?)", sessionRule.keyspace()));
 
       BatchStatementBuilder builder = BatchStatement.builder(DefaultBatchType.LOGGED);
       builder.addStatements(
@@ -369,7 +374,9 @@ public class BatchStatementIT {
               .unset(2)
               .build());
 
-      v3Session.execute(builder.build());
+      assertThatThrownBy(() -> v3Session.execute(builder.build()))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining("Unset value at index");
     }
   }
 

@@ -22,6 +22,9 @@ import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ScyllaRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
+import com.datastax.oss.driver.api.testinfra.requirement.VersionRequirement;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 import org.junit.AssumptionViolatedException;
@@ -40,6 +43,23 @@ public class CcmPaxExam extends PaxExam {
   @Override
   public void run(RunNotifier notifier) {
     Description description = getDescription();
+    BackendType backend =
+        CCM_BRIDGE.getDseVersion().isPresent() ? BackendType.DSE : BackendType.CASSANDRA;
+    Version version = CCM_BRIDGE.getDseVersion().orElseGet(CCM_BRIDGE::getCassandraVersion);
+
+    Collection<VersionRequirement> requirements =
+        VersionRequirement.fromAnnotations(getDescription());
+    if (!VersionRequirement.meetsAny(requirements, backend, version)) {
+      // requirements not met, throw reasoning assumption to skip test
+      AssumptionViolatedException e =
+          new AssumptionViolatedException(
+              VersionRequirement.buildReasonString(requirements, backend, version));
+      notifier.fireTestAssumptionFailed(new Failure(description, e));
+    }
+
+    // Legacy skipping:
+    // TODO: use VersionRequirement
+
     CassandraRequirement cassandraRequirement =
         description.getAnnotation(CassandraRequirement.class);
     if (cassandraRequirement != null) {

@@ -2,6 +2,21 @@
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.17.0
+
+- [improvement] JAVA-3070: Make CqlVector and CqlDuration serializable
+- [improvement] JAVA-3085: Initialize c.d.o.d.i.core.util.Dependency at Graal native image build-time
+- [improvement] JAVA-3061: CqlVector API improvements, add support for accessing vectors directly as float arrays
+- [improvement] JAVA-3042: Enable automated testing for Java17
+- [improvement] JAVA-3050: Upgrade Netty to 4.1.94
+
+### 4.16.0
+
+- [improvement] JAVA-3058: Clear prepared statement cache on UDT type change event
+- [improvement] JAVA-3060: Add vector type, codec + support for parsing CQL type
+- [improvement] DOC-2813: Add error handling guidance linking to a helpful blog post
+- [improvement] JAVA-3045: Fix GraalVM native image support for GraalVM 22.2
+
 ### 4.15.0
 
 - [improvement] JAVA-3041: Update Guava session sample code to use ProgrammaticArguments
@@ -617,7 +632,17 @@ changelog](https://docs.datastax.com/en/developer/java-driver-dse/latest/changel
 - [bug] JAVA-1499: Wait for load balancing policy at cluster initialization
 - [new feature] JAVA-1495: Add prepared statements
 
+## 3.11.3
+
+- [improvement] JAVA-3023: Upgrade Netty to 4.1.77, 3.x edition
+
+## 3.11.2
+
+- [improvement] JAVA-3008: Upgrade Netty to 4.1.75, 3.x edition
+- [improvement] JAVA-2984: Upgrade Jackson to resolve high-priority CVEs
+
 ## 3.11.1
+
 - [bug] JAVA-2967: Support native transport peer information for DSE 6.8.
 - [bug] JAVA-2976: Support missing protocol v5 error codes CAS_WRITE_UNKNOWN, CDC_WRITE_FAILURE.
 

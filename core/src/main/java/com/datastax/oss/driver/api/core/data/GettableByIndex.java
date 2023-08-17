@@ -437,6 +437,19 @@ public interface GettableByIndex extends AccessibleByIndex {
   }
 
   /**
+   * Returns the {@code i}th value as a vector.
+   *
+   * <p>By default, this works with CQL type {@code vector}.
+   *
+   * @throws IndexOutOfBoundsException if the index is invalid.
+   */
+  @Nullable
+  default <ElementT extends Number> CqlVector<ElementT> getVector(
+      int i, @NonNull Class<ElementT> elementsClass) {
+    return get(i, GenericType.vectorOf(elementsClass));
+  }
+
+  /**
    * Returns the {@code i}th value as a token.
    *
    * <p>Note that, for simplicity, this method relies on the CQL type of the column to pick the

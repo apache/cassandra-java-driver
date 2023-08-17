@@ -15,17 +15,22 @@
  */
 package com.datastax.oss.driver.api.core.type;
 
+import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.detach.Detachable;
+import com.datastax.oss.driver.internal.core.metadata.schema.parsing.DataTypeClassNameParser;
 import com.datastax.oss.driver.internal.core.type.DefaultCustomType;
 import com.datastax.oss.driver.internal.core.type.DefaultListType;
 import com.datastax.oss.driver.internal.core.type.DefaultMapType;
 import com.datastax.oss.driver.internal.core.type.DefaultSetType;
 import com.datastax.oss.driver.internal.core.type.DefaultTupleType;
+import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import com.datastax.oss.driver.internal.core.type.PrimitiveType;
+import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
+import java.util.List;
 
 /** Constants and factory methods to obtain data type instances. */
 public class DataTypes {
@@ -51,14 +56,31 @@ public class DataTypes {
   public static final DataType TINYINT = new PrimitiveType(ProtocolConstants.DataType.TINYINT);
   public static final DataType DURATION = new PrimitiveType(ProtocolConstants.DataType.DURATION);
 
+  private static final DataTypeClassNameParser classNameParser = new DataTypeClassNameParser();
+  private static final Splitter paramSplitter = Splitter.on(',').trimResults();
+
   @NonNull
   public static DataType custom(@NonNull String className) {
+
     // In protocol v4, duration is implemented as a custom type
-    if ("org.apache.cassandra.db.marshal.DurationType".equals(className)) {
-      return DURATION;
-    } else {
-      return new DefaultCustomType(className);
+    if (className.equals("org.apache.cassandra.db.marshal.DurationType")) return DURATION;
+
+    /* Vector support is currently implemented as a custom type but is also parameterized */
+    if (className.startsWith(DefaultVectorType.VECTOR_CLASS_NAME)) {
+      List<String> params =
+          paramSplitter.splitToList(
+              className.substring(
+                  DefaultVectorType.VECTOR_CLASS_NAME.length() + 1, className.length() - 1));
+      DataType subType = classNameParser.parse(params.get(0), AttachmentPoint.NONE);
+      int dimensions = Integer.parseInt(params.get(1));
+      if (dimensions <= 0) {
+        throw new IllegalArgumentException(
+            String.format(
+                "Request to create vector of size %d, size must be positive", dimensions));
+      }
+      return new DefaultVectorType(subType, dimensions);
     }
+    return new DefaultCustomType(className);
   }
 
   @NonNull
@@ -117,5 +139,9 @@ public class DataTypes {
   @NonNull
   public static TupleType tupleOf(@NonNull DataType... componentTypes) {
     return new DefaultTupleType(ImmutableList.copyOf(Arrays.asList(componentTypes)));
+  }
+
+  public static VectorType vectorOf(DataType subtype, int dimensions) {
+    return new DefaultVectorType(subtype, dimensions);
   }
 }
