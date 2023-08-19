@@ -27,6 +27,7 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -158,5 +159,9 @@ public abstract class MicrometerMetricUpdater<MetricT> extends AbstractMetricUpd
   protected DistributionSummary.Builder configureDistributionSummary(
       DistributionSummary.Builder builder, MetricT metric, MetricId id) {
     return builder.publishPercentileHistogram();
+  }
+
+  protected double[] toDoubleArray(List<Double> doubleList) {
+    return doubleList.stream().mapToDouble(Double::doubleValue).toArray();
   }
 }

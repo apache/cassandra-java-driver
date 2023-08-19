@@ -114,10 +114,9 @@ public class MicrometerNodeMetricUpdater extends MicrometerMetricUpdater<NodeMet
 
       if (profile.isDefined(DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_PUBLISH_PERCENTILES)) {
         builder.publishPercentiles(
-            profile.getDoubleList(DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_PUBLISH_PERCENTILES)
-                .stream()
-                .mapToDouble(Double::doubleValue)
-                .toArray());
+            toDoubleArray(
+                profile.getDoubleList(
+                    DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_PUBLISH_PERCENTILES)));
       }
       return builder;
     } else if (metric == DseNodeMetric.GRAPH_MESSAGES) {
@@ -136,10 +135,9 @@ public class MicrometerNodeMetricUpdater extends MicrometerMetricUpdater<NodeMet
           .percentilePrecision(profile.getInt(DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_DIGITS));
       if (profile.isDefined(DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_PUBLISH_PERCENTILES)) {
         builder.publishPercentiles(
-            profile.getDoubleList(DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_PUBLISH_PERCENTILES)
-                .stream()
-                .mapToDouble(Double::doubleValue)
-                .toArray());
+            toDoubleArray(
+                profile.getDoubleList(
+                    DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_PUBLISH_PERCENTILES)));
       }
       return builder;
     }
