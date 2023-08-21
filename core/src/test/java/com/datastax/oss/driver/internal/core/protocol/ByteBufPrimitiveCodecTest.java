@@ -219,8 +219,7 @@ public class ByteBufPrimitiveCodecTest {
             // contents : only 2 bytes
             0xca,
             0xfe);
-    assertThatThrownBy(() -> codec.readBytes(source))
-        .isInstanceOf(IndexOutOfBoundsException.class);
+    assertThatThrownBy(() -> codec.readBytes(source)).isInstanceOf(IndexOutOfBoundsException.class);
   }
 
   @Test
