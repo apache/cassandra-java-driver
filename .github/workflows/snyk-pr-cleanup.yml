@@ -1,11 +1,6 @@
 name: 🗑️ Snyk PR cleanup - merged/closed
 
 on:
-  pull_request:
-    types:
-      - closed
-    branches:
-      - 4.x
   workflow_dispatch:
 
 jobs:
