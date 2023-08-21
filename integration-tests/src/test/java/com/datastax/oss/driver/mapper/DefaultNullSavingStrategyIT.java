@@ -35,8 +35,9 @@ import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.function.BiConsumer;
@@ -53,7 +54,10 @@ import org.junit.rules.TestRule;
  * DefaultNullSavingStrategy} annotation.
  */
 @Category(ParallelizableTests.class)
-@CassandraRequirement(min = "2.2", description = "support for unset values")
+@BackendRequirement(
+    type = BackendType.CASSANDRA,
+    minInclusive = "2.2",
+    description = "support for unset values")
 public class DefaultNullSavingStrategyIT {
 
   private static final CcmRule CCM_RULE = CcmRule.getInstance();

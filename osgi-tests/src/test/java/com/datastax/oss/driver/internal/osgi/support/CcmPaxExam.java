@@ -15,12 +15,7 @@
  */
 package com.datastax.oss.driver.internal.osgi.support;
 
-import static com.datastax.oss.driver.internal.osgi.support.CcmStagedReactor.CCM_BRIDGE;
-
-import com.datastax.oss.driver.api.core.Version;
-import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
-import com.datastax.oss.driver.api.testinfra.requirement.VersionRequirement;
-import java.util.Collection;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirementRule;
 import org.junit.AssumptionViolatedException;
 import org.junit.runner.Description;
 import org.junit.runner.notification.Failure;
@@ -37,19 +32,12 @@ public class CcmPaxExam extends PaxExam {
   @Override
   public void run(RunNotifier notifier) {
     Description description = getDescription();
-    BackendType backend =
-        CCM_BRIDGE.getDseVersion().isPresent() ? BackendType.DSE : BackendType.CASSANDRA;
-    Version version = CCM_BRIDGE.getDseVersion().orElseGet(CCM_BRIDGE::getCassandraVersion);
-
-    Collection<VersionRequirement> requirements =
-        VersionRequirement.fromAnnotations(getDescription());
-    if (VersionRequirement.meetsAny(requirements, backend, version)) {
+    if (BackendRequirementRule.meetsDescriptionRequirements(description)) {
       super.run(notifier);
     } else {
       // requirements not met, throw reasoning assumption to skip test
       AssumptionViolatedException e =
-          new AssumptionViolatedException(
-              VersionRequirement.buildReasonString(requirements, backend, version));
+          new AssumptionViolatedException(BackendRequirementRule.buildReasonString(description));
       notifier.fireTestAssumptionFailed(new Failure(description, e));
     }
   }

@@ -20,8 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.specex.ConstantSpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.specex.NoSpeculativeExecutionPolicy;
@@ -33,7 +34,10 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-@DseRequirement(min = "6.8.0", description = "DSE 6.8 required for graph paging")
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "6.8.0",
+    description = "DSE 6.8 required for graph paging")
 @RunWith(DataProviderRunner.class)
 public class GraphSpeculativeExecutionIT {
 

@@ -16,8 +16,9 @@
 package com.datastax.dse.driver.api.core.graph;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import java.util.Collection;
@@ -28,7 +29,10 @@ import org.junit.ClassRule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@DseRequirement(min = "6.8.0", description = "DSE 6.8.0 required for Core graph support")
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "6.8.0",
+    description = "DSE 6.8.0 required for Core graph support")
 public class CoreGraphTextSearchIndexIT extends GraphTextSearchIndexITBase {
 
   private static final CustomCcmRule CCM_RULE =

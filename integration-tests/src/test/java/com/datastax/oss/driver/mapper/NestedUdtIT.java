@@ -38,8 +38,9 @@ import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -61,7 +62,10 @@ import org.junit.rules.TestRule;
 
 /** Tests that entities with UDTs nested at various levels are properly mapped. */
 @Category(ParallelizableTests.class)
-@CassandraRequirement(min = "2.2", description = "support for unset values")
+@BackendRequirement(
+    type = BackendType.CASSANDRA,
+    minInclusive = "2.2",
+    description = "support for unset values")
 public class NestedUdtIT {
 
   private static final CcmRule CCM_RULE = CcmRule.getInstance();

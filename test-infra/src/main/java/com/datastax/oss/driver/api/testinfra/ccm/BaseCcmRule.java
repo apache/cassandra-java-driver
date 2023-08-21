@@ -19,9 +19,7 @@ import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
-import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
-import com.datastax.oss.driver.api.testinfra.requirement.VersionRequirement;
-import java.util.Collection;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirementRule;
 import java.util.Optional;
 import org.junit.AssumptionViolatedException;
 import org.junit.runner.Description;
@@ -58,13 +56,7 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
 
   @Override
   public Statement apply(Statement base, Description description) {
-    BackendType backend =
-        ccmBridge.getDseVersion().isPresent() ? BackendType.DSE : BackendType.CASSANDRA;
-    Version version = ccmBridge.getDseVersion().orElseGet(ccmBridge::getCassandraVersion);
-
-    Collection<VersionRequirement> requirements = VersionRequirement.fromAnnotations(description);
-
-    if (VersionRequirement.meetsAny(requirements, backend, version)) {
+    if (BackendRequirementRule.meetsDescriptionRequirements(description)) {
       return super.apply(base, description);
     } else {
       // requirements not met, throw reasoning assumption to skip test
@@ -72,7 +64,7 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
         @Override
         public void evaluate() {
           throw new AssumptionViolatedException(
-              VersionRequirement.buildReasonString(requirements, backend, version));
+              BackendRequirementRule.buildReasonString(description));
         }
       };
     }

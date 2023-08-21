@@ -22,8 +22,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.dse.driver.api.core.graph.predicates.CqlCollection;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.CqlSessionRuleBuilder;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -41,7 +42,10 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@DseRequirement(min = "6.8", description = "DSE 6.8.0 required for collection predicates support")
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "6.8",
+    description = "DSE 6.8.0 required for collection predicates support")
 public class CqlCollectionIT {
 
   private static final CustomCcmRule CCM_RULE =

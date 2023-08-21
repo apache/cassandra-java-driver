@@ -22,7 +22,8 @@ import com.datastax.dse.driver.internal.core.auth.DseGssApiAuthProvider;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.Row;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.tngtech.java.junit.dataprovider.DataProvider;
@@ -32,7 +33,10 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-@DseRequirement(min = "5.0", description = "Required for DseAuthenticator")
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "5.0",
+    description = "Required for DseAuthenticator")
 @RunWith(DataProviderRunner.class)
 public class DseGssApiAuthProviderAlternateIT {
   @ClassRule public static EmbeddedAdsRule ads = new EmbeddedAdsRule(true);

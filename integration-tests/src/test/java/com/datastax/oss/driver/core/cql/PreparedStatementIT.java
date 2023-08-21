@@ -34,7 +34,6 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.type.DataTypes;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
@@ -148,7 +147,7 @@ public class PreparedStatementIT {
   }
 
   @Test
-  @CassandraRequirement(min = "4.0")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "4.0")
   public void should_update_metadata_when_schema_changed_across_executions() {
     // Given
     CqlSession session = sessionRule.session();
@@ -177,7 +176,7 @@ public class PreparedStatementIT {
   }
 
   @Test
-  @CassandraRequirement(min = "4.0")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "4.0")
   public void should_update_metadata_when_schema_changed_across_pages() {
     // Given
     CqlSession session = sessionRule.session();
@@ -222,7 +221,7 @@ public class PreparedStatementIT {
   }
 
   @Test
-  @CassandraRequirement(min = "4.0")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "4.0")
   public void should_update_metadata_when_schema_changed_across_sessions() {
     // Given
     CqlSession session1 = sessionRule.session();
@@ -269,7 +268,7 @@ public class PreparedStatementIT {
   }
 
   @Test
-  @CassandraRequirement(min = "4.0")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "4.0")
   public void should_fail_to_reprepare_if_query_becomes_invalid() {
     // Given
     CqlSession session = sessionRule.session();
@@ -288,13 +287,13 @@ public class PreparedStatementIT {
   }
 
   @Test
-  @CassandraRequirement(min = "4.0")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "4.0")
   public void should_not_store_metadata_for_conditional_updates() {
     should_not_store_metadata_for_conditional_updates(sessionRule.session());
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "2.2")
   public void should_not_store_metadata_for_conditional_updates_in_legacy_protocol() {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()

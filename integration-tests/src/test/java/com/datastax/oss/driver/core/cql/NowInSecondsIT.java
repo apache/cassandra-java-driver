@@ -24,9 +24,9 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -39,10 +39,11 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
-@CassandraRequirement(min = "4.0")
-@DseRequirement(
-    // Use next version -- not sure if it will be in by then, but as a reminder to check
-    min = "7.0",
+@BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "4.0")
+// Use next version -- not sure if it will be in by then, but as a reminder to check
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "7.0",
     description = "Feature not available in DSE yet")
 public class NowInSecondsIT {
 

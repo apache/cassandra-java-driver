@@ -22,8 +22,9 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
@@ -32,7 +33,10 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-@DseRequirement(min = "5.0.0", description = "DSE 5 required for Graph")
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "5.0.0",
+    description = "DSE 5 required for Graph")
 public class GraphAuthenticationIT {
 
   @ClassRule

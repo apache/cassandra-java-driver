@@ -18,8 +18,9 @@ package com.datastax.dse.driver.api.core.insights;
 import com.datastax.dse.driver.internal.core.insights.InsightsClient;
 import com.datastax.dse.driver.internal.core.insights.configuration.InsightsConfiguration;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import io.netty.util.concurrent.DefaultEventExecutor;
@@ -31,7 +32,10 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@DseRequirement(min = "6.7.0", description = "DSE 6.7.0 required for Insights support")
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "6.7.0",
+    description = "DSE 6.7.0 required for Insights support")
 public class InsightsClientIT {
   private static final StackTraceElement[] EMPTY_STACK_TRACE = {};
 

@@ -16,8 +16,9 @@
 package com.datastax.dse.driver.api.core.graph;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
@@ -30,7 +31,10 @@ import org.junit.ClassRule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@DseRequirement(min = "5.1", description = "DSE 5.1 required for graph geo indexing")
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "5.1",
+    description = "DSE 5.1 required for graph geo indexing")
 public class ClassicGraphGeoSearchIndexIT extends GraphGeoSearchIndexITBase {
   private static final CustomCcmRule CCM_RULE =
       CustomCcmRule.builder().withDseWorkloads("graph", "solr").build();

@@ -24,7 +24,8 @@ import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,10 @@ import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-@DseRequirement(min = "5.0", description = "Required for DseAuthenticator")
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "5.0",
+    description = "Required for DseAuthenticator")
 public class DseGssApiAuthProviderIT {
 
   @ClassRule public static EmbeddedAdsRule ads = new EmbeddedAdsRule();

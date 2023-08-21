@@ -23,8 +23,9 @@ import com.datastax.dse.driver.api.core.graph.DseGraph;
 import com.datastax.dse.driver.api.core.graph.GraphTestSupport;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import org.apache.tinkerpop.gremlin.process.traversal.AnonymousTraversalSource;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
@@ -37,7 +38,10 @@ import org.junit.rules.TestRule;
 
 // INFO: meta props are going away in NGDG
 
-@DseRequirement(min = "5.0.3", description = "DSE 5.0.3 required for remote TinkerPop support")
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "5.0.3",
+    description = "DSE 5.0.3 required for remote TinkerPop support")
 public class GraphTraversalMetaPropertiesRemoteIT {
 
   private static final CustomCcmRule CCM_RULE = GraphTestSupport.GRAPH_CCM_RULE_BUILDER.build();

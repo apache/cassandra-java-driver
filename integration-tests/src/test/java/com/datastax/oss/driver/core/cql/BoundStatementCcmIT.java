@@ -37,8 +37,9 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -353,7 +354,7 @@ public class BoundStatementCcmIT {
 
   // Test for JAVA-2066
   @Test
-  @CassandraRequirement(min = "2.2")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "2.2")
   public void should_compute_routing_key_when_indices_randomly_distributed() {
     try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
 
