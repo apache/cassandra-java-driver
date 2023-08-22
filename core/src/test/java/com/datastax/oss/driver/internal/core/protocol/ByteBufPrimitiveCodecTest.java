@@ -165,6 +165,64 @@ public class ByteBufPrimitiveCodecTest {
   }
 
   @Test
+  public void should_read_bytes_when_extra_data() {
+    ByteBuf source =
+        ByteBufs.wrap(
+            // length (as an int)
+            0x00,
+            0x00,
+            0x00,
+            0x04,
+            // contents
+            0xca,
+            0xfe,
+            0xba,
+            0xbe,
+            0xde,
+            0xda,
+            0xdd);
+    ByteBuffer bytes = codec.readBytes(source);
+    assertThat(Bytes.toHexString(bytes)).isEqualTo("0xcafebabe");
+  }
+
+  @Test
+  public void read_bytes_should_udpate_reader_index() {
+    ByteBuf source =
+        ByteBufs.wrap(
+            // length (as an int)
+            0x00,
+            0x00,
+            0x00,
+            0x04,
+            // contents
+            0xca,
+            0xfe,
+            0xba,
+            0xbe,
+            0xde,
+            0xda,
+            0xdd);
+    codec.readBytes(source);
+
+    assertThat(source.readerIndex()).isEqualTo(8);
+  }
+
+  @Test
+  public void read_bytes_should_throw_when_not_enough_content() {
+    ByteBuf source =
+        ByteBufs.wrap(
+            // length (as an int) : 4 bytes
+            0x00,
+            0x00,
+            0x00,
+            0x04,
+            // contents : only 2 bytes
+            0xca,
+            0xfe);
+    assertThatThrownBy(() -> codec.readBytes(source)).isInstanceOf(IndexOutOfBoundsException.class);
+  }
+
+  @Test
   public void should_read_null_bytes() {
     ByteBuf source = ByteBufs.wrap(0xFF, 0xFF, 0xFF, 0xFF); // -1 (as an int)
     assertThat(codec.readBytes(source)).isNull();

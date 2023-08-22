@@ -24,8 +24,9 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import java.time.Duration;
 import org.junit.ClassRule;
@@ -33,7 +34,10 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@DseRequirement(min = "5.0.0", description = "DSE 5 required for Graph")
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "5.0.0",
+    description = "DSE 5 required for Graph")
 public class GraphTimeoutsIT {
 
   public static CustomCcmRule ccmRule = CustomCcmRule.builder().withDseWorkloads("graph").build();

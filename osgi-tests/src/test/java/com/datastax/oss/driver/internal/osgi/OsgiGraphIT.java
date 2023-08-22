@@ -19,7 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.osgi.service.MailboxService;
 import com.datastax.oss.driver.api.osgi.service.graph.GraphMailboxService;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.internal.osgi.checks.DefaultServiceChecks;
 import com.datastax.oss.driver.internal.osgi.checks.GraphServiceChecks;
 import com.datastax.oss.driver.internal.osgi.support.BundleOptions;
@@ -35,7 +36,10 @@ import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 
 @RunWith(CcmPaxExam.class)
 @ExamReactorStrategy(CcmExamReactorFactory.class)
-@DseRequirement(min = "6.8", description = "Requires Core Graph")
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "6.8",
+    description = "Requires Core Graph")
 public class OsgiGraphIT {
 
   @Inject MailboxService service;

@@ -43,8 +43,9 @@ import com.datastax.oss.driver.api.mapper.annotations.SchemaHint;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.util.LoggerTest;
@@ -61,7 +62,10 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
-@CassandraRequirement(min = "3.4", description = "Creates a SASI index")
+@BackendRequirement(
+    type = BackendType.CASSANDRA,
+    minInclusive = "3.4",
+    description = "Creates a SASI index")
 public class SchemaValidationIT extends InventoryITBase {
 
   private static CcmRule ccm = CcmRule.getInstance();

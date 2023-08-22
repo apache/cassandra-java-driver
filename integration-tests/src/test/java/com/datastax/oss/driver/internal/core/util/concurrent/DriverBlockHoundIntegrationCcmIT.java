@@ -26,8 +26,9 @@ import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.IsolatedTests;
 import java.time.Duration;
@@ -51,8 +52,9 @@ import reactor.test.StepVerifier;
  * {@link DriverBlockHoundIntegration} are being applied, and especially when continuous paging is
  * used.
  */
-@DseRequirement(
-    min = "5.1.0",
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "5.1.0",
     description = "Continuous paging is only available from 5.1.0 onwards")
 @Category(IsolatedTests.class)
 public class DriverBlockHoundIntegrationCcmIT extends ContinuousPagingITBase {

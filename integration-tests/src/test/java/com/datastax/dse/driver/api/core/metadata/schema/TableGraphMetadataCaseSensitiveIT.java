@@ -20,8 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.CqlSessionRuleBuilder;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -38,7 +39,7 @@ import org.junit.rules.TestRule;
  * case-sensitive column names in its tables. See JAVA-2492 for more information.
  */
 @Category(ParallelizableTests.class)
-@DseRequirement(min = "6.8")
+@BackendRequirement(type = BackendType.DSE, minInclusive = "6.8")
 public class TableGraphMetadataCaseSensitiveIT {
 
   private static final CcmRule CCM_RULE = CcmRule.getInstance();

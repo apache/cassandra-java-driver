@@ -21,14 +21,13 @@ import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.cqlproxy.CqlProxyBridge;
-import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
-import com.datastax.oss.driver.api.testinfra.requirement.VersionRequirement;
 import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Collection;
 import java.util.Collections;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirementRule;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
@@ -101,13 +100,7 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
 
   @Override
   public Statement apply(Statement base, Description description) {
-    BackendType backend =
-        ccmBridge.getDseVersion().isPresent() ? BackendType.DSE : BackendType.CASSANDRA;
-    Version version = ccmBridge.getDseVersion().orElseGet(ccmBridge::getCassandraVersion);
-
-    Collection<VersionRequirement> requirements = VersionRequirement.fromAnnotations(description);
-
-    if (VersionRequirement.meetsAny(requirements, backend, version)) {
+    if (BackendRequirementRule.meetsDescriptionRequirements(description)) {
       return super.apply(base, description);
     } else {
       // requirements not met, throw reasoning assumption to skip test
@@ -115,7 +108,7 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
         @Override
         public void evaluate() {
           throw new AssumptionViolatedException(
-              VersionRequirement.buildReasonString(requirements, backend, version));
+              BackendRequirementRule.buildReasonString(description));
         }
       };
     }

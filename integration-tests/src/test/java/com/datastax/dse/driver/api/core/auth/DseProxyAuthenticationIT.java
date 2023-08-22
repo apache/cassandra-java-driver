@@ -27,7 +27,8 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.UnauthorizedException;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
 import java.util.List;
@@ -36,7 +37,10 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-@DseRequirement(min = "5.1", description = "Required for DseAuthenticator with proxy")
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "5.1",
+    description = "Required for DseAuthenticator with proxy")
 public class DseProxyAuthenticationIT {
   private static String bobPrincipal;
   private static String charliePrincipal;

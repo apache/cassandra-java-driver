@@ -21,7 +21,11 @@ import java.lang.annotation.RetentionPolicy;
 /**
  * Annotation for a Class or Method that defines a Cassandra Version requirement. If the cassandra
  * version in use does not meet the version requirement, the test is skipped.
+ *
+ * @deprecated Replaced by {@link
+ *     com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement}
  */
+@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CassandraRequirement {
 

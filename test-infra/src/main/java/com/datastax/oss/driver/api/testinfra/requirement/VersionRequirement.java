@@ -100,6 +100,9 @@ public class VersionRequirement {
     CassandraRequirement cassandraRequirement =
         description.getAnnotation(CassandraRequirement.class);
     DseRequirement dseRequirement = description.getAnnotation(DseRequirement.class);
+    // matches methods/classes with one @BackendRequirement annotation
+    BackendRequirement backendRequirement = description.getAnnotation(BackendRequirement.class);
+    // matches methods/classes with two or more @BackendRequirement annotations
     BackendRequirements backendRequirements = description.getAnnotation(BackendRequirements.class);
 
     // build list of required versions
@@ -109,6 +112,9 @@ public class VersionRequirement {
     }
     if (dseRequirement != null) {
       requirements.add(VersionRequirement.fromDseRequirement(dseRequirement));
+    }
+    if (backendRequirement != null) {
+      requirements.add(VersionRequirement.fromBackendRequirement(backendRequirement));
     }
     if (backendRequirements != null) {
       Arrays.stream(backendRequirements.value())

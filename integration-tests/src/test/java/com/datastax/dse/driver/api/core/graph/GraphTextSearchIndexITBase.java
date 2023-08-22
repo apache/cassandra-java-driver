@@ -18,7 +18,8 @@ package com.datastax.dse.driver.api.core.graph;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.dse.driver.api.core.graph.predicates.Search;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
@@ -102,7 +103,7 @@ public abstract class GraphTextSearchIndexITBase {
    */
   @UseDataProvider("indexTypes")
   @Test
-  @DseRequirement(min = "5.1.0")
+  @BackendRequirement(type = BackendType.DSE, minInclusive = "5.1.0")
   public void search_by_fuzzy(String indexType) {
     // Alias matches 'awrio' fuzzy
     GraphTraversal<Vertex, String> traversal =
@@ -185,7 +186,7 @@ public abstract class GraphTextSearchIndexITBase {
    */
   @UseDataProvider("indexTypes")
   @Test
-  @DseRequirement(min = "5.1.0")
+  @BackendRequirement(type = BackendType.DSE, minInclusive = "5.1.0")
   public void search_by_token_fuzzy(String indexType) {
     // Description containing 'lives' fuzzy
     GraphTraversal<Vertex, String> traversal =
@@ -210,7 +211,7 @@ public abstract class GraphTextSearchIndexITBase {
    */
   @UseDataProvider("indexTypes")
   @Test
-  @DseRequirement(min = "5.1.0")
+  @BackendRequirement(type = BackendType.DSE, minInclusive = "5.1.0")
   public void search_by_phrase(String indexType) {
     // Full name contains phrase "Paul Joe"
     GraphTraversal<Vertex, String> traversal =

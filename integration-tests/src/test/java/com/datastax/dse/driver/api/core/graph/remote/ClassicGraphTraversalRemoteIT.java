@@ -23,8 +23,9 @@ import com.datastax.dse.driver.api.core.graph.SampleGraphScripts;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.dse.driver.api.core.graph.SocialTraversalSource;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
 import org.junit.BeforeClass;
@@ -32,8 +33,9 @@ import org.junit.ClassRule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@DseRequirement(
-    min = "5.0.9",
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "5.0.9",
     description = "DSE 5.0.9 required for inserting edges and vertices script.")
 public class ClassicGraphTraversalRemoteIT extends GraphTraversalRemoteITBase {
 

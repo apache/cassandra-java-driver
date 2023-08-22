@@ -21,7 +21,11 @@ import java.lang.annotation.RetentionPolicy;
 /**
  * Annotation for a Class or Method that defines a DSE Version requirement. If the DSE version in
  * use does not meet the version requirement or DSE isn't used at all, the test is skipped.
+ *
+ * @deprecated Replaced by {@link
+ *     com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement}
  */
+@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DseRequirement {
 

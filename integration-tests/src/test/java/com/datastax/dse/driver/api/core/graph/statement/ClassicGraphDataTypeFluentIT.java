@@ -22,8 +22,9 @@ import com.datastax.dse.driver.api.core.graph.GraphTestSupport;
 import com.datastax.dse.driver.api.core.graph.SampleGraphScripts;
 import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.BeforeClass;
@@ -31,7 +32,10 @@ import org.junit.ClassRule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@DseRequirement(min = "5.0.3", description = "DSE 5.0.3 required for fluent API support")
+@BackendRequirement(
+    type = BackendType.DSE,
+    minInclusive = "5.0.3",
+    description = "DSE 5.0.3 required for fluent API support")
 public class ClassicGraphDataTypeFluentIT extends ClassicGraphDataTypeITBase {
 
   private static final CustomCcmRule CCM_RULE = GraphTestSupport.CCM_BUILDER_WITH_GRAPH.build();

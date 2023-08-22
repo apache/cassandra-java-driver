@@ -28,7 +28,7 @@ try (CqlSession session = new CqlSessionBuilder().withLocalDatacenter("datacente
     session.execute("DROP KEYSPACE IF EXISTS test");
     session.execute("CREATE KEYSPACE test WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
     session.execute("CREATE TABLE test.foo(i int primary key, j vector<float, 3>)");
-    session.execute("CREAT CUSTOM INDEX ann_index ON test.foo(j) USING 'StorageAttachedIndex'");
+    session.execute("CREATE CUSTOM INDEX ann_index ON test.foo(j) USING 'StorageAttachedIndex'");
     session.execute("INSERT INTO test.foo (i, j) VALUES (1, [8, 2.3, 58])");
     session.execute("INSERT INTO test.foo (i, j) VALUES (2, [1.2, 3.4, 5.6])");
     session.execute("INSERT INTO test.foo (i, j) VALUES (5, [23, 18, 3.9])");
