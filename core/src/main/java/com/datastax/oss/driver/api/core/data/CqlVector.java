@@ -218,7 +218,7 @@ public class CqlVector<T extends Number> implements Iterable<T>, Serializable {
       stream.defaultReadObject();
 
       int size = stream.readInt();
-      list = new ArrayList<>(size);
+      list = new ArrayList<>();
       for (int i = 0; i < size; i++) {
         list.add((T) stream.readObject());
       }
