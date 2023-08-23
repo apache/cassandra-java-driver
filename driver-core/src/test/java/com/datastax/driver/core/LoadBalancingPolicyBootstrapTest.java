@@ -57,10 +57,13 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
     try {
       cluster.init();
 
+      // To support astra, only hosts in Metadata#getContactPoints are passed to init()
+      // TestUtils#configureClusterBuilder only uses the first host as the contact point
+      // Remaining hosts are learned after connection via onAdd()
       assertThat(policy.history)
           .containsOnly(
               entry(INIT, TestUtils.findHost(cluster, 1)),
-              entry(INIT, TestUtils.findHost(cluster, 2)));
+              entry(ADD, TestUtils.findHost(cluster, 2)));
     } finally {
       cluster.close();
     }

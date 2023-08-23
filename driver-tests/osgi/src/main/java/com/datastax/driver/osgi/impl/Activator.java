@@ -16,6 +16,7 @@
 package com.datastax.driver.osgi.impl;
 
 import static com.datastax.driver.core.ProtocolOptions.Compression.LZ4;
+import static com.datastax.driver.core.ProtocolOptions.Compression.SNAPPY;
 import static com.datastax.driver.osgi.api.MailboxMessage.TABLE;
 
 import com.datastax.driver.core.Cluster;
@@ -69,7 +70,10 @@ public class Activator implements BundleActivator {
     String compression = context.getProperty("cassandra.compression");
     if (compression != null) {
       if (ver.getMajor() < 2 && compression.equals(LZ4.name())) {
-        LOGGER.warn("Requested LZ4 compression but C* version is not compatible, disabling");
+        LOGGER.warn("Requested LZ4 compression but C* version < 2.0 is not compatible, disabling");
+      } else if (ver.getMajor() >= 4 && compression.equals(SNAPPY.name())) {
+        LOGGER.warn(
+            "Requested snappy compression but C* version >= 4.0 is not compatible, disabling");
       } else {
         LOGGER.info("Compression: {}", compression);
         builder.withCompression(ProtocolOptions.Compression.valueOf(compression));

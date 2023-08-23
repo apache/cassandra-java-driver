@@ -1141,6 +1141,7 @@ limitations under the License.
                 <netty-tcnative.artifact>netty-tcnative-boringssl-static</netty-tcnative.artifact>
                 <!-- https://github.com/jnr/jffi/pull/116 apple-silicon requires signed jffi binaries, added in 1.3.8 (jnr-ffi 2.2.10+) -->
                 <jnr-ffi.version>2.2.10</jnr-ffi.version>
+                <snappy.version>1.1.10.1</snappy.version>
             </properties>
 
         </profile>
