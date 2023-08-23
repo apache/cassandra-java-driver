@@ -106,7 +106,7 @@ abstract class ReplicationStrategy {
 
       SimpleStrategy that = (SimpleStrategy) o;
 
-      return replicationFactor == that.replicationFactor;
+      return replicationFactor.equals(that.replicationFactor);
     }
 
     @Override
