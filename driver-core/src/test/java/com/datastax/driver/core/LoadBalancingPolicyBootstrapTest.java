@@ -99,8 +99,16 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
       ccm().stop(nodeToStop);
       ccm().waitForDown(nodeToStop);
 
+      // usually only one contact point is used to build the test cluster
+      // here we explicitly add both endpoints so we can test load
+      // balancing initial connection when the first connection point is down
       HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
-      Cluster cluster = register(createClusterBuilder().withLoadBalancingPolicy(policy).build());
+      Cluster cluster =
+          register(
+              createClusterBuilder()
+                  .addContactPoints(ccm().getContactPoints().get(1))
+                  .withLoadBalancingPolicy(policy)
+                  .build());
 
       try {
         cluster.init();

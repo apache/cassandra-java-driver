@@ -1139,8 +1139,12 @@ public class CCMTestsSupport {
     }
   }
 
+  protected boolean isCassandraVersionOrHigher(String version) {
+    return CCMBridge.getGlobalCassandraVersion().compareTo(VersionNumber.parse(version)) >= 0;
+  }
+
   protected void skipTestWithCassandraVersionOrHigher(String version, String testKind) {
-    if (CCMBridge.getGlobalCassandraVersion().compareTo(VersionNumber.parse(version)) >= 0) {
+    if (isCassandraVersionOrHigher(version)) {
       throw new SkipException(
           String.format(
               "%s tests not applicable to cassandra version >= %s (configured: %s)",
