@@ -141,6 +141,17 @@ public class BundleOptions {
     };
   }
 
+  public static CompositeOption dropwizardMetricsBundle() {
+    return new CompositeOption() {
+
+      @Override
+      public Option[] getOptions() {
+        return options(
+            mavenBundle("io.dropwizard.metrics", "metrics-core", getVersion("metrics.version")));
+      }
+    };
+  }
+
   public static UrlProvisionOption mailboxBundle() {
     return bundle("reference:file:" + PathUtils.getBaseDir() + "/target/classes");
   }
@@ -164,7 +175,6 @@ public class BundleOptions {
                 mavenBundle("org.slf4j", "slf4j-api", getVersion("slf4j.version")),
                 mavenBundle("ch.qos.logback", "logback-classic", getVersion("logback.version")),
                 mavenBundle("ch.qos.logback", "logback-core", getVersion("logback.version")),
-                mavenBundle("io.dropwizard.metrics", "metrics-core", getVersion("metrics.version")),
                 mavenBundle(
                     "com.fasterxml.jackson.core",
                     "jackson-databind",
