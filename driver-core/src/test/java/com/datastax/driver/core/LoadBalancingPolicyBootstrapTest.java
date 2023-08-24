@@ -57,10 +57,13 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
     try {
       cluster.init();
 
+      // To support astra, only hosts in Metadata#getContactPoints are passed to init()
+      // TestUtils#configureClusterBuilder only uses the first host as the contact point
+      // Remaining hosts are learned after connection via onAdd()
       assertThat(policy.history)
           .containsOnly(
               entry(INIT, TestUtils.findHost(cluster, 1)),
-              entry(INIT, TestUtils.findHost(cluster, 2)));
+              entry(ADD, TestUtils.findHost(cluster, 2)));
     } finally {
       cluster.close();
     }
@@ -96,8 +99,16 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
       ccm().stop(nodeToStop);
       ccm().waitForDown(nodeToStop);
 
+      // usually only one contact point is used to build the test cluster
+      // here we explicitly add both endpoints so we can test load
+      // balancing initial connection when the first connection point is down
       HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
-      Cluster cluster = register(createClusterBuilder().withLoadBalancingPolicy(policy).build());
+      Cluster cluster =
+          register(
+              createClusterBuilder()
+                  .addContactPoints(ccm().getContactPoints().get(1))
+                  .withLoadBalancingPolicy(policy)
+                  .build());
 
       try {
         cluster.init();

@@ -26,10 +26,12 @@ import static com.datastax.driver.osgi.BundleOptions.nettyBundles;
 import static com.datastax.driver.osgi.BundleOptions.snappyBundle;
 import static org.ops4j.pax.exam.CoreOptions.options;
 
+import com.datastax.driver.core.VersionNumber;
 import com.datastax.driver.osgi.api.MailboxException;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.testng.listener.PaxExam;
+import org.testng.SkipException;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -61,6 +63,10 @@ public class MailboxServiceSnappyIT extends MailboxServiceTests {
    */
   @Test(groups = "short")
   public void test_snappy() throws MailboxException {
+    VersionNumber ver = VersionNumber.parse(bundleContext.getProperty("cassandra.version"));
+    if (ver.getMajor() >= 4) {
+      throw new SkipException("Snappy not supported with cassandra 4.0+");
+    }
     checkService();
   }
 }

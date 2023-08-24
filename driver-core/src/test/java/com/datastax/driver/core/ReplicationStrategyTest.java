@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
@@ -86,5 +87,78 @@ public class ReplicationStrategyTest {
                 .build());
 
     assertNull(strategy);
+  }
+
+  @Test(groups = "unit")
+  public void simpleStrategyEqualsTest() {
+    ReplicationStrategy rf3_1 =
+        ReplicationStrategy.create(
+            ImmutableMap.<String, String>builder()
+                .put("class", "SimpleStrategy")
+                .put("replication_factor", "3")
+                .build());
+
+    ReplicationStrategy rf3_2 =
+        ReplicationStrategy.create(
+            ImmutableMap.<String, String>builder()
+                .put("class", "SimpleStrategy")
+                .put("replication_factor", "3")
+                .build());
+
+    ReplicationStrategy rf2_1 =
+        ReplicationStrategy.create(
+            ImmutableMap.<String, String>builder()
+                .put("class", "SimpleStrategy")
+                .put("replication_factor", "2")
+                .build());
+
+    //noinspection EqualsWithItself
+    assertThat(rf3_1).isEqualTo(rf3_1);
+    assertThat(rf3_1).isEqualTo(rf3_2);
+    assertThat(rf3_1).isNotEqualTo(rf2_1);
+  }
+
+  public void networkTopologyStrategyEqualsTest() {
+    ReplicationStrategy network_dc1x2_dc2x2_1 =
+        ReplicationStrategy.create(
+            ImmutableMap.<String, String>builder()
+                .put("class", "NetworkTopologyStrategy")
+                .put("dc1", "2")
+                .put("dc2", "2")
+                .build());
+    ReplicationStrategy network_dc1x2_dc2x2_2 =
+        ReplicationStrategy.create(
+            ImmutableMap.<String, String>builder()
+                .put("class", "NetworkTopologyStrategy")
+                .put("dc1", "2")
+                .put("dc2", "2")
+                .build());
+    ReplicationStrategy network_dc1x1_dc2x2_1 =
+        ReplicationStrategy.create(
+            ImmutableMap.<String, String>builder()
+                .put("class", "NetworkTopologyStrategy")
+                .put("dc1", "1")
+                .put("dc2", "2")
+                .build());
+    ReplicationStrategy network_dc1x2_dc3x2_1 =
+        ReplicationStrategy.create(
+            ImmutableMap.<String, String>builder()
+                .put("class", "NetworkTopologyStrategy")
+                .put("dc1", "2")
+                .put("dc3", "2")
+                .build());
+    ReplicationStrategy network_dc1x2_1 =
+        ReplicationStrategy.create(
+            ImmutableMap.<String, String>builder()
+                .put("class", "NetworkTopologyStrategy")
+                .put("dc1", "2")
+                .build());
+
+    //noinspection EqualsWithItself
+    assertThat(network_dc1x2_dc2x2_1).isEqualTo(network_dc1x2_dc2x2_1);
+    assertThat(network_dc1x2_dc2x2_1).isEqualTo(network_dc1x2_dc2x2_2);
+    assertThat(network_dc1x2_dc2x2_1).isNotEqualTo(network_dc1x1_dc2x2_1);
+    assertThat(network_dc1x2_dc2x2_1).isNotEqualTo(network_dc1x2_dc3x2_1);
+    assertThat(network_dc1x2_dc2x2_1).isNotEqualTo(network_dc1x2_1);
   }
 }

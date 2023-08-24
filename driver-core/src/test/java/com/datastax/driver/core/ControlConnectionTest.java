@@ -52,7 +52,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.log4j.Level;
-import org.junit.Ignore;
 import org.scassandra.http.client.PrimingClient;
 import org.scassandra.http.client.PrimingRequest;
 import org.scassandra.http.client.Result;
@@ -335,11 +334,17 @@ public class ControlConnectionTest extends CCMTestsSupport {
       cluster.init();
 
       InetAddress node2Address = scassandraCluster.address(2).getAddress();
+      String invalidValues =
+          withPeersV2
+              ? columnData
+              : String.format(
+                  "missing native_transport_address, missing native_transport_port, missing native_transport_port_ssl, %s",
+                  columnData);
       String expectedError =
           String.format(
               "Found invalid row in system.peers: [peer=%s, %s]. "
                   + "This is likely a gossip or snitch issue, this host will be ignored.",
-              node2Address, columnData);
+              node2Address, invalidValues);
       String log = logs.get();
       // then: A peer with a null rack should not show up in host metadata, unless allowed via
       // system property.
@@ -614,9 +619,8 @@ public class ControlConnectionTest extends CCMTestsSupport {
    * be selected if the Cluster is created with SSL support (i.e. if {@link
    * Cluster.Builder#withSSL()} is used).
    */
-  @Test(groups = "short")
+  @Test(groups = "short", enabled = false /* Requires SSL support in scassandra */)
   @CCMConfig(createCcm = false)
-  @Ignore("Requires SSL support in scassandra")
   public void should_extract_hosts_using_native_transport_address_port_ssl_from_peers()
       throws UnknownHostException {
 

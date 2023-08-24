@@ -26,4 +26,10 @@ public class OPPTokenVnodeIntegrationTest extends TokenIntegrationTest {
   protected Token.Factory tokenFactory() {
     return Token.OPPToken.FACTORY;
   }
+
+  @Override
+  public void beforeTestClass(Object testInstance) throws Exception {
+    skipTestWithCassandraVersionOrHigher("4.0.0", "ByteOrderedPartitioner");
+    super.beforeTestClass(testInstance);
+  }
 }

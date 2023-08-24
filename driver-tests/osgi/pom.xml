@@ -180,6 +180,9 @@
                         <jackson.version>${jackson.version}</jackson.version>
                         <jackson-databind.version>${jackson-databind.version}</jackson-databind.version>
                         <ipprefix>${ipprefix}</ipprefix>
+                        <org.ops4j.pax.url.mvn.useFallbackRepositories>false</org.ops4j.pax.url.mvn.useFallbackRepositories>
+                        <!-- repo1.maven.org requires https but the old version of pax-exam we use hard-codes http -->
+                        <org.ops4j.pax.url.mvn.repositories>https://repo1.maven.org/maven2@id=central</org.ops4j.pax.url.mvn.repositories>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>

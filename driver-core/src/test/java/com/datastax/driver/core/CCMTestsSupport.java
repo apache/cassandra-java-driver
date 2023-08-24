@@ -56,6 +56,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.ITestResult;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -1135,6 +1136,19 @@ public class CCMTestsSupport {
       Constructor<?> constructor = clazz.getDeclaredConstructor(enclosingClass);
       constructor.setAccessible(true);
       return (T) constructor.newInstance(enclosingInstance);
+    }
+  }
+
+  protected boolean isCassandraVersionOrHigher(String version) {
+    return CCMBridge.getGlobalCassandraVersion().compareTo(VersionNumber.parse(version)) >= 0;
+  }
+
+  protected void skipTestWithCassandraVersionOrHigher(String version, String testKind) {
+    if (isCassandraVersionOrHigher(version)) {
+      throw new SkipException(
+          String.format(
+              "%s tests not applicable to cassandra version >= %s (configured: %s)",
+              testKind, version, CCMBridge.getGlobalCassandraVersion()));
     }
   }
 }
