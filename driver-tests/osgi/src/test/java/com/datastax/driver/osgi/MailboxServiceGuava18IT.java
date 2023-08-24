@@ -17,6 +17,7 @@ package com.datastax.driver.osgi;
 
 import static com.datastax.driver.osgi.BundleOptions.defaultOptions;
 import static com.datastax.driver.osgi.BundleOptions.driverBundle;
+import static com.datastax.driver.osgi.BundleOptions.dropwizardMetricsBundle;
 import static com.datastax.driver.osgi.BundleOptions.extrasBundle;
 import static com.datastax.driver.osgi.BundleOptions.guavaBundle;
 import static com.datastax.driver.osgi.BundleOptions.mailboxBundle;
@@ -39,6 +40,7 @@ public class MailboxServiceGuava18IT extends MailboxServiceTests {
     return options(
         defaultOptions(),
         nettyBundles(),
+        dropwizardMetricsBundle(),
         guavaBundle().version("18.0"),
         driverBundle(),
         extrasBundle(),
