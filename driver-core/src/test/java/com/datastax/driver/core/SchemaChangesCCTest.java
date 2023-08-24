@@ -98,7 +98,12 @@ public class SchemaChangesCCTest extends CCMTestsSupport {
     // Perform some schema changes that we'll validate when the control connection comes back.
     session2.execute("drop keyspace ks2");
     session2.execute("drop table ks1.tbl2");
-    session2.execute("alter keyspace ks1 with durable_writes=false");
+
+    // Modifying keyspaces with a node down is not possible in 4.0+ (CASSANDRA-14404)
+    if (!isCassandraVersionOrHigher("4.0.0")) {
+      session2.execute("alter keyspace ks1 with durable_writes=false");
+    }
+
     session2.execute("alter table ks1.tbl1 add new_col varchar");
     session2.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, "ks3", 1));
     session2.execute("create table ks1.tbl3 (k text primary key, v text)");
@@ -152,8 +157,11 @@ public class SchemaChangesCCTest extends CCMTestsSupport {
         .isDurableWrites()
         .isEqualTo(prealteredKeyspace);
 
-    // New metadata should reflect that the durable writes attribute changed.
-    assertThat(alteredKeyspace.getValue()).hasName("ks1").isNotDurableWrites();
+    // Modifying keyspaces with a node down is not possible in 4.0+ (CASSANDRA-14404)
+    if (!isCassandraVersionOrHigher("4.0.0")) {
+      // New metadata should reflect that the durable writes attribute changed.
+      assertThat(alteredKeyspace.getValue()).hasName("ks1").isNotDurableWrites();
+    }
 
     // Ensure the alter table event shows up.
     ArgumentCaptor<TableMetadata> alteredTable = ArgumentCaptor.forClass(TableMetadata.class);
