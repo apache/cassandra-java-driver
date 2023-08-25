@@ -39,7 +39,7 @@ public interface InventoryMapper {
 ```
 
 The builder allows you to create a mapper instance, by wrapping a core `CqlSession` (if you need
-more details on how to create a session, refer to the [core driver documentation](../core/)).
+more details on how to create a session, refer to the [core driver documentation](../../core/)).
 
 ```java
 CqlSession session = CqlSession.builder().build();
