@@ -40,6 +40,10 @@
                     <artifactId>*</artifactId>
                     <groupId>io.netty</groupId>
                 </exclusion>
+                <exclusion>
+                    <groupId>io.dropwizard.metrics</groupId>
+                    <artifactId>metrics-core</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 
@@ -50,6 +54,12 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-handler</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
             <scope>test</scope>
         </dependency>
 

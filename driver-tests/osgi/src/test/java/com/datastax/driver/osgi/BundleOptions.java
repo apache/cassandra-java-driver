@@ -16,6 +16,7 @@
 package com.datastax.driver.osgi;
 
 import static org.ops4j.pax.exam.CoreOptions.bootDelegationPackage;
+import static org.ops4j.pax.exam.CoreOptions.bootDelegationPackages;
 import static org.ops4j.pax.exam.CoreOptions.bundle;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.options;
@@ -168,7 +169,7 @@ public class BundleOptions {
                 // Delegate javax.security.cert to the parent classloader.
                 // javax.security.cert.X509Certificate is used in
                 // io.netty.util.internal.EmptyArrays, but not directly by the driver.
-                bootDelegationPackage("javax.security.cert"),
+                bootDelegationPackages("javax.security.cert", "javax.management"),
                 systemProperty("cassandra.version")
                     .value(CCMBridge.getGlobalCassandraVersion().toString()),
                 systemProperty("cassandra.contactpoints").value(TestUtils.IP_PREFIX + 1),
