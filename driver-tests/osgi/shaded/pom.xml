@@ -1,0 +1,113 @@
+<!--
+
+    Copyright DataStax, Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.datastax.cassandra</groupId>
+        <artifactId>cassandra-driver-tests-osgi</artifactId>
+        <version>3.11.5-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>cassandra-driver-tests-osgi-shaded</artifactId>
+    <name>DataStax Java Driver for Apache Cassandra Tests - OSGi - Shaded</name>
+    <description>A test for the shaded DataStax Java Driver in an OSGi container.</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.datastax.cassandra</groupId>
+            <artifactId>cassandra-driver-core</artifactId>
+            <classifier>shaded</classifier>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.github.jnr</groupId>
+                    <artifactId>jnr-ffi</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.github.jnr</groupId>
+                    <artifactId>jnr-posix</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <skip>${test.osgi.skip}</skip>
+                    <systemPropertyVariables>
+                        <cassandra.version>${cassandra.version}</cassandra.version>
+                        <!-- pull in declared version properties, this ensures we test with the same versions used by the driver -->
+                        <guava.version>${guava.version}</guava.version>
+                        <lz4.version>${lz4.version}</lz4.version>
+                        <snappy.version>${snappy.version}</snappy.version>
+                        <hdr.version>${hdr.version}</hdr.version>
+                        <netty.version>${netty.version}</netty.version>
+                        <slf4j.version>${slf4j.version}</slf4j.version>
+                        <logback.version>${logback.version}</logback.version>
+                        <metrics.version>${metrics.version}</metrics.version>
+                        <testng.version>${testng.version}</testng.version>
+                        <jsr353-api.version>${jsr353-api.version}</jsr353-api.version>
+                        <jackson.version>${jackson.version}</jackson.version>
+                        <jackson-databind.version>${jackson-databind.version}</jackson-databind.version>
+                        <ipprefix>${ipprefix}</ipprefix>
+                        <org.ops4j.pax.url.mvn.useFallbackRepositories>false</org.ops4j.pax.url.mvn.useFallbackRepositories>
+                        <!-- repo1.maven.org requires https but the old version of pax-exam we use hard-codes http -->
+                        <org.ops4j.pax.url.mvn.repositories>https://repo1.maven.org/maven2@id=central</org.ops4j.pax.url.mvn.repositories>
+                    </systemPropertyVariables>
+                    <classpathDependencyExcludes>
+                        <classpathDependencyExclude>io.dropwizard.metrics:metrics-core</classpathDependencyExclude>
+                    </classpathDependencyExcludes>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>com.datastax.driver.osgi</Bundle-SymbolicName>
+                        <Export-Package>com.datastax.driver.osgi.api,!com.datastax.driver.osgi.impl</Export-Package>
+                        <Bundle-Activator>com.datastax.driver.osgi.impl.Activator</Bundle-Activator>
+                        <_include>-osgi.bnd</_include>
+                    </instructions>
+                    <skip>true</skip>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>bundle-manifest</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>manifest</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

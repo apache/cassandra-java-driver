@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.osgi;
 
-import static org.ops4j.pax.exam.CoreOptions.bootDelegationPackage;
 import static org.ops4j.pax.exam.CoreOptions.bootDelegationPackages;
 import static org.ops4j.pax.exam.CoreOptions.bundle;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
@@ -61,7 +60,7 @@ public class BundleOptions {
     return bundle(
         "reference:file:"
             + PathUtils.getBaseDir()
-            + "/../../driver-core/target/cassandra-driver-core-"
+            + "/../../../driver-core/target/cassandra-driver-core-"
             + Cluster.getDriverVersion()
             + classifier
             + ".jar");
@@ -71,7 +70,7 @@ public class BundleOptions {
     return bundle(
         "reference:file:"
             + PathUtils.getBaseDir()
-            + "/../../driver-mapping/target/cassandra-driver-mapping-"
+            + "/../../../driver-mapping/target/cassandra-driver-mapping-"
             + Cluster.getDriverVersion()
             + ".jar");
   }
@@ -80,7 +79,7 @@ public class BundleOptions {
     return bundle(
         "reference:file:"
             + PathUtils.getBaseDir()
-            + "/../../driver-extras/target/cassandra-driver-extras-"
+            + "/../../../driver-extras/target/cassandra-driver-extras-"
             + Cluster.getDriverVersion()
             + ".jar");
   }
