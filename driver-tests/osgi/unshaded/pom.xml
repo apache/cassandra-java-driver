@@ -29,11 +29,11 @@
     <name>DataStax Java Driver for Apache Cassandra Tests - OSGi - Unshaded</name>
     <description>A test for the unshaded DataStax Java Driver in an OSGi container.</description>
 
-
     <dependencies>
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
+            <!-- note we're depending on the *unshaded* driver-core jar -->
             <exclusions>
                 <exclusion>
                     <groupId>com.github.jnr</groupId>
@@ -50,54 +50,92 @@
     <build>
         <plugins>
             <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <!-- copy over common submodule classes as we need to recompile them with the correct driver-core dependency -->
+                <executions>
+                    <execution>
+                        <id>copy-common-sources</id>
+                        <phase>process-sources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/dependency-sources/cassandra-driver-tests-osgi-common</outputDirectory>
+                            <overwrite>true</overwrite>
+                            <resources>
+                                <resource>
+                                    <directory>../common/src/main/java/</directory>
+                                    <includes>
+                                        <include>**/*.*</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-common-test-sources</id>
+                        <phase>process-test-sources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/dependency-test-sources/cassandra-driver-tests-osgi-common</outputDirectory>
+                            <overwrite>true</overwrite>
+                            <resources>
+                                <resource>
+                                    <directory>../common/src/test/java/</directory>
+                                    <includes>
+                                        <include>**/*.*</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/dependency-sources/cassandra-driver-tests-osgi-common</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-test-source</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/dependency-test-sources/cassandra-driver-tests-osgi-common</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
                     <skip>${test.osgi.skip}</skip>
-                    <systemPropertyVariables>
-                        <cassandra.version>${cassandra.version}</cassandra.version>
-                        <!-- pull in declared version properties, this ensures we test with the same versions used by the driver -->
-                        <guava.version>${guava.version}</guava.version>
-                        <lz4.version>${lz4.version}</lz4.version>
-                        <snappy.version>${snappy.version}</snappy.version>
-                        <hdr.version>${hdr.version}</hdr.version>
-                        <netty.version>${netty.version}</netty.version>
-                        <slf4j.version>${slf4j.version}</slf4j.version>
-                        <logback.version>${logback.version}</logback.version>
-                        <metrics.version>${metrics.version}</metrics.version>
-                        <testng.version>${testng.version}</testng.version>
-                        <jsr353-api.version>${jsr353-api.version}</jsr353-api.version>
-                        <jackson.version>${jackson.version}</jackson.version>
-                        <jackson-databind.version>${jackson-databind.version}</jackson-databind.version>
-                        <ipprefix>${ipprefix}</ipprefix>
-                        <org.ops4j.pax.url.mvn.useFallbackRepositories>false</org.ops4j.pax.url.mvn.useFallbackRepositories>
-                        <!-- repo1.maven.org requires https but the old version of pax-exam we use hard-codes http -->
-                        <org.ops4j.pax.url.mvn.repositories>https://repo1.maven.org/maven2@id=central</org.ops4j.pax.url.mvn.repositories>
-                    </systemPropertyVariables>
-                    <classpathDependencyExcludes>
-                        <classpathDependencyExclude>io.dropwizard.metrics:metrics-core</classpathDependencyExclude>
-                    </classpathDependencyExcludes>
                 </configuration>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-                <configuration>
-                    <instructions>
-                        <Bundle-SymbolicName>com.datastax.driver.osgi</Bundle-SymbolicName>
-                        <Export-Package>com.datastax.driver.osgi.api,!com.datastax.driver.osgi.impl</Export-Package>
-                        <Bundle-Activator>com.datastax.driver.osgi.impl.Activator</Bundle-Activator>
-                        <_include>-osgi.bnd</_include>
-                    </instructions>
-                    <skip>true</skip>
-                </configuration>
                 <executions>
                     <execution>
                         <id>bundle-manifest</id>
@@ -105,6 +143,15 @@
                         <goals>
                             <goal>manifest</goal>
                         </goals>
+                        <configuration>
+                            <manifestLocation>${project.build.outputDirectory}/META-INF</manifestLocation>
+                            <instructions>
+                                <Bundle-SymbolicName>com.datastax.driver.osgi</Bundle-SymbolicName>
+                                <Export-Package>com.datastax.driver.osgi.api,!com.datastax.driver.osgi.impl</Export-Package>
+                                <Bundle-Activator>com.datastax.driver.osgi.impl.Activator</Bundle-Activator>
+                                <_include>-osgi.bnd</_include>
+                            </instructions>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

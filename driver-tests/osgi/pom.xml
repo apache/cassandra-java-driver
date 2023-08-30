@@ -31,6 +31,7 @@
     <description>A test for the DataStax Java Driver in an OSGi container.</description>
 
     <modules>
+        <module>common</module>
         <module>shaded</module>
         <module>unshaded</module>
     </modules>
@@ -149,6 +150,26 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
                     <skip>true</skip>
+                    <systemPropertyVariables>
+                        <cassandra.version>${cassandra.version}</cassandra.version>
+                        <!-- pull in declared version properties, this ensures we test with the same versions used by the driver -->
+                        <guava.version>${guava.version}</guava.version>
+                        <lz4.version>${lz4.version}</lz4.version>
+                        <snappy.version>${snappy.version}</snappy.version>
+                        <hdr.version>${hdr.version}</hdr.version>
+                        <netty.version>${netty.version}</netty.version>
+                        <slf4j.version>${slf4j.version}</slf4j.version>
+                        <logback.version>${logback.version}</logback.version>
+                        <metrics.version>${metrics.version}</metrics.version>
+                        <testng.version>${testng.version}</testng.version>
+                        <jsr353-api.version>${jsr353-api.version}</jsr353-api.version>
+                        <jackson.version>${jackson.version}</jackson.version>
+                        <jackson-databind.version>${jackson-databind.version}</jackson-databind.version>
+                        <ipprefix>${ipprefix}</ipprefix>
+                        <org.ops4j.pax.url.mvn.useFallbackRepositories>false</org.ops4j.pax.url.mvn.useFallbackRepositories>
+                        <!-- repo1.maven.org requires https but the old version of pax-exam we use hard-codes http -->
+                        <org.ops4j.pax.url.mvn.repositories>https://repo1.maven.org/maven2@id=central</org.ops4j.pax.url.mvn.repositories>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
 
