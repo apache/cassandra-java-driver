@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.osgi;
 
-import static org.ops4j.pax.exam.CoreOptions.bootDelegationPackage;
+import static org.ops4j.pax.exam.CoreOptions.bootDelegationPackages;
 import static org.ops4j.pax.exam.CoreOptions.bundle;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.options;
@@ -60,7 +60,7 @@ public class BundleOptions {
     return bundle(
         "reference:file:"
             + PathUtils.getBaseDir()
-            + "/../../driver-core/target/cassandra-driver-core-"
+            + "/../../../driver-core/target/cassandra-driver-core-"
             + Cluster.getDriverVersion()
             + classifier
             + ".jar");
@@ -70,7 +70,7 @@ public class BundleOptions {
     return bundle(
         "reference:file:"
             + PathUtils.getBaseDir()
-            + "/../../driver-mapping/target/cassandra-driver-mapping-"
+            + "/../../../driver-mapping/target/cassandra-driver-mapping-"
             + Cluster.getDriverVersion()
             + ".jar");
   }
@@ -79,7 +79,7 @@ public class BundleOptions {
     return bundle(
         "reference:file:"
             + PathUtils.getBaseDir()
-            + "/../../driver-extras/target/cassandra-driver-extras-"
+            + "/../../../driver-extras/target/cassandra-driver-extras-"
             + Cluster.getDriverVersion()
             + ".jar");
   }
@@ -143,6 +143,17 @@ public class BundleOptions {
     };
   }
 
+  public static CompositeOption dropwizardMetricsBundle() {
+    return new CompositeOption() {
+
+      @Override
+      public Option[] getOptions() {
+        return options(
+            mavenBundle("io.dropwizard.metrics", "metrics-core", getVersion("metrics.version")));
+      }
+    };
+  }
+
   public static UrlProvisionOption mailboxBundle() {
     return bundle("reference:file:" + PathUtils.getBaseDir() + "/target/classes");
   }
@@ -157,7 +168,7 @@ public class BundleOptions {
                 // Delegate javax.security.cert to the parent classloader.
                 // javax.security.cert.X509Certificate is used in
                 // io.netty.util.internal.EmptyArrays, but not directly by the driver.
-                bootDelegationPackage("javax.security.cert"),
+                bootDelegationPackages("javax.security.cert", "javax.management"),
                 systemProperty("cassandra.version")
                     .value(CCMBridge.getGlobalCassandraVersion().toString()),
                 systemProperty("cassandra.contactpoints").value(TestUtils.IP_PREFIX + 1),
@@ -166,7 +177,6 @@ public class BundleOptions {
                 mavenBundle("org.slf4j", "slf4j-api", getVersion("slf4j.version")),
                 mavenBundle("ch.qos.logback", "logback-classic", getVersion("logback.version")),
                 mavenBundle("ch.qos.logback", "logback-core", getVersion("logback.version")),
-                mavenBundle("io.dropwizard.metrics", "metrics-core", getVersion("metrics.version")),
                 mavenBundle(
                     "com.fasterxml.jackson.core",
                     "jackson-databind",

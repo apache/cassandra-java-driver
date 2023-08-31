@@ -17,6 +17,7 @@ package com.datastax.driver.osgi;
 
 import static com.datastax.driver.osgi.BundleOptions.defaultOptions;
 import static com.datastax.driver.osgi.BundleOptions.driverBundle;
+import static com.datastax.driver.osgi.BundleOptions.dropwizardMetricsBundle;
 import static com.datastax.driver.osgi.BundleOptions.extrasBundle;
 import static com.datastax.driver.osgi.BundleOptions.guavaBundle;
 import static com.datastax.driver.osgi.BundleOptions.mailboxBundle;
@@ -27,19 +28,30 @@ import static org.ops4j.pax.exam.CoreOptions.options;
 import com.datastax.driver.osgi.api.MailboxException;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.options.MavenArtifactProvisionOption;
 import org.ops4j.pax.exam.testng.listener.PaxExam;
+import org.testng.SkipException;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners({CCMBridgeListener.class, PaxExam.class})
-public class MailboxServiceGuava19IT extends MailboxServiceTests {
+public class MailboxServiceGuava21IT extends MailboxServiceTests {
 
   @Configuration
-  public Option[] guava19Config() {
+  public Option[] guava21Config() {
+    MavenArtifactProvisionOption guavaBundle = guavaBundle();
+    String javaVersion = System.getProperty("java.version");
+    // Only bring in 21.0 if java version >= 1.8.  If this is not done the framework
+    // will fail to load for < 1.8 and we plan on skipping the test anyways.
+    if (javaVersion.compareTo("1.8") >= 0) {
+      guavaBundle = guavaBundle.version("21.0");
+    }
+
     return options(
         defaultOptions(),
         nettyBundles(),
-        guavaBundle().version("19.0"),
+        dropwizardMetricsBundle(),
+        guavaBundle,
         driverBundle(),
         extrasBundle(),
         mappingBundle(),
@@ -48,7 +60,7 @@ public class MailboxServiceGuava19IT extends MailboxServiceTests {
 
   /**
    * Exercises a 'mailbox' service provided by an OSGi bundle that depends on the driver with Guava
-   * 19 explicitly enforced.
+   * 21 explicitly enforced.
    *
    * @test_category packaging
    * @expected_result Can create, retrieve and delete data using the mailbox service.
@@ -56,7 +68,11 @@ public class MailboxServiceGuava19IT extends MailboxServiceTests {
    * @since 2.0.10, 2.1.5
    */
   @Test(groups = "short")
-  public void test_guava_19() throws MailboxException {
+  public void test_guava_21() throws MailboxException {
+    String javaVersion = System.getProperty("java.version");
+    if (javaVersion.compareTo("1.8") < 0) {
+      throw new SkipException("Guava 21 requires Java 1.8");
+    }
     checkService();
   }
 }

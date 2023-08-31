@@ -17,46 +17,56 @@ package com.datastax.driver.osgi;
 
 import static com.datastax.driver.osgi.BundleOptions.defaultOptions;
 import static com.datastax.driver.osgi.BundleOptions.driverBundle;
+import static com.datastax.driver.osgi.BundleOptions.dropwizardMetricsBundle;
 import static com.datastax.driver.osgi.BundleOptions.extrasBundle;
 import static com.datastax.driver.osgi.BundleOptions.guavaBundle;
 import static com.datastax.driver.osgi.BundleOptions.mailboxBundle;
 import static com.datastax.driver.osgi.BundleOptions.mappingBundle;
 import static com.datastax.driver.osgi.BundleOptions.nettyBundles;
+import static com.datastax.driver.osgi.BundleOptions.snappyBundle;
 import static org.ops4j.pax.exam.CoreOptions.options;
 
+import com.datastax.driver.core.VersionNumber;
 import com.datastax.driver.osgi.api.MailboxException;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.testng.listener.PaxExam;
+import org.testng.SkipException;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners({CCMBridgeListener.class, PaxExam.class})
-public class MailboxServiceGuava20IT extends MailboxServiceTests {
+public class MailboxServiceSnappyIT extends MailboxServiceTests {
 
   @Configuration
-  public Option[] guava20Config() {
+  public Option[] snappyConfig() {
     return options(
         defaultOptions(),
+        snappyBundle(),
         nettyBundles(),
-        guavaBundle().version("20.0"),
-        driverBundle(),
+        dropwizardMetricsBundle(),
+        guavaBundle(),
         extrasBundle(),
         mappingBundle(),
+        driverBundle(),
         mailboxBundle());
   }
 
   /**
-   * Exercises a 'mailbox' service provided by an OSGi bundle that depends on the driver with Guava
-   * 20 explicitly enforced.
+   * Exercises a 'mailbox' service provided by an OSGi bundle that depends on the driver with LZ4
+   * compression activated.
    *
    * @test_category packaging
    * @expected_result Can create, retrieve and delete data using the mailbox service.
-   * @jira_ticket JAVA-620
-   * @since 2.0.10, 2.1.5
+   * @jira_ticket JAVA-1200
+   * @since 3.1.0
    */
   @Test(groups = "short")
-  public void test_guava_20() throws MailboxException {
+  public void test_snappy() throws MailboxException {
+    VersionNumber ver = VersionNumber.parse(bundleContext.getProperty("cassandra.version"));
+    if (ver.getMajor() >= 4) {
+      throw new SkipException("Snappy not supported with cassandra 4.0+");
+    }
     checkService();
   }
 }

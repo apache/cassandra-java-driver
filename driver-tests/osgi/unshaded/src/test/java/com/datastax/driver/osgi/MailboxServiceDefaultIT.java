@@ -17,6 +17,7 @@ package com.datastax.driver.osgi;
 
 import static com.datastax.driver.osgi.BundleOptions.defaultOptions;
 import static com.datastax.driver.osgi.BundleOptions.driverBundle;
+import static com.datastax.driver.osgi.BundleOptions.dropwizardMetricsBundle;
 import static com.datastax.driver.osgi.BundleOptions.extrasBundle;
 import static com.datastax.driver.osgi.BundleOptions.guavaBundle;
 import static com.datastax.driver.osgi.BundleOptions.mailboxBundle;
@@ -32,23 +33,24 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners({CCMBridgeListener.class, PaxExam.class})
-public class MailboxServiceGuava17IT extends MailboxServiceTests {
+public class MailboxServiceDefaultIT extends MailboxServiceTests {
 
   @Configuration
-  public Option[] guava17Config() {
+  public Option[] defaultConfig() {
     return options(
         defaultOptions(),
         nettyBundles(),
-        guavaBundle().version("17.0"),
+        dropwizardMetricsBundle(),
+        guavaBundle(),
         driverBundle(),
-        mappingBundle(),
         extrasBundle(),
+        mappingBundle(),
         mailboxBundle());
   }
 
   /**
-   * Exercises a 'mailbox' service provided by an OSGi bundle that depends on the driver with Guava
-   * 17 explicitly enforced.
+   * Exercises a 'mailbox' service provided by an OSGi bundle that depends on the driver with
+   * default configuration (driver with all of its regular dependencies).
    *
    * @test_category packaging
    * @expected_result Can create, retrieve and delete data using the mailbox service.
@@ -56,7 +58,7 @@ public class MailboxServiceGuava17IT extends MailboxServiceTests {
    * @since 2.0.10, 2.1.5
    */
   @Test(groups = "short")
-  public void test_guava_17() throws MailboxException {
+  public void test_default() throws MailboxException {
     checkService();
   }
 }

@@ -17,9 +17,9 @@ package com.datastax.driver.osgi;
 
 import static com.datastax.driver.osgi.BundleOptions.defaultOptions;
 import static com.datastax.driver.osgi.BundleOptions.driverBundle;
+import static com.datastax.driver.osgi.BundleOptions.dropwizardMetricsBundle;
 import static com.datastax.driver.osgi.BundleOptions.extrasBundle;
 import static com.datastax.driver.osgi.BundleOptions.guavaBundle;
-import static com.datastax.driver.osgi.BundleOptions.hdrHistogramBundle;
 import static com.datastax.driver.osgi.BundleOptions.mailboxBundle;
 import static com.datastax.driver.osgi.BundleOptions.mappingBundle;
 import static com.datastax.driver.osgi.BundleOptions.nettyBundles;
@@ -33,32 +33,32 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners({CCMBridgeListener.class, PaxExam.class})
-public class MailboxServiceHdrHistogramIT extends MailboxServiceTests {
+public class MailboxServiceGuava19IT extends MailboxServiceTests {
 
   @Configuration
-  public Option[] hdrHistogramConfig() {
+  public Option[] guava19Config() {
     return options(
         defaultOptions(),
-        hdrHistogramBundle(),
         nettyBundles(),
-        guavaBundle(),
+        dropwizardMetricsBundle(),
+        guavaBundle().version("19.0"),
+        driverBundle(),
         extrasBundle(),
         mappingBundle(),
-        driverBundle(),
         mailboxBundle());
   }
 
   /**
-   * Exercises a 'mailbox' service provided by an OSGi bundle that depends on the driver with LZ4
-   * compression activated.
+   * Exercises a 'mailbox' service provided by an OSGi bundle that depends on the driver with Guava
+   * 19 explicitly enforced.
    *
    * @test_category packaging
    * @expected_result Can create, retrieve and delete data using the mailbox service.
-   * @jira_ticket JAVA-1200
-   * @since 3.1.0
+   * @jira_ticket JAVA-620
+   * @since 2.0.10, 2.1.5
    */
   @Test(groups = "short")
-  public void test_hdr() throws MailboxException {
+  public void test_guava_19() throws MailboxException {
     checkService();
   }
 }
