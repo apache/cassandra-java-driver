@@ -151,7 +151,7 @@ public class CqlPrepareAsyncProcessor
                     if (error != null) {
                       mine.completeExceptionally(error);
                       cache.invalidate(request); // Make sure failure isn't cached indefinitely
-                    } else if (mine.isCancelled()){
+                    } else if (mine.isCancelled()) {
                       cache.invalidate(request);
                       process(request, session, context, sessionLogPrefix);
                     } else {
