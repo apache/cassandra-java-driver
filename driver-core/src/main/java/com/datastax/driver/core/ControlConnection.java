@@ -617,10 +617,6 @@ class ControlConnection implements Connection.Owner {
       // want to setup a different port for SSL and non-SSL conns).
       InetAddress nativeAddress = row.getInet("native_transport_address");
       int nativePort = row.getInt("native_transport_port");
-      if (cluster.getCluster().getConfiguration().getProtocolOptions().getSSLOptions() != null
-          && !row.isNull("native_transport_port_ssl")) {
-        nativePort = row.getInt("native_transport_port_ssl");
-      }
       broadcastRpcAddress = new InetSocketAddress(nativeAddress, nativePort);
     } else if (row.getColumnDefinitions().contains("rpc_address")) {
       InetAddress rpcAddress = row.getInet("rpc_address");

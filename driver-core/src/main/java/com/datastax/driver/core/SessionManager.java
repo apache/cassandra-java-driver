@@ -521,7 +521,7 @@ class SessionManager extends AbstractSession {
     // not necessary
     // since updateCreatedPools should take care of it. But better protect against non well behaving
     // policies.
-    removePool(host).force().get();
+    removePool(host).get();
     updateCreatedPools().get();
   }
 
