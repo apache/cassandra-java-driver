@@ -68,8 +68,9 @@
     <junit.version>4.13.2</junit.version>
     <logback.version>1.2.3</logback.version>
     <osgi.version>6.0.0</osgi.version>
-    <felix.version>6.0.3</felix.version>
+    <felix.version>7.0.1</felix.version>
     <pax-exam.version>4.13.4</pax-exam.version>
+    <pax-url.version>2.6.4</pax-url.version>
     <simulacron.version>0.11.0</simulacron.version>
     <jsr353-api.version>1.1.4</jsr353-api.version>
     <jersey.version>2.31</jersey.version>
@@ -79,7 +80,7 @@
     <rxjava.version>2.2.2</rxjava.version>
     <awaitility.version>4.0.3</awaitility.version>
     <apacheds.version>2.0.0-M19</apacheds.version>
-    <surefire.version>2.22.2</surefire.version>
+    <surefire.version>3.0.0</surefire.version>
     <graalapi.version>22.0.0.2</graalapi.version>
     <skipTests>false</skipTests>
     <skipUnitTests>${skipTests}</skipUnitTests>
@@ -269,12 +270,17 @@
       <dependency>
         <groupId>org.ops4j.pax.url</groupId>
         <artifactId>pax-url-wrap</artifactId>
-        <version>2.6.3</version>
+        <version>${pax-url.version}</version>
       </dependency>
       <dependency>
         <groupId>org.ops4j.pax.url</groupId>
         <artifactId>pax-url-reference</artifactId>
-        <version>2.6.2</version>
+        <version>${pax-url.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.ops4j.pax.tinybundles</groupId>
+        <artifactId>tinybundles</artifactId>
+        <version>3.0.0</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish</groupId>
