@@ -409,7 +409,7 @@ public class TypedDriverOption<ValueT> {
       new TypedDriverOption<>(
           DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_SLO,
           GenericType.listOf(GenericType.DURATION));
-  /** Optional pre-defined percentile of cql resquests to publish, as a list of percentiles . */
+  /** Optional pre-defined percentile of cql requests to publish, as a list of percentiles . */
   public static final TypedDriverOption<List<Double>>
       METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES =
           new TypedDriverOption<>(

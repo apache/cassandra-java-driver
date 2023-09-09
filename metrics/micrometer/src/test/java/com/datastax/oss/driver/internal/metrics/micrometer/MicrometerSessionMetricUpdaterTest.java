@@ -82,9 +82,7 @@ public class MicrometerSessionMetricUpdaterTest {
     when(profile.getDurationList(sla))
         .thenReturn(Arrays.asList(Duration.ofMillis(100), Duration.ofMillis(500)));
     when(profile.isDefined(percentiles)).thenReturn(true);
-    when(profile.getDoubleList(percentiles))
-        .thenReturn(
-            Arrays.asList(Double.valueOf(0.75), Double.valueOf(0.95), Double.valueOf(0.99)));
+    when(profile.getDoubleList(percentiles)).thenReturn(Arrays.asList(0.75, 0.95, 0.99));
     when(generator.sessionMetricId(metric)).thenReturn(METRIC_ID);
 
     SimpleMeterRegistry registry = spy(new SimpleMeterRegistry());
@@ -102,6 +100,11 @@ public class MicrometerSessionMetricUpdaterTest {
     HistogramSnapshot snapshot = timer.takeSnapshot();
     assertThat(snapshot.histogramCounts()).hasSize(2);
     assertThat(snapshot.percentileValues()).hasSize(3);
+    assertThat(snapshot.percentileValues())
+        .satisfiesExactlyInAnyOrder(
+            valuePercentile -> assertThat(valuePercentile.percentile()).isEqualTo(0.75),
+            valuePercentile -> assertThat(valuePercentile.percentile()).isEqualTo(0.95),
+            valuePercentile -> assertThat(valuePercentile.percentile()).isEqualTo(0.99));
   }
 
   @Test
@@ -131,9 +134,7 @@ public class MicrometerSessionMetricUpdaterTest {
     when(profile.getDurationList(sla))
         .thenReturn(Arrays.asList(Duration.ofMillis(100), Duration.ofMillis(500)));
     when(profile.isDefined(percentiles)).thenReturn(false);
-    when(profile.getDoubleList(percentiles))
-        .thenReturn(
-            Arrays.asList(Double.valueOf(0.75), Double.valueOf(0.95), Double.valueOf(0.99)));
+    when(profile.getDoubleList(percentiles)).thenReturn(Arrays.asList(0.75, 0.95, 0.99));
     when(generator.sessionMetricId(metric)).thenReturn(METRIC_ID);
 
     SimpleMeterRegistry registry = spy(new SimpleMeterRegistry());

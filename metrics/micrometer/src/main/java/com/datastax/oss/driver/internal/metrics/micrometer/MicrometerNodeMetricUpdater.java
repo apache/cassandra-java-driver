@@ -112,12 +112,8 @@ public class MicrometerNodeMetricUpdater extends MicrometerMetricUpdater<NodeMet
           .percentilePrecision(
               profile.getInt(DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_DIGITS));
 
-      if (profile.isDefined(DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_PUBLISH_PERCENTILES)) {
-        builder.publishPercentiles(
-            toDoubleArray(
-                profile.getDoubleList(
-                    DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_PUBLISH_PERCENTILES)));
-      }
+      publishPercentilesIfEnabled(
+          builder, profile, DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_PUBLISH_PERCENTILES);
       return builder;
     } else if (metric == DseNodeMetric.GRAPH_MESSAGES) {
       builder
@@ -133,12 +129,9 @@ public class MicrometerNodeMetricUpdater extends MicrometerMetricUpdater<NodeMet
                       .toArray(new Duration[0])
                   : null)
           .percentilePrecision(profile.getInt(DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_DIGITS));
-      if (profile.isDefined(DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_PUBLISH_PERCENTILES)) {
-        builder.publishPercentiles(
-            toDoubleArray(
-                profile.getDoubleList(
-                    DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_PUBLISH_PERCENTILES)));
-      }
+
+      publishPercentilesIfEnabled(
+          builder, profile, DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_PUBLISH_PERCENTILES);
       return builder;
     }
     return super.configureTimer(builder, metric, id);

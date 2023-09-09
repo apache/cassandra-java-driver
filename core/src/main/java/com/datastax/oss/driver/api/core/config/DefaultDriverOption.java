@@ -940,24 +940,23 @@ public enum DefaultDriverOption implements DriverOption {
    */
   METADATA_SCHEMA_CHANGE_LISTENER_CLASSES("advanced.schema-change-listener.classes"),
   /**
-   * List of percentiles in double to be published by the cql-requests metric. 95th percentile to
-   * represented as 0.95.
+   * Optional list of percentiles to publish for cql-requests metric. e.g 95th percentile as 0.95.
    *
    * <p>Value type: {@link java.util.List List}&#60;{@link Double}&#62;
    */
   METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES(
       "advanced.metrics.session.cql-requests.publish-percentiles"),
   /**
-   * List of percentiles in double to be published by the node cql-messages metric. 95th percentile
-   * to represented as 0.95.
+   * Optional list of percentiles to publish for node cql-messages metric. e.g 95th percentile as
+   * 0.95.
    *
    * <p>Value type: {@link java.util.List List}&#60;{@link Double}&#62;
    */
   METRICS_NODE_CQL_MESSAGES_PUBLISH_PERCENTILES(
       "advanced.metrics.node.cql-messages.publish-percentiles"),
   /**
-   * List of percentiles in double to be published by the throttling delay metric. 95th percentile
-   * to represented as 0.95.
+   * Optional list of percentiles to publish for throttling delay metric. e.g 95th percentile as
+   * 0.95.
    *
    * <p>Value type: {@link java.util.List List}&#60;{@link Double}&#62;
    */

@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.metrics.micrometer;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.AbstractMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.MetricId;
@@ -161,7 +162,14 @@ public abstract class MicrometerMetricUpdater<MetricT> extends AbstractMetricUpd
     return builder.publishPercentileHistogram();
   }
 
-  protected double[] toDoubleArray(List<Double> doubleList) {
+  static double[] toDoubleArray(List<Double> doubleList) {
     return doubleList.stream().mapToDouble(Double::doubleValue).toArray();
+  }
+
+  static void publishPercentilesIfEnabled(
+      Timer.Builder builder, DriverExecutionProfile profile, DriverOption driverOption) {
+    if (profile.isDefined(driverOption)) {
+      builder.publishPercentiles(toDoubleArray(profile.getDoubleList(driverOption)));
+    }
   }
 }
