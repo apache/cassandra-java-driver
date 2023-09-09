@@ -962,6 +962,14 @@ public enum DefaultDriverOption implements DriverOption {
    */
   METRICS_SESSION_THROTTLING_PUBLISH_PERCENTILES(
       "advanced.metrics.session.throttling.delay.publish-percentiles"),
+  /**
+   * Adds histogram buckets used to generate aggregable percentile approximations in monitoring
+   * systems that have query facilities to do so (e.g. Prometheus histogram_quantile, Atlas
+   * percentiles).
+   *
+   * <p>Value-type: boolean
+   */
+  METRICS_GENERATE_AGGREGABLE_HISTOGRAMS("advanced.metrics.histograms.generate-aggregable"),
   ;
 
   private final String path;

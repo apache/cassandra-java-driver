@@ -63,9 +63,9 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
   @Override
   protected Timer.Builder configureTimer(Timer.Builder builder, SessionMetric metric, MetricId id) {
     DriverExecutionProfile profile = context.getConfig().getDefaultProfile();
+    super.configureTimer(builder, metric, id);
     if (metric == DefaultSessionMetric.CQL_REQUESTS) {
       builder
-          .publishPercentileHistogram()
           .minimumExpectedValue(
               profile.getDuration(DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_LOWEST))
           .maximumExpectedValue(
@@ -83,11 +83,8 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
 
       publishPercentilesIfEnabled(
           builder, profile, DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES);
-      return builder;
-
     } else if (metric == DefaultSessionMetric.THROTTLING_DELAY) {
       builder
-          .publishPercentileHistogram()
           .minimumExpectedValue(
               profile.getDuration(DefaultDriverOption.METRICS_SESSION_THROTTLING_LOWEST))
           .maximumExpectedValue(
@@ -105,11 +102,8 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
 
       publishPercentilesIfEnabled(
           builder, profile, DefaultDriverOption.METRICS_SESSION_THROTTLING_PUBLISH_PERCENTILES);
-      return builder;
-
     } else if (metric == DseSessionMetric.CONTINUOUS_CQL_REQUESTS) {
       builder
-          .publishPercentileHistogram()
           .minimumExpectedValue(
               profile.getDuration(
                   DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_LOWEST))
@@ -134,11 +128,8 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
           builder,
           profile,
           DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES);
-      return builder;
-
     } else if (metric == DseSessionMetric.GRAPH_REQUESTS) {
       builder
-          .publishPercentileHistogram()
           .minimumExpectedValue(
               profile.getDuration(DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_LOWEST))
           .maximumExpectedValue(
@@ -156,8 +147,7 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
 
       publishPercentilesIfEnabled(
           builder, profile, DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_PUBLISH_PERCENTILES);
-      return builder;
     }
-    return super.configureTimer(builder, metric, id);
+    return builder;
   }
 }

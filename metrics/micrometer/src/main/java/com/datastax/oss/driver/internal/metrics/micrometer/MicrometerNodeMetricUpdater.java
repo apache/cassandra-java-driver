@@ -96,9 +96,9 @@ public class MicrometerNodeMetricUpdater extends MicrometerMetricUpdater<NodeMet
   @Override
   protected Timer.Builder configureTimer(Timer.Builder builder, NodeMetric metric, MetricId id) {
     DriverExecutionProfile profile = context.getConfig().getDefaultProfile();
+    super.configureTimer(builder, metric, id);
     if (metric == DefaultNodeMetric.CQL_MESSAGES) {
       builder
-          .publishPercentileHistogram()
           .minimumExpectedValue(
               profile.getDuration(DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_LOWEST))
           .maximumExpectedValue(
@@ -114,10 +114,8 @@ public class MicrometerNodeMetricUpdater extends MicrometerMetricUpdater<NodeMet
 
       publishPercentilesIfEnabled(
           builder, profile, DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_PUBLISH_PERCENTILES);
-      return builder;
     } else if (metric == DseNodeMetric.GRAPH_MESSAGES) {
       builder
-          .publishPercentileHistogram()
           .minimumExpectedValue(
               profile.getDuration(DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_LOWEST))
           .maximumExpectedValue(
@@ -132,8 +130,7 @@ public class MicrometerNodeMetricUpdater extends MicrometerMetricUpdater<NodeMet
 
       publishPercentilesIfEnabled(
           builder, profile, DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_PUBLISH_PERCENTILES);
-      return builder;
     }
-    return super.configureTimer(builder, metric, id);
+    return builder;
   }
 }

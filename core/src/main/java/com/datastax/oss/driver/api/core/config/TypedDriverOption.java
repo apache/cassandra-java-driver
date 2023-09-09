@@ -388,6 +388,10 @@ public class TypedDriverOption<ValueT> {
   /** The consistency level to use for trace queries. */
   public static final TypedDriverOption<String> REQUEST_TRACE_CONSISTENCY =
       new TypedDriverOption<>(DefaultDriverOption.REQUEST_TRACE_CONSISTENCY, GenericType.STRING);
+  /** Whether or not to publish aggregable histogram for metrics */
+  public static final TypedDriverOption<Boolean> METRICS_GENERATE_AGGREGABLE_HISTOGRAMS =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_GENERATE_AGGREGABLE_HISTOGRAMS, GenericType.BOOLEAN);
   /** List of enabled session-level metrics. */
   public static final TypedDriverOption<List<String>> METRICS_SESSION_ENABLED =
       new TypedDriverOption<>(
