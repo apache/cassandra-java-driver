@@ -133,11 +133,13 @@ public class MicrometerSessionMetricUpdaterTest {
     when(profile.isDefined(sla)).thenReturn(false);
     when(profile.getDurationList(sla))
         .thenReturn(Arrays.asList(Duration.ofMillis(100), Duration.ofMillis(500)));
+    when(profile.getBoolean(DefaultDriverOption.METRICS_GENERATE_AGGREGABLE_HISTOGRAMS))
+        .thenReturn(true);
     when(profile.isDefined(percentiles)).thenReturn(false);
     when(profile.getDoubleList(percentiles)).thenReturn(Arrays.asList(0.75, 0.95, 0.99));
     when(generator.sessionMetricId(metric)).thenReturn(METRIC_ID);
 
-    SimpleMeterRegistry registry = spy(new SimpleMeterRegistry());
+    SimpleMeterRegistry registry = new SimpleMeterRegistry();
     MicrometerSessionMetricUpdater updater =
         new MicrometerSessionMetricUpdater(context, enabledMetrics, registry);
 
