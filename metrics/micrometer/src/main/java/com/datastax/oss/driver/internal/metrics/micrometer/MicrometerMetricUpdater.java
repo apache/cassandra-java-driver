@@ -175,7 +175,7 @@ public abstract class MicrometerMetricUpdater<MetricT> extends AbstractMetricUpd
     return doubleList.stream().mapToDouble(Double::doubleValue).toArray();
   }
 
-  static void publishPercentilesIfDefined(
+  static void configurePercentilesPublishIfDefined(
       Timer.Builder builder, DriverExecutionProfile profile, DriverOption driverOption) {
     if (profile.isDefined(driverOption)) {
       builder.publishPercentiles(toDoubleArray(profile.getDoubleList(driverOption)));

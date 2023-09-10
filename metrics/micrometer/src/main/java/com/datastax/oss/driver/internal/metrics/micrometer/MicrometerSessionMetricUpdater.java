@@ -81,7 +81,7 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
                   ? profile.getInt(DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_DIGITS)
                   : null);
 
-      publishPercentilesIfDefined(
+      configurePercentilesPublishIfDefined(
           builder, profile, DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES);
     } else if (metric == DefaultSessionMetric.THROTTLING_DELAY) {
       builder
@@ -100,7 +100,7 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
                   ? profile.getInt(DefaultDriverOption.METRICS_SESSION_THROTTLING_DIGITS)
                   : null);
 
-      publishPercentilesIfDefined(
+      configurePercentilesPublishIfDefined(
           builder, profile, DefaultDriverOption.METRICS_SESSION_THROTTLING_PUBLISH_PERCENTILES);
     } else if (metric == DseSessionMetric.CONTINUOUS_CQL_REQUESTS) {
       builder
@@ -124,7 +124,7 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
                       DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_DIGITS)
                   : null);
 
-      publishPercentilesIfDefined(
+      configurePercentilesPublishIfDefined(
           builder,
           profile,
           DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES);
@@ -145,7 +145,7 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
                   ? profile.getInt(DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_DIGITS)
                   : null);
 
-      publishPercentilesIfDefined(
+      configurePercentilesPublishIfDefined(
           builder, profile, DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_PUBLISH_PERCENTILES);
     }
     return builder;
