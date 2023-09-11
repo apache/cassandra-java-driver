@@ -47,7 +47,7 @@ links:
   - title: Mailing List
     href:  https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
   - title: Releases
-    href:  http://downloads.datastax.com/java-driver/
+    href:  https://downloads.datastax.com/#datastax-drivers
 api_docs:
   '4.17': 'http://docs.datastax.com/en/drivers/java/4.17'
   '4.16': 'http://docs.datastax.com/en/drivers/java/4.16'
@@ -143,3 +143,46 @@ versions:
     ref: '2.1'
   - name: '2.0'
     ref: '2.0'
+checks:
+  external_links:
+    exclude:
+      - 'https://twitter.com/dsJavaDriver'
+      - 'https://twitter.com/datastaxeng'
+      - 'https://projectreactor.io'
+      - 'https://docs.datastax.com/en/drivers/java/4.[0-9]+/com/datastax/oss/driver/internal/'
+      - 'http://www.planetcassandra.org/blog/user-defined-functions-in-cassandra-3-0/'
+      - 'http://www.planetcassandra.org/making-the-change-from-thrift-to-cql/'
+      - 'https://academy.datastax.com/slack'
+      - 'https://micrometer.io/docs'
+      - 'http://datastax.github.io/java-driver/features/shaded_jar/'
+  internal_links:
+    exclude:
+      - 'netty_pipeline/'
+      - '../core/'
+      - '%5Bguava%20eviction%5D'
+
+rewrites:
+  - search: 'https://(helpdocs|docs).datastax.com/(en/astra/)?(aws|gcp)/(dscloud/apollo|doc/dscloud/astra)/dscloudGettingStarted.html'
+    replace: 'https://docs.datastax.com/en/astra-serverless/docs/getting-started/getting-started.html'
+  - search: 'https://(helpdocs|docs).datastax.com/(en/astra/)?(aws|gcp)/(dscloud/apollo|doc/dscloud/astra)/dscloudObtainingCredentials.html'
+    replace: 'https://docs.datastax.com/en/astra-serverless/docs/connect/secure-connect-bundle.html'
+  - search: 'https://(helpdocs|docs).datastax.com/(en/astra/)?(aws|gcp)/(dscloud/apollo|doc/dscloud/astra)/dscloudShareClusterDetails.html'
+    replace: 'https://docs.datastax.com/en/astra-serverless/docs/manage/org/manage-tokens.html'
+  - search: 'http://downloads.datastax.com/java-driver/'
+    replace: 'https://downloads.datastax.com/#datastax-drivers'
+  - search: 'https://docs.datastax.com/en/drivers/java/(4.[0-9]+)/com/datastax/oss/driver/api/mapper/EntityHelper.html'
+    replace: 'https://docs.datastax.com/en/drivers/java/\1/com/datastax/oss/driver/api/mapper/entity/EntityHelper.html'
+  - search: '(http|https)://www.datastax.com/drivers/java/'
+    replace: 'https://docs.datastax.com/en/drivers/java/'
+  - search: 'http://docs.datastax.com/en/drivers/java'
+    replace: 'https://docs.datastax.com/en/drivers/java'
+  - search: 'https://docs.astra.datastax.com/docs/creating-your-astra-database'
+    replace: 'https://docs.datastax.com/en/astra-serverless/docs/getting-started/create-db-choices.html'
+  - search: 'https://docs.astra.datastax.com/docs/obtaining-database-credentials'
+    replace: 'https://docs.datastax.com/en/astra-serverless/docs/connect/secure-connect-bundle.html'
+  - search: 'https://docs.datastax.com/en/drivers/java/(4.[0-9]+)/com/datastax/oss/driver/api/core/cql/SyncCqlSession.html%60'
+    replace: 'https://docs.datastax.com/en/drivers/java/\1/com/datastax/oss/driver/api/core/cql/SyncCqlSession.html'
+  - search: 'https://code.google.com/p/snappy/'
+    replace: 'https://google.github.io/snappy/'
+  - search: 'https://code.google.com/p/guava-libraries/wiki/ListenableFutureExplained'
+    replace: 'https://github.com/google/guava/wiki/ListenableFutureExplained'
