@@ -63,9 +63,9 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
   @Override
   protected Timer.Builder configureTimer(Timer.Builder builder, SessionMetric metric, MetricId id) {
     DriverExecutionProfile profile = context.getConfig().getDefaultProfile();
+    super.configureTimer(builder, metric, id);
     if (metric == DefaultSessionMetric.CQL_REQUESTS) {
-      return builder
-          .publishPercentileHistogram()
+      builder
           .minimumExpectedValue(
               profile.getDuration(DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_LOWEST))
           .maximumExpectedValue(
@@ -80,9 +80,11 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
               profile.isDefined(DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_DIGITS)
                   ? profile.getInt(DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_DIGITS)
                   : null);
+
+      configurePercentilesPublishIfDefined(
+          builder, profile, DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES);
     } else if (metric == DefaultSessionMetric.THROTTLING_DELAY) {
-      return builder
-          .publishPercentileHistogram()
+      builder
           .minimumExpectedValue(
               profile.getDuration(DefaultDriverOption.METRICS_SESSION_THROTTLING_LOWEST))
           .maximumExpectedValue(
@@ -97,9 +99,11 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
               profile.isDefined(DefaultDriverOption.METRICS_SESSION_THROTTLING_DIGITS)
                   ? profile.getInt(DefaultDriverOption.METRICS_SESSION_THROTTLING_DIGITS)
                   : null);
+
+      configurePercentilesPublishIfDefined(
+          builder, profile, DefaultDriverOption.METRICS_SESSION_THROTTLING_PUBLISH_PERCENTILES);
     } else if (metric == DseSessionMetric.CONTINUOUS_CQL_REQUESTS) {
-      return builder
-          .publishPercentileHistogram()
+      builder
           .minimumExpectedValue(
               profile.getDuration(
                   DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_LOWEST))
@@ -119,9 +123,13 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
                   ? profile.getInt(
                       DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_DIGITS)
                   : null);
+
+      configurePercentilesPublishIfDefined(
+          builder,
+          profile,
+          DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES);
     } else if (metric == DseSessionMetric.GRAPH_REQUESTS) {
-      return builder
-          .publishPercentileHistogram()
+      builder
           .minimumExpectedValue(
               profile.getDuration(DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_LOWEST))
           .maximumExpectedValue(
@@ -136,7 +144,10 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
               profile.isDefined(DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_DIGITS)
                   ? profile.getInt(DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_DIGITS)
                   : null);
+
+      configurePercentilesPublishIfDefined(
+          builder, profile, DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_PUBLISH_PERCENTILES);
     }
-    return super.configureTimer(builder, metric, id);
+    return builder;
   }
 }

@@ -15,7 +15,9 @@
  */
 package com.datastax.oss.driver.internal.metrics.micrometer;
 
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.AbstractMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.MetricId;
@@ -27,6 +29,7 @@ import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -151,12 +154,31 @@ public abstract class MicrometerMetricUpdater<MetricT> extends AbstractMetricUpd
   }
 
   protected Timer.Builder configureTimer(Timer.Builder builder, MetricT metric, MetricId id) {
-    return builder.publishPercentileHistogram();
+    DriverExecutionProfile profile = context.getConfig().getDefaultProfile();
+    if (profile.getBoolean(DefaultDriverOption.METRICS_GENERATE_AGGREGABLE_HISTOGRAMS)) {
+      builder.publishPercentileHistogram();
+    }
+    return builder;
   }
 
   @SuppressWarnings("unused")
   protected DistributionSummary.Builder configureDistributionSummary(
       DistributionSummary.Builder builder, MetricT metric, MetricId id) {
-    return builder.publishPercentileHistogram();
+    DriverExecutionProfile profile = context.getConfig().getDefaultProfile();
+    if (profile.getBoolean(DefaultDriverOption.METRICS_GENERATE_AGGREGABLE_HISTOGRAMS)) {
+      builder.publishPercentileHistogram();
+    }
+    return builder;
+  }
+
+  static double[] toDoubleArray(List<Double> doubleList) {
+    return doubleList.stream().mapToDouble(Double::doubleValue).toArray();
+  }
+
+  static void configurePercentilesPublishIfDefined(
+      Timer.Builder builder, DriverExecutionProfile profile, DriverOption driverOption) {
+    if (profile.isDefined(driverOption)) {
+      builder.publishPercentiles(toDoubleArray(profile.getDoubleList(driverOption)));
+    }
   }
 }
