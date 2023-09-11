@@ -632,6 +632,10 @@ changelog](https://docs.datastax.com/en/developer/java-driver-dse/latest/changel
 - [bug] JAVA-1499: Wait for load balancing policy at cluster initialization
 - [new feature] JAVA-1495: Add prepared statements
 
+## 3.11.5
+- [improvement] JAVA-3114: Shade io.dropwizard.metrics:metrics-core in shaded driver
+- [improvement] JAVA-3115: SchemaChangeListener#onKeyspaceChanged can fire when keyspace has not changed if using SimpleStrategy replication
+
 ## 3.11.4
 - [improvement] JAVA-3079: Upgrade Netty to 4.1.94, 3.x edition
 - [improvement] JAVA-3082: Fix maven build for Apple-silicon
