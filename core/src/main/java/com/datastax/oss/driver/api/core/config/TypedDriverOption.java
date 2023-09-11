@@ -798,6 +798,11 @@ public class TypedDriverOption<ValueT> {
       new TypedDriverOption<>(
           DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_SLO,
           GenericType.listOf(GenericType.DURATION));
+
+  /** The batch type */
+  public static final TypedDriverOption<String> BATCH_TYPE =
+      new TypedDriverOption<>(DseDriverOption.BATCH_TYPE_CONFIGURATION, GenericType.STRING);
+
   /**
    * The number of significant decimal digits to which internal structures will maintain for graph
    * requests.

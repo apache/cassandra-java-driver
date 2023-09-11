@@ -22,11 +22,14 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.cql.BatchType;
+import com.datastax.oss.driver.internal.core.DefaultBatchTypeRegistry;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
 import com.datastax.oss.driver.internal.core.config.MockOptions;
 import com.datastax.oss.driver.internal.core.context.EventBus;
@@ -78,6 +81,10 @@ public class DefaultDriverConfigLoaderTest {
     when(config.getDefaultProfile()).thenReturn(defaultProfile);
     when(defaultProfile.getDuration(DefaultDriverOption.CONFIG_RELOAD_INTERVAL))
         .thenReturn(Duration.ofSeconds(12));
+
+    when(context.getBatchTypeRegistry()).thenReturn(new DefaultBatchTypeRegistry());
+    when(defaultProfile.getString(DseDriverOption.BATCH_TYPE_CONFIGURATION))
+        .thenReturn(BatchType.LOGGED.toString());
 
     configSource = new AtomicReference<>("int1 = 42");
   }
@@ -205,6 +212,8 @@ public class DefaultDriverConfigLoaderTest {
     // From customApplication.conf:
     assertThat(config.getDuration(DefaultDriverOption.REQUEST_TIMEOUT))
         .isEqualTo(Duration.ofSeconds(5));
+    assertThat(config.getString(DseDriverOption.BATCH_TYPE_CONFIGURATION))
+        .isEqualTo(BatchType.UNLOGGED.toString());
     // From reference.conf:
     assertThat(config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
         .isEqualTo(DefaultConsistencyLevel.SERIAL.name());

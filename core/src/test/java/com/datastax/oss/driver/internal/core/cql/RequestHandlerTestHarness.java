@@ -21,12 +21,14 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.cql.BatchType;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
@@ -36,6 +38,7 @@ import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.internal.core.DefaultBatchTypeRegistry;
 import com.datastax.oss.driver.internal.core.DefaultConsistencyLevelRegistry;
 import com.datastax.oss.driver.internal.core.ProtocolFeature;
 import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
@@ -112,8 +115,11 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     when(defaultProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE))
         .thenReturn(builder.defaultIdempotence);
     when(defaultProfile.getBoolean(DefaultDriverOption.PREPARE_ON_ALL_NODES)).thenReturn(true);
+    when(defaultProfile.getString(DseDriverOption.BATCH_TYPE_CONFIGURATION))
+        .thenReturn(BatchType.UNLOGGED.toString());
 
     when(config.getDefaultProfile()).thenReturn(defaultProfile);
+    when(context.getConfig()).thenReturn(config);
     when(context.getConfig()).thenReturn(config);
 
     when(loadBalancingPolicyWrapper.newQueryPlan(
@@ -160,6 +166,8 @@ public class RequestHandlerTestHarness implements AutoCloseable {
     }
 
     when(context.getConsistencyLevelRegistry()).thenReturn(new DefaultConsistencyLevelRegistry());
+
+    when(context.getBatchTypeRegistry()).thenReturn(new DefaultBatchTypeRegistry());
 
     when(context.getWriteTypeRegistry()).thenReturn(new DefaultWriteTypeRegistry());
 

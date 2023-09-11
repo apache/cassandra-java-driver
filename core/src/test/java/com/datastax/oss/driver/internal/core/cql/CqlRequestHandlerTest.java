@@ -57,6 +57,41 @@ import org.junit.Test;
 public class CqlRequestHandlerTest extends CqlRequestHandlerTestBase {
 
   @Test
+  public void should_use_default_unlogged_batch() {
+
+    try (RequestHandlerTestHarness harness =
+        RequestHandlerTestHarness.builder()
+            .withResponse(node1, defaultFrameOf(singleRow()))
+            .build()) {
+
+      CompletionStage<AsyncResultSet> resultSetFuture =
+          new CqlRequestHandler(
+                  BATCH_STATEMENT_WITHOUT_BATCH_TYPE,
+                  harness.getSession(),
+                  harness.getContext(),
+                  "test")
+              .handle();
+
+      assertThatStage(resultSetFuture)
+          .isSuccess(
+              resultSet -> {
+                Iterator<Row> rows = resultSet.currentPage().iterator();
+                assertThat(rows.hasNext()).isTrue();
+                assertThat(rows.next().getString("message")).isEqualTo("hello, world");
+
+                ExecutionInfo executionInfo = resultSet.getExecutionInfo();
+                assertThat(executionInfo.getCoordinator()).isEqualTo(node1);
+                assertThat(executionInfo.getErrors()).isEmpty();
+                assertThat(executionInfo.getIncomingPayload()).isEmpty();
+                assertThat(executionInfo.getPagingState()).isNull();
+                assertThat(executionInfo.getSpeculativeExecutionCount()).isEqualTo(0);
+                assertThat(executionInfo.getSuccessfulExecutionIndex()).isEqualTo(0);
+                assertThat(executionInfo.getWarnings()).isEmpty();
+              });
+    }
+  }
+
+  @Test
   public void should_complete_result_if_first_node_replies_immediately() {
     try (RequestHandlerTestHarness harness =
         RequestHandlerTestHarness.builder()

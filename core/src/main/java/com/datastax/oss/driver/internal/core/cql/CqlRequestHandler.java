@@ -138,11 +138,10 @@ public class CqlRequestHandler implements Throttled {
     this.startTimeNanos = System.nanoTime();
     this.logPrefix = sessionLogPrefix + "|" + this.hashCode();
     LOG.trace("[{}] Creating new handler for request {}", logPrefix, statement);
-
-    this.initialStatement = statement;
     this.session = session;
     this.keyspace = session.getKeyspace().orElse(null);
     this.context = context;
+    this.initialStatement = Conversions.resolveStatement(statement, context);
     this.result = new CompletableFuture<>();
     this.result.exceptionally(
         t -> {
