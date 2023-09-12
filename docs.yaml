@@ -148,11 +148,13 @@ checks:
     exclude:
       - 'https://twitter.com/dsJavaDriver'
       - 'https://twitter.com/datastaxeng'
+      - 'https://twitter.com/datastax'
       - 'https://projectreactor.io'
       - 'https://docs.datastax.com/en/drivers/java/4.[0-9]+/com/datastax/oss/driver/internal/'
       - 'http://www.planetcassandra.org/blog/user-defined-functions-in-cassandra-3-0/'
       - 'http://www.planetcassandra.org/making-the-change-from-thrift-to-cql/'
       - 'https://academy.datastax.com/slack'
+      - 'https://community.datastax.com/index.html'
       - 'https://micrometer.io/docs'
       - 'http://datastax.github.io/java-driver/features/shaded_jar/'
   internal_links:
@@ -186,3 +188,5 @@ rewrites:
     replace: 'https://google.github.io/snappy/'
   - search: 'https://code.google.com/p/guava-libraries/wiki/ListenableFutureExplained'
     replace: 'https://github.com/google/guava/wiki/ListenableFutureExplained'
+  - search: 'https://community.datastax.com/index.html'
+    replace: 'https://www.datastax.com/workshops'
