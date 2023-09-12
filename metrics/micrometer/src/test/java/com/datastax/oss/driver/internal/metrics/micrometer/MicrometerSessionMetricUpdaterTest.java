@@ -165,7 +165,7 @@ public class MicrometerSessionMetricUpdaterTest {
         DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_HIGHEST,
         DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_DIGITS,
         DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_SLO,
-        DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES,
+        DefaultDriverOption.METRICS_HISTOGRAM_PUBLISH_LOCAL_PERCENTILES,
       },
       {
         DseSessionMetric.GRAPH_REQUESTS,
@@ -173,7 +173,7 @@ public class MicrometerSessionMetricUpdaterTest {
         DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_HIGHEST,
         DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_DIGITS,
         DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_SLO,
-        DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_PUBLISH_PERCENTILES,
+        DefaultDriverOption.METRICS_HISTOGRAM_PUBLISH_LOCAL_PERCENTILES,
       },
       {
         DseSessionMetric.CONTINUOUS_CQL_REQUESTS,
@@ -181,7 +181,7 @@ public class MicrometerSessionMetricUpdaterTest {
         DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_HIGHEST,
         DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_DIGITS,
         DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_SLO,
-        DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES
+        DefaultDriverOption.METRICS_HISTOGRAM_PUBLISH_LOCAL_PERCENTILES
       },
       {
         DefaultSessionMetric.THROTTLING_DELAY,
@@ -189,7 +189,7 @@ public class MicrometerSessionMetricUpdaterTest {
         DefaultDriverOption.METRICS_SESSION_THROTTLING_HIGHEST,
         DefaultDriverOption.METRICS_SESSION_THROTTLING_DIGITS,
         DefaultDriverOption.METRICS_SESSION_THROTTLING_SLO,
-        DefaultDriverOption.METRICS_SESSION_THROTTLING_PUBLISH_PERCENTILES
+        DefaultDriverOption.METRICS_HISTOGRAM_PUBLISH_LOCAL_PERCENTILES
       },
     };
   }

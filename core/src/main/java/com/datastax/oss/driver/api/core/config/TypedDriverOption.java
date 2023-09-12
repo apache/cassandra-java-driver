@@ -388,6 +388,11 @@ public class TypedDriverOption<ValueT> {
   /** The consistency level to use for trace queries. */
   public static final TypedDriverOption<String> REQUEST_TRACE_CONSISTENCY =
       new TypedDriverOption<>(DefaultDriverOption.REQUEST_TRACE_CONSISTENCY, GenericType.STRING);
+  /** Optional pre-defined percentile of histogram metrics to publish, as a list of percentiles . */
+  public static final TypedDriverOption<List<Double>> METRICS_HISTOGRAM_PUBLISH_LOCAL_PERCENTILES =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_HISTOGRAM_PUBLISH_LOCAL_PERCENTILES,
+          GenericType.listOf(GenericType.DOUBLE));
   /** Whether or not to publish aggregable histogram for metrics */
   public static final TypedDriverOption<Boolean> METRICS_GENERATE_AGGREGABLE_HISTOGRAMS =
       new TypedDriverOption<>(
@@ -413,12 +418,6 @@ public class TypedDriverOption<ValueT> {
       new TypedDriverOption<>(
           DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_SLO,
           GenericType.listOf(GenericType.DURATION));
-  /** Optional pre-defined percentile of cql requests to publish, as a list of percentiles . */
-  public static final TypedDriverOption<List<Double>>
-      METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES =
-          new TypedDriverOption<>(
-              DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES,
-              GenericType.listOf(GenericType.DOUBLE));
   /**
    * The number of significant decimal digits to which internal structures will maintain for
    * requests.
@@ -443,12 +442,6 @@ public class TypedDriverOption<ValueT> {
       new TypedDriverOption<>(
           DefaultDriverOption.METRICS_SESSION_THROTTLING_SLO,
           GenericType.listOf(GenericType.DURATION));
-  /** Optional pre-defined percentile of throttling delay to publish, as a list of percentiles . */
-  public static final TypedDriverOption<List<Double>>
-      METRICS_SESSION_THROTTLING_PUBLISH_PERCENTILES =
-          new TypedDriverOption<>(
-              DefaultDriverOption.METRICS_SESSION_THROTTLING_PUBLISH_PERCENTILES,
-              GenericType.listOf(GenericType.DOUBLE));
   /**
    * The number of significant decimal digits to which internal structures will maintain for
    * throttling.
@@ -473,12 +466,6 @@ public class TypedDriverOption<ValueT> {
       new TypedDriverOption<>(
           DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_SLO,
           GenericType.listOf(GenericType.DURATION));
-  /** Optional pre-defined percentile of node cql messages to publish, as a list of percentiles . */
-  public static final TypedDriverOption<List<Double>>
-      METRICS_NODE_CQL_MESSAGES_PUBLISH_PERCENTILES =
-          new TypedDriverOption<>(
-              DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_PUBLISH_PERCENTILES,
-              GenericType.listOf(GenericType.DOUBLE));
   /**
    * The number of significant decimal digits to which internal structures will maintain for
    * requests.
@@ -723,15 +710,6 @@ public class TypedDriverOption<ValueT> {
               DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_SLO,
               GenericType.listOf(GenericType.DURATION));
   /**
-   * Optional pre-defined percentile of continuous paging cql requests to publish, as a list of
-   * percentiles .
-   */
-  public static final TypedDriverOption<List<Double>>
-      CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES =
-          new TypedDriverOption<>(
-              DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES,
-              GenericType.listOf(GenericType.DOUBLE));
-  /**
    * The number of significant decimal digits to which internal structures will maintain for
    * continuous requests.
    */
@@ -805,12 +783,6 @@ public class TypedDriverOption<ValueT> {
       new TypedDriverOption<>(
           DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_SLO,
           GenericType.listOf(GenericType.DURATION));
-  /** Optional pre-defined percentile of graph requests to publish, as a list of percentiles . */
-  public static final TypedDriverOption<List<Double>>
-      METRICS_SESSION_GRAPH_REQUESTS_PUBLISH_PERCENTILES =
-          new TypedDriverOption<>(
-              DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_PUBLISH_PERCENTILES,
-              GenericType.listOf(GenericType.DOUBLE));
   /**
    * The number of significant decimal digits to which internal structures will maintain for graph
    * requests.
@@ -835,14 +807,6 @@ public class TypedDriverOption<ValueT> {
       new TypedDriverOption<>(
           DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_SLO,
           GenericType.listOf(GenericType.DURATION));
-  /**
-   * Optional pre-defined percentile of node graph requests to publish, as a list of percentiles .
-   */
-  public static final TypedDriverOption<List<Double>>
-      METRICS_NODE_GRAPH_MESSAGES_PUBLISH_PERCENTILES =
-          new TypedDriverOption<>(
-              DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_PUBLISH_PERCENTILES,
-              GenericType.listOf(GenericType.DOUBLE));
   /**
    * The number of significant decimal digits to which internal structures will maintain for graph
    * requests.
