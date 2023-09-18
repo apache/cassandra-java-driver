@@ -17,11 +17,13 @@ package com.datastax.dse.driver.internal.core.cql.continuous;
 
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.api.core.cql.continuous.ContinuousAsyncResultSet;
+import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.internal.core.DseProtocolFeature;
 import com.datastax.dse.driver.internal.core.cql.DseConversions;
 import com.datastax.dse.protocol.internal.request.Revise;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.AsyncPagingIterable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.NodeUnavailableException;
@@ -488,9 +490,6 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
 
     // Coordinates concurrent accesses between the client and I/O threads
     private final ReentrantLock lock = new ReentrantLock();
-
-    // The execution info for passing to the request tracker.
-    private ExecutionInfo executionInfo;
 
     // The page queue, storing responses that we have received and have not been consumed by the
     // client yet. We instantiate it lazily to avoid unnecessary allocation; this is also used to
@@ -1563,6 +1562,14 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       if (resultSetClass.isInstance(pageOrError)) {
         if (future.complete(resultSetClass.cast(pageOrError))) {
           throttler.signalSuccess(ContinuousRequestHandlerBase.this);
+
+          ExecutionInfo executionInfo = null;
+          if (pageOrError instanceof AsyncPagingIterable) {
+            executionInfo = ((AsyncPagingIterable) pageOrError).getExecutionInfo();
+          } else if (pageOrError instanceof AsyncGraphResultSet) {
+            executionInfo = ((AsyncGraphResultSet) pageOrError).getRequestExecutionInfo();
+          }
+
           if (nodeSuccessReported.compareAndSet(false, true)) {
             context
                 .getRequestTracker()
@@ -1597,20 +1604,18 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     private ExecutionInfo createExecutionInfo(@NonNull Result result, @Nullable Frame response) {
       ByteBuffer pagingState =
           result instanceof Rows ? ((Rows) result).getMetadata().pagingState : null;
-      this.executionInfo =
-          new DefaultExecutionInfo(
-              statement,
-              node,
-              startedSpeculativeExecutionsCount.get(),
-              executionIndex,
-              errors,
-              pagingState,
-              response,
-              true,
-              session,
-              context,
-              executionProfile);
-      return executionInfo;
+      return new DefaultExecutionInfo(
+          statement,
+          node,
+          startedSpeculativeExecutionsCount.get(),
+          executionIndex,
+          errors,
+          pagingState,
+          response,
+          true,
+          session,
+          context,
+          executionProfile);
     }
 
     private void logTimeoutSchedulingError(IllegalStateException timeoutError) {
