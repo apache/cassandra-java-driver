@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2012-2017 DataStax Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -414,7 +416,7 @@ public final class CodecRegistry {
      * <p/>
      * Furthermore, this method returns the first matching codec, regardless of its accepted CQL type.
      * It should be reserved for situations where the target CQL type is not available or unknown.
-     * In the Java driver, this happens mainly when serializing a value in a
+     * In the Java Driver, this happens mainly when serializing a value in a
      * {@link SimpleStatement#SimpleStatement(String, Object...) SimpleStatement} or in the
      * {@link com.datastax.driver.core.querybuilder.QueryBuilder}, where no CQL type information is available.
      * <p/>
@@ -434,7 +436,7 @@ public final class CodecRegistry {
      * <p/>
      * This method returns the first matching codec, regardless of its accepted Java type.
      * It should be reserved for situations where the Java type is not available or unknown.
-     * In the Java driver, this happens mainly when deserializing a value using the
+     * In the Java Driver, this happens mainly when deserializing a value using the
      * {@link GettableByIndexData#getObject(int) getObject} method.
      * <p/>
      * Codecs returned by this method are cached (see the {@link CodecRegistry top-level documentation}

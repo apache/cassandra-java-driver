@@ -1,4 +1,4 @@
-## Using Tuples with the Java driver
+## Using Tuples with the Java Driver
 
 Cassandra allows to use `tuple` data types [in tables and user-defined types](https://docs.datastax.com/en/cql/3.1/cql/cql_reference/tupleType.html):
 
@@ -14,7 +14,7 @@ CREATE TABLE ks.collect_things (
 
 ### Fetching Tuples from Rows results
 
-The DataStax Java driver exposes a special [`TupleValue`][TupleValue] class to handle such columns. 
+The Java Driver exposes a special [`TupleValue`][TupleValue] class to handle such columns. 
 [`TupleValue`][TupleValue] exposes getters allowing to extract from the tuple all the data types 
 supported by Cassandra:
 
@@ -83,7 +83,7 @@ session.execute(bs);
 
 More generally, the `IN` keyword in a `SELECT` query will be used to define a *list* of 
 desired values of the filtered clustering keys, those would simply be bound as a list of 
-[`TupleValue`][TupleValue] with the Java driver:
+[`TupleValue`][TupleValue] with the Java Driver:
 
 ```java
 TupleType oneTimeUsageTuple = cluster.getMetadata().newTupleType(DataType.text(), DataType.text());

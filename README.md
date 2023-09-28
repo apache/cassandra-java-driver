@@ -1,9 +1,9 @@
-# Datastax Java Driver for Apache Cassandra
+# Java Driver for Apache Cassandra
 
 *If you're reading this on github.com, please note that this is the readme
 for the development version and that some features described here might
 not yet have been released. You can find the documentation for latest
-version through [Java driver
+version through [Java Driver
 docs](http://datastax.github.io/java-driver/) or via the release tags,
 [e.g.
 3.3.2](https://github.com/datastax/java-driver/tree/3.3.2).*
@@ -35,7 +35,7 @@ The driver contains the following modules:
 
 - driver-core: the core layer.
 - driver-mapping: the object mapper.
-- driver-extras: optional features for the Java driver.
+- driver-extras: optional features for the Java Driver.
 - driver-examples: example applications using the other modules which are
   only meant for demonstration purposes.
 - driver-tests: tests for the java-driver.
