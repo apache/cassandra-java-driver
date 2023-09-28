@@ -1,6 +1,6 @@
 ## Connecting to Astra (Cloud)
 
-Using the DataStax Java Driver to connect to a DataStax Astra database is almost identical to using
+Using the Java Driver to connect to a DataStax Astra database is almost identical to using
 the driver to connect to any normal Apache Cassandra® database. The only differences are in how the
 driver is configured in an application and that you will need to obtain a `secure connect bundle`.
 
@@ -22,7 +22,7 @@ database.
 
 1. Include the driver artifacts in your `pom.xml` file according to this [pom.xml dependency].
 
-1. Initialize the DataStax Java Driver.
+1. Initialize the Java Driver.
 
     a. Create a `ConnectDatabase.java` file in the `/src/main/java` directory for your Java project.
 
@@ -40,7 +40,7 @@ database.
       **Note:** With the `Cluster.builder()` object, make sure to set the path to the secure
       connect bundle for your Astra database (**"/path/to/secure-connect-database_name.zip"**) in
       the `withCloudSecureConnectBundle()` method as shown in the following example.  
-      * DataStax Java Driver for Apache Cassandra 3.x
+      * Java Driver for Apache Cassandra 3.x
 
           ```java
           import com.datastax.driver.core.Cluster;

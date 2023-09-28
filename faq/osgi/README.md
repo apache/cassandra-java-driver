@@ -1,6 +1,6 @@
 ## Frequently Asked Questions - OSGi
 
-### How to use the Java driver in an OSGi environment?
+### How to use the Java Driver in an OSGi environment?
 
 We have complete examples demonstrating usage of the driver in an [OSGi]
 environment; please refer to our [OSGi examples repository].
@@ -29,7 +29,7 @@ of Guava's packages, e.g. for 19.0:
 ### How to enable compression?
 
 First, read our [manual page on compression](../../manual/compression/)
-to understand how to enable compression for the Java driver.
+to understand how to enable compression for the Java Driver.
             
 OSGi projects can use both Snappy or LZ4 compression algorithms. 
 
