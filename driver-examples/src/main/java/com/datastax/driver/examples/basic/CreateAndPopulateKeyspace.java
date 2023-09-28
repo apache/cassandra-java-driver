@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,7 +33,7 @@ import com.datastax.driver.core.Session;
  * - creates two tables "simplex.songs" and "simplex.playlists". If they exist already, they will be reused;
  * - inserts a row in each table.
  *
- * @see <a href="http://datastax.github.io/java-driver/manual/">Java driver online manual</a>
+ * @see <a href="http://datastax.github.io/java-driver/manual/">Java Driver online manual</a>
  */
 public class CreateAndPopulateKeyspace {
 

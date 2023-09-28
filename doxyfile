@@ -4,7 +4,7 @@
 # Project related configuration options
 #---------------------------------------------------------------------------
 DOXYFILE_ENCODING      = UTF-8
-PROJECT_NAME           = "DataStax Java Driver"
+PROJECT_NAME           = "Java Driver"
 PROJECT_NUMBER         = 
 PROJECT_BRIEF          = 
 PROJECT_LOGO           = 
