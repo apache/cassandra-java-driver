@@ -1,16 +1,16 @@
-# Datastax Java Driver for Apache Cassandra®
+# Java Driver for Apache Cassandra®
 
 *If you're reading this on github.com, please note that this is the readme
 for the development version and that some features described here might
 not yet have been released. You can find the documentation for the latest
-version through the [Java driver
+version through the [Java Driver
 docs](http://docs.datastax.com/en/developer/java-driver/latest/index.html) or via the release tags,
 [e.g.
 3.10.2](https://github.com/datastax/java-driver/tree/3.10.2).*
 
 A modern, [feature-rich](manual/) and highly tunable Java client
 library for Apache Cassandra (2.1+) and using exclusively Cassandra's binary protocol 
-and Cassandra Query Language v3. _Use the [DataStax Enterprise Java driver][dse-driver]
+and Cassandra Query Language v3. _Use the [DataStax Enterprise Java Driver][dse-driver]
 for better compatibility and support for DataStax Enterprise._
 
 **Features:**
@@ -36,7 +36,7 @@ The driver contains the following modules:
 
 - driver-core: the core layer.
 - driver-mapping: the object mapper.
-- driver-extras: optional features for the Java driver.
+- driver-extras: optional features for the Java Driver.
 - driver-examples: example applications using the other modules which are
   only meant for demonstration purposes.
 - driver-tests: tests for the java-driver.
@@ -61,7 +61,7 @@ The driver contains the following modules:
 
 The last release of the driver is available on Maven Central. You can install
 it in your application using the following Maven dependency (_if
-using DataStax Enterprise, install the [DataStax Enterprise Java driver][dse-driver] instead_):
+using DataStax Enterprise, install the [DataStax Enterprise Java Driver][dse-driver] instead_):
 
 ```xml
 <dependency>
@@ -116,7 +116,7 @@ an [UnsupportedFeatureException](https://github.com/datastax/java-driver/blob/3.
 
 The java driver supports Java JDK versions 6 and above.
 
-If using _DataStax Enterprise_, the [DataStax Enterprise Java driver][dse-driver] provides 
+If using _DataStax Enterprise_, the [DataStax Enterprise Java Driver][dse-driver] provides 
 more features and better compatibility.
 
 __Disclaimer__: Some _DataStax/DataStax Enterprise_ products might partially work on 
@@ -127,7 +127,7 @@ big-endian systems, but _DataStax_ does not officially support these systems.
 If you are upgrading from a previous version of the driver, be sure to have a look at
 the [upgrade guide](/upgrade_guide/).
 
-If you are upgrading to _DataStax Enterprise_, use the [DataStax Enterprise Java driver][dse-driver] for more
+If you are upgrading to _DataStax Enterprise_, use the [DataStax Enterprise Java Driver][dse-driver] for more
 features and better compatibility.
 
 ## License
