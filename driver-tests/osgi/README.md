@@ -24,7 +24,7 @@ Once `mvn verify` completes, the bundle jar will be present in the `target/` dir
 
 The project includes integration tests that verify the service can
 be activated and used in an OSGi container.  It also verifies that
-the Java driver can be used in an OSGi container in the following
+the Java Driver can be used in an OSGi container in the following
 configurations:
 
 1. Default (default classifier with all dependencies)
