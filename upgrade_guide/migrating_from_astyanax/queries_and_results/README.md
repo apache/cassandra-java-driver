@@ -2,7 +2,7 @@
 There are many resources such as [this post][planetCCqlLink] or [this post][dsBlogCqlLink] to learn
 how to transform previous Thrift operations to CQL queries.
  
-The *Java driver* executes CQL queries through the `Session`. 
+The *Java Driver* executes CQL queries through the `Session`. 
 The queries can either be simple *CQL* Strings or represented in the form of 
 `Statement`s. The driver offers 4 kinds of statements, `SimpleStatement`, 
 `Prepared/BoundStatement`, `BuiltStatement`, and `BatchStatement`. All necessary
@@ -14,7 +14,7 @@ results of a *CQL* query will be in the form of *Rows* from *Tables*, composed
 of fixed set of columns, each with a type and a name. The driver exposes the 
 set of *Rows* returned from a query as a ResultSet, thus containing *Rows* on 
 which `getXXX()` can be called. Here are simple examples of translation from 
-*Astyanax* to *Java driver* in querying and retrieving query results.
+*Astyanax* to *Java Driver* in querying and retrieving query results.
 
 ## Single column
 
@@ -30,7 +30,7 @@ Column<String> result = keyspace.prepareQuery(CF_STANDARD1)
 String value = result.getStringValue();
 ```
 
-*Java driver*:
+*Java Driver*:
 
 ```
 Row row = session.execute("SELECT value FROM table1 WHERE key = '1' AND column1 = '3'").one();
@@ -57,7 +57,7 @@ while (!(columns = query.execute().getResult()).isEmpty()) {
 }
 ```
 
-*Java driver*:
+*Java Driver*:
 
 ```java
 ResultSet rs = session.execute("SELECT value FROM table1 WHERE key = '1'");
@@ -84,7 +84,7 @@ while (it.hasNext()) {
 }
 ```
 
-*Java driver*:
+*Java Driver*:
 
 ```java
 ResultSet rs = session.execute("SELECT value FROM table1 WHERE key = '1'" +
@@ -96,10 +96,10 @@ for (Row row : rs) {
 ```
 
 ## Async
-The *Java driver* provides native support for asynchronous programming since it 
+The *Java Driver* provides native support for asynchronous programming since it 
 is built on top of an [asynchronous protocol](../../../manual/native_protocol/),
 please see [this page](../../../manual/async/) for best practices regarding asynchronous programming
-with the *Java driver*.
+with the *Java Driver*.
 
 
 [planetCCqlLink]: http://www.planetcassandra.org/making-the-change-from-thrift-to-cql/

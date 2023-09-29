@@ -1,7 +1,7 @@
 # Stress application
 
-A simple example application that uses the Java driver to stress test
-Cassandra. This also somewhat stress tests the Java driver as a result.
+A simple example application that uses the Java Driver to stress test
+Cassandra. This also somewhat stress tests the Java Driver as a result.
 
 Please note that this simple example is far from being a complete stress
 application. In particular it currently supports a very limited number of
