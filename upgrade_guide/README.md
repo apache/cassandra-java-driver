@@ -1,7 +1,7 @@
 ## Upgrade guide
 
 The purpose of this guide is to detail changes made by successive
-versions of the Java driver.
+versions of the Java Driver.
 
 ### 2.0.11
 
