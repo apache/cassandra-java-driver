@@ -1,4 +1,4 @@
-DataStax Java Driver for Apache Cassandra
+Java Driver for Apache Cassandra
 =========================================
 
 A Java client driver for Apache Cassandra. This driver works exclusively with

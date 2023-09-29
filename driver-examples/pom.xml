@@ -20,8 +20,8 @@
   </parent>
   <artifactId>cassandra-driver-examples-parent</artifactId>
   <packaging>pom</packaging>
-  <name>DataStax Java Driver for Apache Cassandra Examples</name>
-  <description>A collection of examples to demonstrate DataStax Java Driver for Apache Cassandra.</description>
+  <name>Java Driver for Apache Cassandra Examples</name>
+  <description>A collection of examples to demonstrate Java Driver for Apache Cassandra.</description>
   <url>https://github.com/datastax/java-driver</url>
 
   <modules>
