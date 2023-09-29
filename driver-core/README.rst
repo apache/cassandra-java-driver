@@ -1,7 +1,7 @@
 Driver Core
 ===========
 
-This is the core module of the DataStax Java Driver for Apache Cassandra (C*), 
+This is the core module of the Java Driver for Apache Cassandra (C*), 
 which offers a simple (as in, not abstracted) but complete API to work with
 CQL3. The main goal of the module is to handle all the functionality related
 to managing connections to a Cassandra cluster (but leaving higher level
