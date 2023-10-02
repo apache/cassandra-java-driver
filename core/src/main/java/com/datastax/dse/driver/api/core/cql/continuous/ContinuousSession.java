@@ -33,8 +33,8 @@ import java.util.concurrent.CompletionStage;
  * A session that has the ability to execute continuous paging queries.
  *
  * <p>Continuous paging is a new method of streaming bulk amounts of records from Datastax
- * Enterprise (DSE) to the Java Driver, available since DSE 5.1. It is mainly intended to
- * be leveraged by <a
+ * Enterprise (DSE) to the Java Driver, available since DSE 5.1. It is mainly intended to be
+ * leveraged by <a
  * href="https://docs.datastax.com/en/dse/5.1/dse-dev/datastax_enterprise/analytics/analyticsTOC.html">DSE
  * Analytics</a> and Apache Spark™, or by any similar analytics tool that needs to read large
  * portions of a table in one single operation, as quick and reliably as possible.
