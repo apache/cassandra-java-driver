@@ -15,7 +15,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- * Policies that allow to control some of the behavior of the Java Driver for Cassandra.
- */
+/** Policies that allow to control some of the behavior of the Java Driver for Cassandra. */
 package com.datastax.driver.core.policies;
