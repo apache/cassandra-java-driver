@@ -51,6 +51,7 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -220,6 +221,10 @@ public class ChannelPool implements AsyncAutoCloseable {
   public CompletionStage<Void> forceCloseAsync() {
     RunOrSchedule.on(adminExecutor, singleThreaded::forceClose);
     return singleThreaded.closeFuture;
+  }
+
+  public Iterator<DriverChannel> channelIterator() {
+    return channels.iterator();
   }
 
   /** Holds all administration tasks, that are confined to the admin executor. */

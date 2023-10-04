@@ -278,7 +278,7 @@ public class CloudConfigFactory {
       List<EndPoint> endPoints = new ArrayList<>();
       JsonNode hostIdsJson = contactInfo.get("contact_points");
       for (int i = 0; i < hostIdsJson.size(); i++) {
-        endPoints.add(new SniEndPoint(sniProxyAddress, hostIdsJson.get(i).asText()));
+        endPoints.add(new SniEndPoint(sniProxyAddress, hostIdsJson.get(i).asText(), null));
       }
       return endPoints;
     } else {

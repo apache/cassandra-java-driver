@@ -29,10 +29,12 @@ import java.util.UUID;
 public class CloudTopologyMonitor extends DefaultTopologyMonitor {
 
   private final InetSocketAddress cloudProxyAddress;
+  private InternalDriverContext context;
 
   public CloudTopologyMonitor(InternalDriverContext context, InetSocketAddress cloudProxyAddress) {
     super(context);
     this.cloudProxyAddress = cloudProxyAddress;
+    this.context = context;
   }
 
   @NonNull
@@ -42,6 +44,6 @@ public class CloudTopologyMonitor extends DefaultTopologyMonitor {
       @Nullable InetSocketAddress broadcastRpcAddress,
       @NonNull EndPoint localEndPoint) {
     UUID hostId = Objects.requireNonNull(row.getUuid("host_id"));
-    return new SniEndPoint(cloudProxyAddress, hostId.toString());
+    return new SniEndPoint(cloudProxyAddress, hostId.toString(), context);
   }
 }

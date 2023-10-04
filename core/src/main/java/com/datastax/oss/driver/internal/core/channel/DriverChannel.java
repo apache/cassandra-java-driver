@@ -212,6 +212,10 @@ public class DriverChannel {
     return channel.localAddress();
   }
 
+  public SocketAddress remoteAddress() {
+    return channel.remoteAddress();
+  }
+
   /** @return The {@link ChannelConfig configuration} of this channel. */
   public ChannelConfig config() {
     return channel.config();
