@@ -52,7 +52,7 @@
     <config.version>1.4.1</config.version>
     <hdrhistogram.version>2.1.12</hdrhistogram.version>
     <metrics.version>4.1.18</metrics.version>
-    <netty.version>4.1.94.Final</netty.version>
+    <netty.version>4.1.100.Final</netty.version>
     <esri.version>1.2.1</esri.version>
     <!--
     When upgrading TinkerPop please upgrade the version matrix in
@@ -66,7 +66,7 @@
     <jackson-databind.version>2.13.2.2</jackson-databind.version>
     <legacy-jackson.version>1.9.12</legacy-jackson.version>
     <!-- optional dependencies -->
-    <snappy.version>1.1.10.1</snappy.version>
+    <snappy.version>1.1.10.5</snappy.version>
     <lz4.version>1.7.1</lz4.version>
     <!-- test dependencies -->
     <assertj.version>3.19.0</assertj.version>
