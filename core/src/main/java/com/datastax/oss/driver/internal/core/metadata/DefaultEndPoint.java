@@ -38,6 +38,11 @@ public class DefaultEndPoint implements EndPoint, Serializable {
   @NonNull
   @Override
   public InetSocketAddress resolve() {
+    return retrieve();
+  }
+
+  @Override
+  public InetSocketAddress retrieve() {
     return address;
   }
 
