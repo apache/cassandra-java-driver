@@ -510,7 +510,10 @@ public class DefaultEntityFactory implements EntityFactory {
 
   private void reportMultipleAnnotationError(
       Element element, Class<? extends Annotation> a0, Class<? extends Annotation> a1) {
-    if (a0 == a1) {
+    // A hack to prevent displaying warning messages when annotating record's fields.
+    // See: https://github.com/scylladb/java-driver/issues/246
+    boolean isParentRecord = element.getEnclosingElement().getKind().name().equals("RECORD");
+    if (a0 == a1 && !isParentRecord) {
       context
           .getMessager()
           .warn(
@@ -518,7 +521,7 @@ public class DefaultEntityFactory implements EntityFactory {
               "@%s should be used either on the field or the getter, but not both. "
                   + "The annotation on this field will be ignored.",
               a0.getSimpleName());
-    } else {
+    } else if (a0 != a1) {
       context
           .getMessager()
           .error(
