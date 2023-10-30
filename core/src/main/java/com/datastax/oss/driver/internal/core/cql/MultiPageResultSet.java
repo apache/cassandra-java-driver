@@ -93,7 +93,7 @@ public class MultiPageResultSet implements ResultSet {
     }
 
     private void maybeMoveToNextPage() {
-      if (!currentRows.hasNext() && currentPage.hasMorePages()) {
+      while (!currentRows.hasNext() && currentPage.hasMorePages()) {
         BlockingOperation.checkNotDriverThread();
         AsyncResultSet nextPage =
             CompletableFutures.getUninterruptibly(currentPage.fetchNextPage());
