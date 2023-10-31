@@ -18,10 +18,10 @@
 package com.datastax.oss.driver.api.core.type.reflect;
 
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -41,7 +41,7 @@ public class GenericTypeParameter<T> {
         (TypeVariable<?>) ((ParameterizedType) superclass).getActualTypeArguments()[0];
   }
 
-  @NonNull
+  @Nonnull
   public TypeVariable<?> getTypeVariable() {
     return typeVariable;
   }

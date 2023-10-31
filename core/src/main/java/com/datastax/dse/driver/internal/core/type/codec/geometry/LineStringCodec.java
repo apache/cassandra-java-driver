@@ -24,8 +24,8 @@ import com.datastax.dse.driver.internal.core.data.geometry.DefaultLineString;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.esri.core.geometry.ogc.OGCLineString;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -39,47 +39,47 @@ public class LineStringCodec extends GeometryCodec<LineString> {
 
   private static final GenericType<LineString> JAVA_TYPE = GenericType.of(LineString.class);
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<LineString> getJavaType() {
     return JAVA_TYPE;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected LineString fromWellKnownText(@NonNull String source) {
+  protected LineString fromWellKnownText(@Nonnull String source) {
     return new DefaultLineString(DefaultGeometry.fromOgcWellKnownText(source, OGCLineString.class));
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == LineString.class;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof LineString;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected LineString fromWellKnownBinary(@NonNull ByteBuffer bb) {
+  protected LineString fromWellKnownBinary(@Nonnull ByteBuffer bb) {
     return new DefaultLineString(DefaultGeometry.fromOgcWellKnownBinary(bb, OGCLineString.class));
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected String toWellKnownText(@NonNull LineString geometry) {
+  protected String toWellKnownText(@Nonnull LineString geometry) {
     return geometry.asWellKnownText();
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected ByteBuffer toWellKnownBinary(@NonNull LineString geometry) {
+  protected ByteBuffer toWellKnownBinary(@Nonnull LineString geometry) {
     return geometry.asWellKnownBinary();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DseDataTypes.LINE_STRING;

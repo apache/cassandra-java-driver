@@ -21,7 +21,6 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,6 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,14 +45,14 @@ public class OptionalLocalDcHelper implements LocalDcHelper {
 
   private static final Logger LOG = LoggerFactory.getLogger(OptionalLocalDcHelper.class);
 
-  @NonNull protected final InternalDriverContext context;
-  @NonNull protected final DriverExecutionProfile profile;
-  @NonNull protected final String logPrefix;
+  @Nonnull protected final InternalDriverContext context;
+  @Nonnull protected final DriverExecutionProfile profile;
+  @Nonnull protected final String logPrefix;
 
   public OptionalLocalDcHelper(
-      @NonNull InternalDriverContext context,
-      @NonNull DriverExecutionProfile profile,
-      @NonNull String logPrefix) {
+      @Nonnull InternalDriverContext context,
+      @Nonnull DriverExecutionProfile profile,
+      @Nonnull String logPrefix) {
     this.context = context;
     this.profile = profile;
     this.logPrefix = logPrefix;
@@ -63,8 +63,8 @@ public class OptionalLocalDcHelper implements LocalDcHelper {
    *     configuration; {@link Optional#empty empty} if none found.
    */
   @Override
-  @NonNull
-  public Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes) {
+  @Nonnull
+  public Optional<String> discoverLocalDc(@Nonnull Map<UUID, Node> nodes) {
     String localDc = context.getLocalDatacenter(profile.getName());
     if (localDc != null) {
       LOG.debug("[{}] Local DC set programmatically: {}", logPrefix, localDc);
@@ -92,7 +92,7 @@ public class OptionalLocalDcHelper implements LocalDcHelper {
    * @param contactPoints The contact points provided when creating the session.
    */
   protected void checkLocalDatacenterCompatibility(
-      @NonNull String localDc, Set<? extends Node> contactPoints) {
+      @Nonnull String localDc, Set<? extends Node> contactPoints) {
     if (profile.getName().equals(DriverExecutionProfile.DEFAULT_NAME)) {
       Set<Node> badContactPoints = new LinkedHashSet<>();
       for (Node node : contactPoints) {
@@ -115,7 +115,7 @@ public class OptionalLocalDcHelper implements LocalDcHelper {
    * Formats the given nodes as a string detailing each contact point and its datacenter, for
    * informational purposes.
    */
-  @NonNull
+  @Nonnull
   protected String formatNodesAndDcs(Iterable<? extends Node> nodes) {
     List<String> l = new ArrayList<>();
     for (Node node : nodes) {
@@ -128,7 +128,7 @@ public class OptionalLocalDcHelper implements LocalDcHelper {
    * Formats the given nodes as a string detailing each distinct datacenter, for informational
    * purposes.
    */
-  @NonNull
+  @Nonnull
   protected String formatDcs(Iterable<? extends Node> nodes) {
     List<String> l = new ArrayList<>();
     for (Node node : nodes) {

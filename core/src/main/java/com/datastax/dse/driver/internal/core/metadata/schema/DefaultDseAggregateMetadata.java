@@ -23,10 +23,10 @@ import com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultAggregateMetadata;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
 import java.util.Optional;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -36,14 +36,14 @@ public class DefaultDseAggregateMetadata extends DefaultAggregateMetadata
   @Nullable private final Boolean deterministic;
 
   public DefaultDseAggregateMetadata(
-      @NonNull CqlIdentifier keyspace,
-      @NonNull FunctionSignature signature,
+      @Nonnull CqlIdentifier keyspace,
+      @Nonnull FunctionSignature signature,
       @Nullable FunctionSignature finalFuncSignature,
       @Nullable Object initCond,
-      @NonNull DataType returnType,
-      @NonNull FunctionSignature stateFuncSignature,
-      @NonNull DataType stateType,
-      @NonNull TypeCodec<Object> stateTypeCodec,
+      @Nonnull DataType returnType,
+      @Nonnull FunctionSignature stateFuncSignature,
+      @Nonnull DataType stateType,
+      @Nonnull TypeCodec<Object> stateTypeCodec,
       @Nullable Boolean deterministic) {
     super(
         keyspace,

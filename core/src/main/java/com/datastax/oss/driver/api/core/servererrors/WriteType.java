@@ -17,7 +17,7 @@
  */
 package com.datastax.oss.driver.api.core.servererrors;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * The type of a Cassandra write query.
@@ -41,6 +41,6 @@ public interface WriteType {
   WriteType CDC = DefaultWriteType.CDC;
 
   /** The textual representation that the write type is encoded to in protocol frames. */
-  @NonNull
+  @Nonnull
   String name();
 }

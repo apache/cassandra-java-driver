@@ -23,9 +23,9 @@ import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.relation.OngoingWhereClause;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * An in-progress DELETE statement: it targets a table and optionally a list of columns to delete;
@@ -48,8 +48,8 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    * <p>If you add multiple selectors as once, consider {@link #selectors(Iterable)} as a more
    * efficient alternative.
    */
-  @NonNull
-  DeleteSelection selector(@NonNull Selector selector);
+  @Nonnull
+  DeleteSelection selector(@Nonnull Selector selector);
 
   /**
    * Adds multiple selectors at once.
@@ -66,12 +66,12 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    *
    * @see #selector(Selector)
    */
-  @NonNull
-  DeleteSelection selectors(@NonNull Iterable<Selector> additionalSelectors);
+  @Nonnull
+  DeleteSelection selectors(@Nonnull Iterable<Selector> additionalSelectors);
 
   /** Var-arg equivalent of {@link #selectors(Iterable)}. */
-  @NonNull
-  default DeleteSelection selectors(@NonNull Selector... additionalSelectors) {
+  @Nonnull
+  default DeleteSelection selectors(@Nonnull Selector... additionalSelectors) {
     return selectors(Arrays.asList(additionalSelectors));
   }
 
@@ -82,14 +82,14 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    *
    * @see Selector#column(CqlIdentifier)
    */
-  @NonNull
-  default DeleteSelection column(@NonNull CqlIdentifier columnId) {
+  @Nonnull
+  default DeleteSelection column(@Nonnull CqlIdentifier columnId) {
     return selector(Selector.column(columnId));
   }
 
   /** Shortcut for {@link #column(CqlIdentifier) column(CqlIdentifier.fromCql(columnName))} */
-  @NonNull
-  default DeleteSelection column(@NonNull String columnName) {
+  @Nonnull
+  default DeleteSelection column(@Nonnull String columnName) {
     return column(CqlIdentifier.fromCql(columnName));
   }
 
@@ -101,9 +101,9 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    *
    * @see Selector#field(CqlIdentifier, CqlIdentifier)
    */
-  @NonNull
+  @Nonnull
   default DeleteSelection field(
-      @NonNull CqlIdentifier udtColumnId, @NonNull CqlIdentifier fieldId) {
+      @Nonnull CqlIdentifier udtColumnId, @Nonnull CqlIdentifier fieldId) {
     return selector(Selector.field(udtColumnId, fieldId));
   }
 
@@ -113,8 +113,8 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    *
    * @see Selector#field(String, String)
    */
-  @NonNull
-  default DeleteSelection field(@NonNull String udtColumnName, @NonNull String fieldName) {
+  @Nonnull
+  default DeleteSelection field(@Nonnull String udtColumnName, @Nonnull String fieldName) {
     return field(CqlIdentifier.fromCql(udtColumnName), CqlIdentifier.fromCql(fieldName));
   }
 
@@ -126,8 +126,8 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    *
    * @see Selector#element(CqlIdentifier, Term)
    */
-  @NonNull
-  default DeleteSelection element(@NonNull CqlIdentifier collectionId, @NonNull Term index) {
+  @Nonnull
+  default DeleteSelection element(@Nonnull CqlIdentifier collectionId, @Nonnull Term index) {
     return selector(Selector.element(collectionId, index));
   }
 
@@ -137,8 +137,8 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    *
    * @see Selector#element(String, Term)
    */
-  @NonNull
-  default DeleteSelection element(@NonNull String collectionName, @NonNull Term index) {
+  @Nonnull
+  default DeleteSelection element(@Nonnull String collectionName, @Nonnull Term index) {
     return element(CqlIdentifier.fromCql(collectionName), index);
   }
 
@@ -154,8 +154,8 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    *
    * @see QueryBuilder#raw(String)
    */
-  @NonNull
-  default DeleteSelection raw(@NonNull String raw) {
+  @Nonnull
+  default DeleteSelection raw(@Nonnull String raw) {
     return selector(QueryBuilder.raw(raw));
   }
 
@@ -165,7 +165,7 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    * <p>If this method or {@link #usingTimestamp(BindMarker)} is called multiple times, the last
    * value is used.
    */
-  @NonNull
+  @Nonnull
   DeleteSelection usingTimestamp(long timestamp);
 
   /**
@@ -174,6 +174,6 @@ public interface DeleteSelection extends OngoingWhereClause<Delete> {
    * <p>If this method or {@link #usingTimestamp(long)} is called multiple times, the last value is
    * used. Passing {@code null} to this method removes any previous timestamp.
    */
-  @NonNull
+  @Nonnull
   DeleteSelection usingTimestamp(@Nullable BindMarker bindMarker);
 }

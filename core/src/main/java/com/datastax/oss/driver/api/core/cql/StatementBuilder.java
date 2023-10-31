@@ -24,11 +24,11 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.internal.core.util.RoutingKey;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -90,7 +90,7 @@ public abstract class StatementBuilder<
   }
 
   /** @see Statement#setExecutionProfileName(String) */
-  @NonNull
+  @Nonnull
   public SelfT setExecutionProfileName(@Nullable String executionProfileName) {
     this.executionProfileName = executionProfileName;
     if (executionProfileName != null) {
@@ -100,7 +100,7 @@ public abstract class StatementBuilder<
   }
 
   /** @see Statement#setExecutionProfile(DriverExecutionProfile) */
-  @NonNull
+  @Nonnull
   public SelfT setExecutionProfile(@Nullable DriverExecutionProfile executionProfile) {
     this.executionProfile = executionProfile;
     if (executionProfile != null) {
@@ -110,7 +110,7 @@ public abstract class StatementBuilder<
   }
 
   /** @see Statement#setRoutingKeyspace(CqlIdentifier) */
-  @NonNull
+  @Nonnull
   public SelfT setRoutingKeyspace(@Nullable CqlIdentifier routingKeyspace) {
     this.routingKeyspace = routingKeyspace;
     return self;
@@ -120,35 +120,35 @@ public abstract class StatementBuilder<
    * Shortcut for {@link #setRoutingKeyspace(CqlIdentifier)
    * setRoutingKeyspace(CqlIdentifier.fromCql(routingKeyspaceName))}.
    */
-  @NonNull
+  @Nonnull
   public SelfT setRoutingKeyspace(@Nullable String routingKeyspaceName) {
     return setRoutingKeyspace(
         routingKeyspaceName == null ? null : CqlIdentifier.fromCql(routingKeyspaceName));
   }
 
   /** @see Statement#setRoutingKey(ByteBuffer) */
-  @NonNull
+  @Nonnull
   public SelfT setRoutingKey(@Nullable ByteBuffer routingKey) {
     this.routingKey = routingKey;
     return self;
   }
 
   /** @see Statement#setRoutingKey(ByteBuffer...) */
-  @NonNull
-  public SelfT setRoutingKey(@NonNull ByteBuffer... newRoutingKeyComponents) {
+  @Nonnull
+  public SelfT setRoutingKey(@Nonnull ByteBuffer... newRoutingKeyComponents) {
     return setRoutingKey(RoutingKey.compose(newRoutingKeyComponents));
   }
 
   /** @see Statement#setRoutingToken(Token) */
-  @NonNull
+  @Nonnull
   public SelfT setRoutingToken(@Nullable Token routingToken) {
     this.routingToken = routingToken;
     return self;
   }
 
   /** @see Statement#setCustomPayload(Map) */
-  @NonNull
-  public SelfT addCustomPayload(@NonNull String key, @Nullable ByteBuffer value) {
+  @Nonnull
+  public SelfT addCustomPayload(@Nonnull String key, @Nullable ByteBuffer value) {
     if (customPayloadBuilder == null) {
       customPayloadBuilder = NullAllowingImmutableMap.builder();
     }
@@ -157,14 +157,14 @@ public abstract class StatementBuilder<
   }
 
   /** @see Statement#setCustomPayload(Map) */
-  @NonNull
+  @Nonnull
   public SelfT clearCustomPayload() {
     customPayloadBuilder = null;
     return self;
   }
 
   /** @see Statement#setIdempotent(Boolean) */
-  @NonNull
+  @Nonnull
   public SelfT setIdempotence(@Nullable Boolean idempotent) {
     this.idempotent = idempotent;
     return self;
@@ -176,13 +176,13 @@ public abstract class StatementBuilder<
    *
    * @see Statement#setTracing(boolean)
    */
-  @NonNull
+  @Nonnull
   public SelfT setTracing() {
     return setTracing(true);
   }
 
   /** @see Statement#setTracing(boolean) */
-  @NonNull
+  @Nonnull
   public SelfT setTracing(boolean tracing) {
     this.tracing = tracing;
     return self;
@@ -193,7 +193,7 @@ public abstract class StatementBuilder<
    *     {@link #setTracing(boolean) setTracing(true)}.
    */
   @Deprecated
-  @NonNull
+  @Nonnull
   public SelfT enableTracing() {
     return setTracing(true);
   }
@@ -203,13 +203,13 @@ public abstract class StatementBuilder<
    *     {@link #setTracing(boolean) setTracing(false)}.
    */
   @Deprecated
-  @NonNull
+  @Nonnull
   public SelfT disableTracing() {
     return setTracing(false);
   }
 
   /** @see Statement#setQueryTimestamp(long) */
-  @NonNull
+  @Nonnull
   public SelfT setQueryTimestamp(long timestamp) {
     this.timestamp = timestamp;
     return self;
@@ -220,20 +220,20 @@ public abstract class StatementBuilder<
    *     {@link #setQueryTimestamp(long)}.
    */
   @Deprecated
-  @NonNull
+  @Nonnull
   public SelfT setDefaultTimestamp(long timestamp) {
     return setQueryTimestamp(timestamp);
   }
 
   /** @see Statement#setPagingState(ByteBuffer) */
-  @NonNull
+  @Nonnull
   public SelfT setPagingState(@Nullable ByteBuffer pagingState) {
     this.pagingState = pagingState;
     return self;
   }
 
   /** @see Statement#setPageSize(int) */
-  @NonNull
+  @Nonnull
   public SelfT setPageSize(int pageSize) {
     this.pageSize = pageSize;
     return self;
@@ -244,27 +244,27 @@ public abstract class StatementBuilder<
    *     {@link #setPageSize(int)}.
    */
   @Deprecated
-  @NonNull
+  @Nonnull
   public SelfT setFetchSize(int pageSize) {
     return this.setPageSize(pageSize);
   }
 
   /** @see Statement#setConsistencyLevel(ConsistencyLevel) */
-  @NonNull
+  @Nonnull
   public SelfT setConsistencyLevel(@Nullable ConsistencyLevel consistencyLevel) {
     this.consistencyLevel = consistencyLevel;
     return self;
   }
 
   /** @see Statement#setSerialConsistencyLevel(ConsistencyLevel) */
-  @NonNull
+  @Nonnull
   public SelfT setSerialConsistencyLevel(@Nullable ConsistencyLevel serialConsistencyLevel) {
     this.serialConsistencyLevel = serialConsistencyLevel;
     return self;
   }
 
   /** @see Statement#setTimeout(Duration) */
-  @NonNull
+  @Nonnull
   public SelfT setTimeout(@Nullable Duration timeout) {
     this.timeout = timeout;
     return self;
@@ -282,13 +282,13 @@ public abstract class StatementBuilder<
     return self;
   }
 
-  @NonNull
+  @Nonnull
   protected Map<String, ByteBuffer> buildCustomPayload() {
     return (customPayloadBuilder == null)
         ? NullAllowingImmutableMap.of()
         : customPayloadBuilder.build();
   }
 
-  @NonNull
+  @Nonnull
   public abstract StatementT build();
 }

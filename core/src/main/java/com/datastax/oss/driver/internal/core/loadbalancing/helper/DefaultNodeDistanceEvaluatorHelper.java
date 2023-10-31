@@ -24,11 +24,11 @@ import com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.Reflection;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Predicate;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,23 +45,23 @@ public class DefaultNodeDistanceEvaluatorHelper implements NodeDistanceEvaluator
   private static final Logger LOG =
       LoggerFactory.getLogger(DefaultNodeDistanceEvaluatorHelper.class);
 
-  @NonNull protected final InternalDriverContext context;
-  @NonNull protected final DriverExecutionProfile profile;
-  @NonNull protected final String logPrefix;
+  @Nonnull protected final InternalDriverContext context;
+  @Nonnull protected final DriverExecutionProfile profile;
+  @Nonnull protected final String logPrefix;
 
   public DefaultNodeDistanceEvaluatorHelper(
-      @NonNull InternalDriverContext context,
-      @NonNull DriverExecutionProfile profile,
-      @NonNull String logPrefix) {
+      @Nonnull InternalDriverContext context,
+      @Nonnull DriverExecutionProfile profile,
+      @Nonnull String logPrefix) {
     this.context = context;
     this.profile = profile;
     this.logPrefix = logPrefix;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public NodeDistanceEvaluator createNodeDistanceEvaluator(
-      @Nullable String localDc, @NonNull Map<UUID, Node> nodes) {
+      @Nullable String localDc, @Nonnull Map<UUID, Node> nodes) {
     NodeDistanceEvaluator nodeDistanceEvaluatorFromConfig = nodeDistanceEvaluatorFromConfig();
     return (node, dc) -> {
       NodeDistance distance = nodeDistanceEvaluatorFromConfig.evaluateDistance(node, dc);
@@ -74,7 +74,7 @@ public class DefaultNodeDistanceEvaluatorHelper implements NodeDistanceEvaluator
     };
   }
 
-  @NonNull
+  @Nonnull
   protected NodeDistanceEvaluator nodeDistanceEvaluatorFromConfig() {
     NodeDistanceEvaluator evaluator = context.getNodeDistanceEvaluator(profile.getName());
     if (evaluator != null) {

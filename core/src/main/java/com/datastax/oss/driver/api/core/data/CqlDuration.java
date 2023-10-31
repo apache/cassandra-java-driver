@@ -21,7 +21,6 @@ import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting
 import com.datastax.oss.driver.shaded.guava.common.base.Objects;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.Period;
@@ -34,6 +33,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -140,7 +140,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
    *
    * @param input the <code>String</code> to convert
    */
-  public static CqlDuration from(@NonNull String input) {
+  public static CqlDuration from(@Nonnull String input) {
     boolean isNegative = input.startsWith("-");
     String source = isNegative ? input.substring(1) : input;
 
@@ -156,7 +156,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
     return parseStandardFormat(isNegative, source);
   }
 
-  private static CqlDuration parseIso8601Format(boolean isNegative, @NonNull String source) {
+  private static CqlDuration parseIso8601Format(boolean isNegative, @Nonnull String source) {
     Matcher matcher = ISO8601_PATTERN.matcher(source);
     if (!matcher.matches())
       throw new IllegalArgumentException(
@@ -188,7 +188,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
   }
 
   private static CqlDuration parseIso8601AlternativeFormat(
-      boolean isNegative, @NonNull String source) {
+      boolean isNegative, @Nonnull String source) {
     Matcher matcher = ISO8601_ALTERNATIVE_PATTERN.matcher(source);
     if (!matcher.matches()) {
       throw new IllegalArgumentException(
@@ -204,7 +204,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
         .build();
   }
 
-  private static CqlDuration parseIso8601WeekFormat(boolean isNegative, @NonNull String source) {
+  private static CqlDuration parseIso8601WeekFormat(boolean isNegative, @Nonnull String source) {
     Matcher matcher = ISO8601_WEEK_PATTERN.matcher(source);
     if (!matcher.matches()) {
       throw new IllegalArgumentException(
@@ -213,7 +213,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
     return new Builder(isNegative).addWeeks(groupAsLong(matcher, 1)).build();
   }
 
-  private static CqlDuration parseStandardFormat(boolean isNegative, @NonNull String source) {
+  private static CqlDuration parseStandardFormat(boolean isNegative, @Nonnull String source) {
     Matcher matcher = STANDARD_PATTERN.matcher(source);
     if (!matcher.find()) {
       throw new IllegalArgumentException(
@@ -236,11 +236,11 @@ public final class CqlDuration implements TemporalAmount, Serializable {
     return builder.build();
   }
 
-  private static long groupAsLong(@NonNull Matcher matcher, int group) {
+  private static long groupAsLong(@Nonnull Matcher matcher, int group) {
     return Long.parseLong(matcher.group(group));
   }
 
-  private static Builder add(@NonNull Builder builder, long number, @NonNull String symbol) {
+  private static Builder add(@Nonnull Builder builder, long number, @Nonnull String symbol) {
     String s = symbol.toLowerCase(Locale.ROOT);
     if (s.equals("y")) {
       return builder.addYears(number);
@@ -276,7 +276,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
    * @return the remainder of the division
    */
   private static long append(
-      @NonNull StringBuilder builder, long dividend, long divisor, @NonNull String unit) {
+      @Nonnull StringBuilder builder, long dividend, long divisor, @Nonnull String unit) {
     if (dividend == 0 || dividend < divisor) {
       return dividend;
     }
@@ -420,7 +420,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
      * @param numberOfYears the number of years to add.
      * @return this {@code Builder}
      */
-    @NonNull
+    @Nonnull
     public Builder addYears(long numberOfYears) {
       validateOrder(1);
       validateMonths(numberOfYears, MONTHS_PER_YEAR);
@@ -437,7 +437,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
      * @param numberOfMonths the number of months to add.
      * @return this {@code Builder}
      */
-    @NonNull
+    @Nonnull
     public Builder addMonths(long numberOfMonths) {
       validateOrder(2);
       validateMonths(numberOfMonths, 1);
@@ -451,7 +451,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
      * @param numberOfWeeks the number of weeks to add.
      * @return this {@code Builder}
      */
-    @NonNull
+    @Nonnull
     public Builder addWeeks(long numberOfWeeks) {
       validateOrder(3);
       validateDays(numberOfWeeks, DAYS_PER_WEEK);
@@ -465,7 +465,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
      * @param numberOfDays the number of days to add.
      * @return this {@code Builder}
      */
-    @NonNull
+    @Nonnull
     public Builder addDays(long numberOfDays) {
       validateOrder(4);
       validateDays(numberOfDays, 1);
@@ -479,7 +479,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
      * @param numberOfHours the number of hours to add.
      * @return this {@code Builder}
      */
-    @NonNull
+    @Nonnull
     public Builder addHours(long numberOfHours) {
       validateOrder(5);
       validateNanos(numberOfHours, NANOS_PER_HOUR);
@@ -493,7 +493,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
      * @param numberOfMinutes the number of minutes to add.
      * @return this {@code Builder}
      */
-    @NonNull
+    @Nonnull
     public Builder addMinutes(long numberOfMinutes) {
       validateOrder(6);
       validateNanos(numberOfMinutes, NANOS_PER_MINUTE);
@@ -507,7 +507,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
      * @param numberOfSeconds the number of seconds to add.
      * @return this {@code Builder}
      */
-    @NonNull
+    @Nonnull
     public Builder addSeconds(long numberOfSeconds) {
       validateOrder(7);
       validateNanos(numberOfSeconds, NANOS_PER_SECOND);
@@ -521,7 +521,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
      * @param numberOfMillis the number of milliseconds to add.
      * @return this {@code Builder}
      */
-    @NonNull
+    @Nonnull
     public Builder addMillis(long numberOfMillis) {
       validateOrder(8);
       validateNanos(numberOfMillis, NANOS_PER_MILLI);
@@ -535,7 +535,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
      * @param numberOfMicros the number of microseconds to add.
      * @return this {@code Builder}
      */
-    @NonNull
+    @Nonnull
     public Builder addMicros(long numberOfMicros) {
       validateOrder(9);
       validateNanos(numberOfMicros, NANOS_PER_MICRO);
@@ -549,7 +549,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
      * @param numberOfNanos the number of nanoseconds to add.
      * @return this {@code Builder}
      */
-    @NonNull
+    @Nonnull
     public Builder addNanos(long numberOfNanos) {
       validateOrder(10);
       validateNanos(numberOfNanos, 1);
@@ -594,7 +594,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
      * @param limit the limit on the number of units
      * @param unitName the unit name
      */
-    private void validate(long units, long limit, @NonNull String unitName) {
+    private void validate(long units, long limit, @Nonnull String unitName) {
       Preconditions.checkArgument(
           units <= limit,
           "Invalid duration. The total number of %s must be less or equal to %s",
@@ -628,7 +628,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
      * @param unitIndex the unit index
      * @return the name of the unit corresponding to the specified index.
      */
-    @NonNull
+    @Nonnull
     private String getUnitName(int unitIndex) {
       switch (unitIndex) {
         case 1:
@@ -656,7 +656,7 @@ public final class CqlDuration implements TemporalAmount, Serializable {
       }
     }
 
-    @NonNull
+    @Nonnull
     public CqlDuration build() {
       return isNegative
           ? new CqlDuration(-months, -days, -nanoseconds)

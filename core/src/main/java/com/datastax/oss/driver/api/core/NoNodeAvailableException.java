@@ -18,8 +18,8 @@
 package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
+import javax.annotation.Nonnull;
 
 /**
  * Specialization of {@code AllNodesFailedException} when no coordinators were tried.
@@ -36,7 +36,7 @@ public class NoNodeAvailableException extends AllNodesFailedException {
     super("No node was available to execute the query", executionInfo, Collections.emptySet());
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new NoNodeAvailableException(getExecutionInfo());

@@ -21,11 +21,11 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.cql.DefaultSimpleStatement;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableList;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -37,16 +37,16 @@ import net.jcip.annotations.NotThreadSafe;
 public class SimpleStatementBuilder
     extends StatementBuilder<SimpleStatementBuilder, SimpleStatement> {
 
-  @NonNull private String query;
+  @Nonnull private String query;
   @Nullable private CqlIdentifier keyspace;
   @Nullable private NullAllowingImmutableList.Builder<Object> positionalValuesBuilder;
   @Nullable private NullAllowingImmutableMap.Builder<CqlIdentifier, Object> namedValuesBuilder;
 
-  public SimpleStatementBuilder(@NonNull String query) {
+  public SimpleStatementBuilder(@Nonnull String query) {
     this.query = query;
   }
 
-  public SimpleStatementBuilder(@NonNull SimpleStatement template) {
+  public SimpleStatementBuilder(@Nonnull SimpleStatement template) {
     super(template);
     if (!template.getPositionalValues().isEmpty() && !template.getNamedValues().isEmpty()) {
       throw new IllegalArgumentException(
@@ -67,14 +67,14 @@ public class SimpleStatementBuilder
   }
 
   /** @see SimpleStatement#getQuery() */
-  @NonNull
-  public SimpleStatementBuilder setQuery(@NonNull String query) {
+  @Nonnull
+  public SimpleStatementBuilder setQuery(@Nonnull String query) {
     this.query = query;
     return this;
   }
 
   /** @see SimpleStatement#getKeyspace() */
-  @NonNull
+  @Nonnull
   public SimpleStatementBuilder setKeyspace(@Nullable CqlIdentifier keyspace) {
     this.keyspace = keyspace;
     return this;
@@ -84,13 +84,13 @@ public class SimpleStatementBuilder
    * Shortcut for {@link #setKeyspace(CqlIdentifier)
    * setKeyspace(CqlIdentifier.fromCql(keyspaceName))}.
    */
-  @NonNull
+  @Nonnull
   public SimpleStatementBuilder setKeyspace(@Nullable String keyspaceName) {
     return setKeyspace(keyspaceName == null ? null : CqlIdentifier.fromCql(keyspaceName));
   }
 
   /** @see SimpleStatement#setPositionalValues(List) */
-  @NonNull
+  @Nonnull
   public SimpleStatementBuilder addPositionalValue(@Nullable Object value) {
     if (namedValuesBuilder != null) {
       throw new IllegalArgumentException(
@@ -104,8 +104,8 @@ public class SimpleStatementBuilder
   }
 
   /** @see SimpleStatement#setPositionalValues(List) */
-  @NonNull
-  public SimpleStatementBuilder addPositionalValues(@NonNull Iterable<Object> values) {
+  @Nonnull
+  public SimpleStatementBuilder addPositionalValues(@Nonnull Iterable<Object> values) {
     if (namedValuesBuilder != null) {
       throw new IllegalArgumentException(
           "Can't have both positional and named values in a statement.");
@@ -118,21 +118,21 @@ public class SimpleStatementBuilder
   }
 
   /** @see SimpleStatement#setPositionalValues(List) */
-  @NonNull
-  public SimpleStatementBuilder addPositionalValues(@NonNull Object... values) {
+  @Nonnull
+  public SimpleStatementBuilder addPositionalValues(@Nonnull Object... values) {
     return addPositionalValues(Arrays.asList(values));
   }
 
   /** @see SimpleStatement#setPositionalValues(List) */
-  @NonNull
+  @Nonnull
   public SimpleStatementBuilder clearPositionalValues() {
     positionalValuesBuilder = NullAllowingImmutableList.builder();
     return this;
   }
 
   /** @see SimpleStatement#setNamedValuesWithIds(Map) */
-  @NonNull
-  public SimpleStatementBuilder addNamedValue(@NonNull CqlIdentifier name, @Nullable Object value) {
+  @Nonnull
+  public SimpleStatementBuilder addNamedValue(@Nonnull CqlIdentifier name, @Nullable Object value) {
     if (positionalValuesBuilder != null) {
       throw new IllegalArgumentException(
           "Can't have both positional and named values in a statement.");
@@ -148,19 +148,19 @@ public class SimpleStatementBuilder
    * Shortcut for {@link #addNamedValue(CqlIdentifier, Object)
    * addNamedValue(CqlIdentifier.fromCql(name), value)}.
    */
-  @NonNull
-  public SimpleStatementBuilder addNamedValue(@NonNull String name, @Nullable Object value) {
+  @Nonnull
+  public SimpleStatementBuilder addNamedValue(@Nonnull String name, @Nullable Object value) {
     return addNamedValue(CqlIdentifier.fromCql(name), value);
   }
 
   /** @see SimpleStatement#setNamedValuesWithIds(Map) */
-  @NonNull
+  @Nonnull
   public SimpleStatementBuilder clearNamedValues() {
     namedValuesBuilder = NullAllowingImmutableMap.builder();
     return this;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement build() {
     return new DefaultSimpleStatement(

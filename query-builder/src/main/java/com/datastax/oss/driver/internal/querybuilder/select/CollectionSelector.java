@@ -22,9 +22,9 @@ import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -36,9 +36,9 @@ public abstract class CollectionSelector implements Selector {
   private final CqlIdentifier alias;
 
   protected CollectionSelector(
-      @NonNull Iterable<Selector> elementSelectors,
-      @NonNull String opening,
-      @NonNull String closing,
+      @Nonnull Iterable<Selector> elementSelectors,
+      @Nonnull String opening,
+      @Nonnull String closing,
       @Nullable CqlIdentifier alias) {
     Preconditions.checkNotNull(elementSelectors);
     Preconditions.checkArgument(
@@ -53,14 +53,14 @@ public abstract class CollectionSelector implements Selector {
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     CqlHelper.append(elementSelectors, builder, opening, ",", closing);
     if (alias != null) {
       builder.append(" AS ").append(alias.asCql(true));
     }
   }
 
-  @NonNull
+  @Nonnull
   public Iterable<Selector> getElementSelectors() {
     return elementSelectors;
   }

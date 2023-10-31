@@ -29,10 +29,10 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.cql.EmptyColumnDefinitions;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 class MockRow implements Row {
 
@@ -47,61 +47,61 @@ class MockRow implements Row {
     return 0;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CodecRegistry codecRegistry() {
     return mock(CodecRegistry.class);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProtocolVersion protocolVersion() {
     return DefaultProtocolVersion.V4;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ColumnDefinitions getColumnDefinitions() {
     return EmptyColumnDefinitions.INSTANCE;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull String name) {
+  public List<Integer> allIndicesOf(@Nonnull String name) {
     return Collections.singletonList(0);
   }
 
   @Override
-  public int firstIndexOf(@NonNull String name) {
+  public int firstIndexOf(@Nonnull String name) {
     return 0;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+  public List<Integer> allIndicesOf(@Nonnull CqlIdentifier id) {
     return Collections.singletonList(0);
   }
 
   @Override
-  public int firstIndexOf(@NonNull CqlIdentifier id) {
+  public int firstIndexOf(@Nonnull CqlIdentifier id) {
     return 0;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getType(int i) {
     return DataTypes.INT;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DataType getType(@NonNull String name) {
+  public DataType getType(@Nonnull String name) {
     return DataTypes.INT;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DataType getType(@NonNull CqlIdentifier id) {
+  public DataType getType(@Nonnull CqlIdentifier id) {
     return DataTypes.INT;
   }
 
@@ -116,7 +116,7 @@ class MockRow implements Row {
   }
 
   @Override
-  public void attach(@NonNull AttachmentPoint attachmentPoint) {}
+  public void attach(@Nonnull AttachmentPoint attachmentPoint) {}
 
   // equals and hashCode required for TCK tests that check that two subscribers
   // receive the exact same set of items.

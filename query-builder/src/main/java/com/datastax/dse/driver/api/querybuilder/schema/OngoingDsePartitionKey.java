@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import com.datastax.oss.driver.api.querybuilder.schema.CreateTable;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface OngoingDsePartitionKey {
 
@@ -37,15 +37,15 @@ public interface OngoingDsePartitionKey {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
-  @NonNull
-  CreateDseTable withPartitionKey(@NonNull CqlIdentifier columnName, @NonNull DataType dataType);
+  @Nonnull
+  CreateDseTable withPartitionKey(@Nonnull CqlIdentifier columnName, @Nonnull DataType dataType);
 
   /**
    * Shortcut for {@link #withPartitionKey(CqlIdentifier, DataType)
    * withPartitionKey(CqlIdentifier.asCql(columnName), dataType)}.
    */
-  @NonNull
-  default CreateDseTable withPartitionKey(@NonNull String columnName, @NonNull DataType dataType) {
+  @Nonnull
+  default CreateDseTable withPartitionKey(@Nonnull String columnName, @Nonnull DataType dataType) {
     return withPartitionKey(CqlIdentifier.fromCql(columnName), dataType);
   }
 }

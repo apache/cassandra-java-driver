@@ -29,13 +29,13 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.util.RoutingKey;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -113,15 +113,15 @@ public class DefaultBoundStatement implements BoundStatement {
     return variableDefinitions.size();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getType(int i) {
     return variableDefinitions.get(i).getType();
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+  public List<Integer> allIndicesOf(@Nonnull CqlIdentifier id) {
     List<Integer> indices = variableDefinitions.allIndicesOf(id);
     if (indices.isEmpty()) {
       throw new IllegalArgumentException(id + " is not a variable in this bound statement");
@@ -130,7 +130,7 @@ public class DefaultBoundStatement implements BoundStatement {
   }
 
   @Override
-  public int firstIndexOf(@NonNull CqlIdentifier id) {
+  public int firstIndexOf(@Nonnull CqlIdentifier id) {
     int indexOf = variableDefinitions.firstIndexOf(id);
     if (indexOf == -1) {
       throw new IllegalArgumentException(id + " is not a variable in this bound statement");
@@ -138,9 +138,9 @@ public class DefaultBoundStatement implements BoundStatement {
     return indexOf;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull String name) {
+  public List<Integer> allIndicesOf(@Nonnull String name) {
     List<Integer> indices = variableDefinitions.allIndicesOf(name);
     if (indices.isEmpty()) {
       throw new IllegalArgumentException(name + " is not a variable in this bound statement");
@@ -149,7 +149,7 @@ public class DefaultBoundStatement implements BoundStatement {
   }
 
   @Override
-  public int firstIndexOf(@NonNull String name) {
+  public int firstIndexOf(@Nonnull String name) {
     int indexOf = variableDefinitions.firstIndexOf(name);
     if (indexOf == -1) {
       throw new IllegalArgumentException(name + " is not a variable in this bound statement");
@@ -157,13 +157,13 @@ public class DefaultBoundStatement implements BoundStatement {
     return indexOf;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CodecRegistry codecRegistry() {
     return codecRegistry;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProtocolVersion protocolVersion() {
     return protocolVersion;
@@ -174,7 +174,7 @@ public class DefaultBoundStatement implements BoundStatement {
     return values[i];
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatement setBytesUnsafe(int i, ByteBuffer v) {
     ByteBuffer[] newValues = Arrays.copyOf(values, values.length);
@@ -203,13 +203,13 @@ public class DefaultBoundStatement implements BoundStatement {
         nowInSeconds);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public PreparedStatement getPreparedStatement() {
     return preparedStatement;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<ByteBuffer> getValues() {
     return Arrays.asList(values);
@@ -220,7 +220,7 @@ public class DefaultBoundStatement implements BoundStatement {
     return executionProfileName;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatement setExecutionProfileName(@Nullable String newConfigProfileName) {
     return new DefaultBoundStatement(
@@ -252,7 +252,7 @@ public class DefaultBoundStatement implements BoundStatement {
     return executionProfile;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatement setExecutionProfile(@Nullable DriverExecutionProfile newProfile) {
     return new DefaultBoundStatement(
@@ -291,7 +291,7 @@ public class DefaultBoundStatement implements BoundStatement {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatement setRoutingKeyspace(@Nullable CqlIdentifier newRoutingKeyspace) {
     return new DefaultBoundStatement(
@@ -318,7 +318,7 @@ public class DefaultBoundStatement implements BoundStatement {
         nowInSeconds);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatement setNode(@Nullable Node newNode) {
     return new DefaultBoundStatement(
@@ -377,7 +377,7 @@ public class DefaultBoundStatement implements BoundStatement {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatement setRoutingKey(@Nullable ByteBuffer newRoutingKey) {
     return new DefaultBoundStatement(
@@ -409,7 +409,7 @@ public class DefaultBoundStatement implements BoundStatement {
     return routingToken;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatement setRoutingToken(@Nullable Token newRoutingToken) {
     return new DefaultBoundStatement(
@@ -436,15 +436,15 @@ public class DefaultBoundStatement implements BoundStatement {
         nowInSeconds);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, ByteBuffer> getCustomPayload() {
     return customPayload;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public BoundStatement setCustomPayload(@NonNull Map<String, ByteBuffer> newCustomPayload) {
+  public BoundStatement setCustomPayload(@Nonnull Map<String, ByteBuffer> newCustomPayload) {
     return new DefaultBoundStatement(
         preparedStatement,
         variableDefinitions,
@@ -474,7 +474,7 @@ public class DefaultBoundStatement implements BoundStatement {
     return idempotent;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatement setIdempotent(@Nullable Boolean newIdempotence) {
     return new DefaultBoundStatement(
@@ -506,7 +506,7 @@ public class DefaultBoundStatement implements BoundStatement {
     return tracing;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatement setTracing(boolean newTracing) {
     return new DefaultBoundStatement(
@@ -538,7 +538,7 @@ public class DefaultBoundStatement implements BoundStatement {
     return timestamp;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatement setQueryTimestamp(long newTimestamp) {
     return new DefaultBoundStatement(
@@ -571,7 +571,7 @@ public class DefaultBoundStatement implements BoundStatement {
     return timeout;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatement setTimeout(@Nullable Duration newTimeout) {
     return new DefaultBoundStatement(
@@ -603,7 +603,7 @@ public class DefaultBoundStatement implements BoundStatement {
     return pagingState;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatement setPagingState(@Nullable ByteBuffer newPagingState) {
     return new DefaultBoundStatement(
@@ -635,7 +635,7 @@ public class DefaultBoundStatement implements BoundStatement {
     return pageSize;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatement setPageSize(int newPageSize) {
     return new DefaultBoundStatement(
@@ -668,7 +668,7 @@ public class DefaultBoundStatement implements BoundStatement {
     return consistencyLevel;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatement setConsistencyLevel(@Nullable ConsistencyLevel newConsistencyLevel) {
     return new DefaultBoundStatement(
@@ -701,7 +701,7 @@ public class DefaultBoundStatement implements BoundStatement {
     return serialConsistencyLevel;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatement setSerialConsistencyLevel(
       @Nullable ConsistencyLevel newSerialConsistencyLevel) {
@@ -734,7 +734,7 @@ public class DefaultBoundStatement implements BoundStatement {
     return nowInSeconds;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatement setNowInSeconds(int newNowInSeconds) {
     return new DefaultBoundStatement(

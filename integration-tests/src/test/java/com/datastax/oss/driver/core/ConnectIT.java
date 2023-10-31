@@ -41,13 +41,13 @@ import com.datastax.oss.driver.internal.core.connection.ConstantReconnectionPoli
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.server.BoundCluster;
 import com.datastax.oss.simulacron.server.RejectScope;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nonnull;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -200,7 +200,7 @@ public class ConnectIT {
       super(context);
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public ReconnectionSchedule newControlConnectionSchedule(boolean isInitialConnection) {
       if (isInitialConnection) {

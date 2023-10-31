@@ -21,9 +21,9 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -33,12 +33,12 @@ public class CastSelector implements Selector {
   private final DataType targetType;
   private final CqlIdentifier alias;
 
-  public CastSelector(@NonNull Selector selector, @NonNull DataType targetType) {
+  public CastSelector(@Nonnull Selector selector, @Nonnull DataType targetType) {
     this(selector, targetType, null);
   }
 
   public CastSelector(
-      @NonNull Selector selector, @NonNull DataType targetType, @Nullable CqlIdentifier alias) {
+      @Nonnull Selector selector, @Nonnull DataType targetType, @Nullable CqlIdentifier alias) {
     Preconditions.checkNotNull(selector);
     Preconditions.checkNotNull(targetType);
     Preconditions.checkArgument(selector.getAlias() == null, "Inner selector can't be aliased");
@@ -48,7 +48,7 @@ public class CastSelector implements Selector {
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     builder.append("CAST(");
     selector.appendTo(builder);
     builder.append(" AS ").append(targetType.asCql(false, true)).append(')');
@@ -57,18 +57,18 @@ public class CastSelector implements Selector {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Selector as(@NonNull CqlIdentifier alias) {
+  public Selector as(@Nonnull CqlIdentifier alias) {
     return new CastSelector(selector, targetType, alias);
   }
 
-  @NonNull
+  @Nonnull
   public Selector getSelector() {
     return selector;
   }
 
-  @NonNull
+  @Nonnull
   public DataType getTargetType() {
     return targetType;
   }

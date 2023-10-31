@@ -25,12 +25,12 @@ import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
 import com.datastax.oss.driver.shaded.guava.common.cache.CacheLoader;
 import com.datastax.oss.driver.shaded.guava.common.cache.LoadingCache;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
+import javax.annotation.Nonnull;
 import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONMapper;
 import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONReader;
 import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONVersion;
@@ -46,7 +46,7 @@ public class GraphSONUtils {
           .build(
               new CacheLoader<GraphProtocol, ObjectMapper>() {
                 @Override
-                public ObjectMapper load(@NonNull GraphProtocol graphSubProtocol) throws Exception {
+                public ObjectMapper load(@Nonnull GraphProtocol graphSubProtocol) throws Exception {
                   switch (graphSubProtocol) {
                     case GRAPHSON_1_0:
                       com.datastax.oss.driver.api.core.Version driverVersion =

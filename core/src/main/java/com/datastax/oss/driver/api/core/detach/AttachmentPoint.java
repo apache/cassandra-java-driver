@@ -20,26 +20,26 @@ package com.datastax.oss.driver.api.core.detach;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /** @see Detachable */
 public interface AttachmentPoint {
   AttachmentPoint NONE =
       new AttachmentPoint() {
-        @NonNull
+        @Nonnull
         @Override
         public ProtocolVersion getProtocolVersion() {
           return ProtocolVersion.DEFAULT;
         }
 
-        @NonNull
+        @Nonnull
         @Override
         public CodecRegistry getCodecRegistry() {
           return CodecRegistry.DEFAULT;
         }
       };
 
-  @NonNull
+  @Nonnull
   ProtocolVersion getProtocolVersion();
 
   /**
@@ -48,6 +48,6 @@ public interface AttachmentPoint {
    * the result of this method (as long as you didn't extend the driver context to plug a custom
    * registry implementation).
    */
-  @NonNull
+  @Nonnull
   CodecRegistry getCodecRegistry();
 }

@@ -25,8 +25,6 @@ import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.NoopNodeMetricUpdater;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -34,6 +32,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -81,13 +81,13 @@ public class DefaultNode implements Node, Serializable {
     this.upSinceMillis = -1;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public EndPoint getEndPoint() {
     return endPoint;
   }
 
-  public void setEndPoint(@NonNull EndPoint newEndPoint, @NonNull InternalDriverContext context) {
+  public void setEndPoint(@Nonnull EndPoint newEndPoint, @Nonnull InternalDriverContext context) {
     if (!newEndPoint.equals(endPoint)) {
       endPoint = newEndPoint;
 
@@ -99,19 +99,19 @@ public class DefaultNode implements Node, Serializable {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<InetSocketAddress> getBroadcastRpcAddress() {
     return Optional.ofNullable(broadcastRpcAddress);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<InetSocketAddress> getBroadcastAddress() {
     return Optional.ofNullable(broadcastAddress);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<InetSocketAddress> getListenAddress() {
     return Optional.ofNullable(listenAddress);
@@ -147,13 +147,13 @@ public class DefaultNode implements Node, Serializable {
     return schemaVersion;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, Object> getExtras() {
     return extras;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public NodeState getState() {
     return state;
@@ -174,7 +174,7 @@ public class DefaultNode implements Node, Serializable {
     return reconnections > 0;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public NodeDistance getDistance() {
     return distance;

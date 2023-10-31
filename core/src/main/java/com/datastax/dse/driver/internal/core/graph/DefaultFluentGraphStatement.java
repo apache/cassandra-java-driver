@@ -21,10 +21,10 @@ import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 
@@ -98,7 +98,7 @@ public class DefaultFluentGraphStatement extends GraphStatementBase<FluentGraphS
         writeConsistencyLevel);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public GraphTraversal<?, ?> getTraversal() {
     return traversal;

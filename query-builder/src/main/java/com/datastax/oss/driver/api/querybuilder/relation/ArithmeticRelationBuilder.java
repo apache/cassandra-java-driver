@@ -18,47 +18,47 @@
 package com.datastax.oss.driver.api.querybuilder.relation;
 
 import com.datastax.oss.driver.api.querybuilder.term.Term;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public interface ArithmeticRelationBuilder<ResultT> {
 
   /** Builds an '=' relation with the given term. */
-  @NonNull
-  default ResultT isEqualTo(@NonNull Term rightOperand) {
+  @Nonnull
+  default ResultT isEqualTo(@Nonnull Term rightOperand) {
     return build("=", rightOperand);
   }
 
   /** Builds a '&lt;' relation with the given term. */
-  @NonNull
-  default ResultT isLessThan(@NonNull Term rightOperand) {
+  @Nonnull
+  default ResultT isLessThan(@Nonnull Term rightOperand) {
     return build("<", rightOperand);
   }
 
   /** Builds a '&lt;=' relation with the given term. */
-  @NonNull
-  default ResultT isLessThanOrEqualTo(@NonNull Term rightOperand) {
+  @Nonnull
+  default ResultT isLessThanOrEqualTo(@Nonnull Term rightOperand) {
     return build("<=", rightOperand);
   }
 
   /** Builds a '&gt;' relation with the given term. */
-  @NonNull
-  default ResultT isGreaterThan(@NonNull Term rightOperand) {
+  @Nonnull
+  default ResultT isGreaterThan(@Nonnull Term rightOperand) {
     return build(">", rightOperand);
   }
 
   /** Builds a '&gt;=' relation with the given term. */
-  @NonNull
-  default ResultT isGreaterThanOrEqualTo(@NonNull Term rightOperand) {
+  @Nonnull
+  default ResultT isGreaterThanOrEqualTo(@Nonnull Term rightOperand) {
     return build(">=", rightOperand);
   }
 
   /** Builds a '!=' relation with the given term. */
-  @NonNull
-  default ResultT isNotEqualTo(@NonNull Term rightOperand) {
+  @Nonnull
+  default ResultT isNotEqualTo(@Nonnull Term rightOperand) {
     return build("!=", rightOperand);
   }
 
-  @NonNull
-  ResultT build(@NonNull String operator, @Nullable Term rightOperand);
+  @Nonnull
+  ResultT build(@Nonnull String operator, @Nullable Term rightOperand);
 }

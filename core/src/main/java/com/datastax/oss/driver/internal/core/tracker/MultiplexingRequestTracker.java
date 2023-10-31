@@ -23,14 +23,14 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.internal.core.util.Loggers;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,17 +72,17 @@ public class MultiplexingRequestTracker implements RequestTracker {
     }
   }
 
-  public void register(@NonNull RequestTracker tracker) {
+  public void register(@Nonnull RequestTracker tracker) {
     addTracker(tracker);
   }
 
   @Override
   public void onSuccess(
-      @NonNull Request request,
+      @Nonnull Request request,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String logPrefix) {
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node,
+      @Nonnull String logPrefix) {
     invokeTrackers(
         tracker -> tracker.onSuccess(request, latencyNanos, executionProfile, node, logPrefix),
         logPrefix,
@@ -91,12 +91,12 @@ public class MultiplexingRequestTracker implements RequestTracker {
 
   @Override
   public void onError(
-      @NonNull Request request,
-      @NonNull Throwable error,
+      @Nonnull Request request,
+      @Nonnull Throwable error,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
+      @Nonnull DriverExecutionProfile executionProfile,
       @Nullable Node node,
-      @NonNull String logPrefix) {
+      @Nonnull String logPrefix) {
     invokeTrackers(
         tracker -> tracker.onError(request, error, latencyNanos, executionProfile, node, logPrefix),
         logPrefix,
@@ -105,11 +105,11 @@ public class MultiplexingRequestTracker implements RequestTracker {
 
   @Override
   public void onNodeSuccess(
-      @NonNull Request request,
+      @Nonnull Request request,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String logPrefix) {
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node,
+      @Nonnull String logPrefix) {
     invokeTrackers(
         tracker -> tracker.onNodeSuccess(request, latencyNanos, executionProfile, node, logPrefix),
         logPrefix,
@@ -118,12 +118,12 @@ public class MultiplexingRequestTracker implements RequestTracker {
 
   @Override
   public void onNodeError(
-      @NonNull Request request,
-      @NonNull Throwable error,
+      @Nonnull Request request,
+      @Nonnull Throwable error,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String logPrefix) {
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node,
+      @Nonnull String logPrefix) {
     invokeTrackers(
         tracker ->
             tracker.onNodeError(request, error, latencyNanos, executionProfile, node, logPrefix),
@@ -132,7 +132,7 @@ public class MultiplexingRequestTracker implements RequestTracker {
   }
 
   @Override
-  public void onSessionReady(@NonNull Session session) {
+  public void onSessionReady(@Nonnull Session session) {
     invokeTrackers(tracker -> tracker.onSessionReady(session), session.getName(), "onSessionReady");
   }
 
@@ -149,7 +149,7 @@ public class MultiplexingRequestTracker implements RequestTracker {
   }
 
   private void invokeTrackers(
-      @NonNull Consumer<RequestTracker> action, String logPrefix, String event) {
+      @Nonnull Consumer<RequestTracker> action, String logPrefix, String event) {
     for (RequestTracker tracker : trackers) {
       try {
         action.accept(tracker);

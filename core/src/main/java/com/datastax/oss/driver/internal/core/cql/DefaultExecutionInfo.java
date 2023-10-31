@@ -28,14 +28,14 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.protocol.internal.Frame;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -89,14 +89,14 @@ public class DefaultExecutionInfo implements ExecutionInfo {
     this.executionProfile = executionProfile;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   @Deprecated
   public Statement<?> getStatement() {
     return (Statement<?>) request;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Request getRequest() {
     return request;
@@ -118,7 +118,7 @@ public class DefaultExecutionInfo implements ExecutionInfo {
     return successfulExecutionIndex;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<Map.Entry<Node, Throwable>> getErrors() {
     // Assume this method will be called 0 or 1 time, so we create the unmodifiable wrapper on
@@ -146,13 +146,13 @@ public class DefaultExecutionInfo implements ExecutionInfo {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<String> getWarnings() {
     return warnings;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, ByteBuffer> getIncomingPayload() {
     return customPayload;
@@ -169,7 +169,7 @@ public class DefaultExecutionInfo implements ExecutionInfo {
     return tracingId;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<QueryTrace> getQueryTraceAsync() {
     if (tracingId == null) {

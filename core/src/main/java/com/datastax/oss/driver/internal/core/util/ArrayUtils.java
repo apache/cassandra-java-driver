@@ -17,12 +17,12 @@
  */
 package com.datastax.oss.driver.internal.core.util;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.concurrent.ThreadLocalRandom;
+import javax.annotation.Nonnull;
 
 public class ArrayUtils {
 
-  public static <ElementT> void swap(@NonNull ElementT[] elements, int i, int j) {
+  public static <ElementT> void swap(@Nonnull ElementT[] elements, int i, int j) {
     if (i != j) {
       ElementT tmp = elements[i];
       elements[i] = elements[j];
@@ -35,7 +35,7 @@ public class ArrayUtils {
    * the right (no-op if {@code targetIndex >= sourceIndex}).
    */
   public static <ElementT> void bubbleUp(
-      @NonNull ElementT[] elements, int sourceIndex, int targetIndex) {
+      @Nonnull ElementT[] elements, int sourceIndex, int targetIndex) {
     for (int i = sourceIndex; i > targetIndex; i--) {
       swap(elements, i, i - 1);
     }
@@ -46,7 +46,7 @@ public class ArrayUtils {
    * left (no-op if {@code targetIndex <= sourceIndex}).
    */
   public static <ElementT> void bubbleDown(
-      @NonNull ElementT[] elements, int sourceIndex, int targetIndex) {
+      @Nonnull ElementT[] elements, int sourceIndex, int targetIndex) {
     for (int i = sourceIndex; i < targetIndex; i++) {
       swap(elements, i, i + 1);
     }
@@ -61,7 +61,7 @@ public class ArrayUtils {
    *     href="https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#The_modern_algorithm">Modern
    *     Fisher-Yates shuffle</a>
    */
-  public static <ElementT> void shuffleHead(@NonNull ElementT[] elements, int n) {
+  public static <ElementT> void shuffleHead(@Nonnull ElementT[] elements, int n) {
     shuffleHead(elements, n, ThreadLocalRandom.current());
   }
 
@@ -77,7 +77,7 @@ public class ArrayUtils {
    *     Fisher-Yates shuffle</a>
    */
   public static <ElementT> void shuffleHead(
-      @NonNull ElementT[] elements, int n, @NonNull ThreadLocalRandom random) {
+      @Nonnull ElementT[] elements, int n, @Nonnull ThreadLocalRandom random) {
     if (n > elements.length) {
       throw new ArrayIndexOutOfBoundsException(
           String.format(
@@ -93,7 +93,7 @@ public class ArrayUtils {
 
   /** Rotates the elements in the specified range by the specified amount (round-robin). */
   public static <ElementT> void rotate(
-      @NonNull ElementT[] elements, int startIndex, int length, int amount) {
+      @Nonnull ElementT[] elements, int startIndex, int length, int amount) {
     if (length >= 2) {
       amount = amount % length;
       // Repeatedly shift by 1. This is not the most time-efficient but the array will typically be

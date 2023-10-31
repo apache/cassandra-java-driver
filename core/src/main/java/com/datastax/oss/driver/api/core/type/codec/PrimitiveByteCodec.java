@@ -18,9 +18,9 @@
 package com.datastax.oss.driver.api.core.type.codec;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A specialized byte codec that knows how to deal with primitive types.
@@ -31,19 +31,19 @@ import java.nio.ByteBuffer;
 public interface PrimitiveByteCodec extends TypeCodec<Byte> {
 
   @Nullable
-  ByteBuffer encodePrimitive(byte value, @NonNull ProtocolVersion protocolVersion);
+  ByteBuffer encodePrimitive(byte value, @Nonnull ProtocolVersion protocolVersion);
 
-  byte decodePrimitive(@Nullable ByteBuffer value, @NonNull ProtocolVersion protocolVersion);
+  byte decodePrimitive(@Nullable ByteBuffer value, @Nonnull ProtocolVersion protocolVersion);
 
   @Nullable
   @Override
-  default ByteBuffer encode(@Nullable Byte value, @NonNull ProtocolVersion protocolVersion) {
+  default ByteBuffer encode(@Nullable Byte value, @Nonnull ProtocolVersion protocolVersion) {
     return (value == null) ? null : encodePrimitive(value, protocolVersion);
   }
 
   @Nullable
   @Override
-  default Byte decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  default Byte decode(@Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     return (bytes == null || bytes.remaining() == 0)
         ? null
         : decodePrimitive(bytes, protocolVersion);

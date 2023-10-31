@@ -21,7 +21,6 @@ import com.datastax.oss.driver.internal.core.os.Native;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -40,6 +39,7 @@ import java.util.Set;
 import java.util.SplittableRandom;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -279,7 +279,7 @@ public final class Uuids {
    * cryptographic strength, consider using {@link Uuids#random(Random)} instead, and pass an
    * instance of {@link java.security.SecureRandom}.
    */
-  @NonNull
+  @Nonnull
   public static UUID random() {
     return random(new Random());
   }
@@ -297,8 +297,8 @@ public final class Uuids {
    * I/O activity during random number generation; these instances should not be used in
    * non-blocking contexts.
    */
-  @NonNull
-  public static UUID random(@NonNull Random random) {
+  @Nonnull
+  public static UUID random(@Nonnull Random random) {
     byte[] data = new byte[16];
     random.nextBytes(data);
     return buildUuid(data, 4);
@@ -311,8 +311,8 @@ public final class Uuids {
    * parallel computations, such as when using the ForkJoin framework. Note that {@link
    * SplittableRandom} instances are not thread-safe.
    */
-  @NonNull
-  public static UUID random(@NonNull SplittableRandom random) {
+  @Nonnull
+  public static UUID random(@Nonnull SplittableRandom random) {
     byte[] data = toBytes(random.nextLong(), random.nextLong());
     return buildUuid(data, 4);
   }
@@ -329,8 +329,8 @@ public final class Uuids {
    * @throws IllegalStateException if the {@link MessageDigest} algorithm for version 3 (MD5) is not
    *     available on this platform.
    */
-  @NonNull
-  public static UUID nameBased(@NonNull UUID namespace, @NonNull String name) {
+  @Nonnull
+  public static UUID nameBased(@Nonnull UUID namespace, @Nonnull String name) {
     Objects.requireNonNull(name, "name cannot be null");
     return nameBased(namespace, name.getBytes(StandardCharsets.UTF_8));
   }
@@ -345,8 +345,8 @@ public final class Uuids {
    * @throws IllegalStateException if the {@link MessageDigest} algorithm for version 3 (MD5) is not
    *     available on this platform.
    */
-  @NonNull
-  public static UUID nameBased(@NonNull UUID namespace, @NonNull byte[] name) {
+  @Nonnull
+  public static UUID nameBased(@Nonnull UUID namespace, @Nonnull byte[] name) {
     return nameBased(namespace, name, 3);
   }
 
@@ -365,8 +365,8 @@ public final class Uuids {
    * @throws IllegalStateException if the {@link MessageDigest} algorithm for the desired version is
    *     not available on this platform.
    */
-  @NonNull
-  public static UUID nameBased(@NonNull UUID namespace, @NonNull String name, int version) {
+  @Nonnull
+  public static UUID nameBased(@Nonnull UUID namespace, @Nonnull String name, int version) {
     Objects.requireNonNull(name, "name cannot be null");
     return nameBased(namespace, name.getBytes(StandardCharsets.UTF_8), version);
   }
@@ -384,8 +384,8 @@ public final class Uuids {
    * @throws IllegalStateException if the {@link MessageDigest} algorithm for the desired version is
    *     not available on this platform.
    */
-  @NonNull
-  public static UUID nameBased(@NonNull UUID namespace, @NonNull byte[] name, int version) {
+  @Nonnull
+  public static UUID nameBased(@Nonnull UUID namespace, @Nonnull byte[] name, int version) {
     Objects.requireNonNull(namespace, "namespace cannot be null");
     Objects.requireNonNull(name, "name cannot be null");
     MessageDigest md = newMessageDigest(version);
@@ -408,8 +408,8 @@ public final class Uuids {
    * @throws IllegalStateException if the {@link MessageDigest} algorithm for version 3 (MD5) is not
    *     available on this platform.
    */
-  @NonNull
-  public static UUID nameBased(@NonNull byte[] namespaceAndName) {
+  @Nonnull
+  public static UUID nameBased(@Nonnull byte[] namespaceAndName) {
     return nameBased(namespaceAndName, 3);
   }
 
@@ -429,8 +429,8 @@ public final class Uuids {
    * @throws IllegalStateException if the {@link MessageDigest} algorithm for the desired version is
    *     not available on this platform.
    */
-  @NonNull
-  public static UUID nameBased(@NonNull byte[] namespaceAndName, int version) {
+  @Nonnull
+  public static UUID nameBased(@Nonnull byte[] namespaceAndName, int version) {
     Objects.requireNonNull(namespaceAndName, "namespaceAndName cannot be null");
     if (namespaceAndName.length < 16) {
       throw new IllegalArgumentException("namespaceAndName must be at least 16 bytes long");
@@ -440,7 +440,7 @@ public final class Uuids {
     return buildUuid(md.digest(), version);
   }
 
-  @NonNull
+  @Nonnull
   private static MessageDigest newMessageDigest(int version) {
     if (version != 3 && version != 5) {
       throw new IllegalArgumentException(
@@ -454,8 +454,8 @@ public final class Uuids {
     }
   }
 
-  @NonNull
-  private static UUID buildUuid(@NonNull byte[] data, int version) {
+  @Nonnull
+  private static UUID buildUuid(@Nonnull byte[] data, int version) {
     // clear and set version
     data[6] &= (byte) 0x0f;
     data[6] |= (byte) (version << 4);
@@ -520,7 +520,7 @@ public final class Uuids {
    * consider invoking this method once from a thread that is allowed to block. Subsequent
    * invocations are guaranteed not to block.
    */
-  @NonNull
+  @Nonnull
   public static UUID timeBased() {
     return new UUID(makeMsb(getCurrentTimestamp()), CLOCK_SEQ_AND_NODE.get());
   }
@@ -551,7 +551,7 @@ public final class Uuids {
    * @param timestamp the Unix timestamp for which the created UUID must be a lower bound.
    * @return the smallest (for Cassandra {@code timeuuid} sorting) UUID of {@code timestamp}.
    */
-  @NonNull
+  @Nonnull
   public static UUID startOf(long timestamp) {
     return new UUID(makeMsb(fromUnixTimestamp(timestamp)), MIN_CLOCK_SEQ_AND_NODE);
   }
@@ -565,7 +565,7 @@ public final class Uuids {
    * @param timestamp the Unix timestamp for which the created UUID must be an upper bound.
    * @return the biggest (for Cassandra {@code timeuuid} sorting) UUID of {@code timestamp}.
    */
-  @NonNull
+  @Nonnull
   public static UUID endOf(long timestamp) {
     long uuidTstamp = fromUnixTimestamp(timestamp + 1) - 1;
     return new UUID(makeMsb(uuidTstamp), MAX_CLOCK_SEQ_AND_NODE);
@@ -584,7 +584,7 @@ public final class Uuids {
    *
    * @throws IllegalArgumentException if {@code uuid} is not a version 1 UUID.
    */
-  public static long unixTimestamp(@NonNull UUID uuid) {
+  public static long unixTimestamp(@Nonnull UUID uuid) {
     if (uuid.version() != 1) {
       throw new IllegalArgumentException(
           String.format(

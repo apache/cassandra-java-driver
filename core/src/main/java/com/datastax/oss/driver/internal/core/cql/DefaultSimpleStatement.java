@@ -25,13 +25,13 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableList;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -106,15 +106,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
     this.nowInSeconds = nowInSeconds;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getQuery() {
     return query;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public SimpleStatement setQuery(@NonNull String newQuery) {
+  public SimpleStatement setQuery(@Nonnull String newQuery) {
     return new DefaultSimpleStatement(
         newQuery,
         positionalValues,
@@ -138,15 +138,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
         nowInSeconds);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<Object> getPositionalValues() {
     return positionalValues;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public SimpleStatement setPositionalValues(@NonNull List<Object> newPositionalValues) {
+  public SimpleStatement setPositionalValues(@Nonnull List<Object> newPositionalValues) {
     return new DefaultSimpleStatement(
         query,
         newPositionalValues,
@@ -170,15 +170,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
         nowInSeconds);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<CqlIdentifier, Object> getNamedValues() {
     return namedValues;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public SimpleStatement setNamedValuesWithIds(@NonNull Map<CqlIdentifier, Object> newNamedValues) {
+  public SimpleStatement setNamedValuesWithIds(@Nonnull Map<CqlIdentifier, Object> newNamedValues) {
     return new DefaultSimpleStatement(
         query,
         positionalValues,
@@ -208,7 +208,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return executionProfileName;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement setExecutionProfileName(@Nullable String newConfigProfileName) {
     return new DefaultSimpleStatement(
@@ -240,7 +240,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return executionProfile;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement setExecutionProfile(@Nullable DriverExecutionProfile newProfile) {
     return new DefaultSimpleStatement(
@@ -272,7 +272,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement setKeyspace(@Nullable CqlIdentifier newKeyspace) {
     return new DefaultSimpleStatement(
@@ -304,7 +304,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return routingKeyspace;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement setRoutingKeyspace(@Nullable CqlIdentifier newRoutingKeyspace) {
     return new DefaultSimpleStatement(
@@ -330,7 +330,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
         nowInSeconds);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement setNode(@Nullable Node newNode) {
     return new DefaultSimpleStatement(
@@ -368,7 +368,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return routingKey;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement setRoutingKey(@Nullable ByteBuffer newRoutingKey) {
     return new DefaultSimpleStatement(
@@ -400,7 +400,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return routingToken;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement setRoutingToken(@Nullable Token newRoutingToken) {
     return new DefaultSimpleStatement(
@@ -426,15 +426,15 @@ public class DefaultSimpleStatement implements SimpleStatement {
         nowInSeconds);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, ByteBuffer> getCustomPayload() {
     return customPayload;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public SimpleStatement setCustomPayload(@NonNull Map<String, ByteBuffer> newCustomPayload) {
+  public SimpleStatement setCustomPayload(@Nonnull Map<String, ByteBuffer> newCustomPayload) {
     return new DefaultSimpleStatement(
         query,
         positionalValues,
@@ -464,7 +464,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return idempotent;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement setIdempotent(@Nullable Boolean newIdempotence) {
     return new DefaultSimpleStatement(
@@ -495,7 +495,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return tracing;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement setTracing(boolean newTracing) {
     return new DefaultSimpleStatement(
@@ -526,7 +526,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return timestamp;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement setQueryTimestamp(long newTimestamp) {
     return new DefaultSimpleStatement(
@@ -558,7 +558,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return timeout;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement setTimeout(@Nullable Duration newTimeout) {
     return new DefaultSimpleStatement(
@@ -590,7 +590,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return pagingState;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement setPagingState(@Nullable ByteBuffer newPagingState) {
     return new DefaultSimpleStatement(
@@ -621,7 +621,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return pageSize;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement setPageSize(int newPageSize) {
     return new DefaultSimpleStatement(
@@ -653,7 +653,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return consistencyLevel;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement setConsistencyLevel(@Nullable ConsistencyLevel newConsistencyLevel) {
     return new DefaultSimpleStatement(
@@ -685,7 +685,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return serialConsistencyLevel;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement setSerialConsistencyLevel(
       @Nullable ConsistencyLevel newSerialConsistencyLevel) {
@@ -717,7 +717,7 @@ public class DefaultSimpleStatement implements SimpleStatement {
     return nowInSeconds;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement setNowInSeconds(int newNowInSeconds) {
     return new DefaultSimpleStatement(

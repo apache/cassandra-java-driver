@@ -23,8 +23,8 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 
 /**
  * The default {@link MetricIdGenerator}.
@@ -50,15 +50,15 @@ public class DefaultMetricIdGenerator implements MetricIdGenerator {
     nodePrefix = sessionPrefix + "nodes.";
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public MetricId sessionMetricId(@NonNull SessionMetric metric) {
+  public MetricId sessionMetricId(@Nonnull SessionMetric metric) {
     return new DefaultMetricId(sessionPrefix + metric.getPath(), ImmutableMap.of());
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public MetricId nodeMetricId(@NonNull Node node, @NonNull NodeMetric metric) {
+  public MetricId nodeMetricId(@Nonnull Node node, @Nonnull NodeMetric metric) {
     return new DefaultMetricId(
         nodePrefix + node.getEndPoint().asMetricPrefix() + '.' + metric.getPath(),
         ImmutableMap.of());

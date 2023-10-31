@@ -29,8 +29,6 @@ import com.datastax.oss.driver.api.mapper.result.MapperResultProducerService;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Objects;
@@ -38,6 +36,8 @@ import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,11 +58,11 @@ public class DefaultMapperContext implements MapperContext {
   private final ImmutableList<MapperResultProducer> resultProducers;
 
   public DefaultMapperContext(
-      @NonNull CqlSession session,
+      @Nonnull CqlSession session,
       @Nullable CqlIdentifier keyspaceId,
       @Nullable String executionProfileName,
       @Nullable DriverExecutionProfile executionProfile,
-      @NonNull Map<Object, Object> customState) {
+      @Nonnull Map<Object, Object> customState) {
     this(
         session,
         keyspaceId,
@@ -116,7 +116,7 @@ public class DefaultMapperContext implements MapperContext {
             customState);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlSession getSession() {
     return session;
@@ -146,22 +146,22 @@ public class DefaultMapperContext implements MapperContext {
     return executionProfile;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public NameConverter getNameConverter(Class<? extends NameConverter> converterClass) {
     return nameConverterCache.computeIfAbsent(
         converterClass, DefaultMapperContext::buildNameConverter);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<Object, Object> getCustomState() {
     return customState;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public MapperResultProducer getResultProducer(@NonNull GenericType<?> resultToProduce) {
+  public MapperResultProducer getResultProducer(@Nonnull GenericType<?> resultToProduce) {
     return resultProducerCache.computeIfAbsent(
         resultToProduce,
         k -> {

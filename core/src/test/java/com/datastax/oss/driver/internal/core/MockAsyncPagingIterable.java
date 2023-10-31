@@ -21,13 +21,13 @@ import com.datastax.oss.driver.api.core.AsyncPagingIterable;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
 
 public class MockAsyncPagingIterable<ElementT>
     implements AsyncPagingIterable<ElementT, MockAsyncPagingIterable<ElementT>> {
@@ -50,7 +50,7 @@ public class MockAsyncPagingIterable<ElementT>
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Iterable<ElementT> currentPage() {
     return currentPage;
@@ -66,7 +66,7 @@ public class MockAsyncPagingIterable<ElementT>
     return nextPage != null;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<MockAsyncPagingIterable<ElementT>> fetchNextPage()
       throws IllegalStateException {
@@ -74,13 +74,13 @@ public class MockAsyncPagingIterable<ElementT>
     return CompletableFuture.completedFuture(nextPage);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ColumnDefinitions getColumnDefinitions() {
     throw new UnsupportedOperationException("irrelevant");
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ExecutionInfo getExecutionInfo() {
     throw new UnsupportedOperationException("irrelevant");

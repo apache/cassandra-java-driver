@@ -18,81 +18,81 @@
 package com.datastax.oss.driver.internal.core.config;
 
 import com.datastax.oss.driver.api.core.config.DriverOption;
-import edu.umd.cs.findbugs.annotations.CheckReturnValue;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /** @see com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoaderBuilder */
 @Deprecated
 public interface DriverOptionConfigBuilder<SelfT extends DriverOptionConfigBuilder> {
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT withBoolean(@NonNull DriverOption option, boolean value) {
+  default SelfT withBoolean(@Nonnull DriverOption option, boolean value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT withBooleanList(@NonNull DriverOption option, @NonNull List<Boolean> value) {
+  default SelfT withBooleanList(@Nonnull DriverOption option, @Nonnull List<Boolean> value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT withInt(@NonNull DriverOption option, int value) {
+  default SelfT withInt(@Nonnull DriverOption option, int value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT withIntList(@NonNull DriverOption option, @NonNull List<Integer> value) {
+  default SelfT withIntList(@Nonnull DriverOption option, @Nonnull List<Integer> value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT withLong(@NonNull DriverOption option, long value) {
+  default SelfT withLong(@Nonnull DriverOption option, long value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT withLongList(@NonNull DriverOption option, @NonNull List<Long> value) {
+  default SelfT withLongList(@Nonnull DriverOption option, @Nonnull List<Long> value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT withDouble(@NonNull DriverOption option, double value) {
+  default SelfT withDouble(@Nonnull DriverOption option, double value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT withDoubleList(@NonNull DriverOption option, @NonNull List<Double> value) {
+  default SelfT withDoubleList(@Nonnull DriverOption option, @Nonnull List<Double> value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT withString(@NonNull DriverOption option, @NonNull String value) {
+  default SelfT withString(@Nonnull DriverOption option, @Nonnull String value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT withStringList(@NonNull DriverOption option, @NonNull List<String> value) {
+  default SelfT withStringList(@Nonnull DriverOption option, @Nonnull List<String> value) {
     return with(option, value);
   }
 
   @SuppressWarnings("unchecked")
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT withStringMap(@NonNull DriverOption option, @NonNull Map<String, String> value) {
+  default SelfT withStringMap(@Nonnull DriverOption option, @Nonnull Map<String, String> value) {
     SelfT v = (SelfT) this;
     for (String key : value.keySet()) {
       v = (SelfT) v.with(option.getPath() + "." + key, value.get(key));
@@ -105,52 +105,52 @@ public interface DriverOptionConfigBuilder<SelfT extends DriverOptionConfigBuild
    * implementations want to allow users to provide sizes in a more human-readable way, for example
    * "256 MB".
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT withBytes(@NonNull DriverOption option, @NonNull String value) {
+  default SelfT withBytes(@Nonnull DriverOption option, @Nonnull String value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT withBytes(@NonNull DriverOption option, long value) {
+  default SelfT withBytes(@Nonnull DriverOption option, long value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT withBytesList(@NonNull DriverOption option, @NonNull List<Long> value) {
+  default SelfT withBytesList(@Nonnull DriverOption option, @Nonnull List<Long> value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT withDuration(@NonNull DriverOption option, @NonNull Duration value) {
+  default SelfT withDuration(@Nonnull DriverOption option, @Nonnull Duration value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT withDurationList(@NonNull DriverOption option, @NonNull List<Duration> value) {
+  default SelfT withDurationList(@Nonnull DriverOption option, @Nonnull List<Duration> value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT withClass(@NonNull DriverOption option, @NonNull Class<?> value) {
+  default SelfT withClass(@Nonnull DriverOption option, @Nonnull Class<?> value) {
     return with(option, value.getName());
   }
 
   /** Unsets an option. */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT without(@NonNull DriverOption option) {
+  default SelfT without(@Nonnull DriverOption option) {
     return with(option, null);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT with(@NonNull DriverOption option, @Nullable Object value) {
+  default SelfT with(@Nonnull DriverOption option, @Nullable Object value) {
     return with(option.getPath(), value);
   }
 
@@ -158,7 +158,7 @@ public interface DriverOptionConfigBuilder<SelfT extends DriverOptionConfigBuild
    * Provides a simple path to value mapping, all default methods invoke this method directly. It is
    * not recommended that it is used directly other than by these defaults.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  SelfT with(@NonNull String path, @Nullable Object value);
+  SelfT with(@Nonnull String path, @Nullable Object value);
 }

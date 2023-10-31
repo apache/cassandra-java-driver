@@ -21,10 +21,10 @@ import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import java.util.Queue;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.NotThreadSafe;
 
 @NotThreadSafe // wraps a mutable queue
@@ -53,13 +53,13 @@ public class ContinuousAsyncGraphResultSet implements AsyncGraphResultSet {
     this.currentPage = () -> iterator;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ExecutionInfo getRequestExecutionInfo() {
     return executionInfo;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   @Deprecated
   public com.datastax.dse.driver.api.core.graph.GraphExecutionInfo getExecutionInfo() {
@@ -71,7 +71,7 @@ public class ContinuousAsyncGraphResultSet implements AsyncGraphResultSet {
     return iterator.remaining();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Iterable<GraphNode> currentPage() {
     return currentPage;
@@ -82,7 +82,7 @@ public class ContinuousAsyncGraphResultSet implements AsyncGraphResultSet {
     return hasMorePages;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<AsyncGraphResultSet> fetchNextPage() throws IllegalStateException {
     if (!hasMorePages()) {
@@ -106,20 +106,20 @@ public class ContinuousAsyncGraphResultSet implements AsyncGraphResultSet {
 
     return new AsyncGraphResultSet() {
 
-      @NonNull
+      @Nonnull
       @Override
       public ExecutionInfo getRequestExecutionInfo() {
         return executionInfo;
       }
 
-      @NonNull
+      @Nonnull
       @Override
       @Deprecated
       public com.datastax.dse.driver.api.core.graph.GraphExecutionInfo getExecutionInfo() {
         return GraphExecutionInfoConverter.convert(executionInfo);
       }
 
-      @NonNull
+      @Nonnull
       @Override
       public Iterable<GraphNode> currentPage() {
         return Collections.emptyList();
@@ -135,7 +135,7 @@ public class ContinuousAsyncGraphResultSet implements AsyncGraphResultSet {
         return false;
       }
 
-      @NonNull
+      @Nonnull
       @Override
       public CompletionStage<AsyncGraphResultSet> fetchNextPage() throws IllegalStateException {
         throw new IllegalStateException(

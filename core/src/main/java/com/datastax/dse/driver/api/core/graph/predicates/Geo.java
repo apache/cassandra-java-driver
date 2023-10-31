@@ -23,7 +23,7 @@ import com.datastax.dse.driver.api.core.data.geometry.Polygon;
 import com.datastax.dse.driver.internal.core.data.geometry.Distance;
 import com.datastax.dse.driver.internal.core.graph.GeoPredicate;
 import com.datastax.dse.driver.internal.core.graph.GeoUtils;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import org.apache.tinkerpop.gremlin.process.traversal.P;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 
@@ -80,7 +80,7 @@ public interface Geo {
    * <p>This is just a shortcut to {@link Point#fromCoordinates(double, double)}. It is duplicated
    * here so that {@code Geo} can be used as a single entry point in Gremlin-groovy scripts.
    */
-  @NonNull
+  @Nonnull
   static Point point(double x, double y) {
     return Point.fromCoordinates(x, y);
   }
@@ -92,9 +92,9 @@ public interface Geo {
    * duplicated here so that {@code Geo} can be used as a single entry point in Gremlin-groovy
    * scripts.
    */
-  @NonNull
+  @Nonnull
   static LineString lineString(
-      @NonNull Point point1, @NonNull Point point2, @NonNull Point... otherPoints) {
+      @Nonnull Point point1, @Nonnull Point point2, @Nonnull Point... otherPoints) {
     return LineString.fromPoints(point1, point2, otherPoints);
   }
 
@@ -104,7 +104,7 @@ public interface Geo {
    * <p>This is provided for backward compatibility with previous DSE versions. We recommend {@link
    * #lineString(Point, Point, Point...)} instead.
    */
-  @NonNull
+  @Nonnull
   static LineString lineString(double... coordinates) {
     if (coordinates.length % 2 != 0) {
       throw new IllegalArgumentException("lineString() must be passed an even number of arguments");
@@ -128,9 +128,9 @@ public interface Geo {
    * duplicated here so that {@code Geo} can be used as a single entry point in Gremlin-groovy
    * scripts.
    */
-  @NonNull
+  @Nonnull
   static Polygon polygon(
-      @NonNull Point p1, @NonNull Point p2, @NonNull Point p3, @NonNull Point... otherPoints) {
+      @Nonnull Point p1, @Nonnull Point p2, @Nonnull Point p3, @Nonnull Point... otherPoints) {
     return Polygon.fromPoints(p1, p2, p3, otherPoints);
   }
 
@@ -140,7 +140,7 @@ public interface Geo {
    * <p>This is provided for backward compatibility with previous DSE versions. We recommend {@link
    * #polygon(Point, Point, Point, Point...)} instead.
    */
-  @NonNull
+  @Nonnull
   static Polygon polygon(double... coordinates) {
     if (coordinates.length % 2 != 0) {
       throw new IllegalArgumentException("polygon() must be passed an even number of arguments");

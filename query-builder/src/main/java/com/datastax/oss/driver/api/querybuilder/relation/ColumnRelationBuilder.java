@@ -18,32 +18,32 @@
 package com.datastax.oss.driver.api.querybuilder.relation;
 
 import com.datastax.oss.driver.api.querybuilder.term.Term;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface ColumnRelationBuilder<ResultT>
     extends ArithmeticRelationBuilder<ResultT>, InRelationBuilder<ResultT> {
 
   /** Builds a LIKE relation for the column. */
-  @NonNull
-  default ResultT like(@NonNull Term term) {
+  @Nonnull
+  default ResultT like(@Nonnull Term term) {
     return build(" LIKE ", term);
   }
 
   /** Builds an IS NOT NULL relation for the column. */
-  @NonNull
+  @Nonnull
   default ResultT isNotNull() {
     return build(" IS NOT NULL", null);
   }
 
   /** Builds a CONTAINS relation for the column. */
-  @NonNull
-  default ResultT contains(@NonNull Term term) {
+  @Nonnull
+  default ResultT contains(@Nonnull Term term) {
     return build(" CONTAINS ", term);
   }
 
   /** Builds a CONTAINS KEY relation for the column. */
-  @NonNull
-  default ResultT containsKey(@NonNull Term term) {
+  @Nonnull
+  default ResultT containsKey(@Nonnull Term term) {
     return build(" CONTAINS KEY ", term);
   }
 }

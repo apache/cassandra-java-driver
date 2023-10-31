@@ -20,9 +20,9 @@ package com.datastax.oss.driver.internal.core;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 public class MockPagingIterable<T> implements PagingIterable<T> {
 
@@ -32,7 +32,7 @@ public class MockPagingIterable<T> implements PagingIterable<T> {
     this.iterator = iterator;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Iterator<T> iterator() {
     return iterator;
@@ -43,13 +43,13 @@ public class MockPagingIterable<T> implements PagingIterable<T> {
     return !iterator.hasNext();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ColumnDefinitions getColumnDefinitions() {
     throw new UnsupportedOperationException("irrelevant");
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<ExecutionInfo> getExecutionInfos() {
     throw new UnsupportedOperationException("irrelevant");

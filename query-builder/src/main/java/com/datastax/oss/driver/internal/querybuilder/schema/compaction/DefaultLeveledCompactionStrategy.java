@@ -20,7 +20,7 @@ package com.datastax.oss.driver.internal.querybuilder.schema.compaction;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.LeveledCompactionStrategy;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -32,13 +32,13 @@ public class DefaultLeveledCompactionStrategy
     super("LeveledCompactionStrategy");
   }
 
-  protected DefaultLeveledCompactionStrategy(@NonNull ImmutableMap<String, Object> options) {
+  protected DefaultLeveledCompactionStrategy(@Nonnull ImmutableMap<String, Object> options) {
     super(options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DefaultLeveledCompactionStrategy withOption(@NonNull String name, @NonNull Object value) {
+  public DefaultLeveledCompactionStrategy withOption(@Nonnull String name, @Nonnull Object value) {
     return new DefaultLeveledCompactionStrategy(
         ImmutableCollections.append(getInternalOptions(), name, value));
   }

@@ -20,10 +20,10 @@ package com.datastax.oss.driver.internal.core.loadbalancing.helper;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @FunctionalInterface
@@ -42,7 +42,7 @@ public interface NodeDistanceEvaluatorHelper {
    *     implementors need to inspect the cluster topology to create the node distance evaluator.
    * @return the node distance evaluator to use.
    */
-  @NonNull
+  @Nonnull
   NodeDistanceEvaluator createNodeDistanceEvaluator(
-      @Nullable String localDc, @NonNull Map<UUID, Node> nodes);
+      @Nullable String localDc, @Nonnull Map<UUID, Node> nodes);
 }

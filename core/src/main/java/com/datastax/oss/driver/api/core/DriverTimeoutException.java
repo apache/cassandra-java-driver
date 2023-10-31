@@ -18,11 +18,11 @@
 package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /** Thrown when a driver request timed out. */
 public class DriverTimeoutException extends DriverException {
-  public DriverTimeoutException(@NonNull String message) {
+  public DriverTimeoutException(@Nonnull String message) {
     this(message, null);
   }
 
@@ -30,7 +30,7 @@ public class DriverTimeoutException extends DriverException {
     super(message, executionInfo, null, true);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new DriverTimeoutException(getMessage(), getExecutionInfo());

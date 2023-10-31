@@ -19,12 +19,12 @@ package com.datastax.oss.driver.api.core.config;
 
 import com.datastax.oss.driver.internal.core.config.DerivedExecutionProfile;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A profile in the driver's configuration.
@@ -56,93 +56,93 @@ public interface DriverExecutionProfile extends OngoingConfigOptions<DriverExecu
    *
    * <p>Derived profiles inherit the name of their parent.
    */
-  @NonNull
+  @Nonnull
   String getName();
 
-  boolean isDefined(@NonNull DriverOption option);
+  boolean isDefined(@Nonnull DriverOption option);
 
-  boolean getBoolean(@NonNull DriverOption option);
+  boolean getBoolean(@Nonnull DriverOption option);
 
-  default boolean getBoolean(@NonNull DriverOption option, boolean defaultValue) {
+  default boolean getBoolean(@Nonnull DriverOption option, boolean defaultValue) {
     return isDefined(option) ? getBoolean(option) : defaultValue;
   }
 
-  @NonNull
-  List<Boolean> getBooleanList(@NonNull DriverOption option);
+  @Nonnull
+  List<Boolean> getBooleanList(@Nonnull DriverOption option);
 
   @Nullable
   default List<Boolean> getBooleanList(
-      @NonNull DriverOption option, @Nullable List<Boolean> defaultValue) {
+      @Nonnull DriverOption option, @Nullable List<Boolean> defaultValue) {
     return isDefined(option) ? getBooleanList(option) : defaultValue;
   }
 
-  int getInt(@NonNull DriverOption option);
+  int getInt(@Nonnull DriverOption option);
 
-  default int getInt(@NonNull DriverOption option, int defaultValue) {
+  default int getInt(@Nonnull DriverOption option, int defaultValue) {
     return isDefined(option) ? getInt(option) : defaultValue;
   }
 
-  @NonNull
-  List<Integer> getIntList(@NonNull DriverOption option);
+  @Nonnull
+  List<Integer> getIntList(@Nonnull DriverOption option);
 
   @Nullable
   default List<Integer> getIntList(
-      @NonNull DriverOption option, @Nullable List<Integer> defaultValue) {
+      @Nonnull DriverOption option, @Nullable List<Integer> defaultValue) {
     return isDefined(option) ? getIntList(option) : defaultValue;
   }
 
-  long getLong(@NonNull DriverOption option);
+  long getLong(@Nonnull DriverOption option);
 
-  default long getLong(@NonNull DriverOption option, long defaultValue) {
+  default long getLong(@Nonnull DriverOption option, long defaultValue) {
     return isDefined(option) ? getLong(option) : defaultValue;
   }
 
-  @NonNull
-  List<Long> getLongList(@NonNull DriverOption option);
+  @Nonnull
+  List<Long> getLongList(@Nonnull DriverOption option);
 
   @Nullable
-  default List<Long> getLongList(@NonNull DriverOption option, @Nullable List<Long> defaultValue) {
+  default List<Long> getLongList(@Nonnull DriverOption option, @Nullable List<Long> defaultValue) {
     return isDefined(option) ? getLongList(option) : defaultValue;
   }
 
-  double getDouble(@NonNull DriverOption option);
+  double getDouble(@Nonnull DriverOption option);
 
-  default double getDouble(@NonNull DriverOption option, double defaultValue) {
+  default double getDouble(@Nonnull DriverOption option, double defaultValue) {
     return isDefined(option) ? getDouble(option) : defaultValue;
   }
 
-  @NonNull
-  List<Double> getDoubleList(@NonNull DriverOption option);
+  @Nonnull
+  List<Double> getDoubleList(@Nonnull DriverOption option);
 
   @Nullable
   default List<Double> getDoubleList(
-      @NonNull DriverOption option, @Nullable List<Double> defaultValue) {
+      @Nonnull DriverOption option, @Nullable List<Double> defaultValue) {
     return isDefined(option) ? getDoubleList(option) : defaultValue;
   }
 
-  @NonNull
-  String getString(@NonNull DriverOption option);
+  @Nonnull
+  String getString(@Nonnull DriverOption option);
 
   @Nullable
-  default String getString(@NonNull DriverOption option, @Nullable String defaultValue) {
+  default String getString(@Nonnull DriverOption option, @Nullable String defaultValue) {
     return isDefined(option) ? getString(option) : defaultValue;
   }
 
-  @NonNull
-  List<String> getStringList(@NonNull DriverOption option);
+  @Nonnull
+  List<String> getStringList(@Nonnull DriverOption option);
 
   @Nullable
   default List<String> getStringList(
-      @NonNull DriverOption option, @Nullable List<String> defaultValue) {
+      @Nonnull DriverOption option, @Nullable List<String> defaultValue) {
     return isDefined(option) ? getStringList(option) : defaultValue;
   }
 
-  @NonNull
-  Map<String, String> getStringMap(@NonNull DriverOption option);
+  @Nonnull
+  Map<String, String> getStringMap(@Nonnull DriverOption option);
 
   @Nullable
   default Map<String, String> getStringMap(
-      @NonNull DriverOption option, @Nullable Map<String, String> defaultValue) {
+      @Nonnull DriverOption option, @Nullable Map<String, String> defaultValue) {
     return isDefined(option) ? getStringMap(option) : defaultValue;
   }
 
@@ -151,14 +151,14 @@ public interface DriverExecutionProfile extends OngoingConfigOptions<DriverExecu
    *     implementations want to allow users to provide sizes in a more human-readable way, for
    *     example "256 MB".
    */
-  long getBytes(@NonNull DriverOption option);
+  long getBytes(@Nonnull DriverOption option);
 
-  default long getBytes(@NonNull DriverOption option, long defaultValue) {
+  default long getBytes(@Nonnull DriverOption option, long defaultValue) {
     return isDefined(option) ? getBytes(option) : defaultValue;
   }
 
   /** @see #getBytes(DriverOption) */
-  @NonNull
+  @Nonnull
   List<Long> getBytesList(DriverOption option);
 
   @Nullable
@@ -166,20 +166,20 @@ public interface DriverExecutionProfile extends OngoingConfigOptions<DriverExecu
     return isDefined(option) ? getBytesList(option) : defaultValue;
   }
 
-  @NonNull
-  Duration getDuration(@NonNull DriverOption option);
+  @Nonnull
+  Duration getDuration(@Nonnull DriverOption option);
 
   @Nullable
-  default Duration getDuration(@NonNull DriverOption option, @Nullable Duration defaultValue) {
+  default Duration getDuration(@Nonnull DriverOption option, @Nullable Duration defaultValue) {
     return isDefined(option) ? getDuration(option) : defaultValue;
   }
 
-  @NonNull
-  List<Duration> getDurationList(@NonNull DriverOption option);
+  @Nonnull
+  List<Duration> getDurationList(@Nonnull DriverOption option);
 
   @Nullable
   default List<Duration> getDurationList(
-      @NonNull DriverOption option, @Nullable List<Duration> defaultValue) {
+      @Nonnull DriverOption option, @Nullable List<Duration> defaultValue) {
     return isDefined(option) ? getDurationList(option) : defaultValue;
   }
 
@@ -196,8 +196,8 @@ public interface DriverExecutionProfile extends OngoingConfigOptions<DriverExecu
    * default implementation builds a map based on the entries from {@link #entrySet()}, it should be
    * good for most cases.
    */
-  @NonNull
-  default Object getComparisonKey(@NonNull DriverOption option) {
+  @Nonnull
+  default Object getComparisonKey(@Nonnull DriverOption option) {
     // This method is only used during driver initialization, performance is not crucial
     String prefix = option.getPath();
     ImmutableMap.Builder<String, Object> childOptions = ImmutableMap.builder();
@@ -219,111 +219,111 @@ public interface DriverExecutionProfile extends OngoingConfigOptions<DriverExecu
    * possible types are {@code String}, {@code Number}, {@code Boolean}, {@code Map<String,Object>},
    * {@code List<Object>}, or {@code null}.
    */
-  @NonNull
+  @Nonnull
   SortedSet<Map.Entry<String, Object>> entrySet();
 
-  @NonNull
+  @Nonnull
   @Override
-  default DriverExecutionProfile withBoolean(@NonNull DriverOption option, boolean value) {
+  default DriverExecutionProfile withBoolean(@Nonnull DriverOption option, boolean value) {
     return DerivedExecutionProfile.with(this, option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default DriverExecutionProfile withBooleanList(
-      @NonNull DriverOption option, @NonNull List<Boolean> value) {
+      @Nonnull DriverOption option, @Nonnull List<Boolean> value) {
     return DerivedExecutionProfile.with(this, option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  default DriverExecutionProfile withInt(@NonNull DriverOption option, int value) {
+  default DriverExecutionProfile withInt(@Nonnull DriverOption option, int value) {
     return DerivedExecutionProfile.with(this, option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default DriverExecutionProfile withIntList(
-      @NonNull DriverOption option, @NonNull List<Integer> value) {
+      @Nonnull DriverOption option, @Nonnull List<Integer> value) {
     return DerivedExecutionProfile.with(this, option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  default DriverExecutionProfile withLong(@NonNull DriverOption option, long value) {
+  default DriverExecutionProfile withLong(@Nonnull DriverOption option, long value) {
     return DerivedExecutionProfile.with(this, option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default DriverExecutionProfile withLongList(
-      @NonNull DriverOption option, @NonNull List<Long> value) {
+      @Nonnull DriverOption option, @Nonnull List<Long> value) {
     return DerivedExecutionProfile.with(this, option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  default DriverExecutionProfile withDouble(@NonNull DriverOption option, double value) {
+  default DriverExecutionProfile withDouble(@Nonnull DriverOption option, double value) {
     return DerivedExecutionProfile.with(this, option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default DriverExecutionProfile withDoubleList(
-      @NonNull DriverOption option, @NonNull List<Double> value) {
+      @Nonnull DriverOption option, @Nonnull List<Double> value) {
     return DerivedExecutionProfile.with(this, option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  default DriverExecutionProfile withString(@NonNull DriverOption option, @NonNull String value) {
+  default DriverExecutionProfile withString(@Nonnull DriverOption option, @Nonnull String value) {
     return DerivedExecutionProfile.with(this, option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default DriverExecutionProfile withStringList(
-      @NonNull DriverOption option, @NonNull List<String> value) {
+      @Nonnull DriverOption option, @Nonnull List<String> value) {
     return DerivedExecutionProfile.with(this, option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default DriverExecutionProfile withStringMap(
-      @NonNull DriverOption option, @NonNull Map<String, String> value) {
+      @Nonnull DriverOption option, @Nonnull Map<String, String> value) {
     return DerivedExecutionProfile.with(this, option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  default DriverExecutionProfile withBytes(@NonNull DriverOption option, long value) {
+  default DriverExecutionProfile withBytes(@Nonnull DriverOption option, long value) {
     return DerivedExecutionProfile.with(this, option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default DriverExecutionProfile withBytesList(
-      @NonNull DriverOption option, @NonNull List<Long> value) {
+      @Nonnull DriverOption option, @Nonnull List<Long> value) {
     return DerivedExecutionProfile.with(this, option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default DriverExecutionProfile withDuration(
-      @NonNull DriverOption option, @NonNull Duration value) {
+      @Nonnull DriverOption option, @Nonnull Duration value) {
     return DerivedExecutionProfile.with(this, option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default DriverExecutionProfile withDurationList(
-      @NonNull DriverOption option, @NonNull List<Duration> value) {
+      @Nonnull DriverOption option, @Nonnull List<Duration> value) {
     return DerivedExecutionProfile.with(this, option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  default DriverExecutionProfile without(@NonNull DriverOption option) {
+  default DriverExecutionProfile without(@Nonnull DriverOption option) {
     return DerivedExecutionProfile.without(this, option);
   }
 }

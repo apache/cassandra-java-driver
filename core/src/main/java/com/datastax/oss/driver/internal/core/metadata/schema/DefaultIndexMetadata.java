@@ -20,10 +20,10 @@ package com.datastax.oss.driver.internal.core.metadata.schema;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.IndexKind;
 import com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -31,20 +31,20 @@ public class DefaultIndexMetadata implements IndexMetadata, Serializable {
 
   private static final long serialVersionUID = 1;
 
-  @NonNull private final CqlIdentifier keyspace;
-  @NonNull private final CqlIdentifier table;
-  @NonNull private final CqlIdentifier name;
-  @NonNull private final IndexKind kind;
-  @NonNull private final String target;
-  @NonNull private final Map<String, String> options;
+  @Nonnull private final CqlIdentifier keyspace;
+  @Nonnull private final CqlIdentifier table;
+  @Nonnull private final CqlIdentifier name;
+  @Nonnull private final IndexKind kind;
+  @Nonnull private final String target;
+  @Nonnull private final Map<String, String> options;
 
   public DefaultIndexMetadata(
-      @NonNull CqlIdentifier keyspace,
-      @NonNull CqlIdentifier table,
-      @NonNull CqlIdentifier name,
-      @NonNull IndexKind kind,
-      @NonNull String target,
-      @NonNull Map<String, String> options) {
+      @Nonnull CqlIdentifier keyspace,
+      @Nonnull CqlIdentifier table,
+      @Nonnull CqlIdentifier name,
+      @Nonnull IndexKind kind,
+      @Nonnull String target,
+      @Nonnull Map<String, String> options) {
     this.keyspace = keyspace;
     this.table = table;
     this.name = name;
@@ -53,37 +53,37 @@ public class DefaultIndexMetadata implements IndexMetadata, Serializable {
     this.options = options;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getTable() {
     return table;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getName() {
     return name;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public IndexKind getKind() {
     return kind;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getTarget() {
     return target;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, String> getOptions() {
     return options;

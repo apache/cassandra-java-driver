@@ -19,25 +19,25 @@ package com.datastax.oss.driver.internal.querybuilder.select;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
 public class TupleSelector extends CollectionSelector {
 
-  public TupleSelector(@NonNull Iterable<Selector> elementSelectors) {
+  public TupleSelector(@Nonnull Iterable<Selector> elementSelectors) {
     this(elementSelectors, null);
   }
 
   public TupleSelector(
-      @NonNull Iterable<Selector> elementSelectors, @Nullable CqlIdentifier alias) {
+      @Nonnull Iterable<Selector> elementSelectors, @Nullable CqlIdentifier alias) {
     super(elementSelectors, "(", ")", alias);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Selector as(@NonNull CqlIdentifier alias) {
+  public Selector as(@Nonnull CqlIdentifier alias) {
     return new TupleSelector(getElementSelectors(), alias);
   }
 }

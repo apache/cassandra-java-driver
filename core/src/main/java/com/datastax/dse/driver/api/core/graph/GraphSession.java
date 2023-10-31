@@ -19,9 +19,9 @@ package com.datastax.dse.driver.api.core.graph;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.session.Session;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
 
 /**
  * A session that has the ability to execute DSE Graph requests.
@@ -58,8 +58,8 @@ public interface GraphSession extends Session {
    * @param graphStatement the graph query to execute (that can be any {@code GraphStatement}).
    * @return the result of the graph query. That result will never be null but can be empty.
    */
-  @NonNull
-  default GraphResultSet execute(@NonNull GraphStatement<?> graphStatement) {
+  @Nonnull
+  default GraphResultSet execute(@Nonnull GraphStatement<?> graphStatement) {
     return Objects.requireNonNull(
         execute(graphStatement, GraphStatement.SYNC),
         "The graph processor should never return a null result");
@@ -77,9 +77,9 @@ public interface GraphSession extends Session {
    * @param graphStatement the graph query to execute (that can be any {@code GraphStatement}).
    * @return the {@code CompletionStage} on the result of the graph query.
    */
-  @NonNull
+  @Nonnull
   default CompletionStage<AsyncGraphResultSet> executeAsync(
-      @NonNull GraphStatement<?> graphStatement) {
+      @Nonnull GraphStatement<?> graphStatement) {
     return Objects.requireNonNull(
         execute(graphStatement, GraphStatement.ASYNC),
         "The graph processor should never return a null result");

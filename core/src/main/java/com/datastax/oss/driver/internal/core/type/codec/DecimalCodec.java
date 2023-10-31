@@ -22,40 +22,40 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class DecimalCodec implements TypeCodec<BigDecimal> {
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<BigDecimal> getJavaType() {
     return GenericType.BIG_DECIMAL;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.DECIMAL;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof BigDecimal;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return BigDecimal.class.isAssignableFrom(javaClass);
   }
 
   @Nullable
   @Override
-  public ByteBuffer encode(@Nullable BigDecimal value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable BigDecimal value, @Nonnull ProtocolVersion protocolVersion) {
     if (value == null) {
       return null;
     }
@@ -72,7 +72,7 @@ public class DecimalCodec implements TypeCodec<BigDecimal> {
 
   @Nullable
   @Override
-  public BigDecimal decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public BigDecimal decode(@Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return null;
     } else if (bytes.remaining() < 4) {
@@ -89,7 +89,7 @@ public class DecimalCodec implements TypeCodec<BigDecimal> {
     return new BigDecimal(bi, scale);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable BigDecimal value) {
     return (value == null) ? "NULL" : value.toString();

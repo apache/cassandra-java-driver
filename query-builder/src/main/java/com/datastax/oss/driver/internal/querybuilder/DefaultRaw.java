@@ -21,9 +21,9 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.Raw;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -32,24 +32,24 @@ public class DefaultRaw implements Raw {
   private final String rawExpression;
   private final CqlIdentifier alias;
 
-  public DefaultRaw(@NonNull String rawExpression) {
+  public DefaultRaw(@Nonnull String rawExpression) {
     this(rawExpression, null);
   }
 
-  private DefaultRaw(@NonNull String rawExpression, @Nullable CqlIdentifier alias) {
+  private DefaultRaw(@Nonnull String rawExpression, @Nullable CqlIdentifier alias) {
     Preconditions.checkNotNull(rawExpression);
     this.rawExpression = rawExpression;
     this.alias = alias;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Selector as(@NonNull CqlIdentifier alias) {
+  public Selector as(@Nonnull CqlIdentifier alias) {
     return new DefaultRaw(rawExpression, alias);
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     builder.append(rawExpression);
     if (alias != null) {
       builder.append(" AS ").append(alias.asCql(true));
@@ -61,7 +61,7 @@ public class DefaultRaw implements Raw {
     return false;
   }
 
-  @NonNull
+  @Nonnull
   public String getRawExpression() {
     return rawExpression;
   }

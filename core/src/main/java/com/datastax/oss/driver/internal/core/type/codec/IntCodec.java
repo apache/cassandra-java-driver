@@ -22,46 +22,46 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveIntCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class IntCodec implements PrimitiveIntCodec {
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<Integer> getJavaType() {
     return GenericType.INTEGER;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.INT;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof Integer;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == Integer.class || javaClass == int.class;
   }
 
   @Nullable
   @Override
-  public ByteBuffer encodePrimitive(int value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encodePrimitive(int value, @Nonnull ProtocolVersion protocolVersion) {
     ByteBuffer bytes = ByteBuffer.allocate(4);
     bytes.putInt(0, value);
     return bytes;
   }
 
   @Override
-  public int decodePrimitive(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public int decodePrimitive(@Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return 0;
     } else if (bytes.remaining() != 4) {
@@ -72,7 +72,7 @@ public class IntCodec implements PrimitiveIntCodec {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable Integer value) {
     return (value == null) ? "NULL" : Integer.toString(value);

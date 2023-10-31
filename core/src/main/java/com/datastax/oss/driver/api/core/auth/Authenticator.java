@@ -17,10 +17,10 @@
  */
 package com.datastax.oss.driver.api.core.auth;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Handles SASL authentication with Cassandra servers.
@@ -65,7 +65,7 @@ public interface Authenticator {
    *     Alternatively, if the contents are not sensitive, you can make the buffer {@linkplain
    *     ByteBuffer#asReadOnlyBuffer() read-only} and safely reuse it.
    */
-  @NonNull
+  @Nonnull
   CompletionStage<ByteBuffer> initialResponse();
 
   /**
@@ -80,7 +80,7 @@ public interface Authenticator {
    *     Alternatively, if the contents are not sensitive, you can make the buffer {@linkplain
    *     ByteBuffer#asReadOnlyBuffer() read-only} and safely reuse it.
    */
-  @NonNull
+  @Nonnull
   CompletionStage<ByteBuffer> evaluateChallenge(@Nullable ByteBuffer challenge);
 
   /**
@@ -93,6 +93,6 @@ public interface Authenticator {
    * @return a completion stage that completes when the authenticator is done processing this
    *     response.
    */
-  @NonNull
+  @Nonnull
   CompletionStage<Void> onAuthenticationSuccess(@Nullable ByteBuffer token);
 }

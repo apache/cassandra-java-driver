@@ -20,37 +20,37 @@ package com.datastax.oss.driver.api.core.metadata.schema;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 /** A CQL function in the schema metadata. */
 public interface FunctionMetadata extends Describable {
 
-  @NonNull
+  @Nonnull
   CqlIdentifier getKeyspace();
 
-  @NonNull
+  @Nonnull
   FunctionSignature getSignature();
 
   /**
    * The names of the parameters. This is in the same order as {@code
    * getSignature().getParameterTypes()}
    */
-  @NonNull
+  @Nonnull
   List<CqlIdentifier> getParameterNames();
 
-  @NonNull
+  @Nonnull
   String getBody();
 
   boolean isCalledOnNullInput();
 
-  @NonNull
+  @Nonnull
   String getLanguage();
 
-  @NonNull
+  @Nonnull
   DataType getReturnType();
 
-  @NonNull
+  @Nonnull
   @Override
   default String describe(boolean pretty) {
     ScriptBuilder builder = new ScriptBuilder(pretty);
@@ -89,7 +89,7 @@ public interface FunctionMetadata extends Describable {
         .build();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default String describeWithChildren(boolean pretty) {
     // A function has no children

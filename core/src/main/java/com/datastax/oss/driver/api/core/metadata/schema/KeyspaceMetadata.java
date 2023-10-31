@@ -23,15 +23,15 @@ import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 /** A keyspace in the schema metadata. */
 public interface KeyspaceMetadata extends Describable {
 
-  @NonNull
+  @Nonnull
   CqlIdentifier getName();
 
   /** Whether durable writes are set on this keyspace. */
@@ -41,29 +41,29 @@ public interface KeyspaceMetadata extends Describable {
   boolean isVirtual();
 
   /** The replication options defined for this keyspace. */
-  @NonNull
+  @Nonnull
   Map<String, String> getReplication();
 
-  @NonNull
+  @Nonnull
   Map<CqlIdentifier, TableMetadata> getTables();
 
-  @NonNull
-  default Optional<TableMetadata> getTable(@NonNull CqlIdentifier tableId) {
+  @Nonnull
+  default Optional<TableMetadata> getTable(@Nonnull CqlIdentifier tableId) {
     return Optional.ofNullable(getTables().get(tableId));
   }
 
   /** Shortcut for {@link #getTable(CqlIdentifier) getTable(CqlIdentifier.fromCql(tableName))}. */
-  @NonNull
-  default Optional<TableMetadata> getTable(@NonNull String tableName) {
+  @Nonnull
+  default Optional<TableMetadata> getTable(@Nonnull String tableName) {
     return getTable(CqlIdentifier.fromCql(tableName));
   }
 
-  @NonNull
+  @Nonnull
   Map<CqlIdentifier, ViewMetadata> getViews();
 
   /** Gets the views based on a given table. */
-  @NonNull
-  default Map<CqlIdentifier, ViewMetadata> getViewsOnTable(@NonNull CqlIdentifier tableId) {
+  @Nonnull
+  default Map<CqlIdentifier, ViewMetadata> getViewsOnTable(@Nonnull CqlIdentifier tableId) {
     ImmutableMap.Builder<CqlIdentifier, ViewMetadata> builder = ImmutableMap.builder();
     for (ViewMetadata view : getViews().values()) {
       if (view.getBaseTable().equals(tableId)) {
@@ -73,22 +73,22 @@ public interface KeyspaceMetadata extends Describable {
     return builder.build();
   }
 
-  @NonNull
-  default Optional<ViewMetadata> getView(@NonNull CqlIdentifier viewId) {
+  @Nonnull
+  default Optional<ViewMetadata> getView(@Nonnull CqlIdentifier viewId) {
     return Optional.ofNullable(getViews().get(viewId));
   }
 
   /** Shortcut for {@link #getView(CqlIdentifier) getView(CqlIdentifier.fromCql(viewName))}. */
-  @NonNull
-  default Optional<ViewMetadata> getView(@NonNull String viewName) {
+  @Nonnull
+  default Optional<ViewMetadata> getView(@Nonnull String viewName) {
     return getView(CqlIdentifier.fromCql(viewName));
   }
 
-  @NonNull
+  @Nonnull
   Map<CqlIdentifier, UserDefinedType> getUserDefinedTypes();
 
-  @NonNull
-  default Optional<UserDefinedType> getUserDefinedType(@NonNull CqlIdentifier typeId) {
+  @Nonnull
+  default Optional<UserDefinedType> getUserDefinedType(@Nonnull CqlIdentifier typeId) {
     return Optional.ofNullable(getUserDefinedTypes().get(typeId));
   }
 
@@ -96,22 +96,22 @@ public interface KeyspaceMetadata extends Describable {
    * Shortcut for {@link #getUserDefinedType(CqlIdentifier)
    * getUserDefinedType(CqlIdentifier.fromCql(typeName))}.
    */
-  @NonNull
-  default Optional<UserDefinedType> getUserDefinedType(@NonNull String typeName) {
+  @Nonnull
+  default Optional<UserDefinedType> getUserDefinedType(@Nonnull String typeName) {
     return getUserDefinedType(CqlIdentifier.fromCql(typeName));
   }
 
-  @NonNull
+  @Nonnull
   Map<FunctionSignature, FunctionMetadata> getFunctions();
 
-  @NonNull
-  default Optional<FunctionMetadata> getFunction(@NonNull FunctionSignature functionSignature) {
+  @Nonnull
+  default Optional<FunctionMetadata> getFunction(@Nonnull FunctionSignature functionSignature) {
     return Optional.ofNullable(getFunctions().get(functionSignature));
   }
 
-  @NonNull
+  @Nonnull
   default Optional<FunctionMetadata> getFunction(
-      @NonNull CqlIdentifier functionId, @NonNull Iterable<DataType> parameterTypes) {
+      @Nonnull CqlIdentifier functionId, @Nonnull Iterable<DataType> parameterTypes) {
     return Optional.ofNullable(
         getFunctions().get(new FunctionSignature(functionId, parameterTypes)));
   }
@@ -120,18 +120,18 @@ public interface KeyspaceMetadata extends Describable {
    * Shortcut for {@link #getFunction(CqlIdentifier, Iterable)
    * getFunction(CqlIdentifier.fromCql(functionName), parameterTypes)}.
    */
-  @NonNull
+  @Nonnull
   default Optional<FunctionMetadata> getFunction(
-      @NonNull String functionName, @NonNull Iterable<DataType> parameterTypes) {
+      @Nonnull String functionName, @Nonnull Iterable<DataType> parameterTypes) {
     return getFunction(CqlIdentifier.fromCql(functionName), parameterTypes);
   }
 
   /**
    * @param parameterTypes neither the individual types, nor the vararg array itself, can be null.
    */
-  @NonNull
+  @Nonnull
   default Optional<FunctionMetadata> getFunction(
-      @NonNull CqlIdentifier functionId, @NonNull DataType... parameterTypes) {
+      @Nonnull CqlIdentifier functionId, @Nonnull DataType... parameterTypes) {
     return Optional.ofNullable(
         getFunctions().get(new FunctionSignature(functionId, parameterTypes)));
   }
@@ -142,23 +142,23 @@ public interface KeyspaceMetadata extends Describable {
    *
    * @param parameterTypes neither the individual types, nor the vararg array itself, can be null.
    */
-  @NonNull
+  @Nonnull
   default Optional<FunctionMetadata> getFunction(
-      @NonNull String functionName, @NonNull DataType... parameterTypes) {
+      @Nonnull String functionName, @Nonnull DataType... parameterTypes) {
     return getFunction(CqlIdentifier.fromCql(functionName), parameterTypes);
   }
 
-  @NonNull
+  @Nonnull
   Map<FunctionSignature, AggregateMetadata> getAggregates();
 
-  @NonNull
-  default Optional<AggregateMetadata> getAggregate(@NonNull FunctionSignature aggregateSignature) {
+  @Nonnull
+  default Optional<AggregateMetadata> getAggregate(@Nonnull FunctionSignature aggregateSignature) {
     return Optional.ofNullable(getAggregates().get(aggregateSignature));
   }
 
-  @NonNull
+  @Nonnull
   default Optional<AggregateMetadata> getAggregate(
-      @NonNull CqlIdentifier aggregateId, @NonNull Iterable<DataType> parameterTypes) {
+      @Nonnull CqlIdentifier aggregateId, @Nonnull Iterable<DataType> parameterTypes) {
     return Optional.ofNullable(
         getAggregates().get(new FunctionSignature(aggregateId, parameterTypes)));
   }
@@ -167,18 +167,18 @@ public interface KeyspaceMetadata extends Describable {
    * Shortcut for {@link #getAggregate(CqlIdentifier, Iterable)
    * getAggregate(CqlIdentifier.fromCql(aggregateName), parameterTypes)}.
    */
-  @NonNull
+  @Nonnull
   default Optional<AggregateMetadata> getAggregate(
-      @NonNull String aggregateName, @NonNull Iterable<DataType> parameterTypes) {
+      @Nonnull String aggregateName, @Nonnull Iterable<DataType> parameterTypes) {
     return getAggregate(CqlIdentifier.fromCql(aggregateName), parameterTypes);
   }
 
   /**
    * @param parameterTypes neither the individual types, nor the vararg array itself, can be null.
    */
-  @NonNull
+  @Nonnull
   default Optional<AggregateMetadata> getAggregate(
-      @NonNull CqlIdentifier aggregateId, @NonNull DataType... parameterTypes) {
+      @Nonnull CqlIdentifier aggregateId, @Nonnull DataType... parameterTypes) {
     return Optional.ofNullable(
         getAggregates().get(new FunctionSignature(aggregateId, parameterTypes)));
   }
@@ -189,13 +189,13 @@ public interface KeyspaceMetadata extends Describable {
    *
    * @param parameterTypes neither the individual types, nor the vararg array itself, can be null.
    */
-  @NonNull
+  @Nonnull
   default Optional<AggregateMetadata> getAggregate(
-      @NonNull String aggregateName, @NonNull DataType... parameterTypes) {
+      @Nonnull String aggregateName, @Nonnull DataType... parameterTypes) {
     return getAggregate(CqlIdentifier.fromCql(aggregateName), parameterTypes);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default String describe(boolean pretty) {
     ScriptBuilder builder = new ScriptBuilder(pretty);
@@ -230,7 +230,7 @@ public interface KeyspaceMetadata extends Describable {
     return builder.build();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default String describeWithChildren(boolean pretty) {
     String createKeyspace = describe(pretty);

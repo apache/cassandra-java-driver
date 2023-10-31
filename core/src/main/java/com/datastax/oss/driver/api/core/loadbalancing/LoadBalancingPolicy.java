@@ -22,12 +22,12 @@ import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /** Decides which Cassandra nodes to contact for each query. */
 public interface LoadBalancingPolicy extends AutoCloseable {
@@ -42,7 +42,7 @@ public interface LoadBalancingPolicy extends AutoCloseable {
    *
    * @since 4.13.0
    */
-  @NonNull
+  @Nonnull
   default Optional<RequestTracker> getRequestTracker() {
     return Optional.empty();
   }
@@ -74,7 +74,7 @@ public interface LoadBalancingPolicy extends AutoCloseable {
    *     #onAdd(Node) added} later and will need to have their distance set (or the policy might
    *     change distances dynamically over time).
    */
-  void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter);
+  void init(@Nonnull Map<UUID, Node> nodes, @Nonnull DistanceReporter distanceReporter);
 
   /**
    * Returns the coordinators to use for a new query.
@@ -88,7 +88,7 @@ public interface LoadBalancingPolicy extends AutoCloseable {
    * @return the list of coordinators to try. <b>This must be a concurrent queue</b>; {@link
    *     java.util.concurrent.ConcurrentLinkedQueue} is a good choice.
    */
-  @NonNull
+  @Nonnull
   Queue<Node> newQueryPlan(@Nullable Request request, @Nullable Session session);
 
   /**
@@ -107,16 +107,16 @@ public interface LoadBalancingPolicy extends AutoCloseable {
    *
    * @see #init(Map, DistanceReporter)
    */
-  void onAdd(@NonNull Node node);
+  void onAdd(@Nonnull Node node);
 
   /** Called when a node is determined to be up. */
-  void onUp(@NonNull Node node);
+  void onUp(@Nonnull Node node);
 
   /** Called when a node is determined to be down. */
-  void onDown(@NonNull Node node);
+  void onDown(@Nonnull Node node);
 
   /** Called when a node is removed from the cluster. */
-  void onRemove(@NonNull Node node);
+  void onRemove(@Nonnull Node node);
 
   /** Called when the cluster that this policy is associated with closes. */
   @Override
@@ -124,6 +124,6 @@ public interface LoadBalancingPolicy extends AutoCloseable {
 
   /** An object that the policy uses to signal decisions it makes about node distances. */
   interface DistanceReporter {
-    void setDistance(@NonNull Node node, @NonNull NodeDistance distance);
+    void setDistance(@Nonnull Node node, @Nonnull NodeDistance distance);
   }
 }

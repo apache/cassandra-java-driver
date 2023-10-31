@@ -21,16 +21,16 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 /** A CQL aggregate in the schema metadata. */
 public interface AggregateMetadata extends Describable {
 
-  @NonNull
+  @Nonnull
   CqlIdentifier getKeyspace();
 
-  @NonNull
+  @Nonnull
   FunctionSignature getSignature();
 
   /**
@@ -39,7 +39,7 @@ public interface AggregateMetadata extends Describable {
    * <p>This is the function specified with {@code FINALFUNC} in the {@code CREATE AGGREGATE...}
    * statement. It transforms the final value after the aggregation is complete.
    */
-  @NonNull
+  @Nonnull
   Optional<FunctionSignature> getFinalFuncSignature();
 
   /**
@@ -59,7 +59,7 @@ public interface AggregateMetadata extends Describable {
    *
    * @return the initial state, or empty if there is none.
    */
-  @NonNull
+  @Nonnull
   Optional<Object> getInitCond();
 
   /**
@@ -68,7 +68,7 @@ public interface AggregateMetadata extends Describable {
    * <p>This is the final type of the value computed by this aggregate; in other words, the return
    * type of the final function if it is defined, or the state type otherwise.
    */
-  @NonNull
+  @Nonnull
   DataType getReturnType();
 
   /**
@@ -77,7 +77,7 @@ public interface AggregateMetadata extends Describable {
    * <p>This is the function specified with {@code SFUNC} in the {@code CREATE AGGREGATE...}
    * statement. It aggregates the current state with each row to produce a new state.
    */
-  @NonNull
+  @Nonnull
   FunctionSignature getStateFuncSignature();
 
   /**
@@ -87,17 +87,17 @@ public interface AggregateMetadata extends Describable {
    * It defines the type of the value that is accumulated as the aggregate iterates through the
    * rows.
    */
-  @NonNull
+  @Nonnull
   DataType getStateType();
 
-  @NonNull
+  @Nonnull
   @Override
   default String describeWithChildren(boolean pretty) {
     // An aggregate has no children
     return describe(pretty);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default String describe(boolean pretty) {
     ScriptBuilder builder = new ScriptBuilder(pretty);
@@ -141,6 +141,6 @@ public interface AggregateMetadata extends Describable {
   /**
    * Formats the {@linkplain #getInitCond() initial state value} for inclusion in a CQL statement.
    */
-  @NonNull
+  @Nonnull
   Optional<String> formatInitCond();
 }

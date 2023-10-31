@@ -21,12 +21,12 @@ import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.session.Session;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Metadata about a Cassandra node in the cluster.
@@ -52,7 +52,7 @@ public interface Node {
    * <p>When behind a proxy, the endpoint reported here usually refers to the proxy itself, and is
    * unrelated to the node's broadcast RPC address.
    */
-  @NonNull
+  @Nonnull
   EndPoint getEndPoint();
 
   /**
@@ -74,7 +74,7 @@ public interface Node {
    * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-9436">CASSANDRA-9436 (where the
    *     information was added to system.local)</a>
    */
-  @NonNull
+  @Nonnull
   Optional<InetSocketAddress> getBroadcastRpcAddress();
 
   /**
@@ -93,7 +93,7 @@ public interface Node {
    * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-9436">CASSANDRA-9436 (where the
    *     information was added to system.local)</a>
    */
-  @NonNull
+  @Nonnull
   Optional<InetSocketAddress> getBroadcastAddress();
 
   /**
@@ -106,7 +106,7 @@ public interface Node {
    * <p>This may not be known at all times. In particular, current Cassandra versions (up to 3.11)
    * only store it in {@code system.local}, so this will be known only for the control node.
    */
-  @NonNull
+  @Nonnull
   Optional<InetSocketAddress> getListenAddress();
 
   /**
@@ -147,10 +147,10 @@ public interface Node {
    * <p>Note that the returned map is immutable: if the properties change, this is reflected by
    * publishing a new map instance, therefore you must call this method again to see the changes.
    */
-  @NonNull
+  @Nonnull
   Map<String, Object> getExtras();
 
-  @NonNull
+  @Nonnull
   NodeState getState();
 
   /**
@@ -179,7 +179,7 @@ public interface Node {
    * <p>This is exposed here for information only. Distance events are handled internally by the
    * driver.
    */
-  @NonNull
+  @Nonnull
   NodeDistance getDistance();
 
   /**
@@ -198,7 +198,7 @@ public interface Node {
    *     .withNodeStateListener(
    *         new NodeStateListenerBase() {
    *           &#64;Override
-   *           public void onUp(@NonNull Node node) {
+   *           public void onUp(@Nonnull Node node) {
    *             // node.getHostId() == null for the first invocation only
    *           }
    *         })

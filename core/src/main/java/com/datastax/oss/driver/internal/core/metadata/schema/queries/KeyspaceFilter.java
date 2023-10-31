@@ -17,8 +17,8 @@
  */
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 /**
  * Filters keyspaces during schema metadata queries.
@@ -29,7 +29,7 @@ import java.util.List;
  */
 public interface KeyspaceFilter {
 
-  static KeyspaceFilter newInstance(@NonNull String logPrefix, @NonNull List<String> specs) {
+  static KeyspaceFilter newInstance(@Nonnull String logPrefix, @Nonnull List<String> specs) {
     if (specs.isEmpty()) {
       return INCLUDE_ALL;
     } else {
@@ -38,22 +38,22 @@ public interface KeyspaceFilter {
   }
 
   /** The WHERE IN clause, or an empty string if there is no server-side filtering. */
-  @NonNull
+  @Nonnull
   String getWhereClause();
 
   /** The predicate that will be invoked for client-side filtering. */
-  boolean includes(@NonNull String keyspace);
+  boolean includes(@Nonnull String keyspace);
 
   KeyspaceFilter INCLUDE_ALL =
       new KeyspaceFilter() {
-        @NonNull
+        @Nonnull
         @Override
         public String getWhereClause() {
           return "";
         }
 
         @Override
-        public boolean includes(@NonNull String keyspace) {
+        public boolean includes(@Nonnull String keyspace) {
           return true;
         }
       };

@@ -22,9 +22,9 @@ import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Instant;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 
 @Entity
 @CqlName("messages_by_recipient")
@@ -44,10 +44,10 @@ public class MailboxMessage {
   public MailboxMessage() {}
 
   public MailboxMessage(
-      @NonNull String recipient,
-      @NonNull Instant timestamp,
-      @NonNull String sender,
-      @NonNull String body) {
+      @Nonnull String recipient,
+      @Nonnull Instant timestamp,
+      @Nonnull String sender,
+      @Nonnull String body) {
     this.recipient = recipient;
     this.timestamp = timestamp;
     this.sender = sender;

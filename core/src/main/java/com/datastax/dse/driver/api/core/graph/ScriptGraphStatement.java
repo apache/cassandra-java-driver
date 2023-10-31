@@ -20,10 +20,10 @@ package com.datastax.dse.driver.api.core.graph;
 import com.datastax.dse.driver.internal.core.graph.DefaultScriptGraphStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A graph statement that uses a Gremlin-groovy script the query.
@@ -44,8 +44,8 @@ import java.util.Map;
 public interface ScriptGraphStatement extends GraphStatement<ScriptGraphStatement> {
 
   /** Create a new instance from the given script. */
-  @NonNull
-  static ScriptGraphStatement newInstance(@NonNull String script) {
+  @Nonnull
+  static ScriptGraphStatement newInstance(@Nonnull String script) {
     return new DefaultScriptGraphStatement(
         script,
         NullAllowingImmutableMap.of(),
@@ -70,8 +70,8 @@ public interface ScriptGraphStatement extends GraphStatement<ScriptGraphStatemen
    *
    * <p>Note that this builder is mutable and not thread-safe.
    */
-  @NonNull
-  static ScriptGraphStatementBuilder builder(@NonNull String script) {
+  @Nonnull
+  static ScriptGraphStatementBuilder builder(@Nonnull String script) {
     return new ScriptGraphStatementBuilder(script);
   }
 
@@ -82,13 +82,13 @@ public interface ScriptGraphStatement extends GraphStatement<ScriptGraphStatemen
    *
    * <p>Note that this builder is mutable and not thread-safe.
    */
-  @NonNull
-  static ScriptGraphStatementBuilder builder(@NonNull ScriptGraphStatement template) {
+  @Nonnull
+  static ScriptGraphStatementBuilder builder(@Nonnull ScriptGraphStatement template) {
     return new ScriptGraphStatementBuilder(template);
   }
 
   /** The Gremlin-groovy script representing the graph query. */
-  @NonNull
+  @Nonnull
   String getScript();
 
   /**
@@ -121,7 +121,7 @@ public interface ScriptGraphStatement extends GraphStatement<ScriptGraphStatemen
    *     non-system query; {@code null} to default to the value defined in the configuration.
    * @see #isSystemQuery()
    */
-  @NonNull
+  @Nonnull
   ScriptGraphStatement setSystemQuery(@Nullable Boolean newValue);
 
   /**
@@ -129,7 +129,7 @@ public interface ScriptGraphStatement extends GraphStatement<ScriptGraphStatemen
    *
    * @see #setQueryParam(String, Object)
    */
-  @NonNull
+  @Nonnull
   Map<String, Object> getQueryParams();
 
   /**
@@ -154,8 +154,8 @@ public interface ScriptGraphStatement extends GraphStatement<ScriptGraphStatemen
    *     binding for this name, it gets replaced.
    * @param value the value that will be transmitted with the request.
    */
-  @NonNull
-  ScriptGraphStatement setQueryParam(@NonNull String name, @Nullable Object value);
+  @Nonnull
+  ScriptGraphStatement setQueryParam(@Nonnull String name, @Nullable Object value);
 
   /**
    * Removes a binding for the given name from this statement.
@@ -166,6 +166,6 @@ public interface ScriptGraphStatement extends GraphStatement<ScriptGraphStatemen
    *
    * @see #setQueryParam(String, Object)
    */
-  @NonNull
-  ScriptGraphStatement removeQueryParam(@NonNull String name);
+  @Nonnull
+  ScriptGraphStatement removeQueryParam(@Nonnull String name);
 }

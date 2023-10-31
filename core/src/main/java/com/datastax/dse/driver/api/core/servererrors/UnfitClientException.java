@@ -20,8 +20,8 @@ package com.datastax.dse.driver.api.core.servererrors;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.servererrors.CoordinatorException;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A server-side error triggered when DSE can't send asynchronous results back to the client.
@@ -35,20 +35,20 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  */
 public class UnfitClientException extends CoordinatorException {
 
-  public UnfitClientException(@NonNull Node coordinator, @NonNull String message) {
+  public UnfitClientException(@Nonnull Node coordinator, @Nonnull String message) {
     this(coordinator, message, null, false);
   }
 
   private UnfitClientException(
-      @NonNull Node coordinator,
-      @NonNull String message,
+      @Nonnull Node coordinator,
+      @Nonnull String message,
       @Nullable ExecutionInfo executionInfo,
       boolean writableStackTrace) {
     super(coordinator, message, executionInfo, writableStackTrace);
   }
 
   @Override
-  @NonNull
+  @Nonnull
   public UnfitClientException copy() {
     return new UnfitClientException(getCoordinator(), getMessage(), getExecutionInfo(), true);
   }

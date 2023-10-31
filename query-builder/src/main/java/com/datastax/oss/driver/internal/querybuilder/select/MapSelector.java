@@ -21,10 +21,10 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -36,14 +36,14 @@ public class MapSelector implements Selector {
   private final CqlIdentifier alias;
 
   public MapSelector(
-      @NonNull Map<Selector, Selector> elementSelectors,
+      @Nonnull Map<Selector, Selector> elementSelectors,
       @Nullable DataType keyType,
       @Nullable DataType valueType) {
     this(elementSelectors, keyType, valueType, null);
   }
 
   public MapSelector(
-      @NonNull Map<Selector, Selector> elementSelectors,
+      @Nonnull Map<Selector, Selector> elementSelectors,
       @Nullable DataType keyType,
       @Nullable DataType valueType,
       @Nullable CqlIdentifier alias) {
@@ -60,14 +60,14 @@ public class MapSelector implements Selector {
     this.alias = alias;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Selector as(@NonNull CqlIdentifier alias) {
+  public Selector as(@Nonnull CqlIdentifier alias) {
     return new MapSelector(elementSelectors, keyType, valueType, alias);
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     if (keyType != null) {
       assert valueType != null;
       builder
@@ -96,7 +96,7 @@ public class MapSelector implements Selector {
     }
   }
 
-  @NonNull
+  @Nonnull
   public Map<Selector, Selector> getElementSelectors() {
     return elementSelectors;
   }

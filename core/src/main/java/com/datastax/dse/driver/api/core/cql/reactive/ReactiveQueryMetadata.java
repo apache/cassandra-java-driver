@@ -19,7 +19,7 @@ package com.datastax.dse.driver.api.core.cql.reactive;
 
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import org.reactivestreams.Publisher;
 
 /**
@@ -41,7 +41,7 @@ public interface ReactiveQueryMetadata {
    *
    * @see ReactiveRow#getColumnDefinitions()
    */
-  @NonNull
+  @Nonnull
   Publisher<? extends ColumnDefinitions> getColumnDefinitions();
 
   /**
@@ -57,7 +57,7 @@ public interface ReactiveQueryMetadata {
    *
    * @see ReactiveRow#getExecutionInfo()
    */
-  @NonNull
+  @Nonnull
   Publisher<? extends ExecutionInfo> getExecutionInfos();
 
   /**
@@ -83,6 +83,6 @@ public interface ReactiveQueryMetadata {
    *
    * @see ReactiveRow#wasApplied()
    */
-  @NonNull
+  @Nonnull
   Publisher<Boolean> wasApplied();
 }

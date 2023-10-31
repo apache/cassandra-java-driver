@@ -30,9 +30,9 @@ import com.datastax.oss.driver.internal.core.type.PrimitiveType;
 import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 /** Constants and factory methods to obtain data type instances. */
 public class DataTypes {
@@ -61,8 +61,8 @@ public class DataTypes {
   private static final DataTypeClassNameParser classNameParser = new DataTypeClassNameParser();
   private static final Splitter paramSplitter = Splitter.on(',').trimResults();
 
-  @NonNull
-  public static DataType custom(@NonNull String className) {
+  @Nonnull
+  public static DataType custom(@Nonnull String className) {
 
     // In protocol v4, duration is implemented as a custom type
     if (className.equals("org.apache.cassandra.db.marshal.DurationType")) return DURATION;
@@ -85,49 +85,49 @@ public class DataTypes {
     return new DefaultCustomType(className);
   }
 
-  @NonNull
-  public static ListType listOf(@NonNull DataType elementType) {
+  @Nonnull
+  public static ListType listOf(@Nonnull DataType elementType) {
     return new DefaultListType(elementType, false);
   }
 
-  @NonNull
-  public static ListType listOf(@NonNull DataType elementType, boolean frozen) {
+  @Nonnull
+  public static ListType listOf(@Nonnull DataType elementType, boolean frozen) {
     return new DefaultListType(elementType, frozen);
   }
 
-  @NonNull
-  public static ListType frozenListOf(@NonNull DataType elementType) {
+  @Nonnull
+  public static ListType frozenListOf(@Nonnull DataType elementType) {
     return new DefaultListType(elementType, true);
   }
 
-  @NonNull
-  public static SetType setOf(@NonNull DataType elementType) {
+  @Nonnull
+  public static SetType setOf(@Nonnull DataType elementType) {
     return new DefaultSetType(elementType, false);
   }
 
-  @NonNull
-  public static SetType setOf(@NonNull DataType elementType, boolean frozen) {
+  @Nonnull
+  public static SetType setOf(@Nonnull DataType elementType, boolean frozen) {
     return new DefaultSetType(elementType, frozen);
   }
 
-  @NonNull
-  public static SetType frozenSetOf(@NonNull DataType elementType) {
+  @Nonnull
+  public static SetType frozenSetOf(@Nonnull DataType elementType) {
     return new DefaultSetType(elementType, true);
   }
 
-  @NonNull
-  public static MapType mapOf(@NonNull DataType keyType, @NonNull DataType valueType) {
+  @Nonnull
+  public static MapType mapOf(@Nonnull DataType keyType, @Nonnull DataType valueType) {
     return new DefaultMapType(keyType, valueType, false);
   }
 
-  @NonNull
+  @Nonnull
   public static MapType mapOf(
-      @NonNull DataType keyType, @NonNull DataType valueType, boolean frozen) {
+      @Nonnull DataType keyType, @Nonnull DataType valueType, boolean frozen) {
     return new DefaultMapType(keyType, valueType, frozen);
   }
 
-  @NonNull
-  public static MapType frozenMapOf(@NonNull DataType keyType, @NonNull DataType valueType) {
+  @Nonnull
+  public static MapType frozenMapOf(@Nonnull DataType keyType, @Nonnull DataType valueType) {
     return new DefaultMapType(keyType, valueType, true);
   }
 
@@ -138,8 +138,8 @@ public class DataTypes {
    *     null}.
    * @see Detachable
    */
-  @NonNull
-  public static TupleType tupleOf(@NonNull DataType... componentTypes) {
+  @Nonnull
+  public static TupleType tupleOf(@Nonnull DataType... componentTypes) {
     return new DefaultTupleType(ImmutableList.copyOf(Arrays.asList(componentTypes)));
   }
 

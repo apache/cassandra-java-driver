@@ -71,7 +71,6 @@ import com.datastax.oss.protocol.internal.response.result.SchemaChange;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import com.datastax.oss.protocol.internal.response.result.Void;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
@@ -89,6 +88,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -422,7 +422,7 @@ public class CqlRequestHandler implements Throttled {
   }
 
   @Override
-  public void onThrottleFailure(@NonNull RequestThrottlingException error) {
+  public void onThrottleFailure(@Nonnull RequestThrottlingException error) {
     DriverExecutionProfile executionProfile =
         Conversions.resolveExecutionProfile(initialStatement, context);
     sessionMetricUpdater.incrementCounter(

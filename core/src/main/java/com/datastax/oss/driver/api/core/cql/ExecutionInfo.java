@@ -31,13 +31,13 @@ import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.internal.core.cql.DefaultPagingState;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Information about the execution of a query.
@@ -51,7 +51,7 @@ import java.util.concurrent.CompletionStage;
 public interface ExecutionInfo {
 
   /** @return The {@link Request} that was executed. */
-  @NonNull
+  @Nonnull
   default Request getRequest() {
     return getStatement();
   }
@@ -62,7 +62,7 @@ public interface ExecutionInfo {
    * @throws ClassCastException If the request that was executed cannot be cast to {@link
    *     Statement}.
    */
-  @NonNull
+  @Nonnull
   @Deprecated
   Statement<?> getStatement();
 
@@ -110,7 +110,7 @@ public interface ExecutionInfo {
    * interleaved. A node can appear multiple times (if the retry policy decided to retry on the same
    * node).
    */
-  @NonNull
+  @Nonnull
   List<Map.Entry<Node, Throwable>> getErrors();
 
   /**
@@ -159,7 +159,7 @@ public interface ExecutionInfo {
    * <p>This feature is only available with {@link DefaultProtocolVersion#V4} or above; with lower
    * versions, this list will always be empty.
    */
-  @NonNull
+  @Nonnull
   List<String> getWarnings();
 
   /**
@@ -173,7 +173,7 @@ public interface ExecutionInfo {
    * <p>This feature is only available with {@link DefaultProtocolVersion#V4} or above; with lower
    * versions, this map will always be empty.
    */
-  @NonNull
+  @Nonnull
   Map<String, ByteBuffer> getIncomingPayload();
 
   /**
@@ -211,7 +211,7 @@ public interface ExecutionInfo {
    * <p>This method will return a failed future if tracing was disabled for the query (that is, if
    * {@link #getTracingId()} is null).
    */
-  @NonNull
+  @Nonnull
   CompletionStage<QueryTrace> getQueryTraceAsync();
 
   /**
@@ -221,7 +221,7 @@ public interface ExecutionInfo {
    *
    * @throws IllegalStateException if {@link #getTracingId()} is null.
    */
-  @NonNull
+  @Nonnull
   default QueryTrace getQueryTrace() {
     BlockingOperation.checkNotDriverThread();
     return CompletableFutures.getUninterruptibly(getQueryTraceAsync());

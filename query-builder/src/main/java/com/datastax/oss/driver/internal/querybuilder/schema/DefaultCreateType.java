@@ -24,9 +24,9 @@ import com.datastax.oss.driver.api.querybuilder.schema.CreateTypeStart;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -37,28 +37,28 @@ public class DefaultCreateType implements CreateTypeStart, CreateType {
   private final boolean ifNotExists;
   private final ImmutableMap<CqlIdentifier, DataType> fieldsInOrder;
 
-  public DefaultCreateType(@NonNull CqlIdentifier typeName) {
+  public DefaultCreateType(@Nonnull CqlIdentifier typeName) {
     this(null, typeName);
   }
 
-  public DefaultCreateType(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier typeName) {
+  public DefaultCreateType(@Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier typeName) {
     this(keyspace, typeName, false, ImmutableMap.of());
   }
 
   public DefaultCreateType(
       @Nullable CqlIdentifier keyspace,
-      @NonNull CqlIdentifier typeName,
+      @Nonnull CqlIdentifier typeName,
       boolean ifNotExists,
-      @NonNull ImmutableMap<CqlIdentifier, DataType> fieldsInOrder) {
+      @Nonnull ImmutableMap<CqlIdentifier, DataType> fieldsInOrder) {
     this.keyspace = keyspace;
     this.typeName = typeName;
     this.ifNotExists = ifNotExists;
     this.fieldsInOrder = fieldsInOrder;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateType withField(@NonNull CqlIdentifier fieldName, @NonNull DataType dataType) {
+  public CreateType withField(@Nonnull CqlIdentifier fieldName, @Nonnull DataType dataType) {
     return new DefaultCreateType(
         keyspace,
         typeName,
@@ -66,13 +66,13 @@ public class DefaultCreateType implements CreateTypeStart, CreateType {
         ImmutableCollections.append(fieldsInOrder, fieldName, dataType));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateTypeStart ifNotExists() {
     return new DefaultCreateType(keyspace, typeName, true, fieldsInOrder);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder();
@@ -117,7 +117,7 @@ public class DefaultCreateType implements CreateTypeStart, CreateType {
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getType() {
     return typeName;
   }
@@ -126,7 +126,7 @@ public class DefaultCreateType implements CreateTypeStart, CreateType {
     return ifNotExists;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableMap<CqlIdentifier, DataType> getFieldsInOrder() {
     return fieldsInOrder;
   }

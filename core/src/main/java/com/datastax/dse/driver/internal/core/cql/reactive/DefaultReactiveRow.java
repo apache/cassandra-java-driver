@@ -32,7 +32,6 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -44,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.NotThreadSafe;
 
 @NotThreadSafe
@@ -52,18 +52,18 @@ class DefaultReactiveRow implements ReactiveRow {
   private final Row row;
   private final ExecutionInfo executionInfo;
 
-  DefaultReactiveRow(@NonNull Row row, @NonNull ExecutionInfo executionInfo) {
+  DefaultReactiveRow(@Nonnull Row row, @Nonnull ExecutionInfo executionInfo) {
     this.row = row;
     this.executionInfo = executionInfo;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ExecutionInfo getExecutionInfo() {
     return executionInfo;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ColumnDefinitions getColumnDefinitions() {
     return row.getColumnDefinitions();
@@ -190,17 +190,17 @@ class DefaultReactiveRow implements ReactiveRow {
   }
 
   @Override
-  public <T> List<T> getList(int i, @NonNull Class<T> elementsClass) {
+  public <T> List<T> getList(int i, @Nonnull Class<T> elementsClass) {
     return row.getList(i, elementsClass);
   }
 
   @Override
-  public <T> Set<T> getSet(int i, @NonNull Class<T> elementsClass) {
+  public <T> Set<T> getSet(int i, @Nonnull Class<T> elementsClass) {
     return row.getSet(i, elementsClass);
   }
 
   @Override
-  public <K, V> Map<K, V> getMap(int i, @NonNull Class<K> keyClass, @NonNull Class<V> valueClass) {
+  public <K, V> Map<K, V> getMap(int i, @Nonnull Class<K> keyClass, @Nonnull Class<V> valueClass) {
     return row.getMap(i, keyClass, valueClass);
   }
 
@@ -219,347 +219,347 @@ class DefaultReactiveRow implements ReactiveRow {
     return row.size();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getType(int i) {
     return row.getType(i);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CodecRegistry codecRegistry() {
     return row.codecRegistry();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProtocolVersion protocolVersion() {
     return row.protocolVersion();
   }
 
   @Override
-  public ByteBuffer getBytesUnsafe(@NonNull String name) {
+  public ByteBuffer getBytesUnsafe(@Nonnull String name) {
     return row.getBytesUnsafe(name);
   }
 
   @Override
-  public boolean isNull(@NonNull String name) {
+  public boolean isNull(@Nonnull String name) {
     return row.isNull(name);
   }
 
   @Override
-  public <T> T get(@NonNull String name, @NonNull TypeCodec<T> codec) {
+  public <T> T get(@Nonnull String name, @Nonnull TypeCodec<T> codec) {
     return row.get(name, codec);
   }
 
   @Override
-  public <T> T get(@NonNull String name, @NonNull GenericType<T> targetType) {
+  public <T> T get(@Nonnull String name, @Nonnull GenericType<T> targetType) {
     return row.get(name, targetType);
   }
 
   @Override
-  public <T> T get(@NonNull String name, @NonNull Class<T> targetClass) {
+  public <T> T get(@Nonnull String name, @Nonnull Class<T> targetClass) {
     return row.get(name, targetClass);
   }
 
   @Override
-  public Object getObject(@NonNull String name) {
+  public Object getObject(@Nonnull String name) {
     return row.getObject(name);
   }
 
   @Override
-  public boolean getBoolean(@NonNull String name) {
+  public boolean getBoolean(@Nonnull String name) {
     return row.getBoolean(name);
   }
 
   @Override
-  public byte getByte(@NonNull String name) {
+  public byte getByte(@Nonnull String name) {
     return row.getByte(name);
   }
 
   @Override
-  public double getDouble(@NonNull String name) {
+  public double getDouble(@Nonnull String name) {
     return row.getDouble(name);
   }
 
   @Override
-  public float getFloat(@NonNull String name) {
+  public float getFloat(@Nonnull String name) {
     return row.getFloat(name);
   }
 
   @Override
-  public int getInt(@NonNull String name) {
+  public int getInt(@Nonnull String name) {
     return row.getInt(name);
   }
 
   @Override
-  public long getLong(@NonNull String name) {
+  public long getLong(@Nonnull String name) {
     return row.getLong(name);
   }
 
   @Override
-  public short getShort(@NonNull String name) {
+  public short getShort(@Nonnull String name) {
     return row.getShort(name);
   }
 
   @Override
-  public Instant getInstant(@NonNull String name) {
+  public Instant getInstant(@Nonnull String name) {
     return row.getInstant(name);
   }
 
   @Override
-  public LocalDate getLocalDate(@NonNull String name) {
+  public LocalDate getLocalDate(@Nonnull String name) {
     return row.getLocalDate(name);
   }
 
   @Override
-  public LocalTime getLocalTime(@NonNull String name) {
+  public LocalTime getLocalTime(@Nonnull String name) {
     return row.getLocalTime(name);
   }
 
   @Override
-  public ByteBuffer getByteBuffer(@NonNull String name) {
+  public ByteBuffer getByteBuffer(@Nonnull String name) {
     return row.getByteBuffer(name);
   }
 
   @Override
-  public String getString(@NonNull String name) {
+  public String getString(@Nonnull String name) {
     return row.getString(name);
   }
 
   @Override
-  public BigInteger getBigInteger(@NonNull String name) {
+  public BigInteger getBigInteger(@Nonnull String name) {
     return row.getBigInteger(name);
   }
 
   @Override
-  public BigDecimal getBigDecimal(@NonNull String name) {
+  public BigDecimal getBigDecimal(@Nonnull String name) {
     return row.getBigDecimal(name);
   }
 
   @Override
-  public UUID getUuid(@NonNull String name) {
+  public UUID getUuid(@Nonnull String name) {
     return row.getUuid(name);
   }
 
   @Override
-  public InetAddress getInetAddress(@NonNull String name) {
+  public InetAddress getInetAddress(@Nonnull String name) {
     return row.getInetAddress(name);
   }
 
   @Override
-  public CqlDuration getCqlDuration(@NonNull String name) {
+  public CqlDuration getCqlDuration(@Nonnull String name) {
     return row.getCqlDuration(name);
   }
 
   @Override
-  public Token getToken(@NonNull String name) {
+  public Token getToken(@Nonnull String name) {
     return row.getToken(name);
   }
 
   @Override
-  public <T> List<T> getList(@NonNull String name, @NonNull Class<T> elementsClass) {
+  public <T> List<T> getList(@Nonnull String name, @Nonnull Class<T> elementsClass) {
     return row.getList(name, elementsClass);
   }
 
   @Override
-  public <T> Set<T> getSet(@NonNull String name, @NonNull Class<T> elementsClass) {
+  public <T> Set<T> getSet(@Nonnull String name, @Nonnull Class<T> elementsClass) {
     return row.getSet(name, elementsClass);
   }
 
   @Override
   public <K, V> Map<K, V> getMap(
-      @NonNull String name, @NonNull Class<K> keyClass, @NonNull Class<V> valueClass) {
+      @Nonnull String name, @Nonnull Class<K> keyClass, @Nonnull Class<V> valueClass) {
     return row.getMap(name, keyClass, valueClass);
   }
 
   @Override
-  public UdtValue getUdtValue(@NonNull String name) {
+  public UdtValue getUdtValue(@Nonnull String name) {
     return row.getUdtValue(name);
   }
 
   @Override
-  public TupleValue getTupleValue(@NonNull String name) {
+  public TupleValue getTupleValue(@Nonnull String name) {
     return row.getTupleValue(name);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull String name) {
+  public List<Integer> allIndicesOf(@Nonnull String name) {
     return row.allIndicesOf(name);
   }
 
   @Override
-  public int firstIndexOf(@NonNull String name) {
+  public int firstIndexOf(@Nonnull String name) {
     return row.firstIndexOf(name);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DataType getType(@NonNull String name) {
+  public DataType getType(@Nonnull String name) {
     return row.getType(name);
   }
 
   @Override
-  public ByteBuffer getBytesUnsafe(@NonNull CqlIdentifier id) {
+  public ByteBuffer getBytesUnsafe(@Nonnull CqlIdentifier id) {
     return row.getBytesUnsafe(id);
   }
 
   @Override
-  public boolean isNull(@NonNull CqlIdentifier id) {
+  public boolean isNull(@Nonnull CqlIdentifier id) {
     return row.isNull(id);
   }
 
   @Override
-  public <T> T get(@NonNull CqlIdentifier id, @NonNull TypeCodec<T> codec) {
+  public <T> T get(@Nonnull CqlIdentifier id, @Nonnull TypeCodec<T> codec) {
     return row.get(id, codec);
   }
 
   @Override
-  public <T> T get(@NonNull CqlIdentifier id, @NonNull GenericType<T> targetType) {
+  public <T> T get(@Nonnull CqlIdentifier id, @Nonnull GenericType<T> targetType) {
     return row.get(id, targetType);
   }
 
   @Override
-  public <T> T get(@NonNull CqlIdentifier id, @NonNull Class<T> targetClass) {
+  public <T> T get(@Nonnull CqlIdentifier id, @Nonnull Class<T> targetClass) {
     return row.get(id, targetClass);
   }
 
   @Override
-  public Object getObject(@NonNull CqlIdentifier id) {
+  public Object getObject(@Nonnull CqlIdentifier id) {
     return row.getObject(id);
   }
 
   @Override
-  public boolean getBoolean(@NonNull CqlIdentifier id) {
+  public boolean getBoolean(@Nonnull CqlIdentifier id) {
     return row.getBoolean(id);
   }
 
   @Override
-  public byte getByte(@NonNull CqlIdentifier id) {
+  public byte getByte(@Nonnull CqlIdentifier id) {
     return row.getByte(id);
   }
 
   @Override
-  public double getDouble(@NonNull CqlIdentifier id) {
+  public double getDouble(@Nonnull CqlIdentifier id) {
     return row.getDouble(id);
   }
 
   @Override
-  public float getFloat(@NonNull CqlIdentifier id) {
+  public float getFloat(@Nonnull CqlIdentifier id) {
     return row.getFloat(id);
   }
 
   @Override
-  public int getInt(@NonNull CqlIdentifier id) {
+  public int getInt(@Nonnull CqlIdentifier id) {
     return row.getInt(id);
   }
 
   @Override
-  public long getLong(@NonNull CqlIdentifier id) {
+  public long getLong(@Nonnull CqlIdentifier id) {
     return row.getLong(id);
   }
 
   @Override
-  public short getShort(@NonNull CqlIdentifier id) {
+  public short getShort(@Nonnull CqlIdentifier id) {
     return row.getShort(id);
   }
 
   @Override
-  public Instant getInstant(@NonNull CqlIdentifier id) {
+  public Instant getInstant(@Nonnull CqlIdentifier id) {
     return row.getInstant(id);
   }
 
   @Override
-  public LocalDate getLocalDate(@NonNull CqlIdentifier id) {
+  public LocalDate getLocalDate(@Nonnull CqlIdentifier id) {
     return row.getLocalDate(id);
   }
 
   @Override
-  public LocalTime getLocalTime(@NonNull CqlIdentifier id) {
+  public LocalTime getLocalTime(@Nonnull CqlIdentifier id) {
     return row.getLocalTime(id);
   }
 
   @Override
-  public ByteBuffer getByteBuffer(@NonNull CqlIdentifier id) {
+  public ByteBuffer getByteBuffer(@Nonnull CqlIdentifier id) {
     return row.getByteBuffer(id);
   }
 
   @Override
-  public String getString(@NonNull CqlIdentifier id) {
+  public String getString(@Nonnull CqlIdentifier id) {
     return row.getString(id);
   }
 
   @Override
-  public BigInteger getBigInteger(@NonNull CqlIdentifier id) {
+  public BigInteger getBigInteger(@Nonnull CqlIdentifier id) {
     return row.getBigInteger(id);
   }
 
   @Override
-  public BigDecimal getBigDecimal(@NonNull CqlIdentifier id) {
+  public BigDecimal getBigDecimal(@Nonnull CqlIdentifier id) {
     return row.getBigDecimal(id);
   }
 
   @Override
-  public UUID getUuid(@NonNull CqlIdentifier id) {
+  public UUID getUuid(@Nonnull CqlIdentifier id) {
     return row.getUuid(id);
   }
 
   @Override
-  public InetAddress getInetAddress(@NonNull CqlIdentifier id) {
+  public InetAddress getInetAddress(@Nonnull CqlIdentifier id) {
     return row.getInetAddress(id);
   }
 
   @Override
-  public CqlDuration getCqlDuration(@NonNull CqlIdentifier id) {
+  public CqlDuration getCqlDuration(@Nonnull CqlIdentifier id) {
     return row.getCqlDuration(id);
   }
 
   @Override
-  public Token getToken(@NonNull CqlIdentifier id) {
+  public Token getToken(@Nonnull CqlIdentifier id) {
     return row.getToken(id);
   }
 
   @Override
-  public <T> List<T> getList(@NonNull CqlIdentifier id, @NonNull Class<T> elementsClass) {
+  public <T> List<T> getList(@Nonnull CqlIdentifier id, @Nonnull Class<T> elementsClass) {
     return row.getList(id, elementsClass);
   }
 
   @Override
-  public <T> Set<T> getSet(@NonNull CqlIdentifier id, @NonNull Class<T> elementsClass) {
+  public <T> Set<T> getSet(@Nonnull CqlIdentifier id, @Nonnull Class<T> elementsClass) {
     return row.getSet(id, elementsClass);
   }
 
   @Override
   public <K, V> Map<K, V> getMap(
-      @NonNull CqlIdentifier id, @NonNull Class<K> keyClass, @NonNull Class<V> valueClass) {
+      @Nonnull CqlIdentifier id, @Nonnull Class<K> keyClass, @Nonnull Class<V> valueClass) {
     return row.getMap(id, keyClass, valueClass);
   }
 
   @Override
-  public UdtValue getUdtValue(@NonNull CqlIdentifier id) {
+  public UdtValue getUdtValue(@Nonnull CqlIdentifier id) {
     return row.getUdtValue(id);
   }
 
   @Override
-  public TupleValue getTupleValue(@NonNull CqlIdentifier id) {
+  public TupleValue getTupleValue(@Nonnull CqlIdentifier id) {
     return row.getTupleValue(id);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+  public List<Integer> allIndicesOf(@Nonnull CqlIdentifier id) {
     return row.allIndicesOf(id);
   }
 
   @Override
-  public int firstIndexOf(@NonNull CqlIdentifier id) {
+  public int firstIndexOf(@Nonnull CqlIdentifier id) {
     return row.firstIndexOf(id);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DataType getType(@NonNull CqlIdentifier id) {
+  public DataType getType(@Nonnull CqlIdentifier id) {
     return row.getType(id);
   }
 
@@ -569,7 +569,7 @@ class DefaultReactiveRow implements ReactiveRow {
   }
 
   @Override
-  public void attach(@NonNull AttachmentPoint attachmentPoint) {
+  public void attach(@Nonnull AttachmentPoint attachmentPoint) {
     row.attach(attachmentPoint);
   }
 

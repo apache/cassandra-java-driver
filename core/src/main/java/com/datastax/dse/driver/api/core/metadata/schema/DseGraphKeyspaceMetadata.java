@@ -19,9 +19,9 @@ package com.datastax.dse.driver.api.core.metadata.schema;
 
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 /**
  * Specialized keyspace metadata, that handles the graph-specific properties introduced in DSE 6.8.
@@ -33,10 +33,10 @@ import java.util.Optional;
 public interface DseGraphKeyspaceMetadata extends DseKeyspaceMetadata {
 
   /** The graph engine that will be used to interpret this keyspace. */
-  @NonNull
+  @Nonnull
   Optional<String> getGraphEngine();
 
-  @NonNull
+  @Nonnull
   @Override
   default String describe(boolean pretty) {
     ScriptBuilder builder = new ScriptBuilder(pretty);

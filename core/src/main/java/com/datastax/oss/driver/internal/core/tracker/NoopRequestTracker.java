@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -38,43 +38,43 @@ public class NoopRequestTracker implements RequestTracker {
 
   @Override
   public void onSuccess(
-      @NonNull Request request,
+      @Nonnull Request request,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String requestPrefix) {
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node,
+      @Nonnull String requestPrefix) {
     // nothing to do
   }
 
   @Override
   public void onError(
-      @NonNull Request request,
-      @NonNull Throwable error,
+      @Nonnull Request request,
+      @Nonnull Throwable error,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
+      @Nonnull DriverExecutionProfile executionProfile,
       Node node,
-      @NonNull String requestPrefix) {
+      @Nonnull String requestPrefix) {
     // nothing to do
   }
 
   @Override
   public void onNodeError(
-      @NonNull Request request,
-      @NonNull Throwable error,
+      @Nonnull Request request,
+      @Nonnull Throwable error,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String requestPrefix) {
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node,
+      @Nonnull String requestPrefix) {
     // nothing to do
   }
 
   @Override
   public void onNodeSuccess(
-      @NonNull Request request,
+      @Nonnull Request request,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String requestPrefix) {
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node,
+      @Nonnull String requestPrefix) {
     // nothing to do
   }
 

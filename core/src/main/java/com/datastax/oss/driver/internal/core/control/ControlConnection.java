@@ -48,7 +48,6 @@ import com.datastax.oss.protocol.internal.response.Event;
 import com.datastax.oss.protocol.internal.response.event.SchemaChangeEvent;
 import com.datastax.oss.protocol.internal.response.event.StatusChangeEvent;
 import com.datastax.oss.protocol.internal.response.event.TopologyChangeEvent;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -61,6 +60,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -153,20 +153,20 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     RunOrSchedule.on(adminExecutor, singleThreaded::reconnectNow);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Void> closeFuture() {
     return singleThreaded.closeFuture;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Void> closeAsync() {
     // Control queries are never critical, so there is no graceful close.
     return forceCloseAsync();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Void> forceCloseAsync() {
     RunOrSchedule.on(adminExecutor, singleThreaded::forceClose);

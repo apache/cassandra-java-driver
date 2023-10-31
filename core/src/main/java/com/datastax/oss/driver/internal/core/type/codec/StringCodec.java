@@ -22,8 +22,6 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.Strings;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.util.concurrent.FastThreadLocal;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -32,6 +30,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CodingErrorAction;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -41,7 +41,7 @@ public class StringCodec implements TypeCodec<String> {
   private final FastThreadLocal<CharsetEncoder> charsetEncoder;
   private final FastThreadLocal<CharsetDecoder> charsetDecoder;
 
-  public StringCodec(@NonNull DataType cqlType, @NonNull Charset charset) {
+  public StringCodec(@Nonnull DataType cqlType, @Nonnull Charset charset) {
     this.cqlType = cqlType;
     charsetEncoder =
         new FastThreadLocal<CharsetEncoder>() {
@@ -65,31 +65,31 @@ public class StringCodec implements TypeCodec<String> {
         };
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<String> getJavaType() {
     return GenericType.STRING;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return cqlType;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof String;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == String.class;
   }
 
   @Nullable
   @Override
-  public ByteBuffer encode(@Nullable String value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable String value, @Nonnull ProtocolVersion protocolVersion) {
     if (value == null) {
       return null;
     }
@@ -102,7 +102,7 @@ public class StringCodec implements TypeCodec<String> {
 
   @Nullable
   @Override
-  public String decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public String decode(@Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null) {
       return null;
     } else if (bytes.remaining() == 0) {
@@ -116,7 +116,7 @@ public class StringCodec implements TypeCodec<String> {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable String value) {
     return (value == null) ? "NULL" : Strings.quote(value);

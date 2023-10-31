@@ -22,11 +22,11 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.NotThreadSafe;
 
 @NotThreadSafe
@@ -76,42 +76,42 @@ public abstract class GraphStatementBuilderBase<
   }
 
   /** @see GraphStatement#setIdempotent(Boolean) */
-  @NonNull
+  @Nonnull
   public SelfT setIdempotence(@Nullable Boolean idempotent) {
     this.isIdempotent = idempotent;
     return self;
   }
 
   /** @see GraphStatement#setTimeout(Duration) */
-  @NonNull
+  @Nonnull
   public SelfT setTimeout(@Nullable Duration timeout) {
     this.timeout = timeout;
     return self;
   }
 
   /** @see GraphStatement#setNode(Node) */
-  @NonNull
+  @Nonnull
   public SelfT setNode(@Nullable Node node) {
     this.node = node;
     return self;
   }
 
   /** @see GraphStatement#setTimestamp(long) */
-  @NonNull
+  @Nonnull
   public SelfT setTimestamp(long timestamp) {
     this.timestamp = timestamp;
     return self;
   }
 
   /** @see GraphStatement#setExecutionProfileName(String) */
-  @NonNull
+  @Nonnull
   public SelfT setExecutionProfileName(@Nullable String executionProfileName) {
     this.executionProfileName = executionProfileName;
     return self;
   }
 
   /** @see GraphStatement#setExecutionProfile(DriverExecutionProfile) */
-  @NonNull
+  @Nonnull
   public SelfT setExecutionProfile(@Nullable DriverExecutionProfile executionProfile) {
     this.executionProfile = executionProfile;
     this.executionProfileName = null;
@@ -119,8 +119,8 @@ public abstract class GraphStatementBuilderBase<
   }
 
   /** @see GraphStatement#setCustomPayload(Map) */
-  @NonNull
-  public SelfT addCustomPayload(@NonNull String key, @Nullable ByteBuffer value) {
+  @Nonnull
+  public SelfT addCustomPayload(@Nonnull String key, @Nullable ByteBuffer value) {
     if (customPayloadBuilder == null) {
       customPayloadBuilder = NullAllowingImmutableMap.builder();
     }
@@ -129,55 +129,55 @@ public abstract class GraphStatementBuilderBase<
   }
 
   /** @see GraphStatement#setCustomPayload(Map) */
-  @NonNull
+  @Nonnull
   public SelfT clearCustomPayload() {
     customPayloadBuilder = null;
     return self;
   }
 
   /** @see GraphStatement#setGraphName(String) */
-  @NonNull
+  @Nonnull
   public SelfT setGraphName(@Nullable String graphName) {
     this.graphName = graphName;
     return self;
   }
 
   /** @see GraphStatement#setTraversalSource(String) */
-  @NonNull
+  @Nonnull
   public SelfT setTraversalSource(@Nullable String traversalSource) {
     this.traversalSource = traversalSource;
     return self;
   }
 
   /** @see GraphStatement#setSubProtocol(String) */
-  @NonNull
+  @Nonnull
   public SelfT setSubProtocol(@Nullable String subProtocol) {
     this.subProtocol = subProtocol;
     return self;
   }
 
   /** @see GraphStatement#setConsistencyLevel(ConsistencyLevel) */
-  @NonNull
+  @Nonnull
   public SelfT setConsistencyLevel(@Nullable ConsistencyLevel consistencyLevel) {
     this.consistencyLevel = consistencyLevel;
     return self;
   }
 
   /** @see GraphStatement#setReadConsistencyLevel(ConsistencyLevel) */
-  @NonNull
+  @Nonnull
   public SelfT setReadConsistencyLevel(@Nullable ConsistencyLevel readConsistencyLevel) {
     this.readConsistencyLevel = readConsistencyLevel;
     return self;
   }
 
   /** @see GraphStatement#setWriteConsistencyLevel(ConsistencyLevel) */
-  @NonNull
+  @Nonnull
   public SelfT setWriteConsistencyLevel(@Nullable ConsistencyLevel writeConsistencyLevel) {
     this.writeConsistencyLevel = writeConsistencyLevel;
     return self;
   }
 
-  @NonNull
+  @Nonnull
   protected Map<String, ByteBuffer> buildCustomPayload() {
     return (customPayloadBuilder == null)
         ? NullAllowingImmutableMap.of()
@@ -185,6 +185,6 @@ public abstract class GraphStatementBuilderBase<
   }
 
   /** Create the statement with the configuration defined by this builder object. */
-  @NonNull
+  @Nonnull
   public abstract StatementT build();
 }

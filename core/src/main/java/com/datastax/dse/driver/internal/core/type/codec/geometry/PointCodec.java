@@ -24,8 +24,8 @@ import com.datastax.dse.driver.internal.core.data.geometry.DefaultPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.esri.core.geometry.ogc.OGCPoint;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -39,49 +39,49 @@ public class PointCodec extends GeometryCodec<Point> {
 
   private static final GenericType<Point> JAVA_TYPE = GenericType.of(Point.class);
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<Point> getJavaType() {
     return JAVA_TYPE;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DseDataTypes.POINT;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == Point.class;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof Point;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected String toWellKnownText(@NonNull Point geometry) {
+  protected String toWellKnownText(@Nonnull Point geometry) {
     return geometry.asWellKnownText();
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected ByteBuffer toWellKnownBinary(@NonNull Point geometry) {
+  protected ByteBuffer toWellKnownBinary(@Nonnull Point geometry) {
     return geometry.asWellKnownBinary();
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected Point fromWellKnownText(@NonNull String source) {
+  protected Point fromWellKnownText(@Nonnull String source) {
     return new DefaultPoint(DefaultGeometry.fromOgcWellKnownText(source, OGCPoint.class));
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected Point fromWellKnownBinary(@NonNull ByteBuffer source) {
+  protected Point fromWellKnownBinary(@Nonnull ByteBuffer source) {
     return new DefaultPoint(DefaultGeometry.fromOgcWellKnownBinary(source, OGCPoint.class));
   }
 }

@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface AlterDseTableAddColumn {
   /**
@@ -30,17 +30,17 @@ public interface AlterDseTableAddColumn {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
-  @NonNull
+  @Nonnull
   AlterDseTableAddColumnEnd addColumn(
-      @NonNull CqlIdentifier columnName, @NonNull DataType dataType);
+      @Nonnull CqlIdentifier columnName, @Nonnull DataType dataType);
 
   /**
    * Shortcut for {@link #addColumn(CqlIdentifier, DataType)
    * addColumn(CqlIdentifier.asCql(columnName), dataType)}.
    */
-  @NonNull
+  @Nonnull
   default AlterDseTableAddColumnEnd addColumn(
-      @NonNull String columnName, @NonNull DataType dataType) {
+      @Nonnull String columnName, @Nonnull DataType dataType) {
     return addColumn(CqlIdentifier.fromCql(columnName), dataType);
   }
 
@@ -50,17 +50,17 @@ public interface AlterDseTableAddColumn {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
-  @NonNull
+  @Nonnull
   AlterDseTableAddColumnEnd addStaticColumn(
-      @NonNull CqlIdentifier columnName, @NonNull DataType dataType);
+      @Nonnull CqlIdentifier columnName, @Nonnull DataType dataType);
 
   /**
    * Shortcut for {@link #addStaticColumn(CqlIdentifier, DataType)
    * addStaticColumn(CqlIdentifier.asCql(columnName), dataType)}.
    */
-  @NonNull
+  @Nonnull
   default AlterDseTableAddColumnEnd addStaticColumn(
-      @NonNull String columnName, @NonNull DataType dataType) {
+      @Nonnull String columnName, @Nonnull DataType dataType) {
     return addStaticColumn(CqlIdentifier.fromCql(columnName), dataType);
   }
 }

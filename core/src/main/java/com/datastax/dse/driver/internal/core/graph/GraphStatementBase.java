@@ -21,11 +21,11 @@ import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -94,7 +94,7 @@ public abstract class GraphStatementBase<SelfT extends GraphStatement<SelfT>>
     return isIdempotent;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SelfT setIdempotent(@Nullable Boolean newIdempotence) {
     return newInstance(
@@ -119,7 +119,7 @@ public abstract class GraphStatementBase<SelfT extends GraphStatement<SelfT>>
     return timeout;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SelfT setTimeout(@Nullable Duration newTimeout) {
     return newInstance(
@@ -144,7 +144,7 @@ public abstract class GraphStatementBase<SelfT extends GraphStatement<SelfT>>
     return node;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SelfT setNode(@Nullable Node newNode) {
     return newInstance(
@@ -168,7 +168,7 @@ public abstract class GraphStatementBase<SelfT extends GraphStatement<SelfT>>
     return this.timestamp;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SelfT setTimestamp(long newTimestamp) {
     return newInstance(
@@ -193,7 +193,7 @@ public abstract class GraphStatementBase<SelfT extends GraphStatement<SelfT>>
     return executionProfile;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SelfT setExecutionProfile(@Nullable DriverExecutionProfile newExecutionProfile) {
     return newInstance(
@@ -218,7 +218,7 @@ public abstract class GraphStatementBase<SelfT extends GraphStatement<SelfT>>
     return executionProfileName;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SelfT setExecutionProfileName(@Nullable String newExecutionProfileName) {
     return newInstance(
@@ -237,15 +237,15 @@ public abstract class GraphStatementBase<SelfT extends GraphStatement<SelfT>>
         writeConsistencyLevel);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, ByteBuffer> getCustomPayload() {
     return customPayload;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public SelfT setCustomPayload(@NonNull Map<String, ByteBuffer> newCustomPayload) {
+  public SelfT setCustomPayload(@Nonnull Map<String, ByteBuffer> newCustomPayload) {
     return newInstance(
         isIdempotent,
         timeout,
@@ -268,7 +268,7 @@ public abstract class GraphStatementBase<SelfT extends GraphStatement<SelfT>>
     return graphName;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SelfT setGraphName(@Nullable String newGraphName) {
     return newInstance(
@@ -293,7 +293,7 @@ public abstract class GraphStatementBase<SelfT extends GraphStatement<SelfT>>
     return traversalSource;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SelfT setTraversalSource(@Nullable String newTraversalSource) {
     return newInstance(
@@ -318,7 +318,7 @@ public abstract class GraphStatementBase<SelfT extends GraphStatement<SelfT>>
     return subProtocol;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SelfT setSubProtocol(@Nullable String newSubProtocol) {
     return newInstance(
@@ -367,7 +367,7 @@ public abstract class GraphStatementBase<SelfT extends GraphStatement<SelfT>>
     return readConsistencyLevel;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SelfT setReadConsistencyLevel(@Nullable ConsistencyLevel newReadConsistencyLevel) {
     return newInstance(
@@ -392,7 +392,7 @@ public abstract class GraphStatementBase<SelfT extends GraphStatement<SelfT>>
     return writeConsistencyLevel;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SelfT setWriteConsistencyLevel(@Nullable ConsistencyLevel newWriteConsistencyLevel) {
     return newInstance(

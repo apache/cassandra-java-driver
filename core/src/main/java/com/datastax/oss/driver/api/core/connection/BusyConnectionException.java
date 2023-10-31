@@ -20,7 +20,7 @@ package com.datastax.oss.driver.api.core.connection;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * Indicates that a write was attempted on a connection that already handles too many simultaneous
@@ -53,7 +53,7 @@ public class BusyConnectionException extends DriverException {
   }
 
   @Override
-  @NonNull
+  @Nonnull
   public DriverException copy() {
     return new BusyConnectionException(getMessage(), getExecutionInfo(), true);
   }

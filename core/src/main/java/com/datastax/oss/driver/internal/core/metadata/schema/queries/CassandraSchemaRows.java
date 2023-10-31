@@ -30,10 +30,10 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableListMultimap
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.Multimap;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,7 +90,7 @@ public class CassandraSchemaRows implements SchemaRows {
     this.edges = edges;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Node getNode() {
     return node;

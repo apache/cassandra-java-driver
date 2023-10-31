@@ -24,10 +24,10 @@ import com.google.testing.compile.Compilation;
 import com.google.testing.compile.Compiler;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nonnull;
 import javax.tools.JavaFileObject;
 
 public abstract class MapperProcessorTest {
@@ -52,7 +52,7 @@ public abstract class MapperProcessorTest {
         .compile(files);
   }
 
-  @NonNull
+  @Nonnull
   protected MapperProcessor getMapperProcessor() {
     return new MapperProcessor();
   }

@@ -22,8 +22,8 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.querybuilder.Literal;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -47,7 +47,7 @@ public class DefaultLiteral<ValueT> implements Literal {
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     if (value == null) {
       builder.append("NULL");
     } else {
@@ -63,9 +63,9 @@ public class DefaultLiteral<ValueT> implements Literal {
     return true;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Selector as(@NonNull CqlIdentifier alias) {
+  public Selector as(@Nonnull CqlIdentifier alias) {
     return new DefaultLiteral<>(value, codec, alias);
   }
 

@@ -27,9 +27,9 @@ import com.datastax.oss.driver.internal.querybuilder.relation.DefaultColumnCompo
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultColumnRelationBuilder;
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultMultiColumnRelationBuilder;
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultTokenRelationBuilder;
-import edu.umd.cs.findbugs.annotations.CheckReturnValue;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
 
 /** A statement that is ready to accept relations in its WHERE clause. */
 public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
@@ -43,9 +43,9 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * <p>If you add multiple selectors as once, consider {@link #where(Iterable)} as a more efficient
    * alternative.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  SelfT where(@NonNull Relation relation);
+  SelfT where(@Nonnull Relation relation);
 
   /**
    * Adds multiple relations at once. All relations are logically joined with AND.
@@ -58,14 +58,14 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    *
    * @see #where(Relation)
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  SelfT where(@NonNull Iterable<Relation> additionalRelations);
+  SelfT where(@Nonnull Iterable<Relation> additionalRelations);
 
   /** Var-arg equivalent of {@link #where(Iterable)}. */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT where(@NonNull Relation... additionalRelations) {
+  default SelfT where(@Nonnull Relation... additionalRelations) {
     return where(Arrays.asList(additionalRelations));
   }
 
@@ -81,8 +81,8 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * This is the equivalent of creating a relation with {@link Relation#column(CqlIdentifier)} and
    * passing it to {@link #where(Relation)}.
    */
-  @NonNull
-  default ColumnRelationBuilder<SelfT> whereColumn(@NonNull CqlIdentifier id) {
+  @Nonnull
+  default ColumnRelationBuilder<SelfT> whereColumn(@Nonnull CqlIdentifier id) {
     return new DefaultColumnRelationBuilder.Fluent<>(this, id);
   }
 
@@ -92,8 +92,8 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * <p>This is the equivalent of creating a relation with {@link Relation#column(String)} and
    * passing it to {@link #where(Relation)}.
    */
-  @NonNull
-  default ColumnRelationBuilder<SelfT> whereColumn(@NonNull String name) {
+  @Nonnull
+  default ColumnRelationBuilder<SelfT> whereColumn(@Nonnull String name) {
     return whereColumn(CqlIdentifier.fromCql(name));
   }
 
@@ -103,9 +103,9 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * <p>This is the equivalent of creating a relation with {@link Relation#mapValue(CqlIdentifier,
    * Term)} and passing it to {@link #where(Relation)}.
    */
-  @NonNull
+  @Nonnull
   default ColumnComponentRelationBuilder<SelfT> whereMapValue(
-      @NonNull CqlIdentifier columnId, @NonNull Term index) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term index) {
     return new DefaultColumnComponentRelationBuilder.Fluent<>(this, columnId, index);
   }
 
@@ -116,9 +116,9 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * <p>This is the equivalent of creating a relation with {@link Relation#mapValue(String, Term)}
    * and passing it to {@link #where(Relation)}.
    */
-  @NonNull
+  @Nonnull
   default ColumnComponentRelationBuilder<SelfT> whereMapValue(
-      @NonNull String columnName, @NonNull Term index) {
+      @Nonnull String columnName, @Nonnull Term index) {
     return whereMapValue(CqlIdentifier.fromCql(columnName), index);
   }
 
@@ -128,9 +128,9 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * <p>This is the equivalent of creating a relation with {@link Relation#tokenFromIds(Iterable)}
    * and passing it to {@link #where(Relation)}.
    */
-  @NonNull
+  @Nonnull
   default TokenRelationBuilder<SelfT> whereTokenFromIds(
-      @NonNull Iterable<CqlIdentifier> identifiers) {
+      @Nonnull Iterable<CqlIdentifier> identifiers) {
     return new DefaultTokenRelationBuilder.Fluent<>(this, identifiers);
   }
 
@@ -140,8 +140,8 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * <p>This is the equivalent of creating a relation with {@link Relation#token(CqlIdentifier...)}
    * and passing it to {@link #where(Relation)}.
    */
-  @NonNull
-  default TokenRelationBuilder<SelfT> whereToken(@NonNull CqlIdentifier... identifiers) {
+  @Nonnull
+  default TokenRelationBuilder<SelfT> whereToken(@Nonnull CqlIdentifier... identifiers) {
     return whereTokenFromIds(Arrays.asList(identifiers));
   }
 
@@ -152,8 +152,8 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * <p>This is the equivalent of creating a relation with {@link Relation#token(Iterable)} and
    * passing it to {@link #where(Relation)}.
    */
-  @NonNull
-  default TokenRelationBuilder<SelfT> whereToken(@NonNull Iterable<String> names) {
+  @Nonnull
+  default TokenRelationBuilder<SelfT> whereToken(@Nonnull Iterable<String> names) {
     return whereTokenFromIds(CqlIdentifiers.wrap(names));
   }
 
@@ -163,8 +163,8 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * <p>This is the equivalent of creating a relation with {@link Relation#token(String...)} and
    * passing it to {@link #where(Relation)}.
    */
-  @NonNull
-  default TokenRelationBuilder<SelfT> whereToken(@NonNull String... names) {
+  @Nonnull
+  default TokenRelationBuilder<SelfT> whereToken(@Nonnull String... names) {
     return whereToken(Arrays.asList(names));
   }
 
@@ -174,9 +174,9 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * <p>This is the equivalent of creating a relation with {@link Relation#columnIds(Iterable)} and
    * passing it to {@link #where(Relation)}.
    */
-  @NonNull
+  @Nonnull
   default MultiColumnRelationBuilder<SelfT> whereColumnIds(
-      @NonNull Iterable<CqlIdentifier> identifiers) {
+      @Nonnull Iterable<CqlIdentifier> identifiers) {
     return new DefaultMultiColumnRelationBuilder.Fluent<>(this, identifiers);
   }
 
@@ -186,8 +186,8 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * <p>This is the equivalent of creating a relation with {@link
    * Relation#columns(CqlIdentifier...)} and passing it to {@link #where(Relation)}.
    */
-  @NonNull
-  default MultiColumnRelationBuilder<SelfT> whereColumns(@NonNull CqlIdentifier... identifiers) {
+  @Nonnull
+  default MultiColumnRelationBuilder<SelfT> whereColumns(@Nonnull CqlIdentifier... identifiers) {
     return whereColumnIds(Arrays.asList(identifiers));
   }
 
@@ -198,8 +198,8 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * <p>This is the equivalent of creating a relation with {@link Relation#columns(Iterable)} and
    * passing it to {@link #where(Relation)}.
    */
-  @NonNull
-  default MultiColumnRelationBuilder<SelfT> whereColumns(@NonNull Iterable<String> names) {
+  @Nonnull
+  default MultiColumnRelationBuilder<SelfT> whereColumns(@Nonnull Iterable<String> names) {
     return whereColumnIds(CqlIdentifiers.wrap(names));
   }
 
@@ -209,8 +209,8 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * <p>This is the equivalent of creating a relation with {@link Relation#columns(String...)} and
    * passing it to {@link #where(Relation)}.
    */
-  @NonNull
-  default MultiColumnRelationBuilder<SelfT> whereColumns(@NonNull String... names) {
+  @Nonnull
+  default MultiColumnRelationBuilder<SelfT> whereColumns(@Nonnull String... names) {
     return whereColumns(Arrays.asList(names));
   }
 
@@ -220,9 +220,9 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * <p>This is the equivalent of creating a relation with {@link
    * Relation#customIndex(CqlIdentifier, Term)} and passing it to {@link #where(Relation)}.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT whereCustomIndex(@NonNull CqlIdentifier indexId, @NonNull Term expression) {
+  default SelfT whereCustomIndex(@Nonnull CqlIdentifier indexId, @Nonnull Term expression) {
     return where(new CustomIndexRelation(indexId, expression));
   }
 
@@ -233,9 +233,9 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * <p>This is the equivalent of creating a relation with {@link Relation#customIndex(String,
    * Term)} and passing it to {@link #where(Relation)}.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT whereCustomIndex(@NonNull String indexName, @NonNull Term expression) {
+  default SelfT whereCustomIndex(@Nonnull String indexName, @Nonnull Term expression) {
     return whereCustomIndex(CqlIdentifier.fromCql(indexName), expression);
   }
 
@@ -250,9 +250,9 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
    * fail at execution time; on the other hand, it can be used as a workaround to handle new CQL
    * features that are not yet covered by the query builder.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT whereRaw(@NonNull String raw) {
+  default SelfT whereRaw(@Nonnull String raw) {
     return where(new DefaultRaw(raw));
   }
 }

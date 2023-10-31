@@ -26,10 +26,10 @@ import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.NamingStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
 import com.datastax.oss.driver.api.mapper.annotations.SchemaHint;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Builds an instance of a {@link Mapper}-annotated interface wrapping a {@link CqlSession}.
@@ -88,7 +88,7 @@ public abstract class MapperBuilder<MapperT> {
    *
    * @see DaoFactory
    */
-  @NonNull
+  @Nonnull
   public MapperBuilder<MapperT> withDefaultKeyspace(@Nullable CqlIdentifier keyspaceId) {
     this.defaultKeyspaceId = keyspaceId;
     return this;
@@ -98,7 +98,7 @@ public abstract class MapperBuilder<MapperT> {
    * Shortcut for {@link #withDefaultKeyspace(CqlIdentifier)
    * withDefaultKeyspace(CqlIdentifier.fromCql(keyspaceName))}.
    */
-  @NonNull
+  @Nonnull
   public MapperBuilder<MapperT> withDefaultKeyspace(@Nullable String keyspaceName) {
     return withDefaultKeyspace(keyspaceName == null ? null : CqlIdentifier.fromCql(keyspaceName));
   }
@@ -115,7 +115,7 @@ public abstract class MapperBuilder<MapperT> {
    *
    * @see DaoFactory
    */
-  @NonNull
+  @Nonnull
   public MapperBuilder<MapperT> withDefaultExecutionProfileName(
       @Nullable String executionProfileName) {
     this.defaultExecutionProfileName = executionProfileName;
@@ -137,7 +137,7 @@ public abstract class MapperBuilder<MapperT> {
    *
    * @see DaoFactory
    */
-  @NonNull
+  @Nonnull
   public MapperBuilder<MapperT> withDefaultExecutionProfile(
       @Nullable DriverExecutionProfile executionProfile) {
     this.defaultExecutionProfile = executionProfile;
@@ -183,7 +183,7 @@ public abstract class MapperBuilder<MapperT> {
    *
    * <p>Note that this state will be accessed concurrently, it should be thread-safe.
    */
-  @NonNull
+  @Nonnull
   public MapperBuilder<MapperT> withCustomState(@Nullable Object key, @Nullable Object value) {
     customState.put(key, value);
     return this;

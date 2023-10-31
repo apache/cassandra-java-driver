@@ -23,8 +23,8 @@ import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -164,10 +164,10 @@ public class DseGssApiAuthProvider extends DseGssApiAuthProviderBase {
     this.config = context.getConfig().getDefaultProfile();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   protected GssApiOptions getOptions(
-      @NonNull EndPoint endPoint, @NonNull String serverAuthenticator) {
+      @Nonnull EndPoint endPoint, @Nonnull String serverAuthenticator) {
     // A login configuration is always necessary, throw an exception if that option is missing.
     AuthUtils.validateConfigPresent(
         config,

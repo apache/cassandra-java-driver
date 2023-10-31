@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface AlterTypeStart extends AlterTypeRenameField {
 
@@ -32,15 +32,15 @@ public interface AlterTypeStart extends AlterTypeRenameField {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
-  @NonNull
-  BuildableQuery alterField(@NonNull CqlIdentifier fieldName, @NonNull DataType dataType);
+  @Nonnull
+  BuildableQuery alterField(@Nonnull CqlIdentifier fieldName, @Nonnull DataType dataType);
 
   /**
    * Shortcut for {@link #alterField(CqlIdentifier,DataType)
    * alterField(CqlIdentifier.fromCql(columnName,dataType)}.
    */
-  @NonNull
-  default BuildableQuery alterField(@NonNull String fieldName, @NonNull DataType dataType) {
+  @Nonnull
+  default BuildableQuery alterField(@Nonnull String fieldName, @Nonnull DataType dataType) {
     return alterField(CqlIdentifier.fromCql(fieldName), dataType);
   }
 
@@ -50,15 +50,15 @@ public interface AlterTypeStart extends AlterTypeRenameField {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
-  @NonNull
-  BuildableQuery addField(@NonNull CqlIdentifier fieldName, @NonNull DataType dataType);
+  @Nonnull
+  BuildableQuery addField(@Nonnull CqlIdentifier fieldName, @Nonnull DataType dataType);
 
   /**
    * Shortcut for {@link #addField(CqlIdentifier, DataType) addField(CqlIdentifier.asCql(fieldName),
    * dataType)}.
    */
-  @NonNull
-  default BuildableQuery addField(@NonNull String fieldName, @NonNull DataType dataType) {
+  @Nonnull
+  default BuildableQuery addField(@Nonnull String fieldName, @Nonnull DataType dataType) {
     return addField(CqlIdentifier.fromCql(fieldName), dataType);
   }
 }

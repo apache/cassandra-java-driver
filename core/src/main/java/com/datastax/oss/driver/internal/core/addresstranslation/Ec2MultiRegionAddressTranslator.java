@@ -21,11 +21,11 @@ import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import javax.annotation.Nonnull;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -62,7 +62,7 @@ public class Ec2MultiRegionAddressTranslator implements AddressTranslator {
   private final String logPrefix;
 
   public Ec2MultiRegionAddressTranslator(
-      @SuppressWarnings("unused") @NonNull DriverContext context) {
+      @SuppressWarnings("unused") @Nonnull DriverContext context) {
     this.logPrefix = context.getSessionName();
     @SuppressWarnings("JdkObsolete")
     Hashtable<Object, Object> env = new Hashtable<>();
@@ -75,14 +75,14 @@ public class Ec2MultiRegionAddressTranslator implements AddressTranslator {
   }
 
   @VisibleForTesting
-  Ec2MultiRegionAddressTranslator(@NonNull DirContext ctx) {
+  Ec2MultiRegionAddressTranslator(@Nonnull DirContext ctx) {
     this.logPrefix = "test";
     this.ctx = ctx;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public InetSocketAddress translate(@NonNull InetSocketAddress socketAddress) {
+  public InetSocketAddress translate(@Nonnull InetSocketAddress socketAddress) {
     InetAddress address = socketAddress.getAddress();
     try {
       // InetAddress#getHostName() is supposed to perform a reverse DNS lookup, but for some reason

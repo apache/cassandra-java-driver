@@ -18,9 +18,9 @@
 package com.datastax.oss.driver.internal.core.loadbalancing.nodeset;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Set;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -40,7 +40,7 @@ public interface NodeSet {
    * @param node The node to add.
    * @return true if the node was added, false otherwise (because it was already present).
    */
-  boolean add(@NonNull Node node);
+  boolean add(@Nonnull Node node);
 
   /**
    * Removes the node from the set.
@@ -48,7 +48,7 @@ public interface NodeSet {
    * @param node The node to remove.
    * @return true if the node was removed, false otherwise (because it was not present).
    */
-  boolean remove(@NonNull Node node);
+  boolean remove(@Nonnull Node node);
 
   /**
    * Returns the current nodes in the given datacenter.
@@ -60,7 +60,7 @@ public interface NodeSet {
    * @param dc The datacenter name, or null if the datacenter name is not known, or irrelevant.
    * @return the current nodes in the given datacenter.
    */
-  @NonNull
+  @Nonnull
   Set<Node> dc(@Nullable String dc);
 
   /**

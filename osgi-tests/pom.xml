@@ -57,8 +57,8 @@
       <artifactId>java-driver-mapper-runtime</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.github.spotbugs</groupId>
-      <artifactId>spotbugs-annotations</artifactId>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
@@ -205,7 +205,7 @@
             <Bundle-Activator>com.datastax.oss.driver.internal.osgi.MailboxActivator</Bundle-Activator>
             <Export-Package>com.datastax.oss.driver.api.osgi.*</Export-Package>
             <Private-Package>com.datastax.oss.driver.internal.osgi.*</Private-Package>
-            <Import-Package>!net.jcip.annotations.*,!edu.umd.cs.findbugs.annotations.*,org.apache.tinkerpop.*;resolution:=optional,*</Import-Package>
+            <Import-Package>!net.jcip.annotations.*,!javax.annotation.*,org.apache.tinkerpop.*;resolution:=optional,*</Import-Package>
             <_include>-osgi.bnd</_include>
           </instructions>
         </configuration>

@@ -23,9 +23,9 @@ import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.protocol.internal.request.Startup;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable

@@ -20,7 +20,7 @@ package com.datastax.oss.driver.internal.querybuilder.schema.compaction;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.TimeWindowCompactionStrategy;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -31,14 +31,14 @@ public class DefaultTimeWindowCompactionStrategy
     super("TimeWindowCompactionStrategy");
   }
 
-  protected DefaultTimeWindowCompactionStrategy(@NonNull ImmutableMap<String, Object> options) {
+  protected DefaultTimeWindowCompactionStrategy(@Nonnull ImmutableMap<String, Object> options) {
     super(options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DefaultTimeWindowCompactionStrategy withOption(
-      @NonNull String name, @NonNull Object value) {
+      @Nonnull String name, @Nonnull Object value) {
     return new DefaultTimeWindowCompactionStrategy(
         ImmutableCollections.append(getInternalOptions(), name, value));
   }

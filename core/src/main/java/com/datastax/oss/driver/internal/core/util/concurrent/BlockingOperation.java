@@ -17,9 +17,9 @@
  */
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.FastThreadLocalThread;
 import java.util.concurrent.ThreadFactory;
+import javax.annotation.Nonnull;
 
 /**
  * Safeguards against bad usage patterns in client code that could introduce deadlocks in the
@@ -56,7 +56,7 @@ public class BlockingOperation {
    */
   public static class SafeThreadFactory implements ThreadFactory {
     @Override
-    public Thread newThread(@NonNull Runnable r) {
+    public Thread newThread(@Nonnull Runnable r) {
       return new InternalThread(r);
     }
   }

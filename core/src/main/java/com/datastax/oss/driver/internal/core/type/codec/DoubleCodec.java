@@ -22,38 +22,38 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveDoubleCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class DoubleCodec implements PrimitiveDoubleCodec {
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<Double> getJavaType() {
     return GenericType.DOUBLE;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.DOUBLE;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof Double;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == Double.class || javaClass == double.class;
   }
 
   @Nullable
   @Override
-  public ByteBuffer encodePrimitive(double value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encodePrimitive(double value, @Nonnull ProtocolVersion protocolVersion) {
     ByteBuffer bytes = ByteBuffer.allocate(8);
     bytes.putDouble(0, value);
     return bytes;
@@ -61,7 +61,7 @@ public class DoubleCodec implements PrimitiveDoubleCodec {
 
   @Override
   public double decodePrimitive(
-      @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return 0;
     } else if (bytes.remaining() != 8) {
@@ -72,7 +72,7 @@ public class DoubleCodec implements PrimitiveDoubleCodec {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable Double value) {
     return (value == null) ? "NULL" : Double.toString(value);

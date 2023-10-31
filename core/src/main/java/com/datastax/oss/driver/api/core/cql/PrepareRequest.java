@@ -26,12 +26,12 @@ import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A request to prepare a CQL query.
@@ -67,7 +67,7 @@ public interface PrepareRequest extends Request {
       new GenericType<CompletionStage<PreparedStatement>>() {};
 
   /** The CQL query to prepare. */
-  @NonNull
+  @Nonnull
   String getQuery();
 
   /**
@@ -76,7 +76,7 @@ public interface PrepareRequest extends Request {
    * <p>Note that this refers to the prepare query itself, not to the bound statements that will be
    * created from the prepared statement (see {@link #areBoundStatementsIdempotent()}).
    */
-  @NonNull
+  @Nonnull
   @Override
   default Boolean isIdempotent() {
     // Retrying to prepare is always safe
@@ -124,7 +124,7 @@ public interface PrepareRequest extends Request {
    * Returns the custom payload to send alongside the bound statements that will be created from the
    * prepared statement.
    */
-  @NonNull
+  @Nonnull
   Map<String, ByteBuffer> getCustomPayloadForBoundStatements();
 
   /**

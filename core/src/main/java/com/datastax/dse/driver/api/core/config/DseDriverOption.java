@@ -18,7 +18,7 @@
 package com.datastax.dse.driver.api.core.config;
 
 import com.datastax.oss.driver.api.core.config.DriverOption;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public enum DseDriverOption implements DriverOption {
   /**
@@ -326,7 +326,7 @@ public enum DseDriverOption implements DriverOption {
     this.path = path;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getPath() {
     return path;

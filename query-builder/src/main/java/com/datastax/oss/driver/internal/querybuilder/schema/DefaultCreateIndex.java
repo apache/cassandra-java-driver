@@ -24,9 +24,9 @@ import com.datastax.oss.driver.api.querybuilder.schema.CreateIndexStart;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -60,9 +60,9 @@ public class DefaultCreateIndex implements CreateIndexStart, CreateIndexOnTable,
       boolean ifNotExists,
       @Nullable CqlIdentifier keyspace,
       @Nullable CqlIdentifier table,
-      @NonNull ImmutableMap<CqlIdentifier, String> columnToIndexType,
+      @Nonnull ImmutableMap<CqlIdentifier, String> columnToIndexType,
       @Nullable String usingClass,
-      @NonNull ImmutableMap<String, Object> options) {
+      @Nonnull ImmutableMap<String, Object> options) {
     this.indexName = indexName;
     this.ifNotExists = ifNotExists;
     this.keyspace = keyspace;
@@ -72,9 +72,9 @@ public class DefaultCreateIndex implements CreateIndexStart, CreateIndexOnTable,
     this.options = options;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateIndex andColumn(@NonNull CqlIdentifier column, @Nullable String indexType) {
+  public CreateIndex andColumn(@Nonnull CqlIdentifier column, @Nullable String indexType) {
     // use placeholder index type when none present as immutable map does not allow null values.
     if (indexType == null) {
       indexType = NO_INDEX_TYPE;
@@ -90,30 +90,30 @@ public class DefaultCreateIndex implements CreateIndexStart, CreateIndexOnTable,
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateIndexStart ifNotExists() {
     return new DefaultCreateIndex(
         indexName, true, keyspace, table, columnToIndexType, usingClass, options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateIndexStart custom(@NonNull String className) {
+  public CreateIndexStart custom(@Nonnull String className) {
     return new DefaultCreateIndex(
         indexName, ifNotExists, keyspace, table, columnToIndexType, className, options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateIndexOnTable onTable(CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
+  public CreateIndexOnTable onTable(CqlIdentifier keyspace, @Nonnull CqlIdentifier table) {
     return new DefaultCreateIndex(
         indexName, ifNotExists, keyspace, table, columnToIndexType, usingClass, options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateIndex withOption(@NonNull String name, @NonNull Object value) {
+  public CreateIndex withOption(@Nonnull String name, @Nonnull Object value) {
     return new DefaultCreateIndex(
         indexName,
         ifNotExists,
@@ -124,7 +124,7 @@ public class DefaultCreateIndex implements CreateIndexStart, CreateIndexOnTable,
         ImmutableCollections.append(options, name, value));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder("CREATE ");
@@ -187,7 +187,7 @@ public class DefaultCreateIndex implements CreateIndexStart, CreateIndexOnTable,
     return asCql();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, Object> getOptions() {
     return options;
@@ -212,7 +212,7 @@ public class DefaultCreateIndex implements CreateIndexStart, CreateIndexOnTable,
     return table;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableMap<CqlIdentifier, String> getColumnToIndexType() {
     return columnToIndexType;
   }

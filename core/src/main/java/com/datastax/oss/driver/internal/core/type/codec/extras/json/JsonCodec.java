@@ -28,11 +28,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A JSON codec that maps arbitrary Java objects to JSON strings stored as CQL type {@code text},
@@ -69,7 +69,7 @@ public class JsonCodec<T> implements TypeCodec<T> {
    *
    * @param javaClass the Java class this codec maps to.
    */
-  public JsonCodec(@NonNull Class<T> javaClass) {
+  public JsonCodec(@Nonnull Class<T> javaClass) {
     this(GenericType.of(Objects.requireNonNull(javaClass, "javaClass cannot be null")));
   }
 
@@ -84,7 +84,7 @@ public class JsonCodec<T> implements TypeCodec<T> {
    *
    * @param javaType the Java type this codec maps to.
    */
-  public JsonCodec(@NonNull GenericType<T> javaType) {
+  public JsonCodec(@Nonnull GenericType<T> javaType) {
     this(javaType, new ObjectMapper());
   }
 
@@ -95,7 +95,7 @@ public class JsonCodec<T> implements TypeCodec<T> {
    * @param javaClass the Java class this codec maps to.
    * @param objectMapper the {@link ObjectMapper} instance to use.
    */
-  public JsonCodec(@NonNull Class<T> javaClass, @NonNull ObjectMapper objectMapper) {
+  public JsonCodec(@Nonnull Class<T> javaClass, @Nonnull ObjectMapper objectMapper) {
     this(
         GenericType.of(Objects.requireNonNull(javaClass, "javaClass cannot be null")),
         objectMapper);
@@ -108,19 +108,19 @@ public class JsonCodec<T> implements TypeCodec<T> {
    * @param javaType the Java type this codec maps to.
    * @param objectMapper the {@link ObjectMapper} instance to use.
    */
-  public JsonCodec(@NonNull GenericType<T> javaType, @NonNull ObjectMapper objectMapper) {
+  public JsonCodec(@Nonnull GenericType<T> javaType, @Nonnull ObjectMapper objectMapper) {
     this.javaType = Objects.requireNonNull(javaType, "javaType cannot be null");
     this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper cannot be null");
     this.jacksonJavaType = TypeFactory.defaultInstance().constructType(javaType.getType());
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<T> getJavaType() {
     return javaType;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.TEXT;
@@ -128,7 +128,7 @@ public class JsonCodec<T> implements TypeCodec<T> {
 
   @Nullable
   @Override
-  public ByteBuffer encode(@Nullable T value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable T value, @Nonnull ProtocolVersion protocolVersion) {
     if (value == null) {
       return null;
     }
@@ -141,7 +141,7 @@ public class JsonCodec<T> implements TypeCodec<T> {
 
   @Nullable
   @Override
-  public T decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public T decode(@Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null) {
       return null;
     }
@@ -152,7 +152,7 @@ public class JsonCodec<T> implements TypeCodec<T> {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable T value) {
     if (value == null) {

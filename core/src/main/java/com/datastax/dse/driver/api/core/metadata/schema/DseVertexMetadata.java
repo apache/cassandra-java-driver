@@ -18,12 +18,12 @@
 package com.datastax.dse.driver.api.core.metadata.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /** Vertex metadata, for a table that was created with CREATE TABLE ... WITH VERTEX LABEL. */
 public interface DseVertexMetadata {
 
   /** The label of the vertex in graph. */
-  @NonNull
+  @Nonnull
   CqlIdentifier getLabelName();
 }

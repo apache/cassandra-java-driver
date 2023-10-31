@@ -20,9 +20,9 @@ package com.datastax.oss.driver.api.core.metadata.schema;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.RelationParser;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 /** A table in the schema metadata. */
 public interface TableMetadata extends RelationMetadata {
@@ -32,21 +32,21 @@ public interface TableMetadata extends RelationMetadata {
   /** Whether this table is virtual */
   boolean isVirtual();
 
-  @NonNull
+  @Nonnull
   Map<CqlIdentifier, IndexMetadata> getIndexes();
 
-  @NonNull
-  default Optional<IndexMetadata> getIndex(@NonNull CqlIdentifier indexId) {
+  @Nonnull
+  default Optional<IndexMetadata> getIndex(@Nonnull CqlIdentifier indexId) {
     return Optional.ofNullable(getIndexes().get(indexId));
   }
 
   /** Shortcut for {@link #getIndex(CqlIdentifier) getIndex(CqlIdentifier.fromCql(indexName))}. */
-  @NonNull
-  default Optional<IndexMetadata> getIndex(@NonNull String indexName) {
+  @Nonnull
+  default Optional<IndexMetadata> getIndex(@Nonnull String indexName) {
     return getIndex(CqlIdentifier.fromCql(indexName));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default String describe(boolean pretty) {
     ScriptBuilder builder = new ScriptBuilder(pretty);
@@ -130,7 +130,7 @@ public interface TableMetadata extends RelationMetadata {
    * <p>This describes the table and all of its indices. Contrary to previous driver versions, views
    * are <b>not</b> included.
    */
-  @NonNull
+  @Nonnull
   @Override
   default String describeWithChildren(boolean pretty) {
     String createTable = describe(pretty);

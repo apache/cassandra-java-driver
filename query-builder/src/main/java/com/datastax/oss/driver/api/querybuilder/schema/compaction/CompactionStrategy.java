@@ -18,31 +18,31 @@
 package com.datastax.oss.driver.api.querybuilder.schema.compaction;
 
 import com.datastax.oss.driver.api.querybuilder.schema.OptionProvider;
-import edu.umd.cs.findbugs.annotations.CheckReturnValue;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
 
 public interface CompactionStrategy<SelfT extends CompactionStrategy<SelfT>>
     extends OptionProvider<SelfT> {
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default SelfT withEnabled(boolean enabled) {
     return withOption("enabled", enabled);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default SelfT withTombstoneCompactionIntervalInSeconds(int seconds) {
     return withOption("tombstone_compaction_interval", seconds);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default SelfT withTombstoneThreshold(double threshold) {
     return withOption("tombstone_threshold", threshold);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default SelfT withUncheckedTombstoneCompaction(boolean enabled) {
     return withOption("unchecked_tombstone_compaction", enabled);

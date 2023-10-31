@@ -45,8 +45,6 @@ import com.datastax.oss.driver.internal.core.type.codec.IntCodec;
 import com.datastax.oss.driver.internal.core.type.codec.UdtCodec;
 import com.datastax.oss.driver.internal.core.type.codec.extras.OptionalCodec;
 import com.google.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -54,6 +52,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.assertj.core.util.Maps;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -114,29 +114,29 @@ public class CodecRegistryIT {
 
     private static final IntCodec intCodec = new IntCodec();
 
-    @NonNull
+    @Nonnull
     @Override
     public GenericType<Float> getJavaType() {
       return GenericType.of(Float.class);
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public DataType getCqlType() {
       return DataTypes.INT;
     }
 
     @Override
-    public ByteBuffer encode(Float value, @NonNull ProtocolVersion protocolVersion) {
+    public ByteBuffer encode(Float value, @Nonnull ProtocolVersion protocolVersion) {
       return intCodec.encode(value.intValue(), protocolVersion);
     }
 
     @Override
-    public Float decode(ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+    public Float decode(ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
       return intCodec.decode(bytes, protocolVersion).floatValue();
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public String format(Float value) {
       return intCodec.format(value.intValue());
@@ -442,11 +442,11 @@ public class CodecRegistryIT {
 
   private static class CoordinatesCodec extends MappingCodec<UdtValue, Coordinates> {
 
-    public CoordinatesCodec(@NonNull TypeCodec<UdtValue> innerCodec) {
+    public CoordinatesCodec(@Nonnull TypeCodec<UdtValue> innerCodec) {
       super(innerCodec, GenericType.of(Coordinates.class));
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public UserDefinedType getCqlType() {
       return (UserDefinedType) super.getCqlType();

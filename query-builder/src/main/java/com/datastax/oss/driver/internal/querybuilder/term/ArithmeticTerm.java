@@ -20,7 +20,7 @@ package com.datastax.oss.driver.internal.querybuilder.term;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.ArithmeticOperator;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -28,18 +28,18 @@ public abstract class ArithmeticTerm implements Term {
 
   protected final ArithmeticOperator operator;
 
-  protected ArithmeticTerm(@NonNull ArithmeticOperator operator) {
+  protected ArithmeticTerm(@Nonnull ArithmeticOperator operator) {
     Preconditions.checkNotNull(operator);
     this.operator = operator;
   }
 
-  @NonNull
+  @Nonnull
   public ArithmeticOperator getOperator() {
     return operator;
   }
 
   protected static void appendAndMaybeParenthesize(
-      int myPrecedence, @NonNull Term child, @NonNull StringBuilder builder) {
+      int myPrecedence, @Nonnull Term child, @Nonnull StringBuilder builder) {
     boolean parenthesize =
         (child instanceof ArithmeticTerm)
             && (((ArithmeticTerm) child).operator.getPrecedenceLeft() < myPrecedence);

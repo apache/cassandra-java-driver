@@ -23,9 +23,9 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.internal.core.cql.EmptyColumnDefinitions;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.NotThreadSafe;
 
 @NotThreadSafe // wraps a mutable queue
@@ -55,7 +55,7 @@ public class DefaultContinuousAsyncResultSet implements ContinuousAsyncResultSet
     this.currentPage = () -> iterator;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ColumnDefinitions getColumnDefinitions() {
     return columnDefinitions;
@@ -67,7 +67,7 @@ public class DefaultContinuousAsyncResultSet implements ContinuousAsyncResultSet
     return true;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ExecutionInfo getExecutionInfo() {
     return executionInfo;
@@ -83,7 +83,7 @@ public class DefaultContinuousAsyncResultSet implements ContinuousAsyncResultSet
     return hasMorePages;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Iterable<Row> currentPage() {
     return currentPage;
@@ -94,7 +94,7 @@ public class DefaultContinuousAsyncResultSet implements ContinuousAsyncResultSet
     return iterator.remaining();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<ContinuousAsyncResultSet> fetchNextPage() throws IllegalStateException {
     if (!hasMorePages()) {
@@ -113,19 +113,19 @@ public class DefaultContinuousAsyncResultSet implements ContinuousAsyncResultSet
 
     return new ContinuousAsyncResultSet() {
 
-      @NonNull
+      @Nonnull
       @Override
       public ColumnDefinitions getColumnDefinitions() {
         return EmptyColumnDefinitions.INSTANCE;
       }
 
-      @NonNull
+      @Nonnull
       @Override
       public ExecutionInfo getExecutionInfo() {
         return executionInfo;
       }
 
-      @NonNull
+      @Nonnull
       @Override
       public Iterable<Row> currentPage() {
         return Collections.emptyList();
@@ -146,7 +146,7 @@ public class DefaultContinuousAsyncResultSet implements ContinuousAsyncResultSet
         return 1;
       }
 
-      @NonNull
+      @Nonnull
       @Override
       public CompletionStage<ContinuousAsyncResultSet> fetchNextPage()
           throws IllegalStateException {

@@ -22,7 +22,6 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -31,6 +30,7 @@ import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.util.List;
+import javax.annotation.Nonnull;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -86,9 +86,9 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
         config.getBoolean(DefaultDriverOption.SSL_HOSTNAME_VALIDATION, true);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public SSLEngine newSslEngine(@NonNull EndPoint remoteEndpoint) {
+  public SSLEngine newSslEngine(@Nonnull EndPoint remoteEndpoint) {
     SSLEngine engine;
     SocketAddress remoteAddress = remoteEndpoint.resolve();
     if (remoteAddress instanceof InetSocketAddress) {

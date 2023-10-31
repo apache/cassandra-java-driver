@@ -19,17 +19,17 @@ package com.datastax.oss.driver.internal.querybuilder;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.CqlSnippet;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collection;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class CqlHelper {
 
   public static void appendIds(
-      @NonNull Iterable<CqlIdentifier> ids,
-      @NonNull StringBuilder builder,
+      @Nonnull Iterable<CqlIdentifier> ids,
+      @Nonnull StringBuilder builder,
       @Nullable String prefix,
-      @NonNull String separator,
+      @Nonnull String separator,
       @Nullable String suffix) {
     boolean first = true;
     for (CqlIdentifier id : ids) {
@@ -49,10 +49,10 @@ public class CqlHelper {
   }
 
   public static void append(
-      @NonNull Iterable<? extends CqlSnippet> snippets,
-      @NonNull StringBuilder builder,
+      @Nonnull Iterable<? extends CqlSnippet> snippets,
+      @Nonnull StringBuilder builder,
       @Nullable String prefix,
-      @NonNull String separator,
+      @Nonnull String separator,
       @Nullable String suffix) {
     boolean first = true;
     for (CqlSnippet snippet : snippets) {
@@ -73,8 +73,8 @@ public class CqlHelper {
 
   public static void qualify(
       @Nullable CqlIdentifier keyspace,
-      @NonNull CqlIdentifier element,
-      @NonNull StringBuilder builder) {
+      @Nonnull CqlIdentifier element,
+      @Nonnull StringBuilder builder) {
     if (keyspace != null) {
       builder.append(keyspace.asCql(true)).append('.');
     }
@@ -82,9 +82,9 @@ public class CqlHelper {
   }
 
   public static void buildPrimaryKey(
-      @NonNull Collection<CqlIdentifier> partitionKeyColumns,
-      @NonNull Collection<CqlIdentifier> clusteringKeyColumns,
-      @NonNull StringBuilder builder) {
+      @Nonnull Collection<CqlIdentifier> partitionKeyColumns,
+      @Nonnull Collection<CqlIdentifier> clusteringKeyColumns,
+      @Nonnull StringBuilder builder) {
     builder.append("PRIMARY KEY(");
     boolean firstKey = true;
 

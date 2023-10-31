@@ -23,14 +23,14 @@ import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -38,28 +38,28 @@ public class DefaultViewMetadata implements ViewMetadata, Serializable {
 
   private static final long serialVersionUID = 1;
 
-  @NonNull private final CqlIdentifier keyspace;
-  @NonNull private final CqlIdentifier name;
-  @NonNull private final CqlIdentifier baseTable;
+  @Nonnull private final CqlIdentifier keyspace;
+  @Nonnull private final CqlIdentifier name;
+  @Nonnull private final CqlIdentifier baseTable;
   private final boolean includesAllColumns;
   @Nullable private final String whereClause;
-  @NonNull private final UUID id;
-  @NonNull private final ImmutableList<ColumnMetadata> partitionKey;
-  @NonNull private final ImmutableMap<ColumnMetadata, ClusteringOrder> clusteringColumns;
-  @NonNull private final ImmutableMap<CqlIdentifier, ColumnMetadata> columns;
-  @NonNull private final Map<CqlIdentifier, Object> options;
+  @Nonnull private final UUID id;
+  @Nonnull private final ImmutableList<ColumnMetadata> partitionKey;
+  @Nonnull private final ImmutableMap<ColumnMetadata, ClusteringOrder> clusteringColumns;
+  @Nonnull private final ImmutableMap<CqlIdentifier, ColumnMetadata> columns;
+  @Nonnull private final Map<CqlIdentifier, Object> options;
 
   public DefaultViewMetadata(
-      @NonNull CqlIdentifier keyspace,
-      @NonNull CqlIdentifier name,
-      @NonNull CqlIdentifier baseTable,
+      @Nonnull CqlIdentifier keyspace,
+      @Nonnull CqlIdentifier name,
+      @Nonnull CqlIdentifier baseTable,
       boolean includesAllColumns,
       @Nullable String whereClause,
-      @NonNull UUID id,
-      @NonNull ImmutableList<ColumnMetadata> partitionKey,
-      @NonNull ImmutableMap<ColumnMetadata, ClusteringOrder> clusteringColumns,
-      @NonNull ImmutableMap<CqlIdentifier, ColumnMetadata> columns,
-      @NonNull Map<CqlIdentifier, Object> options) {
+      @Nonnull UUID id,
+      @Nonnull ImmutableList<ColumnMetadata> partitionKey,
+      @Nonnull ImmutableMap<ColumnMetadata, ClusteringOrder> clusteringColumns,
+      @Nonnull ImmutableMap<CqlIdentifier, ColumnMetadata> columns,
+      @Nonnull Map<CqlIdentifier, Object> options) {
     this.keyspace = keyspace;
     this.name = name;
     this.baseTable = baseTable;
@@ -72,25 +72,25 @@ public class DefaultViewMetadata implements ViewMetadata, Serializable {
     this.options = options;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getName() {
     return name;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<UUID> getId() {
     return Optional.of(id);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getBaseTable() {
     return baseTable;
@@ -101,31 +101,31 @@ public class DefaultViewMetadata implements ViewMetadata, Serializable {
     return includesAllColumns;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<String> getWhereClause() {
     return Optional.ofNullable(whereClause);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<ColumnMetadata> getPartitionKey() {
     return partitionKey;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<ColumnMetadata, ClusteringOrder> getClusteringColumns() {
     return clusteringColumns;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<CqlIdentifier, ColumnMetadata> getColumns() {
     return columns;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<CqlIdentifier, Object> getOptions() {
     return options;

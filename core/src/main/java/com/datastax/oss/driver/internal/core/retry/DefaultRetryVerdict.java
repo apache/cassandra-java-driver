@@ -19,17 +19,17 @@ package com.datastax.oss.driver.internal.core.retry;
 
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.retry.RetryVerdict;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public class DefaultRetryVerdict implements RetryVerdict {
 
   private final RetryDecision decision;
 
-  public DefaultRetryVerdict(@NonNull RetryDecision decision) {
+  public DefaultRetryVerdict(@Nonnull RetryDecision decision) {
     this.decision = decision;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public RetryDecision getRetryDecision() {
     return decision;

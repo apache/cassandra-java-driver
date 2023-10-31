@@ -24,8 +24,8 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,11 +82,11 @@ public class RequestLogger implements RequestTracker {
 
   @Override
   public void onSuccess(
-      @NonNull Request request,
+      @Nonnull Request request,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String logPrefix) {
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node,
+      @Nonnull String logPrefix) {
 
     boolean successEnabled =
         executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, false);
@@ -134,12 +134,12 @@ public class RequestLogger implements RequestTracker {
 
   @Override
   public void onError(
-      @NonNull Request request,
-      @NonNull Throwable error,
+      @Nonnull Request request,
+      @Nonnull Throwable error,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
+      @Nonnull DriverExecutionProfile executionProfile,
       Node node,
-      @NonNull String logPrefix) {
+      @Nonnull String logPrefix) {
 
     if (!executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, false)) {
       return;
@@ -178,22 +178,22 @@ public class RequestLogger implements RequestTracker {
 
   @Override
   public void onNodeError(
-      @NonNull Request request,
-      @NonNull Throwable error,
+      @Nonnull Request request,
+      @Nonnull Throwable error,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String logPrefix) {
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node,
+      @Nonnull String logPrefix) {
     // Nothing to do
   }
 
   @Override
   public void onNodeSuccess(
-      @NonNull Request request,
+      @Nonnull Request request,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String logPrefix) {
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node,
+      @Nonnull String logPrefix) {
     // Nothing to do
   }
 

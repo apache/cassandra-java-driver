@@ -26,8 +26,8 @@ import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -44,21 +44,21 @@ public class DefaultCreateAggregate
   private final CqlIdentifier finalFunc;
   private final Term term;
 
-  public DefaultCreateAggregate(@NonNull CqlIdentifier functionName) {
+  public DefaultCreateAggregate(@Nonnull CqlIdentifier functionName) {
     this(null, functionName);
   }
 
   public DefaultCreateAggregate(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier functionName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier functionName) {
     this(keyspace, functionName, false, false, ImmutableList.of(), null, null, null, null);
   }
 
   public DefaultCreateAggregate(
       @Nullable CqlIdentifier keyspace,
-      @NonNull CqlIdentifier functionName,
+      @Nonnull CqlIdentifier functionName,
       boolean orReplace,
       boolean ifNotExists,
-      @NonNull ImmutableList<DataType> parameters,
+      @Nonnull ImmutableList<DataType> parameters,
       @Nullable CqlIdentifier sFunc,
       @Nullable DataType sType,
       @Nullable CqlIdentifier finalFunc,
@@ -74,7 +74,7 @@ public class DefaultCreateAggregate
     this.term = term;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder();
@@ -120,30 +120,30 @@ public class DefaultCreateAggregate
     return builder.toString();
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateAggregateEnd withInitCond(@NonNull Term term) {
+  public CreateAggregateEnd withInitCond(@Nonnull Term term) {
     return new DefaultCreateAggregate(
         keyspace, functionName, orReplace, ifNotExists, parameters, sFunc, sType, finalFunc, term);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateAggregateStart ifNotExists() {
     return new DefaultCreateAggregate(
         keyspace, functionName, orReplace, true, parameters, sFunc, sType, finalFunc, term);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateAggregateStart orReplace() {
     return new DefaultCreateAggregate(
         keyspace, functionName, true, ifNotExists, parameters, sFunc, sType, finalFunc, term);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateAggregateStart withParameter(@NonNull DataType paramType) {
+  public CreateAggregateStart withParameter(@Nonnull DataType paramType) {
     return new DefaultCreateAggregate(
         keyspace,
         functionName,
@@ -156,23 +156,23 @@ public class DefaultCreateAggregate
         term);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateAggregateStateFunc withSFunc(@NonNull CqlIdentifier sFunc) {
+  public CreateAggregateStateFunc withSFunc(@Nonnull CqlIdentifier sFunc) {
     return new DefaultCreateAggregate(
         keyspace, functionName, orReplace, ifNotExists, parameters, sFunc, sType, finalFunc, term);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateAggregateEnd withSType(@NonNull DataType sType) {
+  public CreateAggregateEnd withSType(@Nonnull DataType sType) {
     return new DefaultCreateAggregate(
         keyspace, functionName, orReplace, ifNotExists, parameters, sFunc, sType, finalFunc, term);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateAggregateEnd withFinalFunc(@NonNull CqlIdentifier finalFunc) {
+  public CreateAggregateEnd withFinalFunc(@Nonnull CqlIdentifier finalFunc) {
     return new DefaultCreateAggregate(
         keyspace, functionName, orReplace, ifNotExists, parameters, sFunc, sType, finalFunc, term);
   }
@@ -187,7 +187,7 @@ public class DefaultCreateAggregate
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getFunctionName() {
     return functionName;
   }
@@ -200,7 +200,7 @@ public class DefaultCreateAggregate
     return ifNotExists;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableList<DataType> getParameters() {
     return parameters;
   }

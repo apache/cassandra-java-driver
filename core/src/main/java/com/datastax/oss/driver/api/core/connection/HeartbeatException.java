@@ -21,9 +21,9 @@ import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.SocketAddress;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Thrown when a heartbeat query fails.
@@ -38,7 +38,7 @@ public class HeartbeatException extends DriverException {
   private final SocketAddress address;
 
   public HeartbeatException(
-      @NonNull SocketAddress address, @Nullable String message, @Nullable Throwable cause) {
+      @Nonnull SocketAddress address, @Nullable String message, @Nullable Throwable cause) {
     this(address, message, null, cause);
   }
 
@@ -49,12 +49,12 @@ public class HeartbeatException extends DriverException {
   }
 
   /** The address of the node that encountered the error. */
-  @NonNull
+  @Nonnull
   public SocketAddress getAddress() {
     return address;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new HeartbeatException(address, getMessage(), getExecutionInfo(), getCause());

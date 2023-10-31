@@ -19,8 +19,8 @@ package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Base class for all exceptions thrown by the driver.
@@ -107,6 +107,6 @@ public abstract class DriverException extends RuntimeException {
    * more user-friendly stack trace (that includes the line in the user code where the driver
    * rethrew the error).
    */
-  @NonNull
+  @Nonnull
   public abstract DriverException copy();
 }

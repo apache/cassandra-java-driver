@@ -24,8 +24,8 @@ import com.datastax.dse.driver.internal.core.data.geometry.DefaultPolygon;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.esri.core.geometry.ogc.OGCPolygon;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -39,49 +39,49 @@ public class PolygonCodec extends GeometryCodec<Polygon> {
 
   private static final GenericType<Polygon> JAVA_TYPE = GenericType.of(Polygon.class);
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<Polygon> getJavaType() {
     return JAVA_TYPE;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DseDataTypes.POLYGON;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == Polygon.class;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof Polygon;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected Polygon fromWellKnownText(@NonNull String source) {
+  protected Polygon fromWellKnownText(@Nonnull String source) {
     return new DefaultPolygon(DefaultGeometry.fromOgcWellKnownText(source, OGCPolygon.class));
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected Polygon fromWellKnownBinary(@NonNull ByteBuffer bb) {
+  protected Polygon fromWellKnownBinary(@Nonnull ByteBuffer bb) {
     return new DefaultPolygon(DefaultGeometry.fromOgcWellKnownBinary(bb, OGCPolygon.class));
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected String toWellKnownText(@NonNull Polygon geometry) {
+  protected String toWellKnownText(@Nonnull Polygon geometry) {
     return geometry.asWellKnownText();
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected ByteBuffer toWellKnownBinary(@NonNull Polygon geometry) {
+  protected ByteBuffer toWellKnownBinary(@Nonnull Polygon geometry) {
     return geometry.asWellKnownBinary();
   }
 }

@@ -20,9 +20,9 @@ package com.datastax.oss.driver.internal.core.type.codec.extras.enums;
 import com.datastax.oss.driver.api.core.type.codec.MappingCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -39,7 +39,7 @@ public class EnumOrdinalCodec<EnumT extends Enum<EnumT>> extends MappingCodec<In
 
   private final EnumT[] enumConstants;
 
-  public EnumOrdinalCodec(@NonNull Class<EnumT> enumClass) {
+  public EnumOrdinalCodec(@Nonnull Class<EnumT> enumClass) {
     super(
         TypeCodecs.INT,
         GenericType.of(Objects.requireNonNull(enumClass, "enumClass must not be null")));

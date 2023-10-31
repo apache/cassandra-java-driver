@@ -20,7 +20,7 @@ package com.datastax.oss.driver.api.core.metadata;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * A listener that gets notified when nodes states change.
@@ -52,16 +52,16 @@ public interface NodeStateListener extends AutoCloseable {
    * <p>This method is <b>not</b> invoked for the contact points provided at initialization. It is
    * however for new nodes discovered during the full node list refresh after the first connection.
    */
-  void onAdd(@NonNull Node node);
+  void onAdd(@Nonnull Node node);
 
   /** Invoked when a node's state switches to {@link NodeState#UP}. */
-  void onUp(@NonNull Node node);
+  void onUp(@Nonnull Node node);
 
   /**
    * Invoked when a node's state switches to {@link NodeState#DOWN} or {@link
    * NodeState#FORCED_DOWN}.
    */
-  void onDown(@NonNull Node node);
+  void onDown(@Nonnull Node node);
 
   /**
    * Invoked when a node leaves the cluster.
@@ -69,7 +69,7 @@ public interface NodeStateListener extends AutoCloseable {
    * <p>This can be triggered by a topology event, or during a full node list refresh if the node is
    * absent from the new list.
    */
-  void onRemove(@NonNull Node node);
+  void onRemove(@Nonnull Node node);
 
   /**
    * Invoked when the session is ready to process user requests.
@@ -107,5 +107,5 @@ public interface NodeStateListener extends AutoCloseable {
    *
    * <p>This method's default implementation is empty.
    */
-  default void onSessionReady(@NonNull Session session) {}
+  default void onSessionReady(@Nonnull Session session) {}
 }

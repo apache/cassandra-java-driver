@@ -20,9 +20,9 @@ package com.datastax.oss.driver.internal.core.type.codec.extras.array;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -41,13 +41,13 @@ public class FloatListToArrayCodec extends AbstractPrimitiveListToArrayCodec<flo
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     Objects.requireNonNull(javaClass);
     return float[].class.equals(javaClass);
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     Objects.requireNonNull(value);
     return value instanceof float[];
   }
@@ -59,33 +59,33 @@ public class FloatListToArrayCodec extends AbstractPrimitiveListToArrayCodec<flo
 
   @Override
   protected void serializeElement(
-      @NonNull ByteBuffer output,
-      @NonNull float[] array,
+      @Nonnull ByteBuffer output,
+      @Nonnull float[] array,
       int index,
-      @NonNull ProtocolVersion protocolVersion) {
+      @Nonnull ProtocolVersion protocolVersion) {
     output.putFloat(array[index]);
   }
 
   @Override
   protected void deserializeElement(
-      @NonNull ByteBuffer input,
-      @NonNull float[] array,
+      @Nonnull ByteBuffer input,
+      @Nonnull float[] array,
       int index,
-      @NonNull ProtocolVersion protocolVersion) {
+      @Nonnull ProtocolVersion protocolVersion) {
     array[index] = input.getFloat();
   }
 
   @Override
-  protected void formatElement(@NonNull StringBuilder output, @NonNull float[] array, int index) {
+  protected void formatElement(@Nonnull StringBuilder output, @Nonnull float[] array, int index) {
     output.append(array[index]);
   }
 
   @Override
-  protected void parseElement(@NonNull String input, @NonNull float[] array, int index) {
+  protected void parseElement(@Nonnull String input, @Nonnull float[] array, int index) {
     array[index] = Float.parseFloat(input);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   protected float[] newInstance(int size) {
     return new float[size];

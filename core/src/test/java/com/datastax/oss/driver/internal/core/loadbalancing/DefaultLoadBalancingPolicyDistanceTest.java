@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -45,7 +45,7 @@ public class DefaultLoadBalancingPolicyDistanceTest extends BasicLoadBalancingPo
                     .hasMessageContaining("Current DCs in this cluster are: dc1, dc2"));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   protected BasicLoadBalancingPolicy createPolicy() {
     return new DefaultLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);

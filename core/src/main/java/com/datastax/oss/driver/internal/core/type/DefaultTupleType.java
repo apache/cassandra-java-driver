@@ -25,11 +25,11 @@ import com.datastax.oss.driver.internal.core.data.DefaultTupleValue;
 import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.List;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -43,31 +43,31 @@ public class DefaultTupleType implements TupleType, Serializable {
   private transient volatile AttachmentPoint attachmentPoint;
 
   public DefaultTupleType(
-      @NonNull List<DataType> componentTypes, @NonNull AttachmentPoint attachmentPoint) {
+      @Nonnull List<DataType> componentTypes, @Nonnull AttachmentPoint attachmentPoint) {
     Preconditions.checkNotNull(componentTypes);
     this.componentTypes = ImmutableList.copyOf(componentTypes);
     this.attachmentPoint = attachmentPoint;
   }
 
-  public DefaultTupleType(@NonNull List<DataType> componentTypes) {
+  public DefaultTupleType(@Nonnull List<DataType> componentTypes) {
     this(componentTypes, AttachmentPoint.NONE);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<DataType> getComponentTypes() {
     return componentTypes;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public TupleValue newValue() {
     return new DefaultTupleValue(this);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public TupleValue newValue(@NonNull Object... values) {
+  public TupleValue newValue(@Nonnull Object... values) {
     return new DefaultTupleValue(this, values);
   }
 
@@ -77,14 +77,14 @@ public class DefaultTupleType implements TupleType, Serializable {
   }
 
   @Override
-  public void attach(@NonNull AttachmentPoint attachmentPoint) {
+  public void attach(@Nonnull AttachmentPoint attachmentPoint) {
     this.attachmentPoint = attachmentPoint;
     for (DataType componentType : componentTypes) {
       componentType.attach(attachmentPoint);
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public AttachmentPoint getAttachmentPoint() {
     return attachmentPoint;

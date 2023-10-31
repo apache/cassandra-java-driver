@@ -22,13 +22,13 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.internal.core.data.IdentifierIndex;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -54,47 +54,47 @@ public class DefaultColumnDefinitions implements ColumnDefinitions, Serializable
     return definitions.size();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ColumnDefinition get(int i) {
     return definitions.get(i);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Iterator<ColumnDefinition> iterator() {
     return definitions.iterator();
   }
 
   @Override
-  public boolean contains(@NonNull String name) {
+  public boolean contains(@Nonnull String name) {
     return index.firstIndexOf(name) >= 0;
   }
 
   @Override
-  public boolean contains(@NonNull CqlIdentifier id) {
+  public boolean contains(@Nonnull CqlIdentifier id) {
     return index.firstIndexOf(id) >= 0;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull String name) {
+  public List<Integer> allIndicesOf(@Nonnull String name) {
     return index.allIndicesOf(name);
   }
 
   @Override
-  public int firstIndexOf(@NonNull String name) {
+  public int firstIndexOf(@Nonnull String name) {
     return index.firstIndexOf(name);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+  public List<Integer> allIndicesOf(@Nonnull CqlIdentifier id) {
     return index.allIndicesOf(id);
   }
 
   @Override
-  public int firstIndexOf(@NonNull CqlIdentifier id) {
+  public int firstIndexOf(@Nonnull CqlIdentifier id) {
     return index.firstIndexOf(id);
   }
 
@@ -104,7 +104,7 @@ public class DefaultColumnDefinitions implements ColumnDefinitions, Serializable
   }
 
   @Override
-  public void attach(@NonNull AttachmentPoint attachmentPoint) {
+  public void attach(@Nonnull AttachmentPoint attachmentPoint) {
     for (ColumnDefinition definition : definitions) {
       definition.attach(attachmentPoint);
     }

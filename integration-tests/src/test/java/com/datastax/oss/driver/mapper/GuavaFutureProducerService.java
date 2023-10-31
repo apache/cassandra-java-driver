@@ -29,8 +29,8 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Futures;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.ListenableFuture;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.SettableFuture;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class GuavaFutureProducerService implements MapperResultProducerService {
 
@@ -47,8 +47,8 @@ public class GuavaFutureProducerService implements MapperResultProducerService {
     @Nullable
     @Override
     public ListenableFuture<?> execute(
-        @NonNull Statement<?> statement,
-        @NonNull MapperContext context,
+        @Nonnull Statement<?> statement,
+        @Nonnull MapperContext context,
         @Nullable EntityHelper<?> entityHelper) {
       SettableFuture<Object> result = SettableFuture.create();
       context
@@ -67,11 +67,11 @@ public class GuavaFutureProducerService implements MapperResultProducerService {
 
     @Nullable
     protected abstract Object convert(
-        @NonNull AsyncResultSet resultSet, @Nullable EntityHelper<?> entityHelper);
+        @Nonnull AsyncResultSet resultSet, @Nullable EntityHelper<?> entityHelper);
 
     @Nullable
     @Override
-    public ListenableFuture<?> wrapError(@NonNull Exception e) {
+    public ListenableFuture<?> wrapError(@Nonnull Exception e) {
       return Futures.immediateFailedFuture(e);
     }
   }
@@ -82,14 +82,14 @@ public class GuavaFutureProducerService implements MapperResultProducerService {
         new GenericType<ListenableFuture<Void>>() {};
 
     @Override
-    public boolean canProduce(@NonNull GenericType<?> resultType) {
+    public boolean canProduce(@Nonnull GenericType<?> resultType) {
       return resultType.equals(PRODUCED_TYPE);
     }
 
     @Nullable
     @Override
     protected Object convert(
-        @NonNull AsyncResultSet resultSet, @Nullable EntityHelper<?> entityHelper) {
+        @Nonnull AsyncResultSet resultSet, @Nullable EntityHelper<?> entityHelper) {
       // ignore results
       return null;
     }
@@ -98,14 +98,14 @@ public class GuavaFutureProducerService implements MapperResultProducerService {
   public static class SingleEntityListenableFutureProducer extends ListenableFutureProducer {
 
     @Override
-    public boolean canProduce(@NonNull GenericType<?> resultType) {
+    public boolean canProduce(@Nonnull GenericType<?> resultType) {
       return resultType.getRawType().equals(ListenableFuture.class);
     }
 
     @Nullable
     @Override
     protected Object convert(
-        @NonNull AsyncResultSet resultSet, @Nullable EntityHelper<?> entityHelper) {
+        @Nonnull AsyncResultSet resultSet, @Nullable EntityHelper<?> entityHelper) {
       assert entityHelper != null;
       Row row = resultSet.one();
       return (row == null) ? null : entityHelper.get(row, false);

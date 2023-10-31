@@ -23,11 +23,11 @@ import com.datastax.oss.driver.api.core.AsyncPagingIterable;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -54,7 +54,7 @@ public abstract class ReactiveResultSetBase<ResultSetT extends AsyncPagingIterab
   }
 
   @Override
-  public void subscribe(@NonNull Subscriber<? super ReactiveRow> subscriber) {
+  public void subscribe(@Nonnull Subscriber<? super ReactiveRow> subscriber) {
     // As per rule 1.9, we need to throw an NPE if subscriber is null
     Objects.requireNonNull(subscriber, "Subscriber cannot be null");
     // As per rule 1.11, this publisher is allowed to support only one subscriber.
@@ -85,19 +85,19 @@ public abstract class ReactiveResultSetBase<ResultSetT extends AsyncPagingIterab
     // As per 2.13, this method must return normally (i.e. not throw)
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Publisher<? extends ColumnDefinitions> getColumnDefinitions() {
     return columnDefinitionsPublisher;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Publisher<? extends ExecutionInfo> getExecutionInfos() {
     return executionInfosPublisher;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Publisher<Boolean> wasApplied() {
     return wasAppliedPublisher;

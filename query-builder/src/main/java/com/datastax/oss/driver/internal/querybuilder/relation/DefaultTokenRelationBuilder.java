@@ -23,8 +23,8 @@ import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.relation.TokenRelationBuilder;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.TokenLeftOperand;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -32,13 +32,13 @@ public class DefaultTokenRelationBuilder implements TokenRelationBuilder<Relatio
 
   private final Iterable<CqlIdentifier> identifiers;
 
-  public DefaultTokenRelationBuilder(@NonNull Iterable<CqlIdentifier> identifiers) {
+  public DefaultTokenRelationBuilder(@Nonnull Iterable<CqlIdentifier> identifiers) {
     this.identifiers = identifiers;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Relation build(@NonNull String operator, @Nullable Term rightOperand) {
+  public Relation build(@Nonnull String operator, @Nullable Term rightOperand) {
     return new DefaultRelation(new TokenLeftOperand(identifiers), operator, rightOperand);
   }
 
@@ -50,15 +50,15 @@ public class DefaultTokenRelationBuilder implements TokenRelationBuilder<Relatio
     private final TokenRelationBuilder<Relation> delegate;
 
     public Fluent(
-        @NonNull OngoingWhereClause<StatementT> statement,
-        @NonNull Iterable<CqlIdentifier> identifiers) {
+        @Nonnull OngoingWhereClause<StatementT> statement,
+        @Nonnull Iterable<CqlIdentifier> identifiers) {
       this.statement = statement;
       this.delegate = new DefaultTokenRelationBuilder(identifiers);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public StatementT build(@NonNull String operator, @Nullable Term rightOperand) {
+    public StatementT build(@Nonnull String operator, @Nullable Term rightOperand) {
       return statement.where(delegate.build(operator, rightOperand));
     }
   }

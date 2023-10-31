@@ -21,8 +21,6 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -34,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /** A data structure that provides methods to retrieve its values via a name. */
 public interface GettableByName extends GettableByIndex, AccessibleByName {
@@ -58,7 +58,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default ByteBuffer getBytesUnsafe(@NonNull String name) {
+  default ByteBuffer getBytesUnsafe(@Nonnull String name) {
     return getBytesUnsafe(firstIndexOf(name));
   }
 
@@ -73,7 +73,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    *
    * @throws IllegalArgumentException if the name is invalid.
    */
-  default boolean isNull(@NonNull String name) {
+  default boolean isNull(@Nonnull String name) {
     return isNull(firstIndexOf(name));
   }
 
@@ -97,7 +97,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default <ValueT> ValueT get(@NonNull String name, @NonNull TypeCodec<ValueT> codec) {
+  default <ValueT> ValueT get(@Nonnull String name, @Nonnull TypeCodec<ValueT> codec) {
     return get(firstIndexOf(name), codec);
   }
 
@@ -120,7 +120,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @Nullable
-  default <ValueT> ValueT get(@NonNull String name, @NonNull GenericType<ValueT> targetType) {
+  default <ValueT> ValueT get(@Nonnull String name, @Nonnull GenericType<ValueT> targetType) {
     return get(firstIndexOf(name), targetType);
   }
 
@@ -142,7 +142,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @Nullable
-  default <ValueT> ValueT get(@NonNull String name, @NonNull Class<ValueT> targetClass) {
+  default <ValueT> ValueT get(@Nonnull String name, @Nonnull Class<ValueT> targetClass) {
     return get(firstIndexOf(name), targetClass);
   }
 
@@ -173,7 +173,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
   @Nullable
-  default Object getObject(@NonNull String name) {
+  default Object getObject(@Nonnull String name) {
     return getObject(firstIndexOf(name));
   }
 
@@ -194,7 +194,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    *
    * @throws IllegalArgumentException if the name is invalid.
    */
-  default boolean getBoolean(@NonNull String name) {
+  default boolean getBoolean(@Nonnull String name) {
     return getBoolean(firstIndexOf(name));
   }
 
@@ -203,7 +203,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    *     {@link #getBoolean(String)}.
    */
   @Deprecated
-  default boolean getBool(@NonNull String name) {
+  default boolean getBool(@Nonnull String name) {
     return getBoolean(name);
   }
 
@@ -224,7 +224,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    *
    * @throws IllegalArgumentException if the name is invalid.
    */
-  default byte getByte(@NonNull String name) {
+  default byte getByte(@Nonnull String name) {
     return getByte(firstIndexOf(name));
   }
 
@@ -245,7 +245,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    *
    * @throws IllegalArgumentException if the name is invalid.
    */
-  default double getDouble(@NonNull String name) {
+  default double getDouble(@Nonnull String name) {
     return getDouble(firstIndexOf(name));
   }
 
@@ -266,7 +266,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    *
    * @throws IllegalArgumentException if the name is invalid.
    */
-  default float getFloat(@NonNull String name) {
+  default float getFloat(@Nonnull String name) {
     return getFloat(firstIndexOf(name));
   }
 
@@ -287,7 +287,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    *
    * @throws IllegalArgumentException if the name is invalid.
    */
-  default int getInt(@NonNull String name) {
+  default int getInt(@Nonnull String name) {
     return getInt(firstIndexOf(name));
   }
 
@@ -308,7 +308,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    *
    * @throws IllegalArgumentException if the name is invalid.
    */
-  default long getLong(@NonNull String name) {
+  default long getLong(@Nonnull String name) {
     return getLong(firstIndexOf(name));
   }
 
@@ -329,7 +329,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    *
    * @throws IllegalArgumentException if the name is invalid.
    */
-  default short getShort(@NonNull String name) {
+  default short getShort(@Nonnull String name) {
     return getShort(firstIndexOf(name));
   }
 
@@ -347,7 +347,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default Instant getInstant(@NonNull String name) {
+  default Instant getInstant(@Nonnull String name) {
     return getInstant(firstIndexOf(name));
   }
 
@@ -365,7 +365,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default LocalDate getLocalDate(@NonNull String name) {
+  default LocalDate getLocalDate(@Nonnull String name) {
     return getLocalDate(firstIndexOf(name));
   }
 
@@ -383,7 +383,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default LocalTime getLocalTime(@NonNull String name) {
+  default LocalTime getLocalTime(@Nonnull String name) {
     return getLocalTime(firstIndexOf(name));
   }
 
@@ -401,7 +401,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default ByteBuffer getByteBuffer(@NonNull String name) {
+  default ByteBuffer getByteBuffer(@Nonnull String name) {
     return getByteBuffer(firstIndexOf(name));
   }
 
@@ -419,7 +419,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default String getString(@NonNull String name) {
+  default String getString(@Nonnull String name) {
     return getString(firstIndexOf(name));
   }
 
@@ -437,7 +437,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default BigInteger getBigInteger(@NonNull String name) {
+  default BigInteger getBigInteger(@Nonnull String name) {
     return getBigInteger(firstIndexOf(name));
   }
 
@@ -455,7 +455,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default BigDecimal getBigDecimal(@NonNull String name) {
+  default BigDecimal getBigDecimal(@Nonnull String name) {
     return getBigDecimal(firstIndexOf(name));
   }
 
@@ -473,7 +473,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default UUID getUuid(@NonNull String name) {
+  default UUID getUuid(@Nonnull String name) {
     return getUuid(firstIndexOf(name));
   }
 
@@ -491,7 +491,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default InetAddress getInetAddress(@NonNull String name) {
+  default InetAddress getInetAddress(@Nonnull String name) {
     return getInetAddress(firstIndexOf(name));
   }
 
@@ -509,7 +509,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default CqlDuration getCqlDuration(@NonNull String name) {
+  default CqlDuration getCqlDuration(@Nonnull String name) {
     return getCqlDuration(firstIndexOf(name));
   }
 
@@ -528,7 +528,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    */
   @Nullable
   default <ElementT extends Number> CqlVector<ElementT> getVector(
-      @NonNull String name, @NonNull Class<ElementT> elementsClass) {
+      @Nonnull String name, @Nonnull Class<ElementT> elementsClass) {
     return getVector(firstIndexOf(name), elementsClass);
   }
 
@@ -552,7 +552,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    *     or if the name is invalid.
    */
   @Nullable
-  default Token getToken(@NonNull String name) {
+  default Token getToken(@Nonnull String name) {
     return getToken(firstIndexOf(name));
   }
 
@@ -578,7 +578,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    */
   @Nullable
   default <ElementT> List<ElementT> getList(
-      @NonNull String name, @NonNull Class<ElementT> elementsClass) {
+      @Nonnull String name, @Nonnull Class<ElementT> elementsClass) {
     return getList(firstIndexOf(name), elementsClass);
   }
 
@@ -604,7 +604,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    */
   @Nullable
   default <ElementT> Set<ElementT> getSet(
-      @NonNull String name, @NonNull Class<ElementT> elementsClass) {
+      @Nonnull String name, @Nonnull Class<ElementT> elementsClass) {
     return getSet(firstIndexOf(name), elementsClass);
   }
 
@@ -630,7 +630,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    */
   @Nullable
   default <KeyT, ValueT> Map<KeyT, ValueT> getMap(
-      @NonNull String name, @NonNull Class<KeyT> keyClass, @NonNull Class<ValueT> valueClass) {
+      @Nonnull String name, @Nonnull Class<KeyT> keyClass, @Nonnull Class<ValueT> valueClass) {
     return getMap(firstIndexOf(name), keyClass, valueClass);
   }
 
@@ -648,7 +648,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default UdtValue getUdtValue(@NonNull String name) {
+  default UdtValue getUdtValue(@Nonnull String name) {
     return getUdtValue(firstIndexOf(name));
   }
 
@@ -666,7 +666,7 @@ public interface GettableByName extends GettableByIndex, AccessibleByName {
    * @throws IllegalArgumentException if the name is invalid.
    */
   @Nullable
-  default TupleValue getTupleValue(@NonNull String name) {
+  default TupleValue getTupleValue(@Nonnull String name) {
     return getTupleValue(firstIndexOf(name));
   }
 }

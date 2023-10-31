@@ -37,11 +37,11 @@ import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.cql.EmptyColumnDefinitions;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.reactivex.Flowable;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nonnull;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -284,7 +284,7 @@ public class DefaultReactiveResultSetIT {
     assertThat(wasApplied).hasSize(1).containsExactly(row.wasApplied());
   }
 
-  @NonNull
+  @Nonnull
   private static BatchStatement createCASBatch() {
     // Build a batch with CAS operations on the same partition (conditional batch updates cannot
     // span multiple partitions).

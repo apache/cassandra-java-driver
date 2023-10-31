@@ -19,13 +19,13 @@ package com.datastax.oss.driver.internal.querybuilder.update;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
 public class AppendSetElementAssignment extends CollectionElementAssignment {
 
-  public AppendSetElementAssignment(@NonNull CqlIdentifier columnId, @NonNull Term element) {
+  public AppendSetElementAssignment(@Nonnull CqlIdentifier columnId, @Nonnull Term element) {
     super(columnId, Operator.APPEND, null, element, '{', '}');
   }
 }

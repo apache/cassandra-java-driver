@@ -18,8 +18,8 @@
 package com.datastax.oss.driver.api.mapper;
 
 import com.datastax.oss.driver.api.core.DriverException;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A runtime issue with the object mapper.
@@ -32,15 +32,15 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  */
 public class MapperException extends DriverException {
 
-  public MapperException(@NonNull String message, @Nullable Throwable cause) {
+  public MapperException(@Nonnull String message, @Nullable Throwable cause) {
     super(message, null, cause, true);
   }
 
-  public MapperException(@NonNull String message) {
+  public MapperException(@Nonnull String message) {
     this(message, null);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new MapperException(getMessage(), this);

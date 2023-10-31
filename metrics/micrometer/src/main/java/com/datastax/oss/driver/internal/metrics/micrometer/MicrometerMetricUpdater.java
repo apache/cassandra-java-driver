@@ -23,7 +23,6 @@ import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.AbstractMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.MetricId;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.DistributionSummary;
 import io.micrometer.core.instrument.Gauge;
@@ -37,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe

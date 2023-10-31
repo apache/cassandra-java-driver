@@ -20,8 +20,8 @@ package com.datastax.dse.driver.api.core.data.geometry;
 import com.datastax.dse.driver.internal.core.data.geometry.DefaultGeometry;
 import com.datastax.dse.driver.internal.core.data.geometry.DefaultPoint;
 import com.esri.core.geometry.ogc.OGCPoint;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
 
 /**
  * The driver-side representation of DSE's {@code Point}.
@@ -43,8 +43,8 @@ public interface Point extends Geometry {
    * @throws IllegalArgumentException if the string does not contain a valid Well-known Text
    *     representation.
    */
-  @NonNull
-  static Point fromWellKnownText(@NonNull String source) {
+  @Nonnull
+  static Point fromWellKnownText(@Nonnull String source) {
     return new DefaultPoint(DefaultGeometry.fromOgcWellKnownText(source, OGCPoint.class));
   }
 
@@ -58,8 +58,8 @@ public interface Point extends Geometry {
    * @throws IllegalArgumentException if the provided {@link ByteBuffer} does not contain a valid
    *     Well-known Binary representation.
    */
-  @NonNull
-  static Point fromWellKnownBinary(@NonNull ByteBuffer source) {
+  @Nonnull
+  static Point fromWellKnownBinary(@Nonnull ByteBuffer source) {
     return new DefaultPoint(DefaultGeometry.fromOgcWellKnownBinary(source, OGCPoint.class));
   }
 
@@ -74,8 +74,8 @@ public interface Point extends Geometry {
    * @throws IllegalArgumentException if the string does not contain a valid <a
    *     href="https://tools.ietf.org/html/rfc7946#appendix-A">GeoJSON Point</a> representation.
    */
-  @NonNull
-  static Point fromGeoJson(@NonNull String source) {
+  @Nonnull
+  static Point fromGeoJson(@Nonnull String source) {
     return new DefaultPoint(DefaultGeometry.fromOgcGeoJson(source, OGCPoint.class));
   }
 
@@ -86,7 +86,7 @@ public interface Point extends Geometry {
    * @param y The Y coordinate of this point (or its latitude in Geographic Coordinate Systems).
    * @return the point represented by coordinates.
    */
-  @NonNull
+  @Nonnull
   static Point fromCoordinates(double x, double y) {
     return new DefaultPoint(x, y);
   }

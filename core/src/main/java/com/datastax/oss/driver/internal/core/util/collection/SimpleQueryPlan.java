@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.internal.core.util.collection;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 /** Query plan where nodes must be provided at construction time. */
@@ -36,7 +36,7 @@ public class SimpleQueryPlan extends QueryPlanBase {
    *
    * @param nodes the nodes to initially fill the queue with.
    */
-  public SimpleQueryPlan(@NonNull Object... nodes) {
+  public SimpleQueryPlan(@Nonnull Object... nodes) {
     this.nodes = nodes;
   }
 

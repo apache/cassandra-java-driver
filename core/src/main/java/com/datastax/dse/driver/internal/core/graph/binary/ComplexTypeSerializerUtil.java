@@ -36,10 +36,10 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.PrimitiveCodec;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.result.RawType;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import javax.annotation.Nullable;
 import org.apache.tinkerpop.gremlin.structure.io.Buffer;
 
 class ComplexTypeSerializerUtil {

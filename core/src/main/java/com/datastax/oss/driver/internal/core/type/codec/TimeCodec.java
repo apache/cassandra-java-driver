@@ -24,11 +24,11 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.Strings;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -37,31 +37,31 @@ public class TimeCodec implements TypeCodec<LocalTime> {
   private static final DateTimeFormatter FORMATTER =
       DateTimeFormatter.ofPattern("HH:mm:ss.SSSSSSSSS");
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<LocalTime> getJavaType() {
     return GenericType.LOCAL_TIME;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.TIME;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof LocalTime;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == LocalTime.class;
   }
 
   @Nullable
   @Override
-  public ByteBuffer encode(@Nullable LocalTime value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable LocalTime value, @Nonnull ProtocolVersion protocolVersion) {
     return (value == null)
         ? null
         : TypeCodecs.BIGINT.encodePrimitive(value.toNanoOfDay(), protocolVersion);
@@ -69,7 +69,7 @@ public class TimeCodec implements TypeCodec<LocalTime> {
 
   @Nullable
   @Override
-  public LocalTime decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public LocalTime decode(@Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return null;
     } else {
@@ -78,7 +78,7 @@ public class TimeCodec implements TypeCodec<LocalTime> {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable LocalTime value) {
     return (value == null) ? "NULL" : Strings.quote(FORMATTER.format(value));

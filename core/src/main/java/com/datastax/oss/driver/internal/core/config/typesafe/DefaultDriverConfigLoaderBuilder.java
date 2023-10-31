@@ -22,9 +22,9 @@ import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableM
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigValueFactory;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -44,15 +44,15 @@ public class DefaultDriverConfigLoaderBuilder
    * @return a new {@link ProfileBuilder} to provide programmatic configuration at a profile level.
    * @see #withProfile(String, Profile)
    */
-  @NonNull
+  @Nonnull
   public static ProfileBuilder profileBuilder() {
     return new ProfileBuilder();
   }
 
   /** Adds configuration for a profile constructed using {@link #profileBuilder()} by name. */
-  @NonNull
+  @Nonnull
   public DefaultDriverConfigLoaderBuilder withProfile(
-      @NonNull String profileName, @NonNull Profile profile) {
+      @Nonnull String profileName, @Nonnull Profile profile) {
     String prefix = "profiles." + profileName + ".";
     for (Map.Entry<String, Object> entry : profile.values.entrySet()) {
       this.with(prefix + entry.getKey(), entry.getValue());
@@ -64,7 +64,7 @@ public class DefaultDriverConfigLoaderBuilder
    * @return constructed {@link DriverConfigLoader} using the configuration passed into this
    *     builder.
    */
-  @NonNull
+  @Nonnull
   public DriverConfigLoader build() {
     // fallback on the default config supplier (config file)
     return new DefaultDriverConfigLoader(
@@ -80,9 +80,9 @@ public class DefaultDriverConfigLoaderBuilder
     return config;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DefaultDriverConfigLoaderBuilder with(@NonNull String path, @Nullable Object value) {
+  public DefaultDriverConfigLoaderBuilder with(@Nonnull String path, @Nullable Object value) {
     values.put(path, value);
     return this;
   }
@@ -98,14 +98,14 @@ public class DefaultDriverConfigLoaderBuilder
 
     private ProfileBuilder() {}
 
-    @NonNull
+    @Nonnull
     @Override
-    public ProfileBuilder with(@NonNull String path, @Nullable Object value) {
+    public ProfileBuilder with(@Nonnull String path, @Nullable Object value) {
       values.put(path, value);
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Profile build() {
       return new Profile(values.build());
     }

@@ -20,7 +20,6 @@ package com.datastax.oss.driver.api.core.config;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.time.Duration;
@@ -28,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.StringJoiner;
+import javax.annotation.Nonnull;
 
 /**
  * A type-safe wrapper around {@link DriverOption}, that encodes the intended value type of each
@@ -65,17 +65,17 @@ public class TypedDriverOption<ValueT> {
   private final GenericType<ValueT> expectedType;
 
   public TypedDriverOption(
-      @NonNull DriverOption rawOption, @NonNull GenericType<ValueT> expectedType) {
+      @Nonnull DriverOption rawOption, @Nonnull GenericType<ValueT> expectedType) {
     this.rawOption = Objects.requireNonNull(rawOption);
     this.expectedType = Objects.requireNonNull(expectedType);
   }
 
-  @NonNull
+  @Nonnull
   public DriverOption getRawOption() {
     return rawOption;
   }
 
-  @NonNull
+  @Nonnull
   public GenericType<ValueT> getExpectedType() {
     return expectedType;
   }

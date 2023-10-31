@@ -20,11 +20,11 @@ package com.datastax.oss.driver.internal.core.protocol;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import com.datastax.oss.protocol.internal.PrimitiveCodec;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.NotThreadSafe;
 
 @NotThreadSafe
@@ -37,22 +37,22 @@ public class FrameToSegmentEncoder extends ChannelOutboundHandlerAdapter {
   private ByteBufSegmentBuilder segmentBuilder;
 
   public FrameToSegmentEncoder(
-      @NonNull PrimitiveCodec<ByteBuf> primitiveCodec,
-      @NonNull FrameCodec<ByteBuf> frameCodec,
-      @NonNull String logPrefix) {
+      @Nonnull PrimitiveCodec<ByteBuf> primitiveCodec,
+      @Nonnull FrameCodec<ByteBuf> frameCodec,
+      @Nonnull String logPrefix) {
     this.primitiveCodec = primitiveCodec;
     this.frameCodec = frameCodec;
     this.logPrefix = logPrefix;
   }
 
   @Override
-  public void handlerAdded(@NonNull ChannelHandlerContext ctx) {
+  public void handlerAdded(@Nonnull ChannelHandlerContext ctx) {
     segmentBuilder = new ByteBufSegmentBuilder(ctx, primitiveCodec, frameCodec, logPrefix);
   }
 
   @Override
   public void write(
-      @NonNull ChannelHandlerContext ctx, @NonNull Object msg, @NonNull ChannelPromise promise)
+      @Nonnull ChannelHandlerContext ctx, @Nonnull Object msg, @Nonnull ChannelPromise promise)
       throws Exception {
     if (msg instanceof Frame) {
       segmentBuilder.addFrame(((Frame) msg), promise);
@@ -62,7 +62,7 @@ public class FrameToSegmentEncoder extends ChannelOutboundHandlerAdapter {
   }
 
   @Override
-  public void flush(@NonNull ChannelHandlerContext ctx) throws Exception {
+  public void flush(@Nonnull ChannelHandlerContext ctx) throws Exception {
     segmentBuilder.flush();
     super.flush(ctx);
   }

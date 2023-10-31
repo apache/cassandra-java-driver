@@ -20,7 +20,7 @@ package com.datastax.oss.driver.api.querybuilder.schema;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface CreateAggregateEnd extends BuildableQuery {
 
@@ -28,22 +28,22 @@ public interface CreateAggregateEnd extends BuildableQuery {
    * Adds INITCOND to the aggregate query. Defines the initial condition, values, of the first
    * parameter in the SFUNC.
    */
-  @NonNull
-  CreateAggregateEnd withInitCond(@NonNull Term term);
+  @Nonnull
+  CreateAggregateEnd withInitCond(@Nonnull Term term);
 
   /**
    * Adds FINALFUNC to the create aggregate query. This is used to specify what type is returned
    * from the state function.
    */
-  @NonNull
-  CreateAggregateEnd withFinalFunc(@NonNull CqlIdentifier finalFunc);
+  @Nonnull
+  CreateAggregateEnd withFinalFunc(@Nonnull CqlIdentifier finalFunc);
 
   /**
    * Shortcut for {@link #withFinalFunc(CqlIdentifier)
    * withFinalFunc(CqlIdentifier.fromCql(finalFuncName))}.
    */
-  @NonNull
-  default CreateAggregateEnd withFinalFunc(@NonNull String finalFuncName) {
+  @Nonnull
+  default CreateAggregateEnd withFinalFunc(@Nonnull String finalFuncName) {
     return withFinalFunc(CqlIdentifier.fromCql(finalFuncName));
   }
 }

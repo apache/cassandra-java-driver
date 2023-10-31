@@ -18,10 +18,10 @@
 package com.datastax.oss.driver.api.core.auth;
 
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * An authenticator that performs all of its operations synchronously, on the calling thread.
@@ -76,19 +76,19 @@ public interface SyncAuthenticator extends Authenticator {
    */
   void onAuthenticationSuccessSync(@Nullable ByteBuffer token);
 
-  @NonNull
+  @Nonnull
   @Override
   default CompletionStage<ByteBuffer> initialResponse() {
     return CompletableFutures.wrap(this::initialResponseSync);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default CompletionStage<ByteBuffer> evaluateChallenge(@Nullable ByteBuffer challenge) {
     return CompletableFutures.wrap(() -> evaluateChallengeSync(challenge));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default CompletionStage<Void> onAuthenticationSuccess(@Nullable ByteBuffer token) {
     return CompletableFutures.wrap(

@@ -198,11 +198,11 @@ Make sure you import the types from `net.jcip`, there are homonyms in the classp
 
 ### Nullability annotations
 
-We use the [Spotbugs annotations](https://spotbugs.github.io) to document nullability of parameters,
+We use the [jsr305 annotations](http://code.google.com/p/jsr-305/) to document nullability of parameters,
 method return types and class members.
 
-Please annotate any new class or interface with the appropriate annotations: `@NonNull`, `@Nullable`. Make sure you import 
-the types from `edu.umd.cs.findbugs.annotations`, there are homonyms in the classpath.
+Please annotate any new class or interface with the appropriate annotations: `@Nonnull`, `@Nullable`. Make sure you import 
+the types from `javax.annotation`, there are homonyms in the classpath.
 
 
 ## Coding style -- test code

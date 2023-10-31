@@ -21,12 +21,12 @@ import com.datastax.oss.driver.api.core.type.codec.MappingCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.codec.TimestampCodec;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -57,7 +57,7 @@ public class LocalTimestampCodec extends MappingCodec<Instant, LocalDateTime> {
    * timeZone} will also be used to parse CQL timestamp literals that do not include any time zone
    * information.
    */
-  public LocalTimestampCodec(@NonNull ZoneId timeZone) {
+  public LocalTimestampCodec(@Nonnull ZoneId timeZone) {
     super(
         new TimestampCodec(Objects.requireNonNull(timeZone, "timeZone cannot be null")),
         GenericType.LOCAL_DATE_TIME);
@@ -65,7 +65,7 @@ public class LocalTimestampCodec extends MappingCodec<Instant, LocalDateTime> {
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     Objects.requireNonNull(value);
     return value instanceof LocalDateTime;
   }

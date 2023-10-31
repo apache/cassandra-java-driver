@@ -45,7 +45,6 @@ import com.datastax.oss.driver.shaded.guava.common.cache.RemovalListener;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
@@ -59,6 +58,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import javax.annotation.Nonnull;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -119,7 +119,7 @@ public class PreparedStatementCachingIT {
         LoggerFactory.getLogger(PreparedStatementCachingIT.TestCqlPrepareAsyncProcessor.class);
 
     private static RemovalListener<PrepareRequest, CompletableFuture<PreparedStatement>>
-        buildCacheRemoveCallback(@NonNull Optional<DefaultDriverContext> context) {
+        buildCacheRemoveCallback(@Nonnull Optional<DefaultDriverContext> context) {
       return (evt) -> {
         try {
           CompletableFuture<PreparedStatement> future = evt.getValue();
@@ -132,7 +132,7 @@ public class PreparedStatementCachingIT {
       };
     }
 
-    public TestCqlPrepareAsyncProcessor(@NonNull Optional<DefaultDriverContext> context) {
+    public TestCqlPrepareAsyncProcessor(@Nonnull Optional<DefaultDriverContext> context) {
       // Default CqlPrepareAsyncProcessor uses weak values here as well.  We avoid doing so
       // to prevent cache entries from unexpectedly disappearing mid-test.
       super(
@@ -166,7 +166,7 @@ public class PreparedStatementCachingIT {
   private static class TestSessionBuilder extends SessionBuilder {
 
     @Override
-    protected Object wrap(@NonNull CqlSession defaultSession) {
+    protected Object wrap(@Nonnull CqlSession defaultSession) {
       return defaultSession;
     }
 

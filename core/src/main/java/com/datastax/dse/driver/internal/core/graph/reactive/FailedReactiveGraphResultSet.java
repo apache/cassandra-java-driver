@@ -21,7 +21,7 @@ import com.datastax.dse.driver.api.core.graph.reactive.ReactiveGraphNode;
 import com.datastax.dse.driver.api.core.graph.reactive.ReactiveGraphResultSet;
 import com.datastax.dse.driver.internal.core.cql.reactive.FailedPublisher;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import org.reactivestreams.Publisher;
 
 public class FailedReactiveGraphResultSet extends FailedPublisher<ReactiveGraphNode>
@@ -31,7 +31,7 @@ public class FailedReactiveGraphResultSet extends FailedPublisher<ReactiveGraphN
     super(error);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Publisher<? extends ExecutionInfo> getExecutionInfos() {
     return new FailedPublisher<>(error);

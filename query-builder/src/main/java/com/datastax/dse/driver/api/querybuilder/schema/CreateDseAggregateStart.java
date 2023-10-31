@@ -21,21 +21,21 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface CreateDseAggregateStart {
   /**
    * Adds IF NOT EXISTS to the create aggregate specification. This indicates that the aggregate
    * should not be created if it already exists.
    */
-  @NonNull
+  @Nonnull
   CreateDseAggregateStart ifNotExists();
 
   /**
    * Adds OR REPLACE to the create aggregate specification. This indicates that the aggregate should
    * replace an existing aggregate with the same name if it exists.
    */
-  @NonNull
+  @Nonnull
   CreateDseAggregateStart orReplace();
 
   /**
@@ -46,16 +46,16 @@ public interface CreateDseAggregateStart {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
-  @NonNull
-  CreateDseAggregateStart withParameter(@NonNull DataType paramType);
+  @Nonnull
+  CreateDseAggregateStart withParameter(@Nonnull DataType paramType);
 
   /** Adds SFUNC to the create aggregate specification. This is the state function for each row. */
-  @NonNull
-  CreateDseAggregateStateFunc withSFunc(@NonNull CqlIdentifier sfuncName);
+  @Nonnull
+  CreateDseAggregateStateFunc withSFunc(@Nonnull CqlIdentifier sfuncName);
 
   /** Shortcut for {@link #withSFunc(CqlIdentifier) withSFunc(CqlIdentifier.fromCql(sfuncName))}. */
-  @NonNull
-  default CreateDseAggregateStateFunc withSFunc(@NonNull String sfuncName) {
+  @Nonnull
+  default CreateDseAggregateStateFunc withSFunc(@Nonnull String sfuncName) {
     return withSFunc(CqlIdentifier.fromCql(sfuncName));
   }
 }

@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.api.querybuilder.update.Assignment;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -45,7 +45,7 @@ public abstract class CollectionAssignment implements Assignment {
   private final Term value;
 
   protected CollectionAssignment(
-      @NonNull CqlIdentifier columnId, @NonNull Operator operator, @NonNull Term value) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Operator operator, @Nonnull Term value) {
     Preconditions.checkNotNull(columnId);
     Preconditions.checkNotNull(value);
     this.columnId = columnId;
@@ -54,7 +54,7 @@ public abstract class CollectionAssignment implements Assignment {
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     builder.append(String.format(operator.pattern, columnId.asCql(true), buildRightOperand()));
   }
 
@@ -71,12 +71,12 @@ public abstract class CollectionAssignment implements Assignment {
     return operator == Operator.REMOVE && value.isIdempotent();
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getColumnId() {
     return columnId;
   }
 
-  @NonNull
+  @Nonnull
   public Term getValue() {
     return value;
   }

@@ -19,12 +19,12 @@ package com.datastax.oss.driver.internal.core.loadbalancing.nodeset;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -35,13 +35,13 @@ public class SingleDcNodeSet implements NodeSet {
   private final String dc;
   private final Set<String> dcs;
 
-  public SingleDcNodeSet(@NonNull String dc) {
+  public SingleDcNodeSet(@Nonnull String dc) {
     this.dc = dc;
     dcs = ImmutableSet.of(dc);
   }
 
   @Override
-  public boolean add(@NonNull Node node) {
+  public boolean add(@Nonnull Node node) {
     if (Objects.equals(node.getDatacenter(), dc)) {
       return nodes.add(node);
     }
@@ -49,7 +49,7 @@ public class SingleDcNodeSet implements NodeSet {
   }
 
   @Override
-  public boolean remove(@NonNull Node node) {
+  public boolean remove(@Nonnull Node node) {
     if (Objects.equals(node.getDatacenter(), dc)) {
       return nodes.remove(node);
     }
@@ -57,7 +57,7 @@ public class SingleDcNodeSet implements NodeSet {
   }
 
   @Override
-  @NonNull
+  @Nonnull
   public Set<Node> dc(@Nullable String dc) {
     if (Objects.equals(this.dc, dc)) {
       return nodes;

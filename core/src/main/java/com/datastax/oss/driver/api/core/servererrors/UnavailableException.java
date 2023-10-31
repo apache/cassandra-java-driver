@@ -24,7 +24,7 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * Thrown when the coordinator knows there is not enough replicas alive to perform a query with the
@@ -41,8 +41,8 @@ public class UnavailableException extends QueryExecutionException {
   private final int alive;
 
   public UnavailableException(
-      @NonNull Node coordinator,
-      @NonNull ConsistencyLevel consistencyLevel,
+      @Nonnull Node coordinator,
+      @Nonnull ConsistencyLevel consistencyLevel,
       int required,
       int alive) {
     this(
@@ -58,9 +58,9 @@ public class UnavailableException extends QueryExecutionException {
   }
 
   private UnavailableException(
-      @NonNull Node coordinator,
-      @NonNull String message,
-      @NonNull ConsistencyLevel consistencyLevel,
+      @Nonnull Node coordinator,
+      @Nonnull String message,
+      @Nonnull ConsistencyLevel consistencyLevel,
       int required,
       int alive,
       ExecutionInfo executionInfo,
@@ -72,7 +72,7 @@ public class UnavailableException extends QueryExecutionException {
   }
 
   /** The consistency level of the operation triggering this exception. */
-  @NonNull
+  @Nonnull
   public ConsistencyLevel getConsistencyLevel() {
     return consistencyLevel;
   }
@@ -93,7 +93,7 @@ public class UnavailableException extends QueryExecutionException {
     return alive;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new UnavailableException(

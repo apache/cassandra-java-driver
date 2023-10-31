@@ -199,9 +199,9 @@
         <version>1.0-1</version>
       </dependency>
       <dependency>
-        <groupId>com.github.spotbugs</groupId>
-        <artifactId>spotbugs-annotations</artifactId>
-        <version>3.1.12</version>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>jsr305</artifactId>
+        <version>3.0.2</version>
       </dependency>
       <dependency>
         <groupId>com.squareup</groupId>
@@ -556,8 +556,39 @@
             <analysisConfiguration>
               <revapi.ignore>
                 <item>
-                  <!-- We don't consider this a problem -->
                   <code>java.class.externalClassExposedInAPI</code>
+                  <justification>We don't consider this a problem</justification>
+                </item>
+                <!-- Skip annotation checks for 4.17.0 -> 4.18.0 because spotbugs was removed -->
+                <item>
+                  <code>java.annotation.removed</code>
+                  <annotation>@edu.umd.cs.findbugs.annotations.Nullable</annotation>
+                  <justification>replace spotbugs with jsr305</justification>
+                </item>
+                <item>
+                  <code>java.annotation.removed</code>
+                  <annotation>@edu.umd.cs.findbugs.annotations.NonNull</annotation>
+                  <justification>replace spotbugs with jsr305</justification>
+                </item>
+                <item>
+                  <code>java.annotation.removed</code>
+                  <annotation>@edu.umd.cs.findbugs.annotations.CheckReturnValue</annotation>
+                  <justification>replace spotbugs with jsr305</justification>
+                </item>
+                <item>
+                  <code>java.annotation.added</code>
+                  <annotation>@javax.annotation.Nullable</annotation>
+                  <justification>replace spotbugs with jsr305</justification>
+                </item>
+                <item>
+                  <code>java.annotation.added</code>
+                  <annotation>@javax.annotation.Nonnull</annotation>
+                  <justification>replace spotbugs with jsr305</justification>
+                </item>
+                <item>
+                  <code>java.annotation.added</code>
+                  <annotation>@javax.annotation.CheckReturnValue</annotation>
+                  <justification>replace spotbugs with jsr305</justification>
                 </item>
               </revapi.ignore>
             </analysisConfiguration>

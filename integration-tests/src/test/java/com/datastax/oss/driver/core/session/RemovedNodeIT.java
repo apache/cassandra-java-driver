@@ -28,10 +28,10 @@ import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nonnull;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -75,18 +75,18 @@ public class RemovedNodeIT {
     volatile Node removedNode;
 
     @Override
-    public void onRemove(@NonNull Node node) {
+    public void onRemove(@Nonnull Node node) {
       removedNode = node;
     }
 
     @Override
-    public void onAdd(@NonNull Node node) {}
+    public void onAdd(@Nonnull Node node) {}
 
     @Override
-    public void onUp(@NonNull Node node) {}
+    public void onUp(@Nonnull Node node) {}
 
     @Override
-    public void onDown(@NonNull Node node) {}
+    public void onDown(@Nonnull Node node) {}
 
     @Override
     public void close() throws Exception {}

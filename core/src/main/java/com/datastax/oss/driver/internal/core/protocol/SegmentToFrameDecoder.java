@@ -20,7 +20,6 @@ package com.datastax.oss.driver.internal.core.protocol;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import com.datastax.oss.protocol.internal.Segment;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.CompositeByteBuf;
@@ -28,6 +27,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,16 +51,16 @@ public class SegmentToFrameDecoder extends MessageToMessageDecoder<Segment<ByteB
   private final List<ByteBuf> accumulatedSlices = new ArrayList<>();
   private int accumulatedLength;
 
-  public SegmentToFrameDecoder(@NonNull FrameCodec<ByteBuf> frameCodec, @NonNull String logPrefix) {
+  public SegmentToFrameDecoder(@Nonnull FrameCodec<ByteBuf> frameCodec, @Nonnull String logPrefix) {
     this.logPrefix = logPrefix;
     this.frameCodec = frameCodec;
   }
 
   @Override
   protected void decode(
-      @NonNull ChannelHandlerContext ctx,
-      @NonNull Segment<ByteBuf> segment,
-      @NonNull List<Object> out) {
+      @Nonnull ChannelHandlerContext ctx,
+      @Nonnull Segment<ByteBuf> segment,
+      @Nonnull List<Object> out) {
     if (segment.isSelfContained) {
       decodeSelfContained(segment, out);
     } else {

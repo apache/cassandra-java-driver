@@ -41,14 +41,14 @@ import com.datastax.oss.driver.internal.querybuilder.update.RemoveAssignment;
 import com.datastax.oss.driver.internal.querybuilder.update.RemoveListElementAssignment;
 import com.datastax.oss.driver.internal.querybuilder.update.RemoveMapEntryAssignment;
 import com.datastax.oss.driver.internal.querybuilder.update.RemoveSetElementAssignment;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /** An assignment that appears after the SET keyword in an UPDATE statement. */
 public interface Assignment extends CqlSnippet {
 
   /** Assigns a value to a column, as in {@code SET c=?}. */
-  @NonNull
-  static Assignment setColumn(@NonNull CqlIdentifier columnId, @NonNull Term value) {
+  @Nonnull
+  static Assignment setColumn(@Nonnull CqlIdentifier columnId, @Nonnull Term value) {
     return new DefaultAssignment(new ColumnLeftOperand(columnId), "=", value);
   }
 
@@ -56,15 +56,15 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #setColumn(CqlIdentifier, Term)
    * setColumn(CqlIdentifier.fromCql(columnName), value)}.
    */
-  @NonNull
-  static Assignment setColumn(@NonNull String columnName, @NonNull Term value) {
+  @Nonnull
+  static Assignment setColumn(@Nonnull String columnName, @Nonnull Term value) {
     return setColumn(CqlIdentifier.fromCql(columnName), value);
   }
 
   /** Assigns a value to a field of a UDT, as in {@code SET address.zip=?}. */
-  @NonNull
+  @Nonnull
   static Assignment setField(
-      @NonNull CqlIdentifier columnId, @NonNull CqlIdentifier fieldId, @NonNull Term value) {
+      @Nonnull CqlIdentifier columnId, @Nonnull CqlIdentifier fieldId, @Nonnull Term value) {
     return new DefaultAssignment(new FieldLeftOperand(columnId, fieldId), "=", value);
   }
 
@@ -72,16 +72,16 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #setField(CqlIdentifier, CqlIdentifier, Term)
    * setField(CqlIdentifier.fromCql(columnName), CqlIdentifier.fromCql(fieldName), value)}.
    */
-  @NonNull
+  @Nonnull
   static Assignment setField(
-      @NonNull String columnName, @NonNull String fieldName, @NonNull Term value) {
+      @Nonnull String columnName, @Nonnull String fieldName, @Nonnull Term value) {
     return setField(CqlIdentifier.fromCql(columnName), CqlIdentifier.fromCql(fieldName), value);
   }
 
   /** Assigns a value to an entry in a map column, as in {@code SET map[?]=?}. */
-  @NonNull
+  @Nonnull
   static Assignment setMapValue(
-      @NonNull CqlIdentifier columnId, @NonNull Term key, @NonNull Term value) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term key, @Nonnull Term value) {
     return new DefaultAssignment(new ColumnComponentLeftOperand(columnId, key), "=", value);
   }
 
@@ -89,16 +89,16 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #setMapValue(CqlIdentifier, Term, Term)
    * setMapValue(CqlIdentifier.fromCql(columnName), index, value)}.
    */
-  @NonNull
+  @Nonnull
   static Assignment setMapValue(
-      @NonNull String columnName, @NonNull Term key, @NonNull Term value) {
+      @Nonnull String columnName, @Nonnull Term key, @Nonnull Term value) {
     return setMapValue(CqlIdentifier.fromCql(columnName), key, value);
   }
 
   /** Assigns a value to an index in a list column, as in {@code SET list[?]=?}. */
-  @NonNull
+  @Nonnull
   static Assignment setListValue(
-      @NonNull CqlIdentifier columnId, @NonNull Term index, @NonNull Term value) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term index, @Nonnull Term value) {
     return new DefaultAssignment(new ColumnComponentLeftOperand(columnId, index), "=", value);
   }
 
@@ -106,15 +106,15 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #setListValue(CqlIdentifier, Term, Term)
    * setMapValue(CqlIdentifier.fromCql(columnName), index, value)}.
    */
-  @NonNull
+  @Nonnull
   static Assignment setListValue(
-      @NonNull String columnName, @NonNull Term index, @NonNull Term value) {
+      @Nonnull String columnName, @Nonnull Term index, @Nonnull Term value) {
     return setListValue(CqlIdentifier.fromCql(columnName), index, value);
   }
 
   /** Increments a counter, as in {@code SET c=c+?}. */
-  @NonNull
-  static Assignment increment(@NonNull CqlIdentifier columnId, @NonNull Term amount) {
+  @Nonnull
+  static Assignment increment(@Nonnull CqlIdentifier columnId, @Nonnull Term amount) {
     return new IncrementAssignment(columnId, amount);
   }
 
@@ -122,26 +122,26 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #increment(CqlIdentifier, Term)
    * increment(CqlIdentifier.fromCql(columnName), amount)}
    */
-  @NonNull
-  static Assignment increment(@NonNull String columnName, @NonNull Term amount) {
+  @Nonnull
+  static Assignment increment(@Nonnull String columnName, @Nonnull Term amount) {
     return increment(CqlIdentifier.fromCql(columnName), amount);
   }
 
   /** Increments a counter by 1, as in {@code SET c=c+1} . */
-  @NonNull
-  static Assignment increment(@NonNull CqlIdentifier columnId) {
+  @Nonnull
+  static Assignment increment(@Nonnull CqlIdentifier columnId) {
     return increment(columnId, QueryBuilder.literal(1));
   }
 
   /** Shortcut for {@link #increment(CqlIdentifier) CqlIdentifier.fromCql(columnName)}. */
-  @NonNull
-  static Assignment increment(@NonNull String columnName) {
+  @Nonnull
+  static Assignment increment(@Nonnull String columnName) {
     return increment(CqlIdentifier.fromCql(columnName));
   }
 
   /** Decrements a counter, as in {@code SET c=c-?}. */
-  @NonNull
-  static Assignment decrement(@NonNull CqlIdentifier columnId, @NonNull Term amount) {
+  @Nonnull
+  static Assignment decrement(@Nonnull CqlIdentifier columnId, @Nonnull Term amount) {
     return new DecrementAssignment(columnId, amount);
   }
 
@@ -149,20 +149,20 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #decrement(CqlIdentifier, Term)
    * decrement(CqlIdentifier.fromCql(columnName), amount)}
    */
-  @NonNull
-  static Assignment decrement(@NonNull String columnName, @NonNull Term amount) {
+  @Nonnull
+  static Assignment decrement(@Nonnull String columnName, @Nonnull Term amount) {
     return decrement(CqlIdentifier.fromCql(columnName), amount);
   }
 
   /** Decrements a counter by 1, as in {@code SET c=c-1} . */
-  @NonNull
-  static Assignment decrement(@NonNull CqlIdentifier columnId) {
+  @Nonnull
+  static Assignment decrement(@Nonnull CqlIdentifier columnId) {
     return decrement(columnId, QueryBuilder.literal(1));
   }
 
   /** Shortcut for {@link #decrement(CqlIdentifier) CqlIdentifier.fromCql(columnName)}. */
-  @NonNull
-  static Assignment decrement(@NonNull String columnName) {
+  @Nonnull
+  static Assignment decrement(@Nonnull String columnName) {
     return decrement(CqlIdentifier.fromCql(columnName));
   }
 
@@ -171,8 +171,8 @@ public interface Assignment extends CqlSnippet {
    *
    * <p>The term must be a collection of the same type as the column.
    */
-  @NonNull
-  static Assignment append(@NonNull CqlIdentifier columnId, @NonNull Term suffix) {
+  @Nonnull
+  static Assignment append(@Nonnull CqlIdentifier columnId, @Nonnull Term suffix) {
     return new AppendAssignment(columnId, suffix);
   }
 
@@ -180,8 +180,8 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #append(CqlIdentifier, Term) append(CqlIdentifier.fromCql(columnName),
    * suffix)}.
    */
-  @NonNull
-  static Assignment append(@NonNull String columnName, @NonNull Term suffix) {
+  @Nonnull
+  static Assignment append(@Nonnull String columnName, @Nonnull Term suffix) {
     return append(CqlIdentifier.fromCql(columnName), suffix);
   }
 
@@ -190,8 +190,8 @@ public interface Assignment extends CqlSnippet {
    *
    * <p>The term must be of the same type as the column's elements.
    */
-  @NonNull
-  static Assignment appendListElement(@NonNull CqlIdentifier columnId, @NonNull Term suffix) {
+  @Nonnull
+  static Assignment appendListElement(@Nonnull CqlIdentifier columnId, @Nonnull Term suffix) {
     return new AppendListElementAssignment(columnId, suffix);
   }
 
@@ -199,8 +199,8 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #appendListElement(CqlIdentifier, Term)
    * appendListElement(CqlIdentifier.fromCql(columnName), suffix)}.
    */
-  @NonNull
-  static Assignment appendListElement(@NonNull String columnName, @NonNull Term suffix) {
+  @Nonnull
+  static Assignment appendListElement(@Nonnull String columnName, @Nonnull Term suffix) {
     return appendListElement(CqlIdentifier.fromCql(columnName), suffix);
   }
 
@@ -209,8 +209,8 @@ public interface Assignment extends CqlSnippet {
    *
    * <p>The term must be of the same type as the column's elements.
    */
-  @NonNull
-  static Assignment appendSetElement(@NonNull CqlIdentifier columnId, @NonNull Term suffix) {
+  @Nonnull
+  static Assignment appendSetElement(@Nonnull CqlIdentifier columnId, @Nonnull Term suffix) {
     return new AppendSetElementAssignment(columnId, suffix);
   }
 
@@ -218,8 +218,8 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #appendSetElement(CqlIdentifier, Term)
    * appendSetElement(CqlIdentifier.fromCql(columnName), suffix)}.
    */
-  @NonNull
-  static Assignment appendSetElement(@NonNull String columnName, @NonNull Term suffix) {
+  @Nonnull
+  static Assignment appendSetElement(@Nonnull String columnName, @Nonnull Term suffix) {
     return appendSetElement(CqlIdentifier.fromCql(columnName), suffix);
   }
 
@@ -228,9 +228,9 @@ public interface Assignment extends CqlSnippet {
    *
    * <p>The terms must be of the same type as the column's keys and values respectively.
    */
-  @NonNull
+  @Nonnull
   static Assignment appendMapEntry(
-      @NonNull CqlIdentifier columnId, @NonNull Term key, @NonNull Term value) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term key, @Nonnull Term value) {
     return new AppendMapEntryAssignment(columnId, key, value);
   }
 
@@ -238,9 +238,9 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #appendMapEntry(CqlIdentifier, Term, Term)
    * appendMapEntry(CqlIdentifier.fromCql(columnName), key, value)}.
    */
-  @NonNull
+  @Nonnull
   static Assignment appendMapEntry(
-      @NonNull String columnName, @NonNull Term key, @NonNull Term value) {
+      @Nonnull String columnName, @Nonnull Term key, @Nonnull Term value) {
     return appendMapEntry(CqlIdentifier.fromCql(columnName), key, value);
   }
 
@@ -249,8 +249,8 @@ public interface Assignment extends CqlSnippet {
    *
    * <p>The term must be a collection of the same type as the column.
    */
-  @NonNull
-  static Assignment prepend(@NonNull CqlIdentifier columnId, @NonNull Term prefix) {
+  @Nonnull
+  static Assignment prepend(@Nonnull CqlIdentifier columnId, @Nonnull Term prefix) {
     return new PrependAssignment(columnId, prefix);
   }
 
@@ -258,8 +258,8 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #prepend(CqlIdentifier, Term) prepend(CqlIdentifier.fromCql(columnName),
    * prefix)}.
    */
-  @NonNull
-  static Assignment prepend(@NonNull String columnName, @NonNull Term prefix) {
+  @Nonnull
+  static Assignment prepend(@Nonnull String columnName, @Nonnull Term prefix) {
     return prepend(CqlIdentifier.fromCql(columnName), prefix);
   }
 
@@ -268,8 +268,8 @@ public interface Assignment extends CqlSnippet {
    *
    * <p>The term must be of the same type as the column's elements.
    */
-  @NonNull
-  static Assignment prependListElement(@NonNull CqlIdentifier columnId, @NonNull Term suffix) {
+  @Nonnull
+  static Assignment prependListElement(@Nonnull CqlIdentifier columnId, @Nonnull Term suffix) {
     return new PrependListElementAssignment(columnId, suffix);
   }
 
@@ -277,8 +277,8 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #prependListElement(CqlIdentifier, Term)
    * prependListElement(CqlIdentifier.fromCql(columnName), suffix)}.
    */
-  @NonNull
-  static Assignment prependListElement(@NonNull String columnName, @NonNull Term suffix) {
+  @Nonnull
+  static Assignment prependListElement(@Nonnull String columnName, @Nonnull Term suffix) {
     return prependListElement(CqlIdentifier.fromCql(columnName), suffix);
   }
 
@@ -287,8 +287,8 @@ public interface Assignment extends CqlSnippet {
    *
    * <p>The term must be of the same type as the column's elements.
    */
-  @NonNull
-  static Assignment prependSetElement(@NonNull CqlIdentifier columnId, @NonNull Term suffix) {
+  @Nonnull
+  static Assignment prependSetElement(@Nonnull CqlIdentifier columnId, @Nonnull Term suffix) {
     return new PrependSetElementAssignment(columnId, suffix);
   }
 
@@ -296,8 +296,8 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #prependSetElement(CqlIdentifier, Term)
    * prependSetElement(CqlIdentifier.fromCql(columnName), suffix)}.
    */
-  @NonNull
-  static Assignment prependSetElement(@NonNull String columnName, @NonNull Term suffix) {
+  @Nonnull
+  static Assignment prependSetElement(@Nonnull String columnName, @Nonnull Term suffix) {
     return prependSetElement(CqlIdentifier.fromCql(columnName), suffix);
   }
 
@@ -306,9 +306,9 @@ public interface Assignment extends CqlSnippet {
    *
    * <p>The terms must be of the same type as the column's keys and values respectively.
    */
-  @NonNull
+  @Nonnull
   static Assignment prependMapEntry(
-      @NonNull CqlIdentifier columnId, @NonNull Term key, @NonNull Term value) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term key, @Nonnull Term value) {
     return new PrependMapEntryAssignment(columnId, key, value);
   }
 
@@ -316,9 +316,9 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #prependMapEntry(CqlIdentifier, Term, Term)
    * prependMapEntry(CqlIdentifier.fromCql(columnName), key, value)}.
    */
-  @NonNull
+  @Nonnull
   static Assignment prependMapEntry(
-      @NonNull String columnName, @NonNull Term key, @NonNull Term value) {
+      @Nonnull String columnName, @Nonnull Term key, @Nonnull Term value) {
     return prependMapEntry(CqlIdentifier.fromCql(columnName), key, value);
   }
 
@@ -332,8 +332,8 @@ public interface Assignment extends CqlSnippet {
    * and it would be possible to generate an expression such as {@code counter-=1} with this method,
    * a collection removal is idempotent while a counter decrement isn't.
    */
-  @NonNull
-  static Assignment remove(@NonNull CqlIdentifier columnId, @NonNull Term collectionToRemove) {
+  @Nonnull
+  static Assignment remove(@Nonnull CqlIdentifier columnId, @Nonnull Term collectionToRemove) {
     return new RemoveAssignment(columnId, collectionToRemove);
   }
 
@@ -341,8 +341,8 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #remove(CqlIdentifier, Term) remove(CqlIdentifier.fromCql(columnName),
    * collectionToRemove)}.
    */
-  @NonNull
-  static Assignment remove(@NonNull String columnName, @NonNull Term collectionToRemove) {
+  @Nonnull
+  static Assignment remove(@Nonnull String columnName, @Nonnull Term collectionToRemove) {
     return remove(CqlIdentifier.fromCql(columnName), collectionToRemove);
   }
 
@@ -351,8 +351,8 @@ public interface Assignment extends CqlSnippet {
    *
    * <p>The term must be of the same type as the column's elements.
    */
-  @NonNull
-  static Assignment removeListElement(@NonNull CqlIdentifier columnId, @NonNull Term suffix) {
+  @Nonnull
+  static Assignment removeListElement(@Nonnull CqlIdentifier columnId, @Nonnull Term suffix) {
     return new RemoveListElementAssignment(columnId, suffix);
   }
 
@@ -360,8 +360,8 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #removeListElement(CqlIdentifier, Term)
    * removeListElement(CqlIdentifier.fromCql(columnName), suffix)}.
    */
-  @NonNull
-  static Assignment removeListElement(@NonNull String columnName, @NonNull Term suffix) {
+  @Nonnull
+  static Assignment removeListElement(@Nonnull String columnName, @Nonnull Term suffix) {
     return removeListElement(CqlIdentifier.fromCql(columnName), suffix);
   }
 
@@ -370,8 +370,8 @@ public interface Assignment extends CqlSnippet {
    *
    * <p>The term must be of the same type as the column's elements.
    */
-  @NonNull
-  static Assignment removeSetElement(@NonNull CqlIdentifier columnId, @NonNull Term suffix) {
+  @Nonnull
+  static Assignment removeSetElement(@Nonnull CqlIdentifier columnId, @Nonnull Term suffix) {
     return new RemoveSetElementAssignment(columnId, suffix);
   }
 
@@ -379,8 +379,8 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #removeSetElement(CqlIdentifier, Term)
    * removeSetElement(CqlIdentifier.fromCql(columnName), suffix)}.
    */
-  @NonNull
-  static Assignment removeSetElement(@NonNull String columnName, @NonNull Term suffix) {
+  @Nonnull
+  static Assignment removeSetElement(@Nonnull String columnName, @Nonnull Term suffix) {
     return removeSetElement(CqlIdentifier.fromCql(columnName), suffix);
   }
 
@@ -389,9 +389,9 @@ public interface Assignment extends CqlSnippet {
    *
    * <p>The terms must be of the same type as the column's keys and values respectively.
    */
-  @NonNull
+  @Nonnull
   static Assignment removeMapEntry(
-      @NonNull CqlIdentifier columnId, @NonNull Term key, @NonNull Term value) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term key, @Nonnull Term value) {
     return new RemoveMapEntryAssignment(columnId, key, value);
   }
 
@@ -399,9 +399,9 @@ public interface Assignment extends CqlSnippet {
    * Shortcut for {@link #removeMapEntry(CqlIdentifier, Term, Term)
    * removeMapEntry(CqlIdentifier.fromCql(columnName), key, value)}.
    */
-  @NonNull
+  @Nonnull
   static Assignment removeMapEntry(
-      @NonNull String columnName, @NonNull Term key, @NonNull Term value) {
+      @Nonnull String columnName, @Nonnull Term key, @Nonnull Term value) {
     return removeMapEntry(CqlIdentifier.fromCql(columnName), key, value);
   }
 

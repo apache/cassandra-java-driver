@@ -22,13 +22,13 @@ import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Information about a node, returned by the {@link TopologyMonitor}.
@@ -43,7 +43,7 @@ public interface NodeInfo {
    * <p>This information is required; the driver will not function properly if this method returns
    * {@code null}.
    */
-  @NonNull
+  @Nonnull
   EndPoint getEndPoint();
 
   /**
@@ -56,7 +56,7 @@ public interface NodeInfo {
    *
    * @see Node#getBroadcastRpcAddress()
    */
-  @NonNull
+  @Nonnull
   Optional<InetSocketAddress> getBroadcastRpcAddress();
 
   /**
@@ -66,7 +66,7 @@ public interface NodeInfo {
    * <p>This is only used by the default topology monitor, so if you are writing a custom one and
    * don't need this information, you can leave it empty.
    */
-  @NonNull
+  @Nonnull
   Optional<InetSocketAddress> getBroadcastAddress();
 
   /**
@@ -75,7 +75,7 @@ public interface NodeInfo {
    * <p>This is currently not used anywhere in the driver. If you write a custom topology monitor
    * and don't need this information, you can leave it empty.
    */
-  @NonNull
+  @Nonnull
   Optional<InetSocketAddress> getListenAddress();
 
   /**
@@ -145,7 +145,7 @@ public interface NodeInfo {
    * <p>This information is required; the driver will not function properly if this method returns
    * {@code null}.
    */
-  @NonNull
+  @Nonnull
   UUID getHostId();
 
   /**

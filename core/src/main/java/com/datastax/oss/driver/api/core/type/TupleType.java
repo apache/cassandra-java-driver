@@ -21,15 +21,15 @@ import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 public interface TupleType extends DataType {
 
-  @NonNull
+  @Nonnull
   List<DataType> getComponentTypes();
 
-  @NonNull
+  @Nonnull
   TupleValue newValue();
 
   /**
@@ -45,13 +45,13 @@ public interface TupleType extends DataType {
    *     values can be {@code null}, but the array itself can't.
    * @throws IllegalArgumentException if there are too many values.
    */
-  @NonNull
-  TupleValue newValue(@NonNull Object... values);
+  @Nonnull
+  TupleValue newValue(@Nonnull Object... values);
 
-  @NonNull
+  @Nonnull
   AttachmentPoint getAttachmentPoint();
 
-  @NonNull
+  @Nonnull
   @Override
   default String asCql(boolean includeFrozen, boolean pretty) {
     StringBuilder builder = new StringBuilder();

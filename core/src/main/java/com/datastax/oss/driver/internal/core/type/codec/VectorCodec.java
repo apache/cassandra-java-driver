@@ -25,13 +25,13 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class VectorCodec<SubtypeT extends Number> implements TypeCodec<CqlVector<SubtypeT>> {
 
@@ -39,23 +39,23 @@ public class VectorCodec<SubtypeT extends Number> implements TypeCodec<CqlVector
   private final GenericType<CqlVector<SubtypeT>> javaType;
   private final TypeCodec<SubtypeT> subtypeCodec;
 
-  public VectorCodec(@NonNull VectorType cqlType, @NonNull TypeCodec<SubtypeT> subtypeCodec) {
+  public VectorCodec(@Nonnull VectorType cqlType, @Nonnull TypeCodec<SubtypeT> subtypeCodec) {
     this.cqlType = cqlType;
     this.subtypeCodec = subtypeCodec;
     this.javaType = GenericType.vectorOf(subtypeCodec.getJavaType());
   }
 
-  public VectorCodec(int dimensions, @NonNull TypeCodec<SubtypeT> subtypeCodec) {
+  public VectorCodec(int dimensions, @Nonnull TypeCodec<SubtypeT> subtypeCodec) {
     this(new DefaultVectorType(subtypeCodec.getCqlType(), dimensions), subtypeCodec);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<CqlVector<SubtypeT>> getJavaType() {
     return this.javaType;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return this.cqlType;
@@ -64,7 +64,7 @@ public class VectorCodec<SubtypeT extends Number> implements TypeCodec<CqlVector
   @Nullable
   @Override
   public ByteBuffer encode(
-      @Nullable CqlVector<SubtypeT> value, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable CqlVector<SubtypeT> value, @Nonnull ProtocolVersion protocolVersion) {
     if (value == null || cqlType.getDimensions() <= 0) {
       return null;
     }
@@ -109,7 +109,7 @@ public class VectorCodec<SubtypeT extends Number> implements TypeCodec<CqlVector
   @Nullable
   @Override
   public CqlVector<SubtypeT> decode(
-      @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return null;
     }
@@ -141,7 +141,7 @@ public class VectorCodec<SubtypeT extends Number> implements TypeCodec<CqlVector
     return CqlVector.newInstance(rv);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable CqlVector<SubtypeT> value) {
     return value == null ? "NULL" : Iterables.toString(value);

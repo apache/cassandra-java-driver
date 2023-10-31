@@ -24,7 +24,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.channel.DefaultEventLoop;
 import io.netty.channel.EventLoopGroup;
 import io.netty.util.concurrent.ScheduledFuture;
@@ -36,6 +35,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nonnull;
 
 /**
  * Extend Netty's default event loop to capture scheduled tasks instead of running them. The tasks
@@ -55,7 +55,7 @@ public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
     super(parent);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
     CapturedTask<V> task = new CapturedTask<>(callable, delay, unit);
@@ -64,7 +64,7 @@ public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
     return task.scheduledFuture;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
     return schedule(
@@ -76,7 +76,7 @@ public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
         unit);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ScheduledFuture<?> scheduleAtFixedRate(
       Runnable command, long initialDelay, long period, TimeUnit unit) {
@@ -94,7 +94,7 @@ public class ScheduledTaskCapturingEventLoop extends DefaultEventLoop {
     return task.scheduledFuture;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ScheduledFuture<?> scheduleWithFixedDelay(
       Runnable command, long initialDelay, long delay, TimeUnit unit) {

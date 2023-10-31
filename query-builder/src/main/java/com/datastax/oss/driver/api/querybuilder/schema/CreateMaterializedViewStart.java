@@ -18,8 +18,8 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public interface CreateMaterializedViewStart {
 
@@ -27,36 +27,36 @@ public interface CreateMaterializedViewStart {
    * Adds IF NOT EXISTS to the create table specification. This indicates that the table should not
    * be created if it already exists.
    */
-  @NonNull
+  @Nonnull
   CreateMaterializedViewStart ifNotExists();
 
   /**
    * Specifies the base table for the materialized view. This assumes the keyspace name is already
    * qualified for the Session or Statement.
    */
-  @NonNull
-  CreateMaterializedViewSelection asSelectFrom(@NonNull CqlIdentifier table);
+  @Nonnull
+  CreateMaterializedViewSelection asSelectFrom(@Nonnull CqlIdentifier table);
 
   /**
    * Shortcut for {@link #asSelectFrom(CqlIdentifier) asSelectFrom(CqlIdentifier.fromCql(table)}.
    */
-  @NonNull
-  default CreateMaterializedViewSelection asSelectFrom(@NonNull String table) {
+  @Nonnull
+  default CreateMaterializedViewSelection asSelectFrom(@Nonnull String table) {
     return asSelectFrom(CqlIdentifier.fromCql(table));
   }
 
   /** Specifies the base table for the materialized view. */
-  @NonNull
+  @Nonnull
   CreateMaterializedViewSelection asSelectFrom(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table);
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier table);
 
   /**
    * Shortcut for {@link #asSelectFrom(CqlIdentifier,CqlIdentifier)
    * asSelectFrom(CqlIdentifier.fromCql(keyspace),CqlIdentifier.fromCql(table)}.
    */
-  @NonNull
+  @Nonnull
   default CreateMaterializedViewSelection asSelectFrom(
-      @Nullable String keyspace, @NonNull String table) {
+      @Nullable String keyspace, @Nonnull String table) {
     return asSelectFrom(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(table));
   }

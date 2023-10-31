@@ -19,14 +19,14 @@ package com.datastax.oss.driver.api.querybuilder.insert;
 
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /** A complete INSERT statement that is ready to be built. */
 public interface Insert extends BuildableQuery {
 
   /** Adds an IF NOT EXISTS clause to this statement. */
-  @NonNull
+  @Nonnull
   Insert ifNotExists();
 
   /**
@@ -35,7 +35,7 @@ public interface Insert extends BuildableQuery {
    * <p>If this method or {@link #usingTimestamp(BindMarker)} is called multiple times, the last
    * value is used.
    */
-  @NonNull
+  @Nonnull
   Insert usingTimestamp(long timestamp);
 
   /**
@@ -44,7 +44,7 @@ public interface Insert extends BuildableQuery {
    * <p>If this method or {@link #usingTimestamp(long)} is called multiple times, the last value is
    * used. Passing {@code null} to this method removes any previous timestamp.
    */
-  @NonNull
+  @Nonnull
   Insert usingTimestamp(@Nullable BindMarker bindMarker);
 
   /**
@@ -58,7 +58,7 @@ public interface Insert extends BuildableQuery {
    *
    * @param ttlInSeconds Time, in seconds, the inserted data should live before expiring.
    */
-  @NonNull
+  @Nonnull
   Insert usingTtl(int ttlInSeconds);
 
   /**
@@ -72,6 +72,6 @@ public interface Insert extends BuildableQuery {
    *
    * @param bindMarker A bind marker that is understood to be a value in seconds.
    */
-  @NonNull
+  @Nonnull
   Insert usingTtl(@Nullable BindMarker bindMarker);
 }

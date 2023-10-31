@@ -20,9 +20,9 @@ package com.datastax.oss.driver.internal.core.type.codec.extras.array;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -44,13 +44,13 @@ public class BooleanListToArrayCodec extends AbstractPrimitiveListToArrayCodec<b
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     Objects.requireNonNull(javaClass);
     return boolean[].class.equals(javaClass);
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     Objects.requireNonNull(value);
     return value instanceof boolean[];
   }
@@ -62,34 +62,34 @@ public class BooleanListToArrayCodec extends AbstractPrimitiveListToArrayCodec<b
 
   @Override
   protected void serializeElement(
-      @NonNull ByteBuffer output,
-      @NonNull boolean[] array,
+      @Nonnull ByteBuffer output,
+      @Nonnull boolean[] array,
       int index,
-      @NonNull ProtocolVersion protocolVersion) {
+      @Nonnull ProtocolVersion protocolVersion) {
     byte element = array[index] ? TRUE : FALSE;
     output.put(element);
   }
 
   @Override
   protected void deserializeElement(
-      @NonNull ByteBuffer input,
-      @NonNull boolean[] array,
+      @Nonnull ByteBuffer input,
+      @Nonnull boolean[] array,
       int index,
-      @NonNull ProtocolVersion protocolVersion) {
+      @Nonnull ProtocolVersion protocolVersion) {
     array[index] = input.get() == TRUE;
   }
 
   @Override
-  protected void formatElement(@NonNull StringBuilder output, @NonNull boolean[] array, int index) {
+  protected void formatElement(@Nonnull StringBuilder output, @Nonnull boolean[] array, int index) {
     output.append(array[index]);
   }
 
   @Override
-  protected void parseElement(@NonNull String input, @NonNull boolean[] array, int index) {
+  protected void parseElement(@Nonnull String input, @Nonnull boolean[] array, int index) {
     array[index] = Boolean.parseBoolean(input);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   protected boolean[] newInstance(int size) {
     return new boolean[size];

@@ -18,8 +18,6 @@
 package com.datastax.oss.driver.api.core.config;
 
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -32,6 +30,8 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 import net.jcip.annotations.ThreadSafe;
 
@@ -66,7 +66,7 @@ public class OptionsMap implements Serializable {
    * bundled with the driver (however, this method does not load any file, and doesn't require
    * Typesafe config in the classpath).
    */
-  @NonNull
+  @Nonnull
   public static OptionsMap driverDefaults() {
     OptionsMap source = new OptionsMap();
     fillWithDriverDefaults(source);
@@ -93,7 +93,7 @@ public class OptionsMap implements Serializable {
    */
   @Nullable
   public <ValueT> ValueT put(
-      @NonNull String profile, @NonNull TypedDriverOption<ValueT> option, @NonNull ValueT value) {
+      @Nonnull String profile, @Nonnull TypedDriverOption<ValueT> option, @Nonnull ValueT value) {
     Objects.requireNonNull(option, "option");
     Objects.requireNonNull(value, "value");
     Object previous = getProfileMap(profile).put(option.getRawOption(), value);
@@ -112,7 +112,7 @@ public class OptionsMap implements Serializable {
    *     not defined.
    */
   @Nullable
-  public <ValueT> ValueT put(@NonNull TypedDriverOption<ValueT> option, @NonNull ValueT value) {
+  public <ValueT> ValueT put(@Nonnull TypedDriverOption<ValueT> option, @Nonnull ValueT value) {
     return put(DriverExecutionProfile.DEFAULT_NAME, option, value);
   }
 
@@ -121,7 +121,7 @@ public class OptionsMap implements Serializable {
    * null} if the option is not defined.
    */
   @Nullable
-  public <ValueT> ValueT get(@NonNull String profile, @NonNull TypedDriverOption<ValueT> option) {
+  public <ValueT> ValueT get(@Nonnull String profile, @Nonnull TypedDriverOption<ValueT> option) {
     Objects.requireNonNull(option, "option");
     Object result = getProfileMap(profile).get(option.getRawOption());
     return cast(result);
@@ -132,7 +132,7 @@ public class OptionsMap implements Serializable {
    * null} if the option is not defined.
    */
   @Nullable
-  public <ValueT> ValueT get(@NonNull TypedDriverOption<ValueT> option) {
+  public <ValueT> ValueT get(@Nonnull TypedDriverOption<ValueT> option) {
     return get(DriverExecutionProfile.DEFAULT_NAME, option);
   }
 
@@ -144,7 +144,7 @@ public class OptionsMap implements Serializable {
    */
   @Nullable
   public <ValueT> ValueT remove(
-      @NonNull String profile, @NonNull TypedDriverOption<ValueT> option) {
+      @Nonnull String profile, @Nonnull TypedDriverOption<ValueT> option) {
     Objects.requireNonNull(option, "option");
     Object previous = getProfileMap(profile).remove(option.getRawOption());
     if (previous != null) {
@@ -162,7 +162,7 @@ public class OptionsMap implements Serializable {
    *     not defined.
    */
   @Nullable
-  public <ValueT> ValueT remove(@NonNull TypedDriverOption<ValueT> option) {
+  public <ValueT> ValueT remove(@Nonnull TypedDriverOption<ValueT> option) {
     return remove(DriverExecutionProfile.DEFAULT_NAME, option);
   }
 
@@ -172,7 +172,7 @@ public class OptionsMap implements Serializable {
    * <p>This is mostly for internal use by the driver. Note that listeners are transient, and not
    * taken into account by {@link #equals(Object)} and {@link #hashCode()}.
    */
-  public void addChangeListener(@NonNull Consumer<OptionsMap> listener) {
+  public void addChangeListener(@Nonnull Consumer<OptionsMap> listener) {
     changeListeners.add(Objects.requireNonNull(listener));
   }
 
@@ -182,7 +182,7 @@ public class OptionsMap implements Serializable {
    *
    * @return {@code true} if the listener was indeed registered for this object.
    */
-  public boolean removeChangeListener(@NonNull Consumer<OptionsMap> listener) {
+  public boolean removeChangeListener(@Nonnull Consumer<OptionsMap> listener) {
     return changeListeners.remove(Objects.requireNonNull(listener));
   }
 
@@ -209,13 +209,13 @@ public class OptionsMap implements Serializable {
    * <p>This is intended for internal usage by the driver. Modifying the resulting map is strongly
    * discouraged, as it could break the type-safety guarantees provided by the public methods.
    */
-  @NonNull
+  @Nonnull
   protected Map<String, Map<DriverOption, Object>> asRawMap() {
     return map;
   }
 
-  @NonNull
-  private Map<DriverOption, Object> getProfileMap(@NonNull String profile) {
+  @Nonnull
+  private Map<DriverOption, Object> getProfileMap(@Nonnull String profile) {
     Objects.requireNonNull(profile, "profile");
     return map.computeIfAbsent(profile, p -> new ConcurrentHashMap<>());
   }

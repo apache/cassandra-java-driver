@@ -19,10 +19,10 @@ package com.datastax.oss.driver.internal.core.loadbalancing.helper;
 
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 @FunctionalInterface
@@ -45,6 +45,6 @@ public interface LocalDcHelper {
    * @throws IllegalStateException if the local datacenter could not be discovered, and this policy
    *     cannot operate without it.
    */
-  @NonNull
-  Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes);
+  @Nonnull
+  Optional<String> discoverLocalDc(@Nonnull Map<UUID, Node> nodes);
 }

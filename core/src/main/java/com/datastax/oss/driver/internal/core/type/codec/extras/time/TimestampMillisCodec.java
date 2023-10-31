@@ -25,12 +25,12 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.codec.TimestampCodec;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -66,38 +66,38 @@ public class TimestampMillisCodec implements PrimitiveLongCodec {
     timestampCodec = new TimestampCodec(defaultZoneId);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<Long> getJavaType() {
     return GenericType.LONG;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.TIMESTAMP;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == Long.class || javaClass == long.class;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     Objects.requireNonNull(value);
     return value instanceof Long;
   }
 
   @Nullable
   @Override
-  public ByteBuffer encodePrimitive(long value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encodePrimitive(long value, @Nonnull ProtocolVersion protocolVersion) {
     return TypeCodecs.BIGINT.encodePrimitive(value, protocolVersion);
   }
 
   @Override
   public long decodePrimitive(
-      @Nullable ByteBuffer value, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable ByteBuffer value, @Nonnull ProtocolVersion protocolVersion) {
     return TypeCodecs.BIGINT.decodePrimitive(value, protocolVersion);
   }
 
@@ -108,7 +108,7 @@ public class TimestampMillisCodec implements PrimitiveLongCodec {
     return instant == null ? null : instant.toEpochMilli();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable Long value) {
     Instant instant = value == null ? null : Instant.ofEpochMilli(value);

@@ -22,14 +22,14 @@ import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -37,29 +37,29 @@ public class DefaultTableMetadata implements TableMetadata, Serializable {
 
   private static final long serialVersionUID = 1;
 
-  @NonNull private final CqlIdentifier keyspace;
-  @NonNull private final CqlIdentifier name;
+  @Nonnull private final CqlIdentifier keyspace;
+  @Nonnull private final CqlIdentifier name;
   // null for virtual tables
   @Nullable private final UUID id;
   private final boolean compactStorage;
   private final boolean virtual;
-  @NonNull private final List<ColumnMetadata> partitionKey;
-  @NonNull private final Map<ColumnMetadata, ClusteringOrder> clusteringColumns;
-  @NonNull private final Map<CqlIdentifier, ColumnMetadata> columns;
-  @NonNull private final Map<CqlIdentifier, Object> options;
-  @NonNull private final Map<CqlIdentifier, IndexMetadata> indexes;
+  @Nonnull private final List<ColumnMetadata> partitionKey;
+  @Nonnull private final Map<ColumnMetadata, ClusteringOrder> clusteringColumns;
+  @Nonnull private final Map<CqlIdentifier, ColumnMetadata> columns;
+  @Nonnull private final Map<CqlIdentifier, Object> options;
+  @Nonnull private final Map<CqlIdentifier, IndexMetadata> indexes;
 
   public DefaultTableMetadata(
-      @NonNull CqlIdentifier keyspace,
-      @NonNull CqlIdentifier name,
+      @Nonnull CqlIdentifier keyspace,
+      @Nonnull CqlIdentifier name,
       @Nullable UUID id,
       boolean compactStorage,
       boolean virtual,
-      @NonNull List<ColumnMetadata> partitionKey,
-      @NonNull Map<ColumnMetadata, ClusteringOrder> clusteringColumns,
-      @NonNull Map<CqlIdentifier, ColumnMetadata> columns,
-      @NonNull Map<CqlIdentifier, Object> options,
-      @NonNull Map<CqlIdentifier, IndexMetadata> indexes) {
+      @Nonnull List<ColumnMetadata> partitionKey,
+      @Nonnull Map<ColumnMetadata, ClusteringOrder> clusteringColumns,
+      @Nonnull Map<CqlIdentifier, ColumnMetadata> columns,
+      @Nonnull Map<CqlIdentifier, Object> options,
+      @Nonnull Map<CqlIdentifier, IndexMetadata> indexes) {
     this.keyspace = keyspace;
     this.name = name;
     this.id = id;
@@ -72,19 +72,19 @@ public class DefaultTableMetadata implements TableMetadata, Serializable {
     this.indexes = indexes;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getName() {
     return name;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<UUID> getId() {
     return Optional.ofNullable(id);
@@ -100,31 +100,31 @@ public class DefaultTableMetadata implements TableMetadata, Serializable {
     return virtual;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<ColumnMetadata> getPartitionKey() {
     return partitionKey;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<ColumnMetadata, ClusteringOrder> getClusteringColumns() {
     return clusteringColumns;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<CqlIdentifier, ColumnMetadata> getColumns() {
     return columns;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<CqlIdentifier, Object> getOptions() {
     return options;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<CqlIdentifier, IndexMetadata> getIndexes() {
     return indexes;

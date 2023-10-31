@@ -29,13 +29,13 @@ import com.datastax.oss.driver.api.core.type.codec.ExtraTypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.MappingCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * Inserts and retrieves values using a few custom codecs.

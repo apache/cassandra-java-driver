@@ -25,14 +25,14 @@ import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -47,11 +47,11 @@ public class DefaultUdtValue implements UdtValue, Serializable {
   private final UserDefinedType type;
   private final ByteBuffer[] values;
 
-  public DefaultUdtValue(@NonNull UserDefinedType type) {
+  public DefaultUdtValue(@Nonnull UserDefinedType type) {
     this(type, new ByteBuffer[type.getFieldTypes().size()]);
   }
 
-  public DefaultUdtValue(@NonNull UserDefinedType type, @NonNull Object... values) {
+  public DefaultUdtValue(@Nonnull UserDefinedType type, @Nonnull Object... values) {
     this(
         type,
         ValuesHelper.encodeValues(
@@ -67,7 +67,7 @@ public class DefaultUdtValue implements UdtValue, Serializable {
     this.values = values;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public UserDefinedType getType() {
     return type;
@@ -78,9 +78,9 @@ public class DefaultUdtValue implements UdtValue, Serializable {
     return values.length;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+  public List<Integer> allIndicesOf(@Nonnull CqlIdentifier id) {
     List<Integer> indices = type.allIndicesOf(id);
     if (indices.isEmpty()) {
       throw new IllegalArgumentException(id + " is not a field in this UDT");
@@ -89,7 +89,7 @@ public class DefaultUdtValue implements UdtValue, Serializable {
   }
 
   @Override
-  public int firstIndexOf(@NonNull CqlIdentifier id) {
+  public int firstIndexOf(@Nonnull CqlIdentifier id) {
     int indexOf = type.firstIndexOf(id);
     if (indexOf == -1) {
       throw new IllegalArgumentException(id + " is not a field in this UDT");
@@ -97,9 +97,9 @@ public class DefaultUdtValue implements UdtValue, Serializable {
     return indexOf;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull String name) {
+  public List<Integer> allIndicesOf(@Nonnull String name) {
     List<Integer> indices = type.allIndicesOf(name);
     if (indices.isEmpty()) {
       throw new IllegalArgumentException(name + " is not a field in this UDT");
@@ -108,7 +108,7 @@ public class DefaultUdtValue implements UdtValue, Serializable {
   }
 
   @Override
-  public int firstIndexOf(@NonNull String name) {
+  public int firstIndexOf(@Nonnull String name) {
     int indexOf = type.firstIndexOf(name);
     if (indexOf == -1) {
       throw new IllegalArgumentException(name + " is not a field in this UDT");
@@ -116,7 +116,7 @@ public class DefaultUdtValue implements UdtValue, Serializable {
     return indexOf;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getType(int i) {
     return type.getFieldTypes().get(i);
@@ -127,20 +127,20 @@ public class DefaultUdtValue implements UdtValue, Serializable {
     return values[i];
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public UdtValue setBytesUnsafe(int i, @Nullable ByteBuffer v) {
     values[i] = v;
     return this;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CodecRegistry codecRegistry() {
     return type.getAttachmentPoint().getCodecRegistry();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProtocolVersion protocolVersion() {
     return type.getAttachmentPoint().getProtocolVersion();

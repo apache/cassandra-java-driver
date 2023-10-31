@@ -19,8 +19,8 @@ package com.datastax.oss.driver.api.core.connection;
 
 import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.SocketAddress;
+import javax.annotation.Nonnull;
 
 /**
  * Thrown when an incoming or outgoing protocol frame exceeds the limit defined by {@code
@@ -32,7 +32,7 @@ public class FrameTooLongException extends DriverException {
 
   private final SocketAddress address;
 
-  public FrameTooLongException(@NonNull SocketAddress address, @NonNull String message) {
+  public FrameTooLongException(@Nonnull SocketAddress address, @Nonnull String message) {
     this(address, message, null);
   }
 
@@ -43,12 +43,12 @@ public class FrameTooLongException extends DriverException {
   }
 
   /** The address of the node that encountered the error. */
-  @NonNull
+  @Nonnull
   public SocketAddress getAddress() {
     return address;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new FrameTooLongException(address, getMessage(), getExecutionInfo());

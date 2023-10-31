@@ -21,10 +21,10 @@ import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.dse.driver.api.core.graph.reactive.ReactiveGraphNode;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.NotThreadSafe;
 import org.apache.tinkerpop.gremlin.process.traversal.Path;
 import org.apache.tinkerpop.gremlin.structure.Edge;
@@ -38,12 +38,12 @@ class DefaultReactiveGraphNode implements ReactiveGraphNode {
   private final GraphNode graphNode;
   private final ExecutionInfo executionInfo;
 
-  DefaultReactiveGraphNode(@NonNull GraphNode graphNode, @NonNull ExecutionInfo executionInfo) {
+  DefaultReactiveGraphNode(@Nonnull GraphNode graphNode, @Nonnull ExecutionInfo executionInfo) {
     this.graphNode = graphNode;
     this.executionInfo = executionInfo;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ExecutionInfo getExecutionInfo() {
     return executionInfo;

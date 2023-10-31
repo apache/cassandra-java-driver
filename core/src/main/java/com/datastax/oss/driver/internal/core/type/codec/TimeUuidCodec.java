@@ -20,33 +20,33 @@ package com.datastax.oss.driver.internal.core.type.codec;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class TimeUuidCodec extends UuidCodec {
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.TIMEUUID;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof UUID && ((UUID) value).version() == 1;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == UUID.class;
   }
 
   @Nullable
   @Override
-  public ByteBuffer encode(@Nullable UUID value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable UUID value, @Nonnull ProtocolVersion protocolVersion) {
     if (value == null) {
       return null;
     } else if (value.version() != 1) {
@@ -57,7 +57,7 @@ public class TimeUuidCodec extends UuidCodec {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable UUID value) {
     if (value == null) {

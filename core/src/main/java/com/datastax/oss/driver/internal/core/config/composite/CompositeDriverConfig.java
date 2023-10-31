@@ -20,11 +20,11 @@ package com.datastax.oss.driver.internal.core.config.composite;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nonnull;
 
 public class CompositeDriverConfig implements DriverConfig {
 
@@ -33,14 +33,14 @@ public class CompositeDriverConfig implements DriverConfig {
   private final Map<String, CompositeDriverExecutionProfile> profiles = new ConcurrentHashMap<>();
 
   public CompositeDriverConfig(
-      @NonNull DriverConfig primaryConfig, @NonNull DriverConfig fallbackConfig) {
+      @Nonnull DriverConfig primaryConfig, @Nonnull DriverConfig fallbackConfig) {
     this.primaryConfig = Objects.requireNonNull(primaryConfig);
     this.fallbackConfig = Objects.requireNonNull(fallbackConfig);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DriverExecutionProfile getProfile(@NonNull String profileName) {
+  public DriverExecutionProfile getProfile(@Nonnull String profileName) {
     return profiles.compute(
         profileName,
         (k, v) ->
@@ -49,7 +49,7 @@ public class CompositeDriverConfig implements DriverConfig {
                 : v.refresh());
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, ? extends DriverExecutionProfile> getProfiles() {
     // The map is updated lazily, if we want all the profiles we need to fetch them explicitly

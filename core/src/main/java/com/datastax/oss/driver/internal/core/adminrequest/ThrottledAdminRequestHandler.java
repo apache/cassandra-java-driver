@@ -32,12 +32,12 @@ import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.response.Result;
 import com.datastax.oss.protocol.internal.response.result.Prepared;
 import com.datastax.oss.protocol.internal.response.result.Rows;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -150,7 +150,7 @@ public class ThrottledAdminRequestHandler<ResultT> extends AdminRequestHandler<R
   }
 
   @Override
-  public void onThrottleFailure(@NonNull RequestThrottlingException error) {
+  public void onThrottleFailure(@Nonnull RequestThrottlingException error) {
     metricUpdater.incrementCounter(DefaultSessionMetric.THROTTLING_ERRORS, null);
     setFinalError(error);
   }

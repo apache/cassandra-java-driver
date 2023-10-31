@@ -23,8 +23,8 @@ import com.datastax.oss.driver.api.querybuilder.relation.OngoingWhereClause;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.ColumnComponentLeftOperand;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -35,14 +35,14 @@ public class DefaultColumnComponentRelationBuilder
   private final Term index;
 
   public DefaultColumnComponentRelationBuilder(
-      @NonNull CqlIdentifier columnId, @NonNull Term index) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term index) {
     this.columnId = columnId;
     this.index = index;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Relation build(@NonNull String operator, @Nullable Term rightOperand) {
+  public Relation build(@Nonnull String operator, @Nullable Term rightOperand) {
     return new DefaultRelation(
         new ColumnComponentLeftOperand(columnId, index), operator, rightOperand);
   }
@@ -55,16 +55,16 @@ public class DefaultColumnComponentRelationBuilder
     private final ColumnComponentRelationBuilder<Relation> delegate;
 
     public Fluent(
-        @NonNull OngoingWhereClause<StatementT> statement,
-        @NonNull CqlIdentifier columnId,
-        @NonNull Term index) {
+        @Nonnull OngoingWhereClause<StatementT> statement,
+        @Nonnull CqlIdentifier columnId,
+        @Nonnull Term index) {
       this.statement = statement;
       this.delegate = new DefaultColumnComponentRelationBuilder(columnId, index);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public StatementT build(@NonNull String operator, @Nullable Term rightOperand) {
+    public StatementT build(@Nonnull String operator, @Nullable Term rightOperand) {
       return statement.where(delegate.build(operator, rightOperand));
     }
   }

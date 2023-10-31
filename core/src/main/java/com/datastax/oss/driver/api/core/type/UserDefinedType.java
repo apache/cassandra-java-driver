@@ -25,22 +25,22 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public interface UserDefinedType extends DataType, Describable {
 
   @Nullable // because of ShallowUserDefinedType usage in the query builder
   CqlIdentifier getKeyspace();
 
-  @NonNull
+  @Nonnull
   CqlIdentifier getName();
 
   boolean isFrozen();
 
-  @NonNull
+  @Nonnull
   List<CqlIdentifier> getFieldNames();
 
   /**
@@ -50,8 +50,8 @@ public interface UserDefinedType extends DataType, Describable {
    *     <p>Implementors should always override this method (all built-in driver implementations
    *     do).
    */
-  @NonNull
-  default List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+  @Nonnull
+  default List<Integer> allIndicesOf(@Nonnull CqlIdentifier id) {
     Loggers.USER_DEFINED_TYPE.warn(
         "{} should override allIndicesOf(CqlIdentifier), the default implementation is a "
             + "workaround for backward compatibility, it only returns the first occurrence",
@@ -59,7 +59,7 @@ public interface UserDefinedType extends DataType, Describable {
     return Collections.singletonList(firstIndexOf(id));
   }
 
-  int firstIndexOf(@NonNull CqlIdentifier id);
+  int firstIndexOf(@Nonnull CqlIdentifier id);
 
   /**
    * @apiNote the default implementation only exists for backward compatibility. It wraps the result
@@ -68,8 +68,8 @@ public interface UserDefinedType extends DataType, Describable {
    *     <p>Implementors should always override this method (all built-in driver implementations
    *     do).
    */
-  @NonNull
-  default List<Integer> allIndicesOf(@NonNull String name) {
+  @Nonnull
+  default List<Integer> allIndicesOf(@Nonnull String name) {
     Loggers.USER_DEFINED_TYPE.warn(
         "{} should override allIndicesOf(String), the default implementation is a "
             + "workaround for backward compatibility, it only returns the first occurrence",
@@ -77,23 +77,23 @@ public interface UserDefinedType extends DataType, Describable {
     return Collections.singletonList(firstIndexOf(name));
   }
 
-  int firstIndexOf(@NonNull String name);
+  int firstIndexOf(@Nonnull String name);
 
-  default boolean contains(@NonNull CqlIdentifier id) {
+  default boolean contains(@Nonnull CqlIdentifier id) {
     return firstIndexOf(id) >= 0;
   }
 
-  default boolean contains(@NonNull String name) {
+  default boolean contains(@Nonnull String name) {
     return firstIndexOf(name) >= 0;
   }
 
-  @NonNull
+  @Nonnull
   List<DataType> getFieldTypes();
 
-  @NonNull
+  @Nonnull
   UserDefinedType copy(boolean newFrozen);
 
-  @NonNull
+  @Nonnull
   UdtValue newValue();
 
   /**
@@ -109,13 +109,13 @@ public interface UserDefinedType extends DataType, Describable {
    *     can be {@code null}, but the array itself can't.
    * @throws IllegalArgumentException if there are too many values.
    */
-  @NonNull
-  UdtValue newValue(@NonNull Object... fields);
+  @Nonnull
+  UdtValue newValue(@Nonnull Object... fields);
 
-  @NonNull
+  @Nonnull
   AttachmentPoint getAttachmentPoint();
 
-  @NonNull
+  @Nonnull
   @Override
   default String asCql(boolean includeFrozen, boolean pretty) {
     if (getKeyspace() != null) {
@@ -127,7 +127,7 @@ public interface UserDefinedType extends DataType, Describable {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default String describe(boolean pretty) {
     ScriptBuilder builder = new ScriptBuilder(pretty);
@@ -155,7 +155,7 @@ public interface UserDefinedType extends DataType, Describable {
     return builder.build();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default String describeWithChildren(boolean pretty) {
     // No children (if it uses other types, they're considered dependencies, not sub-elements)

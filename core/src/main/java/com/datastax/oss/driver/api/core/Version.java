@@ -17,8 +17,6 @@
  */
 package com.datastax.oss.driver.api.core;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,6 +24,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -48,13 +48,13 @@ public class Version implements Comparable<Version>, Serializable {
 
   private static final Pattern pattern = Pattern.compile(VERSION_REGEXP);
 
-  @NonNull public static final Version V2_1_0 = Objects.requireNonNull(parse("2.1.0"));
-  @NonNull public static final Version V2_2_0 = Objects.requireNonNull(parse("2.2.0"));
-  @NonNull public static final Version V3_0_0 = Objects.requireNonNull(parse("3.0.0"));
-  @NonNull public static final Version V4_0_0 = Objects.requireNonNull(parse("4.0.0"));
-  @NonNull public static final Version V5_0_0 = Objects.requireNonNull(parse("5.0.0"));
-  @NonNull public static final Version V6_7_0 = Objects.requireNonNull(parse("6.7.0"));
-  @NonNull public static final Version V6_8_0 = Objects.requireNonNull(parse("6.8.0"));
+  @Nonnull public static final Version V2_1_0 = Objects.requireNonNull(parse("2.1.0"));
+  @Nonnull public static final Version V2_2_0 = Objects.requireNonNull(parse("2.2.0"));
+  @Nonnull public static final Version V3_0_0 = Objects.requireNonNull(parse("3.0.0"));
+  @Nonnull public static final Version V4_0_0 = Objects.requireNonNull(parse("4.0.0"));
+  @Nonnull public static final Version V5_0_0 = Objects.requireNonNull(parse("5.0.0"));
+  @Nonnull public static final Version V6_7_0 = Objects.requireNonNull(parse("6.7.0"));
+  @Nonnull public static final Version V6_8_0 = Objects.requireNonNull(parse("6.8.0"));
 
   private final int major;
   private final int minor;
@@ -206,7 +206,7 @@ public class Version implements Comparable<Version>, Serializable {
   }
 
   @Override
-  public int compareTo(@NonNull Version other) {
+  public int compareTo(@Nonnull Version other) {
     if (major < other.major) {
       return -1;
     }

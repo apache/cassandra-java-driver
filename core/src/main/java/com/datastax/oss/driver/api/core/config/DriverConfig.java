@@ -17,8 +17,8 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
+import javax.annotation.Nonnull;
 
 /**
  * The configuration of the driver.
@@ -34,16 +34,16 @@ public interface DriverConfig {
    * Alias to get the default profile, which is stored under the name {@link
    * DriverExecutionProfile#DEFAULT_NAME} and always present.
    */
-  @NonNull
+  @Nonnull
   default DriverExecutionProfile getDefaultProfile() {
     return getProfile(DriverExecutionProfile.DEFAULT_NAME);
   }
 
   /** @throws IllegalArgumentException if there is no profile with this name. */
-  @NonNull
-  DriverExecutionProfile getProfile(@NonNull String profileName);
+  @Nonnull
+  DriverExecutionProfile getProfile(@Nonnull String profileName);
 
   /** Returns an <b>immutable</b> view of all named profiles (including the default profile). */
-  @NonNull
+  @Nonnull
   Map<String, ? extends DriverExecutionProfile> getProfiles();
 }

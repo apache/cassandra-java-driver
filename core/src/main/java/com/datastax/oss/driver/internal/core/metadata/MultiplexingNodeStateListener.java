@@ -21,13 +21,13 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.util.Loggers;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,32 +69,32 @@ public class MultiplexingNodeStateListener implements NodeStateListener {
     }
   }
 
-  public void register(@NonNull NodeStateListener listener) {
+  public void register(@Nonnull NodeStateListener listener) {
     addListener(listener);
   }
 
   @Override
-  public void onAdd(@NonNull Node node) {
+  public void onAdd(@Nonnull Node node) {
     invokeListeners(listener -> listener.onAdd(node), "onAdd");
   }
 
   @Override
-  public void onUp(@NonNull Node node) {
+  public void onUp(@Nonnull Node node) {
     invokeListeners(listener -> listener.onUp(node), "onUp");
   }
 
   @Override
-  public void onDown(@NonNull Node node) {
+  public void onDown(@Nonnull Node node) {
     invokeListeners(listener -> listener.onDown(node), "onDown");
   }
 
   @Override
-  public void onRemove(@NonNull Node node) {
+  public void onRemove(@Nonnull Node node) {
     invokeListeners(listener -> listener.onRemove(node), "onRemove");
   }
 
   @Override
-  public void onSessionReady(@NonNull Session session) {
+  public void onSessionReady(@Nonnull Session session) {
     invokeListeners(listener -> listener.onSessionReady(session), "onSessionReady");
   }
 
@@ -110,7 +110,7 @@ public class MultiplexingNodeStateListener implements NodeStateListener {
     }
   }
 
-  private void invokeListeners(@NonNull Consumer<NodeStateListener> action, String event) {
+  private void invokeListeners(@Nonnull Consumer<NodeStateListener> action, String event) {
     for (NodeStateListener listener : listeners) {
       try {
         action.accept(listener);

@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.data.GettableByIndex;
 import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.detach.Detachable;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * A row from a CQL table.
@@ -34,7 +34,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public interface Row extends GettableByIndex, GettableByName, GettableById, Detachable {
 
   /** @return the column definitions contained in this result set. */
-  @NonNull
+  @Nonnull
   ColumnDefinitions getColumnDefinitions();
 
   /**
@@ -57,7 +57,7 @@ public interface Row extends GettableByIndex, GettableByName, GettableById, Deta
    *       might be undesirable to leak data in application logs.
    * </ul>
    */
-  @NonNull
+  @Nonnull
   default String getFormattedContents() {
     StringBuilder result = new StringBuilder("[");
     ColumnDefinitions definitions = getColumnDefinitions();

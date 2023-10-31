@@ -29,8 +29,6 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.concurrent.ReplayingEventFilter;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -42,6 +40,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -89,8 +89,8 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
   private final AtomicReference<State> stateRef = new AtomicReference<>(State.BEFORE_INIT);
 
   public LoadBalancingPolicyWrapper(
-      @NonNull InternalDriverContext context,
-      @NonNull Map<String, LoadBalancingPolicy> policiesPerProfile) {
+      @Nonnull InternalDriverContext context,
+      @Nonnull Map<String, LoadBalancingPolicy> policiesPerProfile) {
     this.context = context;
 
     this.policiesPerProfile = policiesPerProfile;
@@ -139,9 +139,9 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
    *
    * @see LoadBalancingPolicy#newQueryPlan(Request, Session)
    */
-  @NonNull
+  @Nonnull
   public Queue<Node> newQueryPlan(
-      @Nullable Request request, @NonNull String executionProfileName, @Nullable Session session) {
+      @Nullable Request request, @Nonnull String executionProfileName, @Nullable Session session) {
     switch (stateRef.get()) {
       case BEFORE_INIT:
       case DURING_INIT:
@@ -160,7 +160,7 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
     }
   }
 
-  @NonNull
+  @Nonnull
   public Queue<Node> newQueryPlan() {
     return newQueryPlan(null, DriverExecutionProfile.DEFAULT_NAME, null);
   }
@@ -227,7 +227,7 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
     }
 
     @Override
-    public void setDistance(@NonNull Node node, @NonNull NodeDistance suggestedDistance) {
+    public void setDistance(@Nonnull Node node, @Nonnull NodeDistance suggestedDistance) {
       LOG.debug(
           "[{}] {} suggested {} to {}, checking what other policies said",
           logPrefix,

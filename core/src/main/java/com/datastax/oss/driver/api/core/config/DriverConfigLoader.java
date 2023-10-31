@@ -23,11 +23,11 @@ import com.datastax.oss.driver.internal.core.config.composite.CompositeDriverCon
 import com.datastax.oss.driver.internal.core.config.map.MapBasedDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader;
 import com.datastax.oss.driver.internal.core.config.typesafe.DefaultProgrammaticDriverConfigLoaderBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.File;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
 
 /**
  * Manages the initialization, and optionally the periodic reloading, of the driver configuration.
@@ -45,8 +45,8 @@ public interface DriverConfigLoader extends AutoCloseable {
    * <p>The returned loader will honor the reload interval defined by the option {@code
    * basic.config-reload-interval}.
    */
-  @NonNull
-  static DriverConfigLoader fromDefaults(@NonNull ClassLoader appClassLoader) {
+  @Nonnull
+  static DriverConfigLoader fromDefaults(@Nonnull ClassLoader appClassLoader) {
     return new DefaultDriverConfigLoader(appClassLoader);
   }
 
@@ -77,8 +77,8 @@ public interface DriverConfigLoader extends AutoCloseable {
    * <p>The returned loader will honor the reload interval defined by the option {@code
    * basic.config-reload-interval}.
    */
-  @NonNull
-  static DriverConfigLoader fromClasspath(@NonNull String resourceBaseName) {
+  @Nonnull
+  static DriverConfigLoader fromClasspath(@Nonnull String resourceBaseName) {
     return fromClasspath(resourceBaseName, Thread.currentThread().getContextClassLoader());
   }
 
@@ -87,9 +87,9 @@ public interface DriverConfigLoader extends AutoCloseable {
    * resources will be located using the provided {@link ClassLoader} instead of {@linkplain
    * Thread#getContextClassLoader() the current thread's context class loader}.
    */
-  @NonNull
+  @Nonnull
   static DriverConfigLoader fromClasspath(
-      @NonNull String resourceBaseName, @NonNull ClassLoader appClassLoader) {
+      @Nonnull String resourceBaseName, @Nonnull ClassLoader appClassLoader) {
     return DefaultDriverConfigLoader.fromClasspath(resourceBaseName, appClassLoader);
   }
 
@@ -113,8 +113,8 @@ public interface DriverConfigLoader extends AutoCloseable {
    * <p>The returned loader will honor the reload interval defined by the option {@code
    * basic.config-reload-interval}.
    */
-  @NonNull
-  static DriverConfigLoader fromPath(@NonNull Path file) {
+  @Nonnull
+  static DriverConfigLoader fromPath(@Nonnull Path file) {
     return fromFile(file.toFile());
   }
 
@@ -138,8 +138,8 @@ public interface DriverConfigLoader extends AutoCloseable {
    * <p>The returned loader will honor the reload interval defined by the option {@code
    * basic.config-reload-interval}.
    */
-  @NonNull
-  static DriverConfigLoader fromFile(@NonNull File file) {
+  @Nonnull
+  static DriverConfigLoader fromFile(@Nonnull File file) {
     return DefaultDriverConfigLoader.fromFile(file);
   }
 
@@ -163,8 +163,8 @@ public interface DriverConfigLoader extends AutoCloseable {
    * <p>The returned loader will honor the reload interval defined by the option {@code
    * basic.config-reload-interval}.
    */
-  @NonNull
-  static DriverConfigLoader fromUrl(@NonNull URL url) {
+  @Nonnull
+  static DriverConfigLoader fromUrl(@Nonnull URL url) {
     return DefaultDriverConfigLoader.fromUrl(url);
   }
 
@@ -193,8 +193,8 @@ public interface DriverConfigLoader extends AutoCloseable {
    *
    * <p>This loader does not support runtime reloading.
    */
-  @NonNull
-  static DriverConfigLoader fromString(@NonNull String contents) {
+  @Nonnull
+  static DriverConfigLoader fromString(@Nonnull String contents) {
     return DefaultDriverConfigLoader.fromString(contents);
   }
 
@@ -261,7 +261,7 @@ public interface DriverConfigLoader extends AutoCloseable {
    *
    * @see #fromMap(OptionsMap)
    */
-  @NonNull
+  @Nonnull
   static ProgrammaticDriverConfigLoaderBuilder programmaticBuilder() {
     return new DefaultProgrammaticDriverConfigLoaderBuilder();
   }
@@ -271,9 +271,9 @@ public interface DriverConfigLoader extends AutoCloseable {
    * will be located using the provided {@link ClassLoader} instead of {@linkplain
    * Thread#getContextClassLoader() the current thread's context class loader}.
    */
-  @NonNull
+  @Nonnull
   static ProgrammaticDriverConfigLoaderBuilder programmaticBuilder(
-      @NonNull ClassLoader appClassLoader) {
+      @Nonnull ClassLoader appClassLoader) {
     return new DefaultProgrammaticDriverConfigLoaderBuilder(appClassLoader);
   }
 
@@ -310,8 +310,8 @@ public interface DriverConfigLoader extends AutoCloseable {
    *
    * @since 4.6.0
    */
-  @NonNull
-  static DriverConfigLoader fromMap(@NonNull OptionsMap source) {
+  @Nonnull
+  static DriverConfigLoader fromMap(@Nonnull OptionsMap source) {
     return new MapBasedDriverConfigLoader(source, source.asRawMap());
   }
 
@@ -330,10 +330,10 @@ public interface DriverConfigLoader extends AutoCloseable {
    * if nothing is. If the input loaders have periodic reloading built-in, each one will reload at
    * its own pace, and the changes will be reflected in the new config.
    */
-  @NonNull
+  @Nonnull
   static DriverConfigLoader compose(
-      @NonNull DriverConfigLoader primaryConfigLoader,
-      @NonNull DriverConfigLoader fallbackConfigLoader) {
+      @Nonnull DriverConfigLoader primaryConfigLoader,
+      @Nonnull DriverConfigLoader fallbackConfigLoader) {
     return new CompositeDriverConfigLoader(primaryConfigLoader, fallbackConfigLoader);
   }
 
@@ -343,14 +343,14 @@ public interface DriverConfigLoader extends AutoCloseable {
    * <p>If this loader {@linkplain #supportsReloading() supports reloading}, this object should be
    * mutable and reflect later changes when the configuration gets reloaded.
    */
-  @NonNull
+  @Nonnull
   DriverConfig getInitialConfig();
 
   /**
    * Called when the driver initializes. For loaders that periodically check for configuration
    * updates, this is a good time to grab an internal executor and schedule a recurring task.
    */
-  void onDriverInit(@NonNull DriverContext context);
+  void onDriverInit(@Nonnull DriverContext context);
 
   /**
    * Triggers an immediate reload attempt and returns a stage that completes once the attempt is
@@ -366,7 +366,7 @@ public interface DriverConfigLoader extends AutoCloseable {
    * immediately with an {@link UnsupportedOperationException}. The default implementation of this
    * interface does support programmatic reloading however, and never returns a failed stage.
    */
-  @NonNull
+  @Nonnull
   CompletionStage<Boolean> reload();
 
   /**

@@ -19,13 +19,13 @@ package com.datastax.dse.driver.api.core.data.time;
 
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.base.Strings;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A date range, as defined by the server type {@code
@@ -63,8 +63,8 @@ public class DateRange implements Serializable {
    * @see DateRangeBound#parseLowerBound(String)
    * @see DateRangeBound#parseUpperBound(String)
    */
-  @NonNull
-  public static DateRange parse(@NonNull String source) throws ParseException {
+  @Nonnull
+  public static DateRange parse(@Nonnull String source) throws ParseException {
     if (Strings.isNullOrEmpty(source)) {
       throw new ParseException("Date range is null or empty", 0);
     }
@@ -106,7 +106,7 @@ public class DateRange implements Serializable {
     }
   }
 
-  @NonNull private final DateRangeBound lowerBound;
+  @Nonnull private final DateRangeBound lowerBound;
   @Nullable private final DateRangeBound upperBound;
 
   /**
@@ -115,7 +115,7 @@ public class DateRange implements Serializable {
    *
    * @throws NullPointerException if {@code singleBound} is null.
    */
-  public DateRange(@NonNull DateRangeBound singleBound) {
+  public DateRange(@Nonnull DateRangeBound singleBound) {
     this.lowerBound = Preconditions.checkNotNull(singleBound, "singleBound cannot be null");
     this.upperBound = null;
   }
@@ -127,7 +127,7 @@ public class DateRange implements Serializable {
    * @throws IllegalArgumentException if both {@code lowerBound} and {@code upperBound} are not
    *     unbounded and {@code lowerBound} is greater than {@code upperBound}.
    */
-  public DateRange(@NonNull DateRangeBound lowerBound, @NonNull DateRangeBound upperBound) {
+  public DateRange(@Nonnull DateRangeBound lowerBound, @Nonnull DateRangeBound upperBound) {
     Preconditions.checkNotNull(lowerBound, "lowerBound cannot be null");
     Preconditions.checkNotNull(upperBound, "upperBound cannot be null");
     if (!lowerBound.isUnbounded()
@@ -143,7 +143,7 @@ public class DateRange implements Serializable {
   }
 
   /** Returns the lower bound of this range (inclusive). */
-  @NonNull
+  @Nonnull
   public DateRangeBound getLowerBound() {
     return lowerBound;
   }
@@ -152,7 +152,7 @@ public class DateRange implements Serializable {
    * Returns the upper bound of this range (inclusive), or empty if the range is {@linkplain
    * #isSingleBounded() single-bounded}.
    */
-  @NonNull
+  @Nonnull
   public Optional<DateRangeBound> getUpperBound() {
     return Optional.ofNullable(upperBound);
   }
@@ -171,7 +171,7 @@ public class DateRange implements Serializable {
    *
    * @see DateRangeBound#toString()
    */
-  @NonNull
+  @Nonnull
   @Override
   public String toString() {
     if (isSingleBounded()) {

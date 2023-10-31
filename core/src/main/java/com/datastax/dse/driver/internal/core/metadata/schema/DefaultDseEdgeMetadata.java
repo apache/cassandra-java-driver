@@ -20,37 +20,37 @@ package com.datastax.dse.driver.internal.core.metadata.schema;
 import com.datastax.dse.driver.api.core.metadata.schema.DseEdgeMetadata;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 
 public class DefaultDseEdgeMetadata implements DseEdgeMetadata, Serializable {
 
   private static final long serialVersionUID = 1;
 
-  @NonNull private final CqlIdentifier labelName;
+  @Nonnull private final CqlIdentifier labelName;
 
-  @NonNull private final CqlIdentifier fromTable;
-  @NonNull private final CqlIdentifier fromLabel;
-  @NonNull private final List<CqlIdentifier> fromPartitionKeyColumns;
-  @NonNull private final List<CqlIdentifier> fromClusteringColumns;
+  @Nonnull private final CqlIdentifier fromTable;
+  @Nonnull private final CqlIdentifier fromLabel;
+  @Nonnull private final List<CqlIdentifier> fromPartitionKeyColumns;
+  @Nonnull private final List<CqlIdentifier> fromClusteringColumns;
 
-  @NonNull private final CqlIdentifier toTable;
-  @NonNull private final CqlIdentifier toLabel;
-  @NonNull private final List<CqlIdentifier> toPartitionKeyColumns;
-  @NonNull private final List<CqlIdentifier> toClusteringColumns;
+  @Nonnull private final CqlIdentifier toTable;
+  @Nonnull private final CqlIdentifier toLabel;
+  @Nonnull private final List<CqlIdentifier> toPartitionKeyColumns;
+  @Nonnull private final List<CqlIdentifier> toClusteringColumns;
 
   public DefaultDseEdgeMetadata(
-      @NonNull CqlIdentifier labelName,
-      @NonNull CqlIdentifier fromTable,
-      @NonNull CqlIdentifier fromLabel,
-      @NonNull List<CqlIdentifier> fromPartitionKeyColumns,
-      @NonNull List<CqlIdentifier> fromClusteringColumns,
-      @NonNull CqlIdentifier toTable,
-      @NonNull CqlIdentifier toLabel,
-      @NonNull List<CqlIdentifier> toPartitionKeyColumns,
-      @NonNull List<CqlIdentifier> toClusteringColumns) {
+      @Nonnull CqlIdentifier labelName,
+      @Nonnull CqlIdentifier fromTable,
+      @Nonnull CqlIdentifier fromLabel,
+      @Nonnull List<CqlIdentifier> fromPartitionKeyColumns,
+      @Nonnull List<CqlIdentifier> fromClusteringColumns,
+      @Nonnull CqlIdentifier toTable,
+      @Nonnull CqlIdentifier toLabel,
+      @Nonnull List<CqlIdentifier> toPartitionKeyColumns,
+      @Nonnull List<CqlIdentifier> toClusteringColumns) {
     this.labelName = Preconditions.checkNotNull(labelName);
     this.fromTable = Preconditions.checkNotNull(fromTable);
     this.fromLabel = Preconditions.checkNotNull(fromLabel);
@@ -62,55 +62,55 @@ public class DefaultDseEdgeMetadata implements DseEdgeMetadata, Serializable {
     this.toClusteringColumns = Preconditions.checkNotNull(toClusteringColumns);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getLabelName() {
     return labelName;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getFromTable() {
     return fromTable;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getFromLabel() {
     return fromLabel;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<CqlIdentifier> getFromPartitionKeyColumns() {
     return fromPartitionKeyColumns;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<CqlIdentifier> getFromClusteringColumns() {
     return fromClusteringColumns;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getToTable() {
     return toTable;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getToLabel() {
     return toLabel;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<CqlIdentifier> getToPartitionKeyColumns() {
     return toPartitionKeyColumns;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<CqlIdentifier> getToClusteringColumns() {
     return toClusteringColumns;

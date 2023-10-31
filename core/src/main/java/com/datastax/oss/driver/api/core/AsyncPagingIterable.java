@@ -20,11 +20,11 @@ package com.datastax.oss.driver.api.core;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.internal.core.AsyncPagingIterableWrapper;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Iterator;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * An iterable of elements which are fetched asynchronously by the driver, possibly in multiple
@@ -33,11 +33,11 @@ import java.util.function.Function;
 public interface AsyncPagingIterable<ElementT, SelfT extends AsyncPagingIterable<ElementT, SelfT>> {
 
   /** Metadata about the columns returned by the CQL request that was used to build this result. */
-  @NonNull
+  @Nonnull
   ColumnDefinitions getColumnDefinitions();
 
   /** Returns {@linkplain ExecutionInfo information about the execution} of this page of results. */
-  @NonNull
+  @Nonnull
   ExecutionInfo getExecutionInfo();
 
   /** How many rows are left before the current page is exhausted. */
@@ -50,7 +50,7 @@ public interface AsyncPagingIterable<ElementT, SelfT extends AsyncPagingIterable
    * <p>Note that this method always returns the same object, and that that object can only be
    * iterated once: elements are "consumed" as they are read.
    */
-  @NonNull
+  @Nonnull
   Iterable<ElementT> currentPage();
 
   /**
@@ -77,7 +77,7 @@ public interface AsyncPagingIterable<ElementT, SelfT extends AsyncPagingIterable
    * @throws IllegalStateException if there are no more pages. Use {@link #hasMorePages()} to check
    *     if you can call this method.
    */
-  @NonNull
+  @Nonnull
   CompletionStage<SelfT> fetchNextPage() throws IllegalStateException;
 
   /**

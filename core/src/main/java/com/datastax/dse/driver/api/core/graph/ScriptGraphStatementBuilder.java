@@ -20,9 +20,9 @@ package com.datastax.dse.driver.api.core.graph;
 import com.datastax.dse.driver.internal.core.graph.DefaultScriptGraphStatement;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -54,14 +54,14 @@ public class ScriptGraphStatementBuilder
     this.isSystemQuery = template.isSystemQuery();
   }
 
-  @NonNull
-  public ScriptGraphStatementBuilder setScript(@NonNull String script) {
+  @Nonnull
+  public ScriptGraphStatementBuilder setScript(@Nonnull String script) {
     this.script = script;
     return this;
   }
 
   /** @see ScriptGraphStatement#isSystemQuery() */
-  @NonNull
+  @Nonnull
   public ScriptGraphStatementBuilder setSystemQuery(@Nullable Boolean isSystemQuery) {
     this.isSystemQuery = isSystemQuery;
     return this;
@@ -72,8 +72,8 @@ public class ScriptGraphStatementBuilder
    *
    * @see ScriptGraphStatement#setQueryParam(String, Object)
    */
-  @NonNull
-  public ScriptGraphStatementBuilder setQueryParam(@NonNull String name, @Nullable Object value) {
+  @Nonnull
+  public ScriptGraphStatementBuilder setQueryParam(@Nonnull String name, @Nullable Object value) {
     this.queryParams.put(name, value);
     return this;
   }
@@ -83,8 +83,8 @@ public class ScriptGraphStatementBuilder
    *
    * @see ScriptGraphStatement#setQueryParam(String, Object)
    */
-  @NonNull
-  public ScriptGraphStatementBuilder setQueryParams(@NonNull Map<String, Object> params) {
+  @Nonnull
+  public ScriptGraphStatementBuilder setQueryParams(@Nonnull Map<String, Object> params) {
     this.queryParams.putAll(params);
     return this;
   }
@@ -99,8 +99,8 @@ public class ScriptGraphStatementBuilder
    * @see ScriptGraphStatement#setQueryParam(String, Object)
    * @see #clearQueryParams()
    */
-  @NonNull
-  public ScriptGraphStatementBuilder removeQueryParam(@NonNull String name) {
+  @Nonnull
+  public ScriptGraphStatementBuilder removeQueryParam(@Nonnull String name) {
     this.queryParams.remove(name);
     return this;
   }
@@ -111,7 +111,7 @@ public class ScriptGraphStatementBuilder
     return this;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ScriptGraphStatement build() {
     Preconditions.checkNotNull(this.script, "Script hasn't been defined in this builder.");

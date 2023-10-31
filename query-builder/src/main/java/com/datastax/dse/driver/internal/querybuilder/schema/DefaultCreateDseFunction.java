@@ -27,9 +27,9 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -106,7 +106,7 @@ public class DefaultCreateDseFunction
     this.monotonicOn = monotonicOn;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder();
@@ -188,9 +188,9 @@ public class DefaultCreateDseFunction
     return asCql();
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateDseFunctionEnd as(@NonNull String functionBody) {
+  public CreateDseFunctionEnd as(@Nonnull String functionBody) {
     return new DefaultCreateDseFunction(
         keyspace,
         functionName,
@@ -206,9 +206,9 @@ public class DefaultCreateDseFunction
         monotonicOn);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateDseFunctionWithLanguage withLanguage(@NonNull String language) {
+  public CreateDseFunctionWithLanguage withLanguage(@Nonnull String language) {
     return new DefaultCreateDseFunction(
         keyspace,
         functionName,
@@ -224,7 +224,7 @@ public class DefaultCreateDseFunction
         monotonicOn);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseFunctionStart ifNotExists() {
     return new DefaultCreateDseFunction(
@@ -242,7 +242,7 @@ public class DefaultCreateDseFunction
         monotonicOn);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseFunctionStart orReplace() {
     return new DefaultCreateDseFunction(
@@ -260,10 +260,10 @@ public class DefaultCreateDseFunction
         monotonicOn);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseFunctionStart withParameter(
-      @NonNull CqlIdentifier paramName, @NonNull DataType paramType) {
+      @Nonnull CqlIdentifier paramName, @Nonnull DataType paramType) {
     return new DefaultCreateDseFunction(
         keyspace,
         functionName,
@@ -279,7 +279,7 @@ public class DefaultCreateDseFunction
         monotonicOn);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseFunctionWithNullOption returnsNullOnNull() {
     return new DefaultCreateDseFunction(
@@ -297,7 +297,7 @@ public class DefaultCreateDseFunction
         monotonicOn);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseFunctionWithNullOption calledOnNull() {
     return new DefaultCreateDseFunction(
@@ -315,7 +315,7 @@ public class DefaultCreateDseFunction
         monotonicOn);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseFunctionWithType deterministic() {
     return new DefaultCreateDseFunction(
@@ -333,7 +333,7 @@ public class DefaultCreateDseFunction
         monotonicOn);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseFunctionWithType monotonic() {
     return new DefaultCreateDseFunction(
@@ -351,9 +351,9 @@ public class DefaultCreateDseFunction
         null);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateDseFunctionWithType monotonicOn(@NonNull CqlIdentifier monotonicColumn) {
+  public CreateDseFunctionWithType monotonicOn(@Nonnull CqlIdentifier monotonicColumn) {
     return new DefaultCreateDseFunction(
         keyspace,
         functionName,
@@ -369,9 +369,9 @@ public class DefaultCreateDseFunction
         monotonicColumn);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateDseFunctionWithType returnsType(@NonNull DataType returnType) {
+  public CreateDseFunctionWithType returnsType(@Nonnull DataType returnType) {
     return new DefaultCreateDseFunction(
         keyspace,
         functionName,
@@ -392,7 +392,7 @@ public class DefaultCreateDseFunction
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getFunction() {
     return functionName;
   }
@@ -405,7 +405,7 @@ public class DefaultCreateDseFunction
     return ifNotExists;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableMap<CqlIdentifier, DataType> getParameters() {
     return parameters;
   }

@@ -17,7 +17,7 @@
  */
 package com.datastax.oss.driver.api.core.type;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * Representation of a type which "contains" some other type. This might be a collection type or it
@@ -25,6 +25,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  */
 public interface ContainerType {
 
-  @NonNull
+  @Nonnull
   DataType getElementType();
 }

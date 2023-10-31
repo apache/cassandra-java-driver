@@ -67,7 +67,7 @@ public class DefaultDriverContext {
     return new DefaultNettyOptions(this);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public NettyOptions getNettyOptions() {
     return nettyOptionsRef.get();
@@ -104,7 +104,7 @@ public class CustomBuilder extends SessionBuilder<CustomBuilder, CqlSession> {
   }
 
   @Override
-  protected CqlSession wrap(@NonNull CqlSession defaultSession) {
+  protected CqlSession wrap(@Nonnull CqlSession defaultSession) {
     // Nothing to do here, nothing changes on the session type
     return defaultSession;
   }

@@ -26,13 +26,13 @@ import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.data.ValuesHelper;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class DefaultPagingState implements PagingState {
 
@@ -101,14 +101,14 @@ public class DefaultPagingState implements PagingState {
   }
 
   @Override
-  public boolean matches(@NonNull Statement<?> statement, @Nullable Session session) {
+  public boolean matches(@Nonnull Statement<?> statement, @Nullable Session session) {
     AttachmentPoint attachmentPoint =
         (session == null) ? AttachmentPoint.NONE : session.getContext();
     byte[] actual = hash(statement, rawPagingState, attachmentPoint);
     return Arrays.equals(actual, hash);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ByteBuffer getRawPagingState() {
     return rawPagingState;
@@ -117,9 +117,9 @@ public class DefaultPagingState implements PagingState {
   // Hashes a statement's query string and parameters. We also include the paging state itself in
   // the hash computation, to make the serialized form a bit more resistant to manual tampering.
   private static byte[] hash(
-      @NonNull Statement<?> statement,
+      @Nonnull Statement<?> statement,
       ByteBuffer rawPagingState,
-      @NonNull AttachmentPoint attachmentPoint) {
+      @Nonnull AttachmentPoint attachmentPoint) {
     // Batch statements don't have paging, the driver should never call this method for one
     assert !(statement instanceof BatchStatement);
 

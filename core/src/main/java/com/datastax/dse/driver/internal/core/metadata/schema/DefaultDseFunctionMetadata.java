@@ -23,11 +23,11 @@ import com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultFunctionMetadata;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -36,19 +36,19 @@ public class DefaultDseFunctionMetadata extends DefaultFunctionMetadata
 
   @Nullable private final Boolean deterministic;
   @Nullable private final Monotonicity monotonicity;
-  @NonNull private final List<CqlIdentifier> monotonicArgumentNames;
+  @Nonnull private final List<CqlIdentifier> monotonicArgumentNames;
 
   public DefaultDseFunctionMetadata(
-      @NonNull CqlIdentifier keyspace,
-      @NonNull FunctionSignature signature,
-      @NonNull List<CqlIdentifier> parameterNames,
-      @NonNull String body,
+      @Nonnull CqlIdentifier keyspace,
+      @Nonnull FunctionSignature signature,
+      @Nonnull List<CqlIdentifier> parameterNames,
+      @Nonnull String body,
       boolean calledOnNullInput,
-      @NonNull String language,
-      @NonNull DataType returnType,
+      @Nonnull String language,
+      @Nonnull DataType returnType,
       @Nullable Boolean deterministic,
       @Nullable Boolean monotonic,
-      @NonNull List<CqlIdentifier> monotonicArgumentNames) {
+      @Nonnull List<CqlIdentifier> monotonicArgumentNames) {
     super(keyspace, signature, parameterNames, body, calledOnNullInput, language, returnType);
     // set DSE extension attributes
     this.deterministic = deterministic;
@@ -85,7 +85,7 @@ public class DefaultDseFunctionMetadata extends DefaultFunctionMetadata
     return Optional.ofNullable(monotonicity);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<CqlIdentifier> getMonotonicArgumentNames() {
     return this.monotonicArgumentNames;

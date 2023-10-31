@@ -22,38 +22,38 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveFloatCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class FloatCodec implements PrimitiveFloatCodec {
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<Float> getJavaType() {
     return GenericType.FLOAT;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.FLOAT;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof Float;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == Float.class || javaClass == float.class;
   }
 
   @Nullable
   @Override
-  public ByteBuffer encodePrimitive(float value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encodePrimitive(float value, @Nonnull ProtocolVersion protocolVersion) {
     ByteBuffer bytes = ByteBuffer.allocate(4);
     bytes.putFloat(0, value);
     return bytes;
@@ -61,7 +61,7 @@ public class FloatCodec implements PrimitiveFloatCodec {
 
   @Override
   public float decodePrimitive(
-      @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return 0;
     } else if (bytes.remaining() != 4) {
@@ -72,7 +72,7 @@ public class FloatCodec implements PrimitiveFloatCodec {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable Float value) {
     return (value == null) ? "NULL" : Float.toString(value);

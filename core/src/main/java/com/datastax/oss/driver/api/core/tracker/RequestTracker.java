@@ -23,8 +23,8 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Tracks request execution for a session.
@@ -41,10 +41,10 @@ public interface RequestTracker extends AutoCloseable {
    */
   @Deprecated
   default void onSuccess(
-      @NonNull Request request,
+      @Nonnull Request request,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node) {}
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node) {}
 
   /**
    * Invoked each time a request succeeds.
@@ -56,11 +56,11 @@ public interface RequestTracker extends AutoCloseable {
    * @param requestLogPrefix the dedicated log prefix for this request
    */
   default void onSuccess(
-      @NonNull Request request,
+      @Nonnull Request request,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String requestLogPrefix) {
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node,
+      @Nonnull String requestLogPrefix) {
     // If client doesn't override onSuccess with requestLogPrefix delegate call to the old method
     onSuccess(request, latencyNanos, executionProfile, node);
   }
@@ -71,10 +71,10 @@ public interface RequestTracker extends AutoCloseable {
    */
   @Deprecated
   default void onError(
-      @NonNull Request request,
-      @NonNull Throwable error,
+      @Nonnull Request request,
+      @Nonnull Throwable error,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
+      @Nonnull DriverExecutionProfile executionProfile,
       @Nullable Node node) {}
 
   /**
@@ -87,12 +87,12 @@ public interface RequestTracker extends AutoCloseable {
    * @param requestLogPrefix the dedicated log prefix for this request
    */
   default void onError(
-      @NonNull Request request,
-      @NonNull Throwable error,
+      @Nonnull Request request,
+      @Nonnull Throwable error,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
+      @Nonnull DriverExecutionProfile executionProfile,
       @Nullable Node node,
-      @NonNull String requestLogPrefix) {
+      @Nonnull String requestLogPrefix) {
     // If client doesn't override onError with requestLogPrefix delegate call to the old method
     onError(request, error, latencyNanos, executionProfile, node);
   }
@@ -103,11 +103,11 @@ public interface RequestTracker extends AutoCloseable {
    */
   @Deprecated
   default void onNodeError(
-      @NonNull Request request,
-      @NonNull Throwable error,
+      @Nonnull Request request,
+      @Nonnull Throwable error,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node) {}
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node) {}
 
   /**
    * Invoked each time a request fails at the node level. Similar to {@link #onError(Request,
@@ -120,12 +120,12 @@ public interface RequestTracker extends AutoCloseable {
    * @param requestLogPrefix the dedicated log prefix for this request
    */
   default void onNodeError(
-      @NonNull Request request,
-      @NonNull Throwable error,
+      @Nonnull Request request,
+      @Nonnull Throwable error,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String requestLogPrefix) {
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node,
+      @Nonnull String requestLogPrefix) {
     // If client doesn't override onNodeError with requestLogPrefix delegate call to the old method
     onNodeError(request, error, latencyNanos, executionProfile, node);
   }
@@ -136,10 +136,10 @@ public interface RequestTracker extends AutoCloseable {
    */
   @Deprecated
   default void onNodeSuccess(
-      @NonNull Request request,
+      @Nonnull Request request,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node) {}
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node) {}
 
   /**
    * Invoked each time a request succeeds at the node level. Similar to {@link #onSuccess(Request,
@@ -152,11 +152,11 @@ public interface RequestTracker extends AutoCloseable {
    * @param requestLogPrefix the dedicated log prefix for this request
    */
   default void onNodeSuccess(
-      @NonNull Request request,
+      @Nonnull Request request,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String requestLogPrefix) {
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node,
+      @Nonnull String requestLogPrefix) {
     // If client doesn't override onNodeSuccess with requestLogPrefix delegate call to the old
     // method
     onNodeSuccess(request, latencyNanos, executionProfile, node);
@@ -181,5 +181,5 @@ public interface RequestTracker extends AutoCloseable {
    *
    * <p>The default implementation is empty.
    */
-  default void onSessionReady(@NonNull Session session) {}
+  default void onSessionReady(@Nonnull Session session) {}
 }

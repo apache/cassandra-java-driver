@@ -33,8 +33,6 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
 import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
 import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -46,6 +44,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /** A data structure that provides methods to retrieve its values via an integer index. */
 public interface GettableByIndex extends AccessibleByIndex {
@@ -447,7 +447,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    */
   @Nullable
   default <ElementT extends Number> CqlVector<ElementT> getVector(
-      int i, @NonNull Class<ElementT> elementsClass) {
+      int i, @Nonnull Class<ElementT> elementsClass) {
     return get(i, GenericType.vectorOf(elementsClass));
   }
 
@@ -497,7 +497,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @Nullable
-  default <ElementT> List<ElementT> getList(int i, @NonNull Class<ElementT> elementsClass) {
+  default <ElementT> List<ElementT> getList(int i, @Nonnull Class<ElementT> elementsClass) {
     return get(i, GenericType.listOf(elementsClass));
   }
 
@@ -516,7 +516,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
   @Nullable
-  default <ElementT> Set<ElementT> getSet(int i, @NonNull Class<ElementT> elementsClass) {
+  default <ElementT> Set<ElementT> getSet(int i, @Nonnull Class<ElementT> elementsClass) {
     return get(i, GenericType.setOf(elementsClass));
   }
 
@@ -536,7 +536,7 @@ public interface GettableByIndex extends AccessibleByIndex {
    */
   @Nullable
   default <KeyT, ValueT> Map<KeyT, ValueT> getMap(
-      int i, @NonNull Class<KeyT> keyClass, @NonNull Class<ValueT> valueClass) {
+      int i, @Nonnull Class<KeyT> keyClass, @Nonnull Class<ValueT> valueClass) {
     return get(i, GenericType.mapOf(keyClass, valueClass));
   }
 

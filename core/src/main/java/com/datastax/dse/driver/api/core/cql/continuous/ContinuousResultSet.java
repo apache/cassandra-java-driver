@@ -20,9 +20,9 @@ package com.datastax.dse.driver.api.core.cql.continuous;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 /**
  * The result of a {@linkplain ContinuousSession#executeContinuously(Statement) synchronous
@@ -71,7 +71,7 @@ public interface ContinuousResultSet extends ResultSet {
    * <p>Note: because the driver does not support query traces for continuous queries, {@link
    * ExecutionInfo#getTracingId()} will always be {@code null}.
    */
-  @NonNull
+  @Nonnull
   @Override
   default ExecutionInfo getExecutionInfo() {
     List<ExecutionInfo> infos = getExecutionInfos();

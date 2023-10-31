@@ -22,9 +22,9 @@ import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.internal.core.metadata.SniEndPoint;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CopyOnWriteArrayList;
+import javax.annotation.Nonnull;
 import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -43,9 +43,9 @@ public class SniSslEngineFactory implements SslEngineFactory {
     this.sslContext = sslContext;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public SSLEngine newSslEngine(@NonNull EndPoint remoteEndpoint) {
+  public SSLEngine newSslEngine(@Nonnull EndPoint remoteEndpoint) {
     if (!(remoteEndpoint instanceof SniEndPoint)) {
       throw new IllegalArgumentException(
           String.format(

@@ -19,7 +19,7 @@ package com.datastax.oss.driver.internal.querybuilder.lhs;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -28,24 +28,24 @@ public class ColumnComponentLeftOperand implements LeftOperand {
   private final CqlIdentifier columnId;
   private final Term index;
 
-  public ColumnComponentLeftOperand(@NonNull CqlIdentifier columnId, @NonNull Term index) {
+  public ColumnComponentLeftOperand(@Nonnull CqlIdentifier columnId, @Nonnull Term index) {
     this.columnId = columnId;
     this.index = index;
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     builder.append(columnId.asCql(true)).append('[');
     index.appendTo(builder);
     builder.append(']');
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getColumnId() {
     return columnId;
   }
 
-  @NonNull
+  @Nonnull
   public Term getIndex() {
     return index;
   }

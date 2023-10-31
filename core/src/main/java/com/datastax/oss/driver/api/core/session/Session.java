@@ -32,10 +32,10 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.DefaultMavenCoordinates;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A nexus to send requests to a Cassandra cluster.
@@ -58,7 +58,7 @@ public interface Session extends AsyncAutoCloseable {
    * <p>This is intended for products that wrap or extend the driver, as a way to check
    * compatibility if end-users override the driver version in their application.
    */
-  @NonNull
+  @Nonnull
   MavenCoordinates OSS_DRIVER_COORDINATES =
       DefaultMavenCoordinates.buildFromResourceAndPrint(
           Session.class.getResource("/com/datastax/oss/driver/Driver.properties"));
@@ -74,7 +74,7 @@ public interface Session extends AsyncAutoCloseable {
    * <p>Note that this is purely a client-side identifier; in particular, it has no relation with
    * {@code system.local.cluster_name} on the server.
    */
-  @NonNull
+  @Nonnull
   String getName();
 
   /**
@@ -96,7 +96,7 @@ public interface Session extends AsyncAutoCloseable {
    * <p>The returned object is never {@code null}, but may be empty if metadata has been disabled in
    * the configuration.
    */
-  @NonNull
+  @Nonnull
   Metadata getMetadata();
 
   /** Whether schema metadata is currently enabled. */
@@ -118,7 +118,7 @@ public interface Session extends AsyncAutoCloseable {
    * @return if this call triggered a refresh, a future that will complete when that refresh is
    *     complete. Otherwise, a completed future with the current metadata.
    */
-  @NonNull
+  @Nonnull
   CompletionStage<Metadata> setSchemaMetadataEnabled(@Nullable Boolean newValue);
 
   /**
@@ -128,7 +128,7 @@ public interface Session extends AsyncAutoCloseable {
    * <p>The new metadata is returned in the resulting future (and will also be reflected by {@link
    * #getMetadata()} when that future completes).
    */
-  @NonNull
+  @Nonnull
   CompletionStage<Metadata> refreshSchemaAsync();
 
   /**
@@ -136,7 +136,7 @@ public interface Session extends AsyncAutoCloseable {
    *
    * <p>This must not be called on a driver thread.
    */
-  @NonNull
+  @Nonnull
   default Metadata refreshSchema() {
     BlockingOperation.checkNotDriverThread();
     return CompletableFutures.getUninterruptibly(refreshSchemaAsync());
@@ -166,7 +166,7 @@ public interface Session extends AsyncAutoCloseable {
    * @see DefaultDriverOption#CONTROL_CONNECTION_AGREEMENT_INTERVAL
    * @see DefaultDriverOption#CONTROL_CONNECTION_AGREEMENT_TIMEOUT
    */
-  @NonNull
+  @Nonnull
   CompletionStage<Boolean> checkSchemaAgreementAsync();
 
   /**
@@ -180,7 +180,7 @@ public interface Session extends AsyncAutoCloseable {
   }
 
   /** Returns a context that provides access to all the policies used by this driver instance. */
-  @NonNull
+  @Nonnull
   DriverContext getContext();
 
   /**
@@ -195,7 +195,7 @@ public interface Session extends AsyncAutoCloseable {
    * concurrently. Therefore it is highly discouraged, aside from trivial cases (such as a
    * cqlsh-style program where requests are never concurrent).
    */
-  @NonNull
+  @Nonnull
   Optional<CqlIdentifier> getKeyspace();
 
   /**
@@ -209,7 +209,7 @@ public interface Session extends AsyncAutoCloseable {
    * SessionBuilder#withMetricRegistry(Object)} when you build the session. You can then use the
    * framework's proprietary APIs to retrieve the metrics from the registry.
    */
-  @NonNull
+  @Nonnull
   Optional<Metrics> getMetrics();
 
   /**
@@ -221,5 +221,5 @@ public interface Session extends AsyncAutoCloseable {
    */
   @Nullable // because ResultT could be Void
   <RequestT extends Request, ResultT> ResultT execute(
-      @NonNull RequestT request, @NonNull GenericType<ResultT> resultType);
+      @Nonnull RequestT request, @Nonnull GenericType<ResultT> resultType);
 }

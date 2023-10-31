@@ -22,11 +22,11 @@ import com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.Optional;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,24 +38,24 @@ public class DefaultAggregateMetadata implements AggregateMetadata, Serializable
 
   private static final long serialVersionUID = 1;
 
-  @NonNull private final CqlIdentifier keyspace;
-  @NonNull private final FunctionSignature signature;
+  @Nonnull private final CqlIdentifier keyspace;
+  @Nonnull private final FunctionSignature signature;
   @Nullable private final FunctionSignature finalFuncSignature;
   @Nullable private final Object initCond;
   @Nullable private final String formattedInitCond;
-  @NonNull private final DataType returnType;
-  @NonNull private final FunctionSignature stateFuncSignature;
-  @NonNull private final DataType stateType;
+  @Nonnull private final DataType returnType;
+  @Nonnull private final FunctionSignature stateFuncSignature;
+  @Nonnull private final DataType stateType;
 
   public DefaultAggregateMetadata(
-      @NonNull CqlIdentifier keyspace,
-      @NonNull FunctionSignature signature,
+      @Nonnull CqlIdentifier keyspace,
+      @Nonnull FunctionSignature signature,
       @Nullable FunctionSignature finalFuncSignature,
       @Nullable Object initCond,
-      @NonNull DataType returnType,
-      @NonNull FunctionSignature stateFuncSignature,
-      @NonNull DataType stateType,
-      @NonNull TypeCodec<Object> stateTypeCodec) {
+      @Nonnull DataType returnType,
+      @Nonnull FunctionSignature stateFuncSignature,
+      @Nonnull DataType stateType,
+      @Nonnull TypeCodec<Object> stateTypeCodec) {
     this.keyspace = keyspace;
     this.signature = signature;
     this.finalFuncSignature = finalFuncSignature;
@@ -66,49 +66,49 @@ public class DefaultAggregateMetadata implements AggregateMetadata, Serializable
     this.stateType = stateType;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public FunctionSignature getSignature() {
     return signature;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<FunctionSignature> getFinalFuncSignature() {
     return Optional.ofNullable(finalFuncSignature);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<Object> getInitCond() {
     return Optional.ofNullable(initCond);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getReturnType() {
     return returnType;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public FunctionSignature getStateFuncSignature() {
     return stateFuncSignature;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getStateType() {
     return stateType;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<String> formatInitCond() {
     return Optional.ofNullable(this.formattedInitCond);
@@ -157,7 +157,7 @@ public class DefaultAggregateMetadata implements AggregateMetadata, Serializable
 
   @Nullable
   private String computeFormattedInitCond(
-      @Nullable Object initCond, @NonNull TypeCodec<Object> stateTypeCodec) {
+      @Nullable Object initCond, @Nonnull TypeCodec<Object> stateTypeCodec) {
 
     if (initCond == null) {
       return null;

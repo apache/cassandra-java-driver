@@ -20,10 +20,10 @@ package com.datastax.oss.driver.internal.core.type;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.CustomType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -34,12 +34,12 @@ public class DefaultCustomType implements CustomType, Serializable {
   /** @serial */
   private final String className;
 
-  public DefaultCustomType(@NonNull String className) {
+  public DefaultCustomType(@Nonnull String className) {
     Preconditions.checkNotNull(className);
     this.className = className;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getClassName() {
     return className;
@@ -51,7 +51,7 @@ public class DefaultCustomType implements CustomType, Serializable {
   }
 
   @Override
-  public void attach(@NonNull AttachmentPoint attachmentPoint) {
+  public void attach(@Nonnull AttachmentPoint attachmentPoint) {
     // nothing to do
   }
 

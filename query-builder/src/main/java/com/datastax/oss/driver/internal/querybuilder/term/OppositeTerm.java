@@ -20,22 +20,22 @@ package com.datastax.oss.driver.internal.querybuilder.term;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.ArithmeticOperator;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
 public class OppositeTerm extends ArithmeticTerm {
 
-  @NonNull private final Term argument;
+  @Nonnull private final Term argument;
 
-  public OppositeTerm(@NonNull Term argument) {
+  public OppositeTerm(@Nonnull Term argument) {
     super(ArithmeticOperator.OPPOSITE);
     Preconditions.checkNotNull(argument);
     this.argument = argument;
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     builder.append('-');
     appendAndMaybeParenthesize(operator.getPrecedenceLeft(), argument, builder);
   }
@@ -45,7 +45,7 @@ public class OppositeTerm extends ArithmeticTerm {
     return argument.isIdempotent();
   }
 
-  @NonNull
+  @Nonnull
   public Term getArgument() {
     return argument;
   }

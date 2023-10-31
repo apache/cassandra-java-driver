@@ -24,46 +24,46 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.Strings;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class InetCodec implements TypeCodec<InetAddress> {
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<InetAddress> getJavaType() {
     return GenericType.INET_ADDRESS;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.INET;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof InetAddress;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return InetAddress.class.equals(javaClass);
   }
 
   @Nullable
   @Override
-  public ByteBuffer encode(@Nullable InetAddress value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable InetAddress value, @Nonnull ProtocolVersion protocolVersion) {
     return (value == null) ? null : ByteBuffer.wrap(value.getAddress());
   }
 
   @Nullable
   @Override
-  public InetAddress decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public InetAddress decode(@Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return null;
     }
@@ -75,7 +75,7 @@ public class InetCodec implements TypeCodec<InetAddress> {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable InetAddress value) {
     return (value == null) ? "NULL" : ("'" + value.getHostAddress() + "'");

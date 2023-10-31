@@ -30,13 +30,13 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.CheckReturnValue;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A request to execute a DSE Graph query.
@@ -77,7 +77,7 @@ public interface GraphStatement<SelfT extends GraphStatement<SelfT>> extends Req
    * @param idempotent a boolean instance to set a statement-specific value, or {@code null} to use
    *     the default idempotence defined in the configuration.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   SelfT setIdempotent(@Nullable Boolean idempotent);
 
@@ -103,7 +103,7 @@ public interface GraphStatement<SelfT extends GraphStatement<SelfT>> extends Req
    *     configuration.
    * @see #getTimeout()
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   SelfT setTimeout(@Nullable Duration newTimeout);
 
@@ -125,7 +125,7 @@ public interface GraphStatement<SelfT extends GraphStatement<SelfT>> extends Req
    * @param newNode The node that should be used to handle executions of this statement or null to
    *     delegate to the configured load balancing policy.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   SelfT setNode(@Nullable Node newNode);
 
@@ -157,7 +157,7 @@ public interface GraphStatement<SelfT extends GraphStatement<SelfT>> extends Req
    * <p>All the driver's built-in implementations are immutable, and return a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   SelfT setExecutionProfile(@Nullable DriverExecutionProfile executionProfile);
 
@@ -170,7 +170,7 @@ public interface GraphStatement<SelfT extends GraphStatement<SelfT>> extends Req
    * <p>All the driver's built-in implementations are immutable, and return a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   SelfT setExecutionProfileName(@Nullable String name);
 
@@ -193,9 +193,9 @@ public interface GraphStatement<SelfT extends GraphStatement<SelfT>> extends Req
    * <p>All the driver's built-in implementations are immutable, and return a new instance from this
    * method. However custom implementations may choose to be mutable and return the same instance.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  SelfT setCustomPayload(@NonNull Map<String, ByteBuffer> newCustomPayload);
+  SelfT setCustomPayload(@Nonnull Map<String, ByteBuffer> newCustomPayload);
 
   /**
    * The name of the graph to use for this statement.
@@ -215,7 +215,7 @@ public interface GraphStatement<SelfT extends GraphStatement<SelfT>> extends Req
    *
    * @see #getGraphName()
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   SelfT setGraphName(@Nullable String newGraphName);
 
@@ -237,7 +237,7 @@ public interface GraphStatement<SelfT extends GraphStatement<SelfT>> extends Req
    *
    * @see #getTraversalSource()
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   SelfT setTraversalSource(@Nullable String newTraversalSource);
 
@@ -259,7 +259,7 @@ public interface GraphStatement<SelfT extends GraphStatement<SelfT>> extends Req
    *
    * @see #getSubProtocol()
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   SelfT setSubProtocol(@Nullable String newSubProtocol);
 
@@ -308,7 +308,7 @@ public interface GraphStatement<SelfT extends GraphStatement<SelfT>> extends Req
    *
    * @see #getReadConsistencyLevel()
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   SelfT setReadConsistencyLevel(@Nullable ConsistencyLevel newReadConsistencyLevel);
 
@@ -334,7 +334,7 @@ public interface GraphStatement<SelfT extends GraphStatement<SelfT>> extends Req
    *
    * @see #getWriteConsistencyLevel()
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   SelfT setWriteConsistencyLevel(@Nullable ConsistencyLevel newWriteConsistencyLevel);
 

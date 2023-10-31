@@ -25,14 +25,14 @@ import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -53,7 +53,7 @@ public class DefaultRow implements Row, Serializable {
     this(definitions, data, AttachmentPoint.NONE);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ColumnDefinitions getColumnDefinitions() {
     return definitions;
@@ -64,15 +64,15 @@ public class DefaultRow implements Row, Serializable {
     return definitions.size();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getType(int i) {
     return definitions.get(i).getType();
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+  public List<Integer> allIndicesOf(@Nonnull CqlIdentifier id) {
     List<Integer> indices = definitions.allIndicesOf(id);
     if (indices.isEmpty()) {
       throw new IllegalArgumentException(id + " is not a column in this row");
@@ -81,7 +81,7 @@ public class DefaultRow implements Row, Serializable {
   }
 
   @Override
-  public int firstIndexOf(@NonNull CqlIdentifier id) {
+  public int firstIndexOf(@Nonnull CqlIdentifier id) {
     int indexOf = definitions.firstIndexOf(id);
     if (indexOf == -1) {
       throw new IllegalArgumentException(id + " is not a column in this row");
@@ -89,15 +89,15 @@ public class DefaultRow implements Row, Serializable {
     return indexOf;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DataType getType(@NonNull CqlIdentifier id) {
+  public DataType getType(@Nonnull CqlIdentifier id) {
     return definitions.get(firstIndexOf(id)).getType();
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull String name) {
+  public List<Integer> allIndicesOf(@Nonnull String name) {
     List<Integer> indices = definitions.allIndicesOf(name);
     if (indices.isEmpty()) {
       throw new IllegalArgumentException(name + " is not a column in this row");
@@ -106,7 +106,7 @@ public class DefaultRow implements Row, Serializable {
   }
 
   @Override
-  public int firstIndexOf(@NonNull String name) {
+  public int firstIndexOf(@Nonnull String name) {
     int indexOf = definitions.firstIndexOf(name);
     if (indexOf == -1) {
       throw new IllegalArgumentException(name + " is not a column in this row");
@@ -114,19 +114,19 @@ public class DefaultRow implements Row, Serializable {
     return indexOf;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DataType getType(@NonNull String name) {
+  public DataType getType(@Nonnull String name) {
     return definitions.get(firstIndexOf(name)).getType();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CodecRegistry codecRegistry() {
     return attachmentPoint.getCodecRegistry();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProtocolVersion protocolVersion() {
     return attachmentPoint.getProtocolVersion();
@@ -138,7 +138,7 @@ public class DefaultRow implements Row, Serializable {
   }
 
   @Override
-  public void attach(@NonNull AttachmentPoint attachmentPoint) {
+  public void attach(@Nonnull AttachmentPoint attachmentPoint) {
     this.attachmentPoint = attachmentPoint;
     this.definitions.attach(attachmentPoint);
   }

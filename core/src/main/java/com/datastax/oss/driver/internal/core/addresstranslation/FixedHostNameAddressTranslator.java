@@ -20,8 +20,8 @@ package com.datastax.oss.driver.internal.core.addresstranslation;
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetSocketAddress;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +42,7 @@ public class FixedHostNameAddressTranslator implements AddressTranslator {
 
   public static DriverOption ADDRESS_TRANSLATOR_ADVERTISED_HOSTNAME_OPTION =
       new DriverOption() {
-        @NonNull
+        @Nonnull
         @Override
         public String getPath() {
           return ADDRESS_TRANSLATOR_ADVERTISED_HOSTNAME;
@@ -52,7 +52,7 @@ public class FixedHostNameAddressTranslator implements AddressTranslator {
   private final String advertisedHostname;
   private final String logPrefix;
 
-  public FixedHostNameAddressTranslator(@NonNull DriverContext context) {
+  public FixedHostNameAddressTranslator(@Nonnull DriverContext context) {
     logPrefix = context.getSessionName();
     advertisedHostname =
         context
@@ -61,9 +61,9 @@ public class FixedHostNameAddressTranslator implements AddressTranslator {
             .getString(ADDRESS_TRANSLATOR_ADVERTISED_HOSTNAME_OPTION);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public InetSocketAddress translate(@NonNull InetSocketAddress address) {
+  public InetSocketAddress translate(@Nonnull InetSocketAddress address) {
     final int port = address.getPort();
     LOG.debug("[{}] Resolved {}:{} to {}:{}", logPrefix, address, port, advertisedHostname, port);
     return new InetSocketAddress(advertisedHostname, port);

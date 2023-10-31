@@ -18,10 +18,10 @@
 package com.datastax.oss.driver.internal.core.util.collection;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.AbstractQueue;
 import java.util.Collections;
 import java.util.Iterator;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -32,7 +32,7 @@ class EmptyQueryPlan extends AbstractQueue<Node> implements QueryPlan {
     return null;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Iterator<Node> iterator() {
     return Collections.emptyIterator();

@@ -24,10 +24,10 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -86,7 +86,7 @@ public class ConcurrencyLimitingRequestThrottler implements RequestThrottler {
   }
 
   @Override
-  public void register(@NonNull Throttled request) {
+  public void register(@Nonnull Throttled request) {
     lock.lock();
     try {
       if (closed) {
@@ -115,7 +115,7 @@ public class ConcurrencyLimitingRequestThrottler implements RequestThrottler {
   }
 
   @Override
-  public void signalSuccess(@NonNull Throttled request) {
+  public void signalSuccess(@Nonnull Throttled request) {
     lock.lock();
     try {
       onRequestDone();
@@ -125,12 +125,12 @@ public class ConcurrencyLimitingRequestThrottler implements RequestThrottler {
   }
 
   @Override
-  public void signalError(@NonNull Throttled request, @NonNull Throwable error) {
+  public void signalError(@Nonnull Throttled request, @Nonnull Throwable error) {
     signalSuccess(request); // not treated differently
   }
 
   @Override
-  public void signalTimeout(@NonNull Throttled request) {
+  public void signalTimeout(@Nonnull Throttled request) {
     lock.lock();
     try {
       if (!closed) {

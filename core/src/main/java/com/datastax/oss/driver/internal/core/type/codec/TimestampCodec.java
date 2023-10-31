@@ -24,8 +24,6 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.Strings;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.util.concurrent.FastThreadLocal;
 import java.nio.ByteBuffer;
 import java.text.ParsePosition;
@@ -34,6 +32,8 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.TimeZone;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -207,31 +207,31 @@ public class TimestampCodec implements TypeCodec<Instant> {
         };
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<Instant> getJavaType() {
     return GenericType.INSTANT;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.TIMESTAMP;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof Instant;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == Instant.class;
   }
 
   @Nullable
   @Override
-  public ByteBuffer encode(@Nullable Instant value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable Instant value, @Nonnull ProtocolVersion protocolVersion) {
     return (value == null)
         ? null
         : TypeCodecs.BIGINT.encodePrimitive(value.toEpochMilli(), protocolVersion);
@@ -239,13 +239,13 @@ public class TimestampCodec implements TypeCodec<Instant> {
 
   @Nullable
   @Override
-  public Instant decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public Instant decode(@Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     return (bytes == null || bytes.remaining() == 0)
         ? null
         : Instant.ofEpochMilli(TypeCodecs.BIGINT.decodePrimitive(bytes, protocolVersion));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable Instant value) {
     return (value == null) ? "NULL" : Strings.quote(formatter.get().format(Date.from(value)));

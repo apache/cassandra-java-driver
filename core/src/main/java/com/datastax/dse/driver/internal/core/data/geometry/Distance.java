@@ -28,11 +28,11 @@ import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.esri.core.geometry.MultiPath;
 import com.esri.core.geometry.ogc.OGCGeometry;
 import com.esri.core.geometry.ogc.OGCPoint;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -69,8 +69,8 @@ public class Distance extends DefaultGeometry {
    *     representation.
    * @see Distance#asWellKnownText()
    */
-  @NonNull
-  public static Distance fromWellKnownText(@NonNull String source) {
+  @Nonnull
+  public static Distance fromWellKnownText(@Nonnull String source) {
     Matcher matcher = WKT_PATTERN.matcher(source.trim());
     if (matcher.matches() && matcher.groupCount() == 3) {
       try {
@@ -96,7 +96,7 @@ public class Distance extends DefaultGeometry {
    * @param center The center point.
    * @param radius The radius of the circle representing distance.
    */
-  public Distance(@NonNull Point center, double radius) {
+  public Distance(@Nonnull Point center, double radius) {
     super(((DefaultPoint) center).getOgcGeometry());
     Preconditions.checkNotNull(center);
     Preconditions.checkArgument(radius >= 0.0D, "Radius must be >= 0 (got %s)", radius);
@@ -105,7 +105,7 @@ public class Distance extends DefaultGeometry {
   }
 
   /** @return The center point of the circle representing this distance. */
-  @NonNull
+  @Nonnull
   public Point getCenter() {
     return center;
   }
@@ -124,7 +124,7 @@ public class Distance extends DefaultGeometry {
    *
    * @return a Well-known Text representation of this object.
    */
-  @NonNull
+  @Nonnull
   @Override
   public String asWellKnownText() {
     return String.format("DISTANCE((%s %s) %s)", this.center.X(), this.center.Y(), this.radius);
@@ -134,7 +134,7 @@ public class Distance extends DefaultGeometry {
    * The distance type has no equivalent in the OGC standard: this method throws an {@link
    * UnsupportedOperationException}.
    */
-  @NonNull
+  @Nonnull
   @Override
   public OGCGeometry getOgcGeometry() {
     throw new UnsupportedOperationException();
@@ -144,7 +144,7 @@ public class Distance extends DefaultGeometry {
    * The distance type has no equivalent in the OGC standard: this method throws an {@link
    * UnsupportedOperationException}.
    */
-  @NonNull
+  @Nonnull
   @Override
   public ByteBuffer asWellKnownBinary() {
     throw new UnsupportedOperationException();
@@ -155,7 +155,7 @@ public class Distance extends DefaultGeometry {
    * UnsupportedOperationException}.
    */
   @Override
-  @NonNull
+  @Nonnull
   public String asGeoJson() {
     throw new UnsupportedOperationException();
   }
@@ -179,7 +179,7 @@ public class Distance extends DefaultGeometry {
 
   @SuppressWarnings("SimplifiableConditionalExpression")
   @Override
-  public boolean contains(@NonNull Geometry geometry) {
+  public boolean contains(@Nonnull Geometry geometry) {
     return geometry instanceof Distance
         ? this.containsDistance((Distance) geometry)
         : geometry instanceof Point

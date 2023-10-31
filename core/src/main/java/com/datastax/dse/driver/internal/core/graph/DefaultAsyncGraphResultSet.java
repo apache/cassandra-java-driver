@@ -21,9 +21,9 @@ import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Queue;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.NotThreadSafe;
 
 @NotThreadSafe // wraps a mutable queue
@@ -40,13 +40,13 @@ public class DefaultAsyncGraphResultSet implements AsyncGraphResultSet {
     this.currentPage = () -> iterator;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ExecutionInfo getRequestExecutionInfo() {
     return executionInfo;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   @Deprecated
   public com.datastax.dse.driver.api.core.graph.GraphExecutionInfo getExecutionInfo() {
@@ -58,7 +58,7 @@ public class DefaultAsyncGraphResultSet implements AsyncGraphResultSet {
     return iterator.remaining();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Iterable<GraphNode> currentPage() {
     return currentPage;
@@ -69,7 +69,7 @@ public class DefaultAsyncGraphResultSet implements AsyncGraphResultSet {
     return false;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<AsyncGraphResultSet> fetchNextPage() throws IllegalStateException {
     throw new IllegalStateException(

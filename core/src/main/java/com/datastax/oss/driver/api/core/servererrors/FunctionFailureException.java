@@ -21,8 +21,8 @@ import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * An error during the execution of a CQL function.
@@ -32,19 +32,19 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  */
 public class FunctionFailureException extends QueryExecutionException {
 
-  public FunctionFailureException(@NonNull Node coordinator, @NonNull String message) {
+  public FunctionFailureException(@Nonnull Node coordinator, @Nonnull String message) {
     this(coordinator, message, null, false);
   }
 
   private FunctionFailureException(
-      @NonNull Node coordinator,
-      @NonNull String message,
+      @Nonnull Node coordinator,
+      @Nonnull String message,
       @Nullable ExecutionInfo executionInfo,
       boolean writableStackTrace) {
     super(coordinator, message, executionInfo, writableStackTrace);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new FunctionFailureException(getCoordinator(), getMessage(), getExecutionInfo(), true);

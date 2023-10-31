@@ -29,8 +29,8 @@ import com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.UUID;
+import javax.annotation.Nonnull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -217,7 +217,7 @@ public class BasicLoadBalancingPolicyDistanceTest extends LoadBalancingPolicyTes
     assertThat(policy.getLiveNodes().dc("dc2")).containsExactly(node1, node2, node3);
   }
 
-  @NonNull
+  @Nonnull
   protected BasicLoadBalancingPolicy createPolicy() {
     return new BasicLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME);
   }

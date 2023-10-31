@@ -19,7 +19,7 @@ package com.datastax.dse.driver.api.core;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -31,9 +31,9 @@ import net.jcip.annotations.NotThreadSafe;
 @Deprecated
 public class DseSessionBuilder extends SessionBuilder<DseSessionBuilder, DseSession> {
 
-  @NonNull
+  @Nonnull
   @Override
-  protected DseSession wrap(@NonNull CqlSession defaultSession) {
+  protected DseSession wrap(@Nonnull CqlSession defaultSession) {
     return new com.datastax.dse.driver.internal.core.session.DefaultDseSession(defaultSession);
   }
 }

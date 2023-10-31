@@ -19,10 +19,10 @@ package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A query with bind variables that has been pre-parsed by the database.
@@ -43,14 +43,14 @@ public interface PreparedStatement {
    *
    * <p>Note: the returned buffer is read-only.
    */
-  @NonNull
+  @Nonnull
   ByteBuffer getId();
 
-  @NonNull
+  @Nonnull
   String getQuery();
 
   /** A description of the bind variables of this prepared statement. */
-  @NonNull
+  @Nonnull
   ColumnDefinitions getVariableDefinitions();
 
   /**
@@ -75,7 +75,7 @@ public interface PreparedStatement {
    * ps2.getPartitionKeyIndices()} is empty (because one of the partition key components is
    * hard-coded in the query string).
    */
-  @NonNull
+  @Nonnull
   List<Integer> getPartitionKeyIndices();
 
   /**
@@ -103,7 +103,7 @@ public interface PreparedStatement {
    * EXISTS}), which do return columns; for those cases, use {@link
    * ResultSet#getColumnDefinitions()} on the result, not this method.
    */
-  @NonNull
+  @Nonnull
   ColumnDefinitions getResultSetDefinitions();
 
   /**
@@ -113,7 +113,7 @@ public interface PreparedStatement {
    * cause existing queries to fail.
    */
   void setResultMetadata(
-      @NonNull ByteBuffer newResultMetadataId, @NonNull ColumnDefinitions newResultSetDefinitions);
+      @Nonnull ByteBuffer newResultMetadataId, @Nonnull ColumnDefinitions newResultSetDefinitions);
 
   /**
    * Builds an executable statement that associates a set of values with the bind variables.
@@ -130,8 +130,8 @@ public interface PreparedStatement {
    *     IllegalArgumentException} if there are more values than variables. Individual values can be
    *     {@code null}, but the vararg array itself can't.
    */
-  @NonNull
-  BoundStatement bind(@NonNull Object... values);
+  @Nonnull
+  BoundStatement bind(@Nonnull Object... values);
 
   /**
    * Returns a builder to construct an executable statement.
@@ -140,6 +140,6 @@ public interface PreparedStatement {
    *
    * @see #bind(Object...)
    */
-  @NonNull
-  BoundStatementBuilder boundStatementBuilder(@NonNull Object... values);
+  @Nonnull
+  BoundStatementBuilder boundStatementBuilder(@Nonnull Object... values);
 }

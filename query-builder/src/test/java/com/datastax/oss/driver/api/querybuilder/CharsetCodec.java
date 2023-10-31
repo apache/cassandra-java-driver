@@ -26,9 +26,9 @@ import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
 import com.datastax.oss.driver.internal.querybuilder.DefaultLiteral;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import javax.annotation.Nonnull;
 
 /** Example codec implementation used for {@link DefaultLiteral} tests. */
 public class CharsetCodec implements TypeCodec<Charset> {
@@ -42,31 +42,31 @@ public class CharsetCodec implements TypeCodec<Charset> {
     TEST_REGISTRY = registry;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<Charset> getJavaType() {
     return GenericType.of(Charset.class);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.TEXT;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(Charset value) {
     return "'" + value.name() + "'";
   }
 
   @Override
-  public ByteBuffer encode(Charset value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(Charset value, @Nonnull ProtocolVersion protocolVersion) {
     throw new UnsupportedOperationException("Not used in this test");
   }
 
   @Override
-  public Charset decode(ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public Charset decode(ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     throw new UnsupportedOperationException("Not used in this test");
   }
 

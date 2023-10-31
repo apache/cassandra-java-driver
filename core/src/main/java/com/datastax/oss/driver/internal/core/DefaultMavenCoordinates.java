@@ -19,7 +19,6 @@ package com.datastax.oss.driver.internal.core;
 
 import com.datastax.oss.driver.api.core.MavenCoordinates;
 import com.datastax.oss.driver.api.core.Version;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.buffer.ByteBuf;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -27,6 +26,7 @@ import java.io.UncheckedIOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,25 +73,25 @@ public class DefaultMavenCoordinates implements MavenCoordinates {
     this.version = version;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getName() {
     return name;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getGroupId() {
     return groupId;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getArtifactId() {
     return artifactId;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Version getVersion() {
     return version;

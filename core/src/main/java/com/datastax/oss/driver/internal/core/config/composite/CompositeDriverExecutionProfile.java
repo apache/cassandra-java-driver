@@ -22,8 +22,6 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSortedSet;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +29,8 @@ import java.util.Objects;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class CompositeDriverExecutionProfile implements DriverExecutionProfile {
 
@@ -42,9 +42,9 @@ public class CompositeDriverExecutionProfile implements DriverExecutionProfile {
   @Nullable private volatile DriverExecutionProfile fallbackProfile;
 
   public CompositeDriverExecutionProfile(
-      @NonNull DriverConfig primaryConfig,
-      @NonNull DriverConfig fallbackConfig,
-      @NonNull String profileName) {
+      @Nonnull DriverConfig primaryConfig,
+      @Nonnull DriverConfig fallbackConfig,
+      @Nonnull String profileName) {
     this.primaryConfig = Objects.requireNonNull(primaryConfig);
     this.fallbackConfig = Objects.requireNonNull(fallbackConfig);
     this.profileName = Objects.requireNonNull(profileName);
@@ -84,14 +84,14 @@ public class CompositeDriverExecutionProfile implements DriverExecutionProfile {
     return this;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getName() {
     return profileName;
   }
 
   @Override
-  public boolean isDefined(@NonNull DriverOption option) {
+  public boolean isDefined(@Nonnull DriverOption option) {
     DriverExecutionProfile primaryProfile = this.primaryProfile;
     if (primaryProfile != null && primaryProfile.isDefined(option)) {
       return true;
@@ -102,92 +102,92 @@ public class CompositeDriverExecutionProfile implements DriverExecutionProfile {
   }
 
   @Override
-  public boolean getBoolean(@NonNull DriverOption option) {
+  public boolean getBoolean(@Nonnull DriverOption option) {
     return get(option, DriverExecutionProfile::getBoolean);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Boolean> getBooleanList(@NonNull DriverOption option) {
+  public List<Boolean> getBooleanList(@Nonnull DriverOption option) {
     return get(option, DriverExecutionProfile::getBooleanList);
   }
 
   @Override
-  public int getInt(@NonNull DriverOption option) {
+  public int getInt(@Nonnull DriverOption option) {
     return get(option, DriverExecutionProfile::getInt);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> getIntList(@NonNull DriverOption option) {
+  public List<Integer> getIntList(@Nonnull DriverOption option) {
     return get(option, DriverExecutionProfile::getIntList);
   }
 
   @Override
-  public long getLong(@NonNull DriverOption option) {
+  public long getLong(@Nonnull DriverOption option) {
     return get(option, DriverExecutionProfile::getLong);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Long> getLongList(@NonNull DriverOption option) {
+  public List<Long> getLongList(@Nonnull DriverOption option) {
     return get(option, DriverExecutionProfile::getLongList);
   }
 
   @Override
-  public double getDouble(@NonNull DriverOption option) {
+  public double getDouble(@Nonnull DriverOption option) {
     return get(option, DriverExecutionProfile::getDouble);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Double> getDoubleList(@NonNull DriverOption option) {
+  public List<Double> getDoubleList(@Nonnull DriverOption option) {
     return get(option, DriverExecutionProfile::getDoubleList);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public String getString(@NonNull DriverOption option) {
+  public String getString(@Nonnull DriverOption option) {
     return get(option, DriverExecutionProfile::getString);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<String> getStringList(@NonNull DriverOption option) {
+  public List<String> getStringList(@Nonnull DriverOption option) {
     return get(option, DriverExecutionProfile::getStringList);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Map<String, String> getStringMap(@NonNull DriverOption option) {
+  public Map<String, String> getStringMap(@Nonnull DriverOption option) {
     return get(option, DriverExecutionProfile::getStringMap);
   }
 
   @Override
-  public long getBytes(@NonNull DriverOption option) {
+  public long getBytes(@Nonnull DriverOption option) {
     return get(option, DriverExecutionProfile::getBytes);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<Long> getBytesList(DriverOption option) {
     return get(option, DriverExecutionProfile::getBytesList);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Duration getDuration(@NonNull DriverOption option) {
+  public Duration getDuration(@Nonnull DriverOption option) {
     return get(option, DriverExecutionProfile::getDuration);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Duration> getDurationList(@NonNull DriverOption option) {
+  public List<Duration> getDurationList(@Nonnull DriverOption option) {
     return get(option, DriverExecutionProfile::getDurationList);
   }
 
   private <ValueT> ValueT get(
-      @NonNull DriverOption option,
+      @Nonnull DriverOption option,
       BiFunction<DriverExecutionProfile, DriverOption, ValueT> getter) {
     DriverExecutionProfile primaryProfile = this.primaryProfile;
     if (primaryProfile != null && primaryProfile.isDefined(option)) {
@@ -202,7 +202,7 @@ public class CompositeDriverExecutionProfile implements DriverExecutionProfile {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SortedSet<Map.Entry<String, Object>> entrySet() {
     DriverExecutionProfile primaryProfile = this.primaryProfile;

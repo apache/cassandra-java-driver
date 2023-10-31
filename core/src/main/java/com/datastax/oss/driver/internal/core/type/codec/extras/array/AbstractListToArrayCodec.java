@@ -22,10 +22,10 @@ import com.datastax.oss.driver.api.core.type.ListType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.codec.ParseUtils;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.reflect.Array;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Base class for all codecs dealing with Java arrays. This class aims to reduce the amount of code
@@ -35,15 +35,15 @@ import java.util.Objects;
  */
 public abstract class AbstractListToArrayCodec<ArrayT> implements TypeCodec<ArrayT> {
 
-  @NonNull protected final ListType cqlType;
-  @NonNull protected final GenericType<ArrayT> javaType;
+  @Nonnull protected final ListType cqlType;
+  @Nonnull protected final GenericType<ArrayT> javaType;
 
   /**
    * @param cqlType The CQL type. Must be a list type.
    * @param arrayType The Java type. Must be an array class.
    */
   protected AbstractListToArrayCodec(
-      @NonNull ListType cqlType, @NonNull GenericType<ArrayT> arrayType) {
+      @Nonnull ListType cqlType, @Nonnull GenericType<ArrayT> arrayType) {
     this.cqlType = Objects.requireNonNull(cqlType, "cqlType cannot be null");
     this.javaType = Objects.requireNonNull(arrayType, "arrayType cannot be null");
     if (!arrayType.isArray()) {
@@ -51,19 +51,19 @@ public abstract class AbstractListToArrayCodec<ArrayT> implements TypeCodec<Arra
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<ArrayT> getJavaType() {
     return javaType;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return cqlType;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable ArrayT array) {
     if (array == null) {
@@ -119,7 +119,7 @@ public abstract class AbstractListToArrayCodec<ArrayT> implements TypeCodec<Arra
    * @param size The size of the array to instantiate.
    * @return a new array instance with the given size.
    */
-  @NonNull
+  @Nonnull
   protected abstract ArrayT newInstance(int size);
 
   /**
@@ -130,7 +130,7 @@ public abstract class AbstractListToArrayCodec<ArrayT> implements TypeCodec<Arra
    * @param index The element index.
    */
   protected abstract void formatElement(
-      @NonNull StringBuilder output, @NonNull ArrayT array, int index);
+      @Nonnull StringBuilder output, @Nonnull ArrayT array, int index);
 
   /**
    * Parses the {@code index}th element of {@code array} from {@code input}.
@@ -139,7 +139,7 @@ public abstract class AbstractListToArrayCodec<ArrayT> implements TypeCodec<Arra
    * @param array The array to write to.
    * @param index The element index.
    */
-  protected abstract void parseElement(@NonNull String input, @NonNull ArrayT array, int index);
+  protected abstract void parseElement(@Nonnull String input, @Nonnull ArrayT array, int index);
 
   private int getArrayLength(String value, int idx) {
     int length = 1;

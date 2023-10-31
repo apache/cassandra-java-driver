@@ -19,9 +19,9 @@ package com.datastax.dse.driver.api.core.config;
 
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.File;
 import java.net.URL;
+import javax.annotation.Nonnull;
 
 /**
  * @deprecated This class only exists for backward compatibility. All of its methods delegate to
@@ -35,8 +35,8 @@ public class DseDriverConfigLoader {
    *     DriverConfigLoader#fromClasspath(String)}, which you should call directly instead.
    */
   @Deprecated
-  @NonNull
-  public static DriverConfigLoader fromClasspath(@NonNull String resourceBaseName) {
+  @Nonnull
+  public static DriverConfigLoader fromClasspath(@Nonnull String resourceBaseName) {
     return DriverConfigLoader.fromClasspath(resourceBaseName);
   }
 
@@ -45,8 +45,8 @@ public class DseDriverConfigLoader {
    *     DriverConfigLoader#fromFile(File)}, which you should call directly instead.
    */
   @Deprecated
-  @NonNull
-  public static DriverConfigLoader fromFile(@NonNull File file) {
+  @Nonnull
+  public static DriverConfigLoader fromFile(@Nonnull File file) {
     return DriverConfigLoader.fromFile(file);
   }
 
@@ -55,8 +55,8 @@ public class DseDriverConfigLoader {
    *     DriverConfigLoader#fromUrl(URL)}, which you should call directly instead.
    */
   @Deprecated
-  @NonNull
-  public static DriverConfigLoader fromUrl(@NonNull URL url) {
+  @Nonnull
+  public static DriverConfigLoader fromUrl(@Nonnull URL url) {
     return DriverConfigLoader.fromUrl(url);
   }
 
@@ -65,7 +65,7 @@ public class DseDriverConfigLoader {
    *     DriverConfigLoader#programmaticBuilder()}, which you should call directly instead.
    */
   @Deprecated
-  @NonNull
+  @Nonnull
   public static ProgrammaticDriverConfigLoaderBuilder programmaticBuilder() {
     return DriverConfigLoader.programmaticBuilder();
   }

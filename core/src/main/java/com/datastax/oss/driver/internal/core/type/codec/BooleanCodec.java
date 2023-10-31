@@ -22,9 +22,9 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveBooleanCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -33,37 +33,37 @@ public class BooleanCodec implements PrimitiveBooleanCodec {
   private static final ByteBuffer TRUE = ByteBuffer.wrap(new byte[] {1});
   private static final ByteBuffer FALSE = ByteBuffer.wrap(new byte[] {0});
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<Boolean> getJavaType() {
     return GenericType.BOOLEAN;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.BOOLEAN;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof Boolean;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == Boolean.class || javaClass == boolean.class;
   }
 
   @Nullable
   @Override
-  public ByteBuffer encodePrimitive(boolean value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encodePrimitive(boolean value, @Nonnull ProtocolVersion protocolVersion) {
     return value ? TRUE.duplicate() : FALSE.duplicate();
   }
 
   @Override
   public boolean decodePrimitive(
-      @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return false;
     } else if (bytes.remaining() != 1) {
@@ -74,7 +74,7 @@ public class BooleanCodec implements PrimitiveBooleanCodec {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable Boolean value) {
     if (value == null) {

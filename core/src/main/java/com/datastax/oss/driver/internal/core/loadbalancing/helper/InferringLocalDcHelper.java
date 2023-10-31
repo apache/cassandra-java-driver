@@ -24,12 +24,12 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -44,16 +44,16 @@ import net.jcip.annotations.ThreadSafe;
 public class InferringLocalDcHelper extends OptionalLocalDcHelper {
 
   public InferringLocalDcHelper(
-      @NonNull InternalDriverContext context,
-      @NonNull DriverExecutionProfile profile,
-      @NonNull String logPrefix) {
+      @Nonnull InternalDriverContext context,
+      @Nonnull DriverExecutionProfile profile,
+      @Nonnull String logPrefix) {
     super(context, profile, logPrefix);
   }
 
   /** @return The local datacenter; always present. */
-  @NonNull
+  @Nonnull
   @Override
-  public Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes) {
+  public Optional<String> discoverLocalDc(@Nonnull Map<UUID, Node> nodes) {
     Optional<String> optionalLocalDc = super.discoverLocalDc(nodes);
     if (optionalLocalDc.isPresent()) {
       return optionalLocalDc;

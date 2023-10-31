@@ -21,10 +21,10 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 /**
  * The singleton that represents no column definitions (implemented as an enum which provides the
@@ -38,41 +38,41 @@ public enum EmptyColumnDefinitions implements ColumnDefinitions {
     return 0;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ColumnDefinition get(int i) {
     throw new ArrayIndexOutOfBoundsException();
   }
 
   @Override
-  public boolean contains(@NonNull String name) {
+  public boolean contains(@Nonnull String name) {
     return false;
   }
 
   @Override
-  public boolean contains(@NonNull CqlIdentifier id) {
+  public boolean contains(@Nonnull CqlIdentifier id) {
     return false;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull String name) {
+  public List<Integer> allIndicesOf(@Nonnull String name) {
     return Collections.emptyList();
   }
 
   @Override
-  public int firstIndexOf(@NonNull String name) {
+  public int firstIndexOf(@Nonnull String name) {
     return -1;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+  public List<Integer> allIndicesOf(@Nonnull CqlIdentifier id) {
     return Collections.emptyList();
   }
 
   @Override
-  public int firstIndexOf(@NonNull CqlIdentifier id) {
+  public int firstIndexOf(@Nonnull CqlIdentifier id) {
     return -1;
   }
 
@@ -82,7 +82,7 @@ public enum EmptyColumnDefinitions implements ColumnDefinitions {
   }
 
   @Override
-  public void attach(@NonNull AttachmentPoint attachmentPoint) {}
+  public void attach(@Nonnull AttachmentPoint attachmentPoint) {}
 
   @Override
   public Iterator<ColumnDefinition> iterator() {

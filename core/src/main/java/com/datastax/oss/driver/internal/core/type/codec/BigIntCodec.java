@@ -22,38 +22,38 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveLongCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class BigIntCodec implements PrimitiveLongCodec {
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<Long> getJavaType() {
     return GenericType.LONG;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.BIGINT;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof Long;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == Long.class || javaClass == long.class;
   }
 
   @Nullable
   @Override
-  public ByteBuffer encodePrimitive(long value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encodePrimitive(long value, @Nonnull ProtocolVersion protocolVersion) {
     ByteBuffer bytes = ByteBuffer.allocate(8);
     bytes.putLong(0, value);
     return bytes;
@@ -61,7 +61,7 @@ public class BigIntCodec implements PrimitiveLongCodec {
 
   @Override
   public long decodePrimitive(
-      @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return 0;
     } else if (bytes.remaining() != 8) {
@@ -72,7 +72,7 @@ public class BigIntCodec implements PrimitiveLongCodec {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable Long value) {
     return (value == null) ? "NULL" : Long.toString(value);

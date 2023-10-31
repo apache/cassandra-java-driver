@@ -38,7 +38,6 @@ import com.datastax.oss.driver.internal.core.util.concurrent.Debouncer;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -46,6 +45,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -277,20 +277,20 @@ public class MetadataManager implements AsyncAutoCloseable {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Void> closeFuture() {
     return singleThreaded.closeFuture;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Void> closeAsync() {
     RunOrSchedule.on(adminExecutor, singleThreaded::close);
     return singleThreaded.closeFuture;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Void> forceCloseAsync() {
     return this.closeAsync();

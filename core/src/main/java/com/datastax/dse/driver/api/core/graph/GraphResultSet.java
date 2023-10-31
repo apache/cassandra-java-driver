@@ -20,11 +20,11 @@ package com.datastax.dse.driver.api.core.graph;
 import com.datastax.dse.driver.internal.core.graph.GraphExecutionInfoConverter;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * The result of a synchronous Graph query.
@@ -62,7 +62,7 @@ public interface GraphResultSet extends Iterable<GraphNode> {
    * <p>At this time (DSE 6.0.0), graph queries are not paginated and the server sends all the
    * results at once.
    */
-  @NonNull
+  @Nonnull
   default List<GraphNode> all() {
     if (!iterator().hasNext()) {
       return Collections.emptyList();
@@ -81,13 +81,13 @@ public interface GraphResultSet extends Iterable<GraphNode> {
   /**
    * The execution information for the query that have been performed to assemble this result set.
    */
-  @NonNull
+  @Nonnull
   default ExecutionInfo getRequestExecutionInfo() {
     return GraphExecutionInfoConverter.convert(getExecutionInfo());
   }
 
   /** @deprecated Use {@link #getRequestExecutionInfo()} instead. */
   @Deprecated
-  @NonNull
+  @Nonnull
   com.datastax.dse.driver.api.core.graph.GraphExecutionInfo getExecutionInfo();
 }

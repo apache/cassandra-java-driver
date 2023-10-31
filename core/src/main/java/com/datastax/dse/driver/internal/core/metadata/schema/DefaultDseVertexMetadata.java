@@ -20,21 +20,21 @@ package com.datastax.dse.driver.internal.core.metadata.schema;
 import com.datastax.dse.driver.api.core.metadata.schema.DseVertexMetadata;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.Serializable;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 
 public class DefaultDseVertexMetadata implements DseVertexMetadata, Serializable {
 
   private static final long serialVersionUID = 1;
 
-  @NonNull private final CqlIdentifier labelName;
+  @Nonnull private final CqlIdentifier labelName;
 
-  public DefaultDseVertexMetadata(@NonNull CqlIdentifier labelName) {
+  public DefaultDseVertexMetadata(@Nonnull CqlIdentifier labelName) {
     this.labelName = Preconditions.checkNotNull(labelName);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getLabelName() {
     return labelName;

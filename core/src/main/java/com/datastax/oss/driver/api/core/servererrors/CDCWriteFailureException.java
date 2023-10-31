@@ -23,8 +23,8 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * An attempt was made to write to a commitlog segment which doesn't support CDC mutations.
@@ -36,23 +36,23 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  */
 public class CDCWriteFailureException extends QueryExecutionException {
 
-  public CDCWriteFailureException(@NonNull Node coordinator) {
+  public CDCWriteFailureException(@Nonnull Node coordinator) {
     super(coordinator, "Commitlog does not support CDC mutations", null, false);
   }
 
-  public CDCWriteFailureException(@NonNull Node coordinator, @NonNull String message) {
+  public CDCWriteFailureException(@Nonnull Node coordinator, @Nonnull String message) {
     super(coordinator, "Commitlog does not support CDC mutations", null, false);
   }
 
   private CDCWriteFailureException(
-      @NonNull Node coordinator,
-      @NonNull String message,
+      @Nonnull Node coordinator,
+      @Nonnull String message,
       @Nullable ExecutionInfo executionInfo,
       boolean writableStackTrace) {
     super(coordinator, message, executionInfo, writableStackTrace);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new CDCWriteFailureException(getCoordinator(), getMessage(), getExecutionInfo(), true);

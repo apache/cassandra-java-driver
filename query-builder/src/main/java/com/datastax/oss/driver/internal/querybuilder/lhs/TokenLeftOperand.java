@@ -19,7 +19,7 @@ package com.datastax.oss.driver.internal.querybuilder.lhs;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -27,16 +27,16 @@ public class TokenLeftOperand implements LeftOperand {
 
   private final Iterable<CqlIdentifier> identifiers;
 
-  public TokenLeftOperand(@NonNull Iterable<CqlIdentifier> identifiers) {
+  public TokenLeftOperand(@Nonnull Iterable<CqlIdentifier> identifiers) {
     this.identifiers = identifiers;
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     CqlHelper.appendIds(identifiers, builder, "token(", ",", ")");
   }
 
-  public @NonNull Iterable<CqlIdentifier> getIdentifiers() {
+  public @Nonnull Iterable<CqlIdentifier> getIdentifiers() {
     return identifiers;
   }
 }

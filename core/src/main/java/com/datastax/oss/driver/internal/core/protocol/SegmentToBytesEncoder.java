@@ -19,12 +19,12 @@ package com.datastax.oss.driver.internal.core.protocol;
 
 import com.datastax.oss.protocol.internal.Segment;
 import com.datastax.oss.protocol.internal.SegmentCodec;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
 import java.util.List;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -33,15 +33,15 @@ public class SegmentToBytesEncoder extends MessageToMessageEncoder<Segment<ByteB
 
   private final SegmentCodec<ByteBuf> segmentCodec;
 
-  public SegmentToBytesEncoder(@NonNull SegmentCodec<ByteBuf> segmentCodec) {
+  public SegmentToBytesEncoder(@Nonnull SegmentCodec<ByteBuf> segmentCodec) {
     this.segmentCodec = segmentCodec;
   }
 
   @Override
   protected void encode(
-      @NonNull ChannelHandlerContext ctx,
-      @NonNull Segment<ByteBuf> segment,
-      @NonNull List<Object> out) {
+      @Nonnull ChannelHandlerContext ctx,
+      @Nonnull Segment<ByteBuf> segment,
+      @Nonnull List<Object> out) {
     segmentCodec.encode(segment, out);
   }
 }

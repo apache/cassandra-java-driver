@@ -20,30 +20,30 @@ package com.datastax.oss.driver.api.core.metadata.schema;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 /** A secondary index in the schema metadata. */
 public interface IndexMetadata extends Describable {
 
-  @NonNull
+  @Nonnull
   CqlIdentifier getKeyspace();
 
-  @NonNull
+  @Nonnull
   CqlIdentifier getTable();
 
-  @NonNull
+  @Nonnull
   CqlIdentifier getName();
 
-  @NonNull
+  @Nonnull
   IndexKind getKind();
 
-  @NonNull
+  @Nonnull
   String getTarget();
 
   /** If this index is custom, the name of the server-side implementation. Otherwise, empty. */
-  @NonNull
+  @Nonnull
   default Optional<String> getClassName() {
     return Optional.ofNullable(getOptions().get("class_name"));
   }
@@ -58,10 +58,10 @@ public interface IndexMetadata extends Describable {
    * <p>Note that some of these options might also be exposed as standalone fields in this
    * interface, namely {@link #getClassName()} and {{@link #getTarget()}}.
    */
-  @NonNull
+  @Nonnull
   Map<String, String> getOptions();
 
-  @NonNull
+  @Nonnull
   @Override
   default String describe(boolean pretty) {
     ScriptBuilder builder = new ScriptBuilder(pretty);
@@ -106,7 +106,7 @@ public interface IndexMetadata extends Describable {
     return builder.build();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default String describeWithChildren(boolean pretty) {
     // An index has no children

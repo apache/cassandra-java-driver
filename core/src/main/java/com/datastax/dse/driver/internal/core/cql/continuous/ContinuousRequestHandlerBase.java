@@ -77,8 +77,6 @@ import com.datastax.oss.protocol.internal.response.error.Unprepared;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.datastax.oss.protocol.internal.response.result.Void;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
@@ -101,6 +99,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -166,11 +166,11 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
   private final Class<ResultSetT> resultSetClass;
 
   public ContinuousRequestHandlerBase(
-      @NonNull StatementT statement,
-      @NonNull DefaultSession session,
-      @NonNull InternalDriverContext context,
-      @NonNull String sessionLogPrefix,
-      @NonNull Class<ResultSetT> resultSetClass,
+      @Nonnull StatementT statement,
+      @Nonnull DefaultSession session,
+      @Nonnull InternalDriverContext context,
+      @Nonnull String sessionLogPrefix,
+      @Nonnull Class<ResultSetT> resultSetClass,
       boolean specExecEnabled,
       SessionMetric clientTimeoutsMetric,
       SessionMetric continuousRequestsMetric,
@@ -212,38 +212,38 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     this.scheduledExecutions = this.specExecEnabled ? new CopyOnWriteArrayList<>() : null;
   }
 
-  @NonNull
+  @Nonnull
   protected abstract Duration getGlobalTimeout();
 
-  @NonNull
-  protected abstract Duration getPageTimeout(@NonNull StatementT statement, int pageNumber);
+  @Nonnull
+  protected abstract Duration getPageTimeout(@Nonnull StatementT statement, int pageNumber);
 
-  @NonNull
-  protected abstract Duration getReviseRequestTimeout(@NonNull StatementT statement);
+  @Nonnull
+  protected abstract Duration getReviseRequestTimeout(@Nonnull StatementT statement);
 
-  protected abstract int getMaxEnqueuedPages(@NonNull StatementT statement);
+  protected abstract int getMaxEnqueuedPages(@Nonnull StatementT statement);
 
-  protected abstract int getMaxPages(@NonNull StatementT statement);
+  protected abstract int getMaxPages(@Nonnull StatementT statement);
 
-  @NonNull
-  protected abstract Message getMessage(@NonNull StatementT statement);
+  @Nonnull
+  protected abstract Message getMessage(@Nonnull StatementT statement);
 
-  protected abstract boolean isTracingEnabled(@NonNull StatementT statement);
+  protected abstract boolean isTracingEnabled(@Nonnull StatementT statement);
 
-  @NonNull
-  protected abstract Map<String, ByteBuffer> createPayload(@NonNull StatementT statement);
+  @Nonnull
+  protected abstract Map<String, ByteBuffer> createPayload(@Nonnull StatementT statement);
 
-  @NonNull
-  protected abstract ResultSetT createEmptyResultSet(@NonNull ExecutionInfo executionInfo);
+  @Nonnull
+  protected abstract ResultSetT createEmptyResultSet(@Nonnull ExecutionInfo executionInfo);
 
-  protected abstract int pageNumber(@NonNull ResultSetT resultSet);
+  protected abstract int pageNumber(@Nonnull ResultSetT resultSet);
 
-  @NonNull
+  @Nonnull
   protected abstract ResultSetT createResultSet(
-      @NonNull StatementT statement,
-      @NonNull Rows rows,
-      @NonNull ExecutionInfo executionInfo,
-      @NonNull ColumnDefinitions columnDefinitions)
+      @Nonnull StatementT statement,
+      @Nonnull Rows rows,
+      @Nonnull ExecutionInfo executionInfo,
+      @Nonnull ColumnDefinitions columnDefinitions)
       throws IOException;
 
   // MAIN LIFECYCLE
@@ -269,7 +269,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
   }
 
   @Override
-  public void onThrottleFailure(@NonNull RequestThrottlingException error) {
+  public void onThrottleFailure(@Nonnull RequestThrottlingException error) {
     DriverExecutionProfile executionProfile =
         Conversions.resolveExecutionProfile(initialStatement, context);
     session
@@ -278,7 +278,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     abortGlobalRequestOrChosenCallback(error);
   }
 
-  private void abortGlobalRequestOrChosenCallback(@NonNull Throwable error) {
+  private void abortGlobalRequestOrChosenCallback(@Nonnull Throwable error) {
     if (!chosenCallback.completeExceptionally(error)) {
       chosenCallback.thenAccept(callback -> callback.abort(error, false));
     }
@@ -460,7 +460,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     }
   }
 
-  private void recordError(@NonNull Node node, @NonNull Throwable error) {
+  private void recordError(@Nonnull Node node, @Nonnull Throwable error) {
     errors.add(new AbstractMap.SimpleEntry<>(node, error));
   }
 
@@ -577,7 +577,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     }
 
     @Override
-    public boolean isLastResponse(@NonNull Frame responseFrame) {
+    public boolean isLastResponse(@Nonnull Frame responseFrame) {
       lock.lock();
       try {
         Message message = responseFrame.message;
@@ -621,7 +621,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      * @param future The future representing the outcome of the write operation.
      */
     @Override
-    public void operationComplete(@NonNull Future<java.lang.Void> future) {
+    public void operationComplete(@Nonnull Future<java.lang.Void> future) {
       if (!future.isSuccess()) {
         Throwable error = future.cause();
         if (error instanceof EncoderException
@@ -742,7 +742,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      * @param response the received {@link Frame}.
      */
     @Override
-    public void onResponse(@NonNull Frame response) {
+    public void onResponse(@Nonnull Frame response) {
       stopNodeMessageTimer();
       cancelTimeout(pageTimeout);
       lock.lock();
@@ -783,7 +783,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      * @param error the error encountered, usually a network problem.
      */
     @Override
-    public void onFailure(@NonNull Throwable error) {
+    public void onFailure(@Nonnull Throwable error) {
       cancelTimeout(pageTimeout);
       LOG.trace(String.format("[%s] Request failure", logPrefix), error);
       RetryVerdict verdict;
@@ -826,7 +826,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      * @param frame the {@link Frame} (used to create the {@link ExecutionInfo} the first time).
      */
     @SuppressWarnings("GuardedBy") // this method is only called with the lock held
-    private void processResultResponse(@NonNull Result result, @Nullable Frame frame) {
+    private void processResultResponse(@Nonnull Result result, @Nullable Frame frame) {
       assert lock.isHeldByCurrentThread();
       try {
         ExecutionInfo executionInfo = createExecutionInfo(result, frame);
@@ -900,7 +900,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      * @param errorMessage the error message received.
      */
     @SuppressWarnings("GuardedBy") // this method is only called with the lock held
-    private void processErrorResponse(@NonNull Error errorMessage) {
+    private void processErrorResponse(@Nonnull Error errorMessage) {
       assert lock.isHeldByCurrentThread();
       if (errorMessage instanceof Unprepared) {
         processUnprepared((Unprepared) errorMessage);
@@ -941,7 +941,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      *
      * @param error the recoverable error.
      */
-    private void processRecoverableError(@NonNull CoordinatorException error) {
+    private void processRecoverableError(@Nonnull CoordinatorException error) {
       assert lock.isHeldByCurrentThread();
       NodeMetricUpdater metricUpdater = ((DefaultNode) node).getMetricUpdater();
       RetryVerdict verdict;
@@ -1018,7 +1018,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      * @param errorMessage the unprepared error message.
      */
     @SuppressWarnings("GuardedBy") // this method is only called with the lock held
-    private void processUnprepared(@NonNull Unprepared errorMessage) {
+    private void processUnprepared(@Nonnull Unprepared errorMessage) {
       assert lock.isHeldByCurrentThread();
       ByteBuffer idToReprepare = ByteBuffer.wrap(errorMessage.id);
       LOG.trace(
@@ -1112,7 +1112,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      * @param verdict the verdict to process.
      * @param error the original error.
      */
-    private void processRetryVerdict(@NonNull RetryVerdict verdict, @NonNull Throwable error) {
+    private void processRetryVerdict(@Nonnull RetryVerdict verdict, @Nonnull Throwable error) {
       assert lock.isHeldByCurrentThread();
       LOG.trace("[{}] Processing retry decision {}", logPrefix, verdict);
       switch (verdict.getRetryDecision()) {
@@ -1149,7 +1149,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      * @param pageOrError the next page, or an error.
      */
     @SuppressWarnings("GuardedBy") // this method is only called with the lock held
-    private void enqueueOrCompletePending(@NonNull Object pageOrError) {
+    private void enqueueOrCompletePending(@Nonnull Object pageOrError) {
       assert lock.isHeldByCurrentThread();
 
       if (queue == null) {
@@ -1213,7 +1213,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      *
      * @return the next page's future; never null.
      */
-    @NonNull
+    @Nonnull
     public CompletableFuture<ResultSetT> dequeueOrCreatePending() {
       lock.lock();
       try {
@@ -1442,7 +1442,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
 
     // ERROR HANDLING
 
-    private void trackNodeError(@NonNull Node node, @NonNull Throwable error) {
+    private void trackNodeError(@Nonnull Node node, @Nonnull Throwable error) {
       if (nodeErrorReported.compareAndSet(false, true)) {
         long latencyNanos = System.nanoTime() - this.messageStartTimeNanos;
         context
@@ -1459,7 +1459,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      * @param fromServer whether the error was triggered by the coordinator or by the driver.
      */
     @SuppressWarnings("GuardedBy") // this method is only called with the lock held
-    private void abort(@NonNull Throwable error, boolean fromServer) {
+    private void abort(@Nonnull Throwable error, boolean fromServer) {
       assert lock.isHeldByCurrentThread();
       LOG.trace(
           "[{}] Aborting due to {} ({})",
@@ -1515,11 +1515,11 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     }
 
     private void updateErrorMetrics(
-        @NonNull NodeMetricUpdater metricUpdater,
-        @NonNull RetryVerdict verdict,
-        @NonNull DefaultNodeMetric error,
-        @NonNull DefaultNodeMetric retriesOnError,
-        @NonNull DefaultNodeMetric ignoresOnError) {
+        @Nonnull NodeMetricUpdater metricUpdater,
+        @Nonnull RetryVerdict verdict,
+        @Nonnull DefaultNodeMetric error,
+        @Nonnull DefaultNodeMetric retriesOnError,
+        @Nonnull DefaultNodeMetric ignoresOnError) {
       metricUpdater.incrementCounter(error, executionProfile.getName());
       switch (verdict.getRetryDecision()) {
         case RETRY_SAME:
@@ -1538,14 +1538,14 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
 
     // UTILITY METHODS
 
-    @NonNull
-    private CompletableFuture<ResultSetT> immediateResultSetFuture(@NonNull Object pageOrError) {
+    @Nonnull
+    private CompletableFuture<ResultSetT> immediateResultSetFuture(@Nonnull Object pageOrError) {
       CompletableFuture<ResultSetT> future = new CompletableFuture<>();
       completeResultSetFuture(future, pageOrError);
       return future;
     }
 
-    @NonNull
+    @Nonnull
     private CompletableFuture<ResultSetT> cancelledResultSetFuture() {
       return immediateResultSetFuture(
           new CancellationException(
@@ -1554,7 +1554,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     }
 
     private void completeResultSetFuture(
-        @NonNull CompletableFuture<ResultSetT> future, @NonNull Object pageOrError) {
+        @Nonnull CompletableFuture<ResultSetT> future, @Nonnull Object pageOrError) {
       long now = System.nanoTime();
       long totalLatencyNanos = now - startTimeNanos;
       long nodeLatencyNanos = now - messageStartTimeNanos;
@@ -1588,8 +1588,8 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       }
     }
 
-    @NonNull
-    private ExecutionInfo createExecutionInfo(@NonNull Result result, @Nullable Frame response) {
+    @Nonnull
+    private ExecutionInfo createExecutionInfo(@Nonnull Result result, @Nullable Frame response) {
       ByteBuffer pagingState =
           result instanceof Rows ? ((Rows) result).getMetadata().pagingState : null;
       return new DefaultExecutionInfo(
@@ -1615,8 +1615,8 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       }
     }
 
-    @NonNull
-    private String asTraceString(@NonNull Object pageOrError) {
+    @Nonnull
+    private String asTraceString(@Nonnull Object pageOrError) {
       return resultSetClass.isInstance(pageOrError)
           ? "page " + pageNumber(resultSetClass.cast(pageOrError))
           : ((Exception) pageOrError).getClass().getSimpleName();

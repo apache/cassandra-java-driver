@@ -23,9 +23,6 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.CheckReturnValue;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -37,6 +34,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /** A data structure that provides methods to set its values via a CQL identifier. */
 public interface SettableById<SelfT extends SettableById<SelfT>>
@@ -58,9 +58,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *     further usage of this data will have unpredictable results.
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setBytesUnsafe(@NonNull CqlIdentifier id, @Nullable ByteBuffer v) {
+  default SelfT setBytesUnsafe(@Nonnull CqlIdentifier id, @Nullable ByteBuffer v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setBytesUnsafe(i, v);
@@ -69,9 +69,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
     return result;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  default DataType getType(@NonNull CqlIdentifier id) {
+  default DataType getType(@Nonnull CqlIdentifier id) {
     return getType(firstIndexOf(id));
   }
 
@@ -83,9 +83,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setToNull(@NonNull CqlIdentifier id) {
+  default SelfT setToNull(@Nonnull CqlIdentifier id) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setToNull(i);
@@ -109,10 +109,10 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default <ValueT> SelfT set(
-      @NonNull CqlIdentifier id, @Nullable ValueT v, @NonNull TypeCodec<ValueT> codec) {
+      @Nonnull CqlIdentifier id, @Nullable ValueT v, @Nonnull TypeCodec<ValueT> codec) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).set(i, v, codec);
@@ -135,10 +135,10 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    * @throws IllegalArgumentException if the id is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default <ValueT> SelfT set(
-      @NonNull CqlIdentifier id, @Nullable ValueT v, @NonNull GenericType<ValueT> targetType) {
+      @Nonnull CqlIdentifier id, @Nullable ValueT v, @Nonnull GenericType<ValueT> targetType) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).set(i, v, targetType);
@@ -160,10 +160,10 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    * @throws IllegalArgumentException if the id is invalid.
    * @throws CodecNotFoundException if no codec can perform the conversion.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default <ValueT> SelfT set(
-      @NonNull CqlIdentifier id, @Nullable ValueT v, @NonNull Class<ValueT> targetClass) {
+      @Nonnull CqlIdentifier id, @Nullable ValueT v, @Nonnull Class<ValueT> targetClass) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).set(i, v, targetClass);
@@ -185,9 +185,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setBoolean(@NonNull CqlIdentifier id, boolean v) {
+  default SelfT setBoolean(@Nonnull CqlIdentifier id, boolean v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setBoolean(i, v);
@@ -201,9 +201,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *     {@link #setBoolean(CqlIdentifier, boolean)}.
    */
   @Deprecated
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setBool(@NonNull CqlIdentifier id, boolean v) {
+  default SelfT setBool(@Nonnull CqlIdentifier id, boolean v) {
     return setBoolean(id, v);
   }
 
@@ -220,9 +220,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setByte(@NonNull CqlIdentifier id, byte v) {
+  default SelfT setByte(@Nonnull CqlIdentifier id, byte v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setByte(i, v);
@@ -244,9 +244,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setDouble(@NonNull CqlIdentifier id, double v) {
+  default SelfT setDouble(@Nonnull CqlIdentifier id, double v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setDouble(i, v);
@@ -268,9 +268,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setFloat(@NonNull CqlIdentifier id, float v) {
+  default SelfT setFloat(@Nonnull CqlIdentifier id, float v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setFloat(i, v);
@@ -292,9 +292,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setInt(@NonNull CqlIdentifier id, int v) {
+  default SelfT setInt(@Nonnull CqlIdentifier id, int v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setInt(i, v);
@@ -316,9 +316,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setLong(@NonNull CqlIdentifier id, long v) {
+  default SelfT setLong(@Nonnull CqlIdentifier id, long v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setLong(i, v);
@@ -340,9 +340,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setShort(@NonNull CqlIdentifier id, short v) {
+  default SelfT setShort(@Nonnull CqlIdentifier id, short v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setShort(i, v);
@@ -361,9 +361,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setInstant(@NonNull CqlIdentifier id, @Nullable Instant v) {
+  default SelfT setInstant(@Nonnull CqlIdentifier id, @Nullable Instant v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setInstant(i, v);
@@ -382,9 +382,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setLocalDate(@NonNull CqlIdentifier id, @Nullable LocalDate v) {
+  default SelfT setLocalDate(@Nonnull CqlIdentifier id, @Nullable LocalDate v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setLocalDate(i, v);
@@ -403,9 +403,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setLocalTime(@NonNull CqlIdentifier id, @Nullable LocalTime v) {
+  default SelfT setLocalTime(@Nonnull CqlIdentifier id, @Nullable LocalTime v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setLocalTime(i, v);
@@ -424,9 +424,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setByteBuffer(@NonNull CqlIdentifier id, @Nullable ByteBuffer v) {
+  default SelfT setByteBuffer(@Nonnull CqlIdentifier id, @Nullable ByteBuffer v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setByteBuffer(i, v);
@@ -445,9 +445,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setString(@NonNull CqlIdentifier id, @Nullable String v) {
+  default SelfT setString(@Nonnull CqlIdentifier id, @Nullable String v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setString(i, v);
@@ -466,9 +466,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setBigInteger(@NonNull CqlIdentifier id, @Nullable BigInteger v) {
+  default SelfT setBigInteger(@Nonnull CqlIdentifier id, @Nullable BigInteger v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setBigInteger(i, v);
@@ -487,9 +487,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setBigDecimal(@NonNull CqlIdentifier id, @Nullable BigDecimal v) {
+  default SelfT setBigDecimal(@Nonnull CqlIdentifier id, @Nullable BigDecimal v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setBigDecimal(i, v);
@@ -508,9 +508,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setUuid(@NonNull CqlIdentifier id, @Nullable UUID v) {
+  default SelfT setUuid(@Nonnull CqlIdentifier id, @Nullable UUID v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setUuid(i, v);
@@ -529,9 +529,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setInetAddress(@NonNull CqlIdentifier id, @Nullable InetAddress v) {
+  default SelfT setInetAddress(@Nonnull CqlIdentifier id, @Nullable InetAddress v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setInetAddress(i, v);
@@ -550,9 +550,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setCqlDuration(@NonNull CqlIdentifier id, @Nullable CqlDuration v) {
+  default SelfT setCqlDuration(@Nonnull CqlIdentifier id, @Nullable CqlDuration v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setCqlDuration(i, v);
@@ -571,12 +571,12 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default <ElementT extends Number> SelfT setVector(
-      @NonNull CqlIdentifier id,
+      @Nonnull CqlIdentifier id,
       @Nullable CqlVector<ElementT> v,
-      @NonNull Class<ElementT> elementsClass) {
+      @Nonnull Class<ElementT> elementsClass) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setVector(i, v, elementsClass);
@@ -597,9 +597,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the index is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setToken(@NonNull CqlIdentifier id, @NonNull Token v) {
+  default SelfT setToken(@Nonnull CqlIdentifier id, @Nonnull Token v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setToken(i, v);
@@ -621,12 +621,12 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default <ElementT> SelfT setList(
-      @NonNull CqlIdentifier id,
+      @Nonnull CqlIdentifier id,
       @Nullable List<ElementT> v,
-      @NonNull Class<ElementT> elementsClass) {
+      @Nonnull Class<ElementT> elementsClass) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setList(i, v, elementsClass);
@@ -648,12 +648,12 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default <ElementT> SelfT setSet(
-      @NonNull CqlIdentifier id,
+      @Nonnull CqlIdentifier id,
       @Nullable Set<ElementT> v,
-      @NonNull Class<ElementT> elementsClass) {
+      @Nonnull Class<ElementT> elementsClass) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setSet(i, v, elementsClass);
@@ -675,13 +675,13 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default <KeyT, ValueT> SelfT setMap(
-      @NonNull CqlIdentifier id,
+      @Nonnull CqlIdentifier id,
       @Nullable Map<KeyT, ValueT> v,
-      @NonNull Class<KeyT> keyClass,
-      @NonNull Class<ValueT> valueClass) {
+      @Nonnull Class<KeyT> keyClass,
+      @Nonnull Class<ValueT> valueClass) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setMap(i, v, keyClass, valueClass);
@@ -700,9 +700,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setUdtValue(@NonNull CqlIdentifier id, @Nullable UdtValue v) {
+  default SelfT setUdtValue(@Nonnull CqlIdentifier id, @Nullable UdtValue v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setUdtValue(i, v);
@@ -721,9 +721,9 @@ public interface SettableById<SelfT extends SettableById<SelfT>>
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT setTupleValue(@NonNull CqlIdentifier id, @Nullable TupleValue v) {
+  default SelfT setTupleValue(@Nonnull CqlIdentifier id, @Nullable TupleValue v) {
     SelfT result = null;
     for (Integer i : allIndicesOf(id)) {
       result = (result == null ? this : result).setTupleValue(i, v);

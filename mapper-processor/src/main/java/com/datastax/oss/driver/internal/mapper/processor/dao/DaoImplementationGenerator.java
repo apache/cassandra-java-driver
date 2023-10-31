@@ -48,7 +48,6 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,6 +60,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -401,7 +401,7 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
     return JavaFile.builder(implementationName.packageName(), classBuilder.build());
   }
 
-  @NonNull
+  @Nonnull
   protected Class<?> getDaoParentClass(boolean requiresReactive) {
     if (requiresReactive) {
       return ReactiveDaoBase.class;

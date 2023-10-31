@@ -20,10 +20,10 @@ package com.datastax.oss.driver.api.core.metadata.schema;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -37,11 +37,11 @@ public class FunctionSignature implements Serializable {
 
   private static final long serialVersionUID = 1;
 
-  @NonNull private final CqlIdentifier name;
-  @NonNull private final List<DataType> parameterTypes;
+  @Nonnull private final CqlIdentifier name;
+  @Nonnull private final List<DataType> parameterTypes;
 
   public FunctionSignature(
-      @NonNull CqlIdentifier name, @NonNull Iterable<DataType> parameterTypes) {
+      @Nonnull CqlIdentifier name, @Nonnull Iterable<DataType> parameterTypes) {
     this.name = name;
     this.parameterTypes = ImmutableList.copyOf(parameterTypes);
   }
@@ -49,7 +49,7 @@ public class FunctionSignature implements Serializable {
   /**
    * @param parameterTypes neither the individual types, nor the vararg array itself, can be null.
    */
-  public FunctionSignature(@NonNull CqlIdentifier name, @NonNull DataType... parameterTypes) {
+  public FunctionSignature(@Nonnull CqlIdentifier name, @Nonnull DataType... parameterTypes) {
     this(
         name,
         parameterTypes.length == 0
@@ -61,7 +61,7 @@ public class FunctionSignature implements Serializable {
    * Shortcut for {@link #FunctionSignature(CqlIdentifier, Iterable) new
    * FunctionSignature(CqlIdentifier.fromCql(name), parameterTypes)}.
    */
-  public FunctionSignature(@NonNull String name, @NonNull Iterable<DataType> parameterTypes) {
+  public FunctionSignature(@Nonnull String name, @Nonnull Iterable<DataType> parameterTypes) {
     this(CqlIdentifier.fromCql(name), parameterTypes);
   }
 
@@ -71,16 +71,16 @@ public class FunctionSignature implements Serializable {
    *
    * @param parameterTypes neither the individual types, nor the vararg array itself, can be null.
    */
-  public FunctionSignature(@NonNull String name, @NonNull DataType... parameterTypes) {
+  public FunctionSignature(@Nonnull String name, @Nonnull DataType... parameterTypes) {
     this(CqlIdentifier.fromCql(name), parameterTypes);
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getName() {
     return name;
   }
 
-  @NonNull
+  @Nonnull
   public List<DataType> getParameterTypes() {
     return parameterTypes;
   }

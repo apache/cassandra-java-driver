@@ -22,8 +22,8 @@ import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Thrown when the coordinator was bootstrapping when it received a query.
@@ -34,19 +34,19 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  */
 public class BootstrappingException extends QueryExecutionException {
 
-  public BootstrappingException(@NonNull Node coordinator) {
+  public BootstrappingException(@Nonnull Node coordinator) {
     this(coordinator, String.format("%s is bootstrapping", coordinator), null, false);
   }
 
   private BootstrappingException(
-      @NonNull Node coordinator,
-      @NonNull String message,
+      @Nonnull Node coordinator,
+      @Nonnull String message,
       @Nullable ExecutionInfo executionInfo,
       boolean writableStackTrace) {
     super(coordinator, message, executionInfo, writableStackTrace);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new BootstrappingException(getCoordinator(), getMessage(), getExecutionInfo(), true);

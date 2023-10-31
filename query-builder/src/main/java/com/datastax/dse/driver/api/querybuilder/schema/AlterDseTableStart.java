@@ -22,8 +22,8 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public interface AlterDseTableStart
     extends AlterDseTableWithOptions,
@@ -33,7 +33,7 @@ public interface AlterDseTableStart
         DseTableGraphOptions<BuildableQuery> {
 
   /** Completes ALTER TABLE specifying that compact storage should be removed from the table. */
-  @NonNull
+  @Nonnull
   BuildableQuery dropCompactStorage();
 
   /**
@@ -42,28 +42,28 @@ public interface AlterDseTableStart
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
-  @NonNull
-  BuildableQuery alterColumn(@NonNull CqlIdentifier columnName, @NonNull DataType dataType);
+  @Nonnull
+  BuildableQuery alterColumn(@Nonnull CqlIdentifier columnName, @Nonnull DataType dataType);
 
   /**
    * Shortcut for {@link #alterColumn(CqlIdentifier, DataType)
    * alterColumn(CqlIdentifier.fromCql(columnName,dataType)}.
    */
-  @NonNull
-  default BuildableQuery alterColumn(@NonNull String columnName, @NonNull DataType dataType) {
+  @Nonnull
+  default BuildableQuery alterColumn(@Nonnull String columnName, @Nonnull DataType dataType) {
     return alterColumn(CqlIdentifier.fromCql(columnName), dataType);
   }
 
   /** Removes the named vertex label from this table. */
-  @NonNull
+  @Nonnull
   BuildableQuery withoutVertexLabel(@Nullable CqlIdentifier vertexLabelId);
 
   /**
    * Shortcut for {@link #withoutVertexLabel(CqlIdentifier)
    * withoutVertexLabel(CqlIdentifier.fromCql(vertexLabelName))}.
    */
-  @NonNull
-  default BuildableQuery withoutVertexLabel(@NonNull String vertexLabelName) {
+  @Nonnull
+  default BuildableQuery withoutVertexLabel(@Nonnull String vertexLabelName) {
     return withoutVertexLabel(CqlIdentifier.fromCql(vertexLabelName));
   }
 
@@ -72,21 +72,21 @@ public interface AlterDseTableStart
    *
    * <p>This is a shortcut for {@link #withoutVertexLabel(CqlIdentifier) withoutVertexLabel(null)}.
    */
-  @NonNull
+  @Nonnull
   default BuildableQuery withoutVertexLabel() {
     return withoutVertexLabel((CqlIdentifier) null);
   }
 
   /** Removes the named edge label from this table. */
-  @NonNull
+  @Nonnull
   BuildableQuery withoutEdgeLabel(@Nullable CqlIdentifier edgeLabelId);
 
   /**
    * Shortcut for {@link #withoutEdgeLabel(CqlIdentifier)
    * withoutEdgeLabel(CqlIdentifier.fromCql(edgeLabelName))}.
    */
-  @NonNull
-  default BuildableQuery withoutEdgeLabel(@NonNull String edgeLabelName) {
+  @Nonnull
+  default BuildableQuery withoutEdgeLabel(@Nonnull String edgeLabelName) {
     return withoutEdgeLabel(CqlIdentifier.fromCql(edgeLabelName));
   }
 
@@ -95,7 +95,7 @@ public interface AlterDseTableStart
    *
    * <p>This is a shortcut for {@link #withoutVertexLabel(CqlIdentifier) withoutEdgeLabel(null)}.
    */
-  @NonNull
+  @Nonnull
   default BuildableQuery withoutEdgeLabel() {
     return withoutEdgeLabel((CqlIdentifier) null);
   }

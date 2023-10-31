@@ -24,8 +24,6 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.Strings;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -33,6 +31,8 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonException;
@@ -112,13 +112,13 @@ public class Jsr353JsonCodec implements TypeCodec<JsonStructure> {
     writerFactory = Json.createWriterFactory(config);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<JsonStructure> getJavaType() {
     return GenericType.of(JsonStructure.class);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.TEXT;
@@ -127,7 +127,7 @@ public class Jsr353JsonCodec implements TypeCodec<JsonStructure> {
   @Nullable
   @Override
   public ByteBuffer encode(
-      @Nullable JsonStructure value, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable JsonStructure value, @Nonnull ProtocolVersion protocolVersion) {
     if (value == null) {
       return null;
     }
@@ -143,7 +143,7 @@ public class Jsr353JsonCodec implements TypeCodec<JsonStructure> {
   @Nullable
   @Override
   public JsonStructure decode(
-      @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null) {
       return null;
     }
@@ -155,7 +155,7 @@ public class Jsr353JsonCodec implements TypeCodec<JsonStructure> {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable JsonStructure value) {
     if (value == null) {

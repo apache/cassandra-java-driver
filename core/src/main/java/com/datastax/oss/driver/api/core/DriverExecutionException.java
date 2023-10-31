@@ -19,7 +19,7 @@ package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * Thrown by synchronous wrapper methods (such as {@link CqlSession#execute(Statement)}, when the
@@ -37,7 +37,7 @@ public class DriverExecutionException extends DriverException {
     super(null, executionInfo, cause, true);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new DriverExecutionException(getExecutionInfo(), getCause());

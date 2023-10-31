@@ -23,8 +23,8 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Thrown when the coordinator reported itself as being overloaded.
@@ -36,23 +36,23 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  */
 public class OverloadedException extends QueryExecutionException {
 
-  public OverloadedException(@NonNull Node coordinator) {
+  public OverloadedException(@Nonnull Node coordinator) {
     super(coordinator, String.format("%s is overloaded", coordinator), null, false);
   }
 
-  public OverloadedException(@NonNull Node coordinator, @NonNull String message) {
+  public OverloadedException(@Nonnull Node coordinator, @Nonnull String message) {
     super(coordinator, String.format("%s is overloaded: %s", coordinator, message), null, false);
   }
 
   private OverloadedException(
-      @NonNull Node coordinator,
-      @NonNull String message,
+      @Nonnull Node coordinator,
+      @Nonnull String message,
       @Nullable ExecutionInfo executionInfo,
       boolean writableStackTrace) {
     super(coordinator, message, executionInfo, writableStackTrace);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new OverloadedException(getCoordinator(), getMessage(), getExecutionInfo(), true);

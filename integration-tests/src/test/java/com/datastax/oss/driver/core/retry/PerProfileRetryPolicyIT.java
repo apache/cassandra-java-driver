@@ -45,9 +45,9 @@ import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.retry.DefaultRetryPolicy;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -156,8 +156,8 @@ public class PerProfileRetryPolicyIT {
     @Override
     @Deprecated
     public RetryDecision onReadTimeout(
-        @NonNull Request request,
-        @NonNull ConsistencyLevel cl,
+        @Nonnull Request request,
+        @Nonnull ConsistencyLevel cl,
         int blockFor,
         int received,
         boolean dataPresent,
@@ -168,9 +168,9 @@ public class PerProfileRetryPolicyIT {
     @Override
     @Deprecated
     public RetryDecision onWriteTimeout(
-        @NonNull Request request,
-        @NonNull ConsistencyLevel cl,
-        @NonNull WriteType writeType,
+        @Nonnull Request request,
+        @Nonnull ConsistencyLevel cl,
+        @Nonnull WriteType writeType,
         int blockFor,
         int received,
         int retryCount) {
@@ -180,8 +180,8 @@ public class PerProfileRetryPolicyIT {
     @Override
     @Deprecated
     public RetryDecision onUnavailable(
-        @NonNull Request request,
-        @NonNull ConsistencyLevel cl,
+        @Nonnull Request request,
+        @Nonnull ConsistencyLevel cl,
         int required,
         int alive,
         int retryCount) {
@@ -191,14 +191,14 @@ public class PerProfileRetryPolicyIT {
     @Override
     @Deprecated
     public RetryDecision onRequestAborted(
-        @NonNull Request request, @NonNull Throwable error, int retryCount) {
+        @Nonnull Request request, @Nonnull Throwable error, int retryCount) {
       return RetryDecision.RETHROW;
     }
 
     @Override
     @Deprecated
     public RetryDecision onErrorResponse(
-        @NonNull Request request, @NonNull CoordinatorException error, int retryCount) {
+        @Nonnull Request request, @Nonnull CoordinatorException error, int retryCount) {
       return RetryDecision.RETHROW;
     }
 

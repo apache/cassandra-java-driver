@@ -17,13 +17,13 @@
  */
 package com.datastax.dse.driver.internal.core.util.concurrent;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Deque;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A concurrent queue with a limited size.
@@ -49,8 +49,8 @@ public class BoundedConcurrentQueue<ElementT> {
    * @throws IllegalStateException if the method is invoked before the stage returned by the
    *     previous call has completed.
    */
-  @NonNull
-  public CompletionStage<ElementT> offer(@NonNull ElementT element) {
+  @Nonnull
+  public CompletionStage<ElementT> offer(@Nonnull ElementT element) {
     while (true) {
       State oldState = state.get();
       State newState = oldState.increment();

@@ -31,9 +31,9 @@ import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -53,7 +53,7 @@ public class DefaultSelect implements SelectFrom, Select {
   private final Object perPartitionLimit;
   private final boolean allowsFiltering;
 
-  public DefaultSelect(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
+  public DefaultSelect(@Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier table) {
     this(
         keyspace,
         table,
@@ -77,13 +77,13 @@ public class DefaultSelect implements SelectFrom, Select {
    */
   public DefaultSelect(
       @Nullable CqlIdentifier keyspace,
-      @NonNull CqlIdentifier table,
+      @Nonnull CqlIdentifier table,
       boolean isJson,
       boolean isDistinct,
-      @NonNull ImmutableList<Selector> selectors,
-      @NonNull ImmutableList<Relation> relations,
-      @NonNull ImmutableList<Selector> groupByClauses,
-      @NonNull ImmutableMap<CqlIdentifier, ClusteringOrder> orderings,
+      @Nonnull ImmutableList<Selector> selectors,
+      @Nonnull ImmutableList<Relation> relations,
+      @Nonnull ImmutableList<Selector> groupByClauses,
+      @Nonnull ImmutableMap<CqlIdentifier, ClusteringOrder> orderings,
       @Nullable Object limit,
       @Nullable Object perPartitionLimit,
       boolean allowsFiltering) {
@@ -105,7 +105,7 @@ public class DefaultSelect implements SelectFrom, Select {
     this.allowsFiltering = allowsFiltering;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SelectFrom json() {
     return new DefaultSelect(
@@ -122,7 +122,7 @@ public class DefaultSelect implements SelectFrom, Select {
         allowsFiltering);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SelectFrom distinct() {
     return new DefaultSelect(
@@ -139,9 +139,9 @@ public class DefaultSelect implements SelectFrom, Select {
         allowsFiltering);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Select selector(@NonNull Selector selector) {
+  public Select selector(@Nonnull Selector selector) {
     ImmutableList<Selector> newSelectors;
     if (selector == AllSelector.INSTANCE) {
       // '*' cancels any previous one
@@ -155,9 +155,9 @@ public class DefaultSelect implements SelectFrom, Select {
     return withSelectors(newSelectors);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Select selectors(@NonNull Iterable<Selector> additionalSelectors) {
+  public Select selectors(@Nonnull Iterable<Selector> additionalSelectors) {
     ImmutableList.Builder<Selector> newSelectors = ImmutableList.builder();
     if (!SELECT_ALL.equals(selectors)) { // previous '*' gets cancelled
       newSelectors.addAll(selectors);
@@ -171,9 +171,9 @@ public class DefaultSelect implements SelectFrom, Select {
     return withSelectors(newSelectors.build());
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Select as(@NonNull CqlIdentifier alias) {
+  public Select as(@Nonnull CqlIdentifier alias) {
     if (SELECT_ALL.equals(selectors)) {
       throw new IllegalStateException("Can't alias the * selector");
     } else if (selectors.isEmpty()) {
@@ -182,8 +182,8 @@ public class DefaultSelect implements SelectFrom, Select {
     return withSelectors(ImmutableCollections.modifyLast(selectors, last -> last.as(alias)));
   }
 
-  @NonNull
-  public Select withSelectors(@NonNull ImmutableList<Selector> newSelectors) {
+  @Nonnull
+  public Select withSelectors(@Nonnull ImmutableList<Selector> newSelectors) {
     return new DefaultSelect(
         keyspace,
         table,
@@ -198,20 +198,20 @@ public class DefaultSelect implements SelectFrom, Select {
         allowsFiltering);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Select where(@NonNull Relation relation) {
+  public Select where(@Nonnull Relation relation) {
     return withRelations(ImmutableCollections.append(relations, relation));
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Select where(@NonNull Iterable<Relation> additionalRelations) {
+  public Select where(@Nonnull Iterable<Relation> additionalRelations) {
     return withRelations(ImmutableCollections.concat(relations, additionalRelations));
   }
 
-  @NonNull
-  public Select withRelations(@NonNull ImmutableList<Relation> newRelations) {
+  @Nonnull
+  public Select withRelations(@Nonnull ImmutableList<Relation> newRelations) {
     return new DefaultSelect(
         keyspace,
         table,
@@ -226,20 +226,20 @@ public class DefaultSelect implements SelectFrom, Select {
         allowsFiltering);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Select groupBy(@NonNull Selector groupByClause) {
+  public Select groupBy(@Nonnull Selector groupByClause) {
     return withGroupByClauses(ImmutableCollections.append(groupByClauses, groupByClause));
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Select groupBy(@NonNull Iterable<Selector> newGroupByClauses) {
+  public Select groupBy(@Nonnull Iterable<Selector> newGroupByClauses) {
     return withGroupByClauses(ImmutableCollections.concat(groupByClauses, newGroupByClauses));
   }
 
-  @NonNull
-  public Select withGroupByClauses(@NonNull ImmutableList<Selector> newGroupByClauses) {
+  @Nonnull
+  public Select withGroupByClauses(@Nonnull ImmutableList<Selector> newGroupByClauses) {
     return new DefaultSelect(
         keyspace,
         table,
@@ -254,20 +254,20 @@ public class DefaultSelect implements SelectFrom, Select {
         allowsFiltering);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Select orderBy(@NonNull CqlIdentifier columnId, @NonNull ClusteringOrder order) {
+  public Select orderBy(@Nonnull CqlIdentifier columnId, @Nonnull ClusteringOrder order) {
     return withOrderings(ImmutableCollections.append(orderings, columnId, order));
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Select orderByIds(@NonNull Map<CqlIdentifier, ClusteringOrder> newOrderings) {
+  public Select orderByIds(@Nonnull Map<CqlIdentifier, ClusteringOrder> newOrderings) {
     return withOrderings(ImmutableCollections.concat(orderings, newOrderings));
   }
 
-  @NonNull
-  public Select withOrderings(@NonNull ImmutableMap<CqlIdentifier, ClusteringOrder> newOrderings) {
+  @Nonnull
+  public Select withOrderings(@Nonnull ImmutableMap<CqlIdentifier, ClusteringOrder> newOrderings) {
     return new DefaultSelect(
         keyspace,
         table,
@@ -282,7 +282,7 @@ public class DefaultSelect implements SelectFrom, Select {
         allowsFiltering);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Select limit(int limit) {
     Preconditions.checkArgument(limit > 0, "Limit must be strictly positive");
@@ -300,7 +300,7 @@ public class DefaultSelect implements SelectFrom, Select {
         allowsFiltering);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Select limit(@Nullable BindMarker bindMarker) {
     return new DefaultSelect(
@@ -317,7 +317,7 @@ public class DefaultSelect implements SelectFrom, Select {
         allowsFiltering);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Select perPartitionLimit(int perPartitionLimit) {
     Preconditions.checkArgument(
@@ -336,7 +336,7 @@ public class DefaultSelect implements SelectFrom, Select {
         allowsFiltering);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Select perPartitionLimit(@Nullable BindMarker bindMarker) {
     return new DefaultSelect(
@@ -353,7 +353,7 @@ public class DefaultSelect implements SelectFrom, Select {
         allowsFiltering);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Select allowFiltering() {
     return new DefaultSelect(
@@ -370,7 +370,7 @@ public class DefaultSelect implements SelectFrom, Select {
         true);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder();
@@ -427,21 +427,21 @@ public class DefaultSelect implements SelectFrom, Select {
     return builder.toString();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement build() {
     return builder().build();
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public SimpleStatement build(@NonNull Object... values) {
+  public SimpleStatement build(@Nonnull Object... values) {
     return builder().addPositionalValues(values).build();
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public SimpleStatement build(@NonNull Map<String, Object> namedValues) {
+  public SimpleStatement build(@Nonnull Map<String, Object> namedValues) {
     SimpleStatementBuilder builder = builder();
     for (Map.Entry<String, Object> entry : namedValues.entrySet()) {
       builder.addNamedValue(entry.getKey(), entry.getValue());
@@ -449,7 +449,7 @@ public class DefaultSelect implements SelectFrom, Select {
     return builder.build();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatementBuilder builder() {
     // SELECT statements are always idempotent
@@ -461,7 +461,7 @@ public class DefaultSelect implements SelectFrom, Select {
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getTable() {
     return table;
   }
@@ -474,22 +474,22 @@ public class DefaultSelect implements SelectFrom, Select {
     return isDistinct;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableList<Selector> getSelectors() {
     return selectors;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableList<Relation> getRelations() {
     return relations;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableList<Selector> getGroupByClauses() {
     return groupByClauses;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableMap<CqlIdentifier, ClusteringOrder> getOrderings() {
     return orderings;
   }

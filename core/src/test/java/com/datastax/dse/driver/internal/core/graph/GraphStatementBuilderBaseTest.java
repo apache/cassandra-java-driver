@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 import com.datastax.dse.driver.api.core.graph.FluentGraphStatement;
 import com.datastax.dse.driver.api.core.graph.GraphStatementBuilderBase;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import org.junit.Test;
 
 public class GraphStatementBuilderBaseTest {
@@ -32,7 +32,7 @@ public class GraphStatementBuilderBaseTest {
   private static class MockGraphStatementBuilder
       extends GraphStatementBuilderBase<MockGraphStatementBuilder, FluentGraphStatement> {
 
-    @NonNull
+    @Nonnull
     @Override
     public FluentGraphStatement build() {
       FluentGraphStatement rv = mock(FluentGraphStatement.class);

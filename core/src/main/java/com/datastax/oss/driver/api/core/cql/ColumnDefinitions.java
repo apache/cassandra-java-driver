@@ -21,9 +21,9 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.data.AccessibleByName;
 import com.datastax.oss.driver.api.core.detach.Detachable;
 import com.datastax.oss.driver.internal.core.util.Loggers;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 /**
  * Metadata about a set of CQL columns.
@@ -42,7 +42,7 @@ public interface ColumnDefinitions extends Iterable<ColumnDefinition>, Detachabl
    * @throws IndexOutOfBoundsException if the index is invalid.
    * @return the {@code i}th {@link ColumnDefinition} in this metadata.
    */
-  @NonNull
+  @Nonnull
   ColumnDefinition get(int i);
 
   /**
@@ -59,8 +59,8 @@ public interface ColumnDefinitions extends Iterable<ColumnDefinition>, Detachabl
    * @see #contains(String)
    * @see #firstIndexOf(String)
    */
-  @NonNull
-  default ColumnDefinition get(@NonNull String name) {
+  @Nonnull
+  default ColumnDefinition get(@Nonnull String name) {
     if (!contains(name)) {
       throw new IllegalArgumentException("No definition named " + name);
     } else {
@@ -82,8 +82,8 @@ public interface ColumnDefinitions extends Iterable<ColumnDefinition>, Detachabl
    * @see #contains(CqlIdentifier)
    * @see #firstIndexOf(CqlIdentifier)
    */
-  @NonNull
-  default ColumnDefinition get(@NonNull CqlIdentifier name) {
+  @Nonnull
+  default ColumnDefinition get(@Nonnull CqlIdentifier name) {
     if (!contains(name)) {
       throw new IllegalArgumentException("No definition named " + name);
     } else {
@@ -97,10 +97,10 @@ public interface ColumnDefinitions extends Iterable<ColumnDefinition>, Detachabl
    * <p>Because raw strings are ambiguous with regard to case-sensitivity, the argument will be
    * interpreted according to the rules described in {@link AccessibleByName}.
    */
-  boolean contains(@NonNull String name);
+  boolean contains(@Nonnull String name);
 
   /** Whether there is a definition using the given CQL identifier. */
-  boolean contains(@NonNull CqlIdentifier id);
+  boolean contains(@Nonnull CqlIdentifier id);
 
   /**
    * Returns the indices of all columns that use the given name.
@@ -115,8 +115,8 @@ public interface ColumnDefinitions extends Iterable<ColumnDefinition>, Detachabl
    *     <p>Implementors should always override this method (all built-in driver implementations
    *     do).
    */
-  @NonNull
-  default List<Integer> allIndicesOf(@NonNull String name) {
+  @Nonnull
+  default List<Integer> allIndicesOf(@Nonnull String name) {
     Loggers.COLUMN_DEFINITIONS.warn(
         "{} should override allIndicesOf(String), the default implementation is a "
             + "workaround for backward compatibility, it only returns the first occurrence",
@@ -132,7 +132,7 @@ public interface ColumnDefinitions extends Iterable<ColumnDefinition>, Detachabl
    *
    * @return the index, or -1 if no column uses this name.
    */
-  int firstIndexOf(@NonNull String name);
+  int firstIndexOf(@Nonnull String name);
 
   /**
    * Returns the indices of all columns that use the given identifier.
@@ -144,8 +144,8 @@ public interface ColumnDefinitions extends Iterable<ColumnDefinition>, Detachabl
    *     <p>Implementors should always override this method (all built-in driver implementations
    *     do).
    */
-  @NonNull
-  default List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+  @Nonnull
+  default List<Integer> allIndicesOf(@Nonnull CqlIdentifier id) {
     Loggers.COLUMN_DEFINITIONS.warn(
         "{} should override allIndicesOf(CqlIdentifier), the default implementation is a "
             + "workaround for backward compatibility, it only returns the first occurrence",
@@ -158,5 +158,5 @@ public interface ColumnDefinitions extends Iterable<ColumnDefinition>, Detachabl
    *
    * @return the index, or -1 if no column uses this identifier.
    */
-  int firstIndexOf(@NonNull CqlIdentifier id);
+  int firstIndexOf(@Nonnull CqlIdentifier id);
 }

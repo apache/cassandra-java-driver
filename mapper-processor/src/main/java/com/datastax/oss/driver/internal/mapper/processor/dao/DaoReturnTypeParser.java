@@ -17,14 +17,14 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
 public interface DaoReturnTypeParser {
-  @NonNull
+  @Nonnull
   DaoReturnType parse(
-      @NonNull TypeMirror returnTypeMirror, @NonNull Map<Name, TypeElement> typeParameters);
+      @Nonnull TypeMirror returnTypeMirror, @Nonnull Map<Name, TypeElement> typeParameters);
 }

@@ -20,8 +20,8 @@ package com.datastax.oss.driver.internal.core.type;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.VectorType;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -51,13 +51,13 @@ public class DefaultVectorType implements VectorType {
   }
 
   /* ============== CustomType interface ============== */
-  @NonNull
+  @Nonnull
   @Override
   public String getClassName() {
     return VECTOR_CLASS_NAME;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asCql(boolean includeFrozen, boolean pretty) {
     return String.format("'%s(%d)'", getClassName(), getDimensions());
@@ -92,7 +92,7 @@ public class DefaultVectorType implements VectorType {
   }
 
   @Override
-  public void attach(@NonNull AttachmentPoint attachmentPoint) {
+  public void attach(@Nonnull AttachmentPoint attachmentPoint) {
     // nothing to do
   }
 }

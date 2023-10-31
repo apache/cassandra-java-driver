@@ -30,11 +30,11 @@ import com.typesafe.config.ConfigOrigin;
 import com.typesafe.config.ConfigOriginFactory;
 import com.typesafe.config.ConfigValue;
 import com.typesafe.config.ConfigValueFactory;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.URL;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -146,9 +146,9 @@ public class TypesafeDriverConfig implements DriverConfig {
     return defaultProfile;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DriverExecutionProfile getProfile(@NonNull String profileName) {
+  public DriverExecutionProfile getProfile(@Nonnull String profileName) {
     if (profileName.equals(DriverExecutionProfile.DEFAULT_NAME)) {
       return defaultProfile;
     }
@@ -159,7 +159,7 @@ public class TypesafeDriverConfig implements DriverConfig {
                     String.format("Unknown profile '%s'. Check your configuration.", profileName)));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, ? extends DriverExecutionProfile> getProfiles() {
     return profiles;
@@ -174,7 +174,7 @@ public class TypesafeDriverConfig implements DriverConfig {
    * is invoked multiple times, the last value for each option will be used. Note that it is
    * currently not possible to use {@code null} as a value.
    */
-  public void overrideDefaults(@NonNull Map<DriverOption, Object> overrides) {
+  public void overrideDefaults(@Nonnull Map<DriverOption, Object> overrides) {
     defaultOverrides.putAll(overrides);
     reload(lastLoadedConfig);
   }

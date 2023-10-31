@@ -29,9 +29,9 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.cql.Conversions;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collection;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +68,7 @@ public class GraphSupportChecker {
    * cluster later and do not support graph paging, the user has to manually disable graph paging.
    */
   public boolean isPagingEnabled(
-      @NonNull GraphStatement<?> graphStatement, @NonNull InternalDriverContext context) {
+      @Nonnull GraphStatement<?> graphStatement, @Nonnull InternalDriverContext context) {
     DriverExecutionProfile driverExecutionProfile =
         Conversions.resolveExecutionProfile(graphStatement, context);
     PagingEnabledOptions pagingEnabledOptions =
@@ -110,11 +110,11 @@ public class GraphSupportChecker {
    * you are targeting a "classic" graph engine instead, the user has to manually set the graph
    * protocol to something else.
    */
-  @NonNull
+  @Nonnull
   public GraphProtocol inferGraphProtocol(
-      @NonNull GraphStatement<?> statement,
-      @NonNull DriverExecutionProfile config,
-      @NonNull InternalDriverContext context) {
+      @Nonnull GraphStatement<?> statement,
+      @Nonnull DriverExecutionProfile config,
+      @Nonnull InternalDriverContext context) {
     String graphProtocol = statement.getSubProtocol();
     if (graphProtocol == null) {
       // use the protocol specified in configuration, otherwise get the default from the context
@@ -154,7 +154,7 @@ public class GraphSupportChecker {
    * @return The default GraphProtocol to used based on the provided context.
    */
   @VisibleForTesting
-  GraphProtocol getDefaultGraphProtocol(@NonNull InternalDriverContext context) {
+  GraphProtocol getDefaultGraphProtocol(@Nonnull InternalDriverContext context) {
     if (isDse68OrAbove == null) {
       isDse68OrAbove = checkIsDse68OrAbove(context);
     }
@@ -162,7 +162,7 @@ public class GraphSupportChecker {
     return isDse68OrAbove ? GraphProtocol.GRAPH_BINARY_1_0 : GraphProtocol.GRAPHSON_2_0;
   }
 
-  private boolean checkIsDse68OrAbove(@NonNull InternalDriverContext context) {
+  private boolean checkIsDse68OrAbove(@Nonnull InternalDriverContext context) {
     Collection<Node> nodes = context.getMetadataManager().getMetadata().getNodes().values();
 
     for (Node node : nodes) {

@@ -20,8 +20,8 @@ package com.datastax.oss.driver.internal.querybuilder.schema;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.schema.Drop;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -33,21 +33,21 @@ public class DefaultDrop implements Drop {
 
   private final boolean ifExists;
 
-  public DefaultDrop(@NonNull CqlIdentifier itemName, @NonNull String schemaTypeName) {
+  public DefaultDrop(@Nonnull CqlIdentifier itemName, @Nonnull String schemaTypeName) {
     this(null, itemName, schemaTypeName);
   }
 
   public DefaultDrop(
       @Nullable CqlIdentifier keyspace,
-      @NonNull CqlIdentifier itemName,
-      @NonNull String schemaTypeName) {
+      @Nonnull CqlIdentifier itemName,
+      @Nonnull String schemaTypeName) {
     this(keyspace, itemName, schemaTypeName, false);
   }
 
   public DefaultDrop(
       @Nullable CqlIdentifier keyspace,
-      @NonNull CqlIdentifier itemName,
-      @NonNull String schemaTypeName,
+      @Nonnull CqlIdentifier itemName,
+      @Nonnull String schemaTypeName,
       boolean ifExists) {
     this.keyspace = keyspace;
     this.itemName = itemName;
@@ -55,13 +55,13 @@ public class DefaultDrop implements Drop {
     this.ifExists = ifExists;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Drop ifExists() {
     return new DefaultDrop(keyspace, itemName, schemaTypeName, true);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder("DROP ").append(schemaTypeName).append(' ');
@@ -85,12 +85,12 @@ public class DefaultDrop implements Drop {
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getName() {
     return itemName;
   }
 
-  @NonNull
+  @Nonnull
   public String getSchemaType() {
     return schemaTypeName;
   }

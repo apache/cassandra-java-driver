@@ -19,15 +19,15 @@ package com.datastax.dse.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.querybuilder.schema.KeyspaceReplicationOptions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
+import javax.annotation.Nonnull;
 
 public interface CreateDseKeyspaceStart extends KeyspaceReplicationOptions<CreateDseKeyspace> {
   /**
    * Adds IF NOT EXISTS to the create keyspace specification. This indicates that the keyspace
    * should not be created it already exists.
    */
-  @NonNull
+  @Nonnull
   CreateDseKeyspaceStart ifNotExists();
 
   /**
@@ -35,9 +35,9 @@ public interface CreateDseKeyspaceStart extends KeyspaceReplicationOptions<Creat
    * strategy, otherwise it is advisable to use {@link #withSimpleStrategy(int)} or {@link
    * #withNetworkTopologyStrategy(Map)}.
    */
-  @NonNull
+  @Nonnull
   @Override
-  CreateDseKeyspace withReplicationOptions(@NonNull Map<String, Object> replicationOptions);
+  CreateDseKeyspace withReplicationOptions(@Nonnull Map<String, Object> replicationOptions);
 
   /**
    * Adds SimpleStrategy replication options with the given replication factor.
@@ -45,7 +45,7 @@ public interface CreateDseKeyspaceStart extends KeyspaceReplicationOptions<Creat
    * <p>Note that using this will overwrite any previous use of this method or {@link
    * #withNetworkTopologyStrategy(Map)}.
    */
-  @NonNull
+  @Nonnull
   @Override
   default CreateDseKeyspace withSimpleStrategy(int replicationFactor) {
     ImmutableMap<String, Object> replication =
@@ -67,10 +67,10 @@ public interface CreateDseKeyspaceStart extends KeyspaceReplicationOptions<Creat
    * @param replications Mapping of data center name to replication factor to use for that data
    *     center.
    */
-  @NonNull
+  @Nonnull
   @Override
   default CreateDseKeyspace withNetworkTopologyStrategy(
-      @NonNull Map<String, Integer> replications) {
+      @Nonnull Map<String, Integer> replications) {
     ImmutableMap.Builder<String, Object> replicationBuilder =
         ImmutableMap.<String, Object>builder().put("class", "NetworkTopologyStrategy");
 

@@ -17,8 +17,8 @@
  */
 package com.datastax.oss.driver.internal.core.metrics;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
+import javax.annotation.Nonnull;
 
 /**
  * The identifier of a metric.
@@ -40,10 +40,10 @@ public interface MetricId {
    *
    * @return The metric name; cannot be empty nor null.
    */
-  @NonNull
+  @Nonnull
   String getName();
 
   /** @return The metric tags, or empty if no tag is defined; cannot be null. */
-  @NonNull
+  @Nonnull
   Map<String, String> getTags();
 }

@@ -21,11 +21,11 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -46,7 +46,7 @@ public class ObjectListToArrayCodec<ElementT> extends AbstractListToArrayCodec<E
 
   private final TypeCodec<ElementT> elementCodec;
 
-  public ObjectListToArrayCodec(@NonNull TypeCodec<ElementT> elementCodec) {
+  public ObjectListToArrayCodec(@Nonnull TypeCodec<ElementT> elementCodec) {
     super(
         DataTypes.listOf(
             Objects.requireNonNull(elementCodec, "elementCodec must not be null").getCqlType()),
@@ -55,7 +55,7 @@ public class ObjectListToArrayCodec<ElementT> extends AbstractListToArrayCodec<E
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     Objects.requireNonNull(value);
     Class<?> clazz = value.getClass();
     return clazz.isArray()
@@ -64,7 +64,7 @@ public class ObjectListToArrayCodec<ElementT> extends AbstractListToArrayCodec<E
 
   @Nullable
   @Override
-  public ByteBuffer encode(@Nullable ElementT[] value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable ElementT[] value, @Nonnull ProtocolVersion protocolVersion) {
     if (value == null) {
       return null;
     }
@@ -103,7 +103,7 @@ public class ObjectListToArrayCodec<ElementT> extends AbstractListToArrayCodec<E
 
   @Nullable
   @Override
-  public ElementT[] decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public ElementT[] decode(@Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return newInstance(0);
     }
@@ -130,16 +130,16 @@ public class ObjectListToArrayCodec<ElementT> extends AbstractListToArrayCodec<E
 
   @Override
   protected void formatElement(
-      @NonNull StringBuilder output, @NonNull ElementT[] array, int index) {
+      @Nonnull StringBuilder output, @Nonnull ElementT[] array, int index) {
     output.append(elementCodec.format(array[index]));
   }
 
   @Override
-  protected void parseElement(@NonNull String input, @NonNull ElementT[] array, int index) {
+  protected void parseElement(@Nonnull String input, @Nonnull ElementT[] array, int index) {
     array[index] = elementCodec.parse(input);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   @SuppressWarnings("unchecked")
   protected ElementT[] newInstance(int size) {

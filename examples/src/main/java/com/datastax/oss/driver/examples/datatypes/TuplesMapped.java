@@ -29,9 +29,9 @@ import com.datastax.oss.driver.api.core.type.codec.MappingCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Inserts and retrieves values in columns of tuples.
@@ -102,11 +102,11 @@ public class TuplesMapped {
   /** The custom codec that will convert to and from {@link Coordinates}. */
   public static class CoordinatesCodec extends MappingCodec<TupleValue, Coordinates> {
 
-    public CoordinatesCodec(@NonNull TypeCodec<TupleValue> innerCodec) {
+    public CoordinatesCodec(@Nonnull TypeCodec<TupleValue> innerCodec) {
       super(innerCodec, GenericType.of(Coordinates.class));
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public TupleType getCqlType() {
       return (TupleType) super.getCqlType();

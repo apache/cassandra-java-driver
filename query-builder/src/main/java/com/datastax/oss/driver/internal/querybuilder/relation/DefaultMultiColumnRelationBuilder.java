@@ -24,8 +24,8 @@ import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.TupleLeftOperand;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -33,16 +33,16 @@ public class DefaultMultiColumnRelationBuilder implements MultiColumnRelationBui
 
   private final Iterable<CqlIdentifier> identifiers;
 
-  public DefaultMultiColumnRelationBuilder(@NonNull Iterable<CqlIdentifier> identifiers) {
+  public DefaultMultiColumnRelationBuilder(@Nonnull Iterable<CqlIdentifier> identifiers) {
     Preconditions.checkNotNull(identifiers);
     Preconditions.checkArgument(
         identifiers.iterator().hasNext(), "Tuple must contain at least one column");
     this.identifiers = identifiers;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Relation build(@NonNull String operator, @Nullable Term rightOperand) {
+  public Relation build(@Nonnull String operator, @Nullable Term rightOperand) {
     return new DefaultRelation(new TupleLeftOperand(identifiers), operator, rightOperand);
   }
 
@@ -54,15 +54,15 @@ public class DefaultMultiColumnRelationBuilder implements MultiColumnRelationBui
     private final MultiColumnRelationBuilder<Relation> delegate;
 
     public Fluent(
-        @NonNull OngoingWhereClause<StatementT> statement,
-        @NonNull Iterable<CqlIdentifier> identifiers) {
+        @Nonnull OngoingWhereClause<StatementT> statement,
+        @Nonnull Iterable<CqlIdentifier> identifiers) {
       this.statement = statement;
       this.delegate = new DefaultMultiColumnRelationBuilder(identifiers);
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public StatementT build(@NonNull String operator, @Nullable Term rightOperand) {
+    public StatementT build(@Nonnull String operator, @Nullable Term rightOperand) {
       return statement.where(delegate.build(operator, rightOperand));
     }
   }

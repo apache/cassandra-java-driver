@@ -28,13 +28,13 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -101,15 +101,15 @@ public class DefaultBatchStatement implements BatchStatement {
     this.nowInSeconds = nowInSeconds;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BatchType getBatchType() {
     return batchType;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public BatchStatement setBatchType(@NonNull BatchType newBatchType) {
+  public BatchStatement setBatchType(@Nonnull BatchType newBatchType) {
     return new DefaultBatchStatement(
         newBatchType,
         statements,
@@ -132,7 +132,7 @@ public class DefaultBatchStatement implements BatchStatement {
         nowInSeconds);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BatchStatement setKeyspace(@Nullable CqlIdentifier newKeyspace) {
     return new DefaultBatchStatement(
@@ -157,9 +157,9 @@ public class DefaultBatchStatement implements BatchStatement {
         nowInSeconds);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public BatchStatement add(@NonNull BatchableStatement<?> statement) {
+  public BatchStatement add(@Nonnull BatchableStatement<?> statement) {
     if (statements.size() >= 0xFFFF) {
       throw new IllegalStateException(
           "Batch statement cannot contain more than " + 0xFFFF + " statements.");
@@ -187,9 +187,9 @@ public class DefaultBatchStatement implements BatchStatement {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public BatchStatement addAll(@NonNull Iterable<? extends BatchableStatement<?>> newStatements) {
+  public BatchStatement addAll(@Nonnull Iterable<? extends BatchableStatement<?>> newStatements) {
     if (statements.size() + Iterables.size(newStatements) > 0xFFFF) {
       throw new IllegalStateException(
           "Batch statement cannot contain more than " + 0xFFFF + " statements.");
@@ -225,7 +225,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return statements.size();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BatchStatement clear() {
     return new DefaultBatchStatement(
@@ -250,7 +250,7 @@ public class DefaultBatchStatement implements BatchStatement {
         nowInSeconds);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Iterator<BatchableStatement<?>> iterator() {
     return statements.iterator();
@@ -261,7 +261,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return pagingState;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BatchStatement setPagingState(ByteBuffer newPagingState) {
     return new DefaultBatchStatement(
@@ -291,7 +291,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return pageSize;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BatchStatement setPageSize(int newPageSize) {
     return new DefaultBatchStatement(
@@ -322,7 +322,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return consistencyLevel;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BatchStatement setConsistencyLevel(@Nullable ConsistencyLevel newConsistencyLevel) {
     return new DefaultBatchStatement(
@@ -353,7 +353,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return serialConsistencyLevel;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BatchStatement setSerialConsistencyLevel(
       @Nullable ConsistencyLevel newSerialConsistencyLevel) {
@@ -384,7 +384,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return executionProfileName;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BatchStatement setExecutionProfileName(@Nullable String newConfigProfileName) {
     return new DefaultBatchStatement(
@@ -414,7 +414,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return executionProfile;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DefaultBatchStatement setExecutionProfile(@Nullable DriverExecutionProfile newProfile) {
     return new DefaultBatchStatement(
@@ -468,7 +468,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return null;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BatchStatement setRoutingKeyspace(CqlIdentifier newRoutingKeyspace) {
     return new DefaultBatchStatement(
@@ -493,7 +493,7 @@ public class DefaultBatchStatement implements BatchStatement {
         nowInSeconds);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BatchStatement setNode(@Nullable Node newNode) {
     return new DefaultBatchStatement(
@@ -539,7 +539,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return null;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BatchStatement setRoutingKey(ByteBuffer newRoutingKey) {
     return new DefaultBatchStatement(
@@ -579,7 +579,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return null;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BatchStatement setRoutingToken(Token newRoutingToken) {
     return new DefaultBatchStatement(
@@ -604,15 +604,15 @@ public class DefaultBatchStatement implements BatchStatement {
         nowInSeconds);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, ByteBuffer> getCustomPayload() {
     return customPayload;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DefaultBatchStatement setCustomPayload(@NonNull Map<String, ByteBuffer> newCustomPayload) {
+  public DefaultBatchStatement setCustomPayload(@Nonnull Map<String, ByteBuffer> newCustomPayload) {
     return new DefaultBatchStatement(
         batchType,
         statements,
@@ -646,7 +646,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return null;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DefaultBatchStatement setIdempotent(Boolean newIdempotence) {
     return new DefaultBatchStatement(
@@ -676,7 +676,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return tracing;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BatchStatement setTracing(boolean newTracing) {
     return new DefaultBatchStatement(
@@ -706,7 +706,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return timestamp;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BatchStatement setQueryTimestamp(long newTimestamp) {
     return new DefaultBatchStatement(
@@ -731,7 +731,7 @@ public class DefaultBatchStatement implements BatchStatement {
         nowInSeconds);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BatchStatement setTimeout(@Nullable Duration newTimeout) {
     return new DefaultBatchStatement(
@@ -761,7 +761,7 @@ public class DefaultBatchStatement implements BatchStatement {
     return nowInSeconds;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BatchStatement setNowInSeconds(int newNowInSeconds) {
     return new DefaultBatchStatement(

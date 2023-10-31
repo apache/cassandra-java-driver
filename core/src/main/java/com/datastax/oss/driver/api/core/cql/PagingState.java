@@ -19,9 +19,9 @@ package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.cql.DefaultPagingState;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A safe wrapper around the paging state of a query.
@@ -37,13 +37,13 @@ import java.nio.ByteBuffer;
 public interface PagingState {
 
   /** Parses an instance from a string previously generated with {@code toString()}. */
-  @NonNull
-  static PagingState fromString(@NonNull String string) {
+  @Nonnull
+  static PagingState fromString(@Nonnull String string) {
     return DefaultPagingState.fromString(string);
   }
 
   /** Parses an instance from a byte array previously generated with {@link #toBytes()}. */
-  @NonNull
+  @Nonnull
   static PagingState fromBytes(byte[] bytes) {
     return DefaultPagingState.fromBytes(bytes);
   }
@@ -62,7 +62,7 @@ public interface PagingState {
    *
    * <p>If {@code statement} is a {@link BoundStatement}, it is always safe to call this method.
    */
-  default boolean matches(@NonNull Statement<?> statement) {
+  default boolean matches(@Nonnull Statement<?> statement) {
     return matches(statement, null);
   }
 
@@ -71,12 +71,12 @@ public interface PagingState {
    * executed with. <b>You only need this for simple statements, and if you use custom codecs.</b>
    * Bound statements already know which session they are attached to.
    */
-  boolean matches(@NonNull Statement<?> statement, @Nullable Session session);
+  boolean matches(@Nonnull Statement<?> statement, @Nullable Session session);
 
   /**
    * Returns the underlying "unsafe" paging state (the equivalent of {@link
    * ExecutionInfo#getPagingState()}).
    */
-  @NonNull
+  @Nonnull
   ByteBuffer getRawPagingState();
 }

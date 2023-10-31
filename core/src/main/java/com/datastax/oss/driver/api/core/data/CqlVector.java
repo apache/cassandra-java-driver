@@ -23,7 +23,6 @@ import com.datastax.oss.driver.shaded.guava.common.base.Predicates;
 import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
@@ -37,6 +36,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 
 /**
  * Representation of a vector as defined in CQL.
@@ -88,7 +88,7 @@ public class CqlVector<T extends Number> implements Iterable<T>, Serializable {
    * @return a new CqlVector built from the String representation
    */
   public static <V extends Number> CqlVector<V> from(
-      @NonNull String str, @NonNull TypeCodec<V> subtypeCodec) {
+      @Nonnull String str, @Nonnull TypeCodec<V> subtypeCodec) {
     Preconditions.checkArgument(str != null, "Cannot create CqlVector from null string");
     Preconditions.checkArgument(!str.isEmpty(), "Cannot create CqlVector from empty string");
     ArrayList<V> vals =
@@ -100,7 +100,7 @@ public class CqlVector<T extends Number> implements Iterable<T>, Serializable {
 
   private final List<T> list;
 
-  private CqlVector(@NonNull List<T> list) {
+  private CqlVector(@Nonnull List<T> list) {
 
     Preconditions.checkArgument(
         Iterables.all(list, Predicates.notNull()), "CqlVectors cannot contain null values");

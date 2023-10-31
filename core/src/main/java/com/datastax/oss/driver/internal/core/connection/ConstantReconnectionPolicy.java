@@ -22,8 +22,8 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,14 +67,14 @@ public class ConstantReconnectionPolicy implements ReconnectionPolicy {
     this.schedule = () -> delay;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public ReconnectionSchedule newNodeSchedule(@NonNull Node node) {
+  public ReconnectionSchedule newNodeSchedule(@Nonnull Node node) {
     LOG.debug("[{}] Creating new schedule for {}", logPrefix, node);
     return schedule;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ReconnectionSchedule newControlConnectionSchedule(
       @SuppressWarnings("ignored") boolean isInitialConnection) {

@@ -19,26 +19,26 @@ package com.datastax.dse.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.schema.KeyspaceOptions;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface CreateDseKeyspace extends BuildableQuery, KeyspaceOptions<CreateDseKeyspace> {
 
-  @NonNull
+  @Nonnull
   @Override
-  CreateDseKeyspace withOption(@NonNull String name, @NonNull Object value);
+  CreateDseKeyspace withOption(@Nonnull String name, @Nonnull Object value);
 
   /**
    * Adjusts durable writes configuration for this keyspace. If set to false, data written to the
    * keyspace will bypass the commit log.
    */
-  @NonNull
+  @Nonnull
   @Override
   default CreateDseKeyspace withDurableWrites(boolean durableWrites) {
     return withOption("durable_writes", durableWrites);
   }
 
   /** Adjusts the graph engine that will be used to interpret this keyspace. */
-  @NonNull
+  @Nonnull
   default CreateDseKeyspace withGraphEngine(String graphEngine) {
     return this.withOption("graph_engine", graphEngine);
   }

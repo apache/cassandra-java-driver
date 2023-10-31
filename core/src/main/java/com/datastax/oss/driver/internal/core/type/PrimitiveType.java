@@ -20,9 +20,9 @@ package com.datastax.oss.driver.internal.core.type;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.Serializable;
 import java.util.Locale;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -46,7 +46,7 @@ public class PrimitiveType implements DataType, Serializable {
   }
 
   @Override
-  public void attach(@NonNull AttachmentPoint attachmentPoint) {
+  public void attach(@Nonnull AttachmentPoint attachmentPoint) {
     // nothing to do
   }
 
@@ -67,7 +67,7 @@ public class PrimitiveType implements DataType, Serializable {
     return protocolCode;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asCql(boolean includeFrozen, boolean pretty) {
     return codeName(protocolCode).toLowerCase(Locale.ROOT);

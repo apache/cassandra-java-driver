@@ -17,7 +17,7 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * Describes an option in the driver's configuration.
@@ -31,6 +31,6 @@ public interface DriverOption {
    * The option's path. Paths are hierarchical and each segment is separated by a dot, e.g. {@code
    * metadata.schema.enabled}.
    */
-  @NonNull
+  @Nonnull
   String getPath();
 }

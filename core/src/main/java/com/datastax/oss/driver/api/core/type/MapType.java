@@ -18,19 +18,19 @@
 package com.datastax.oss.driver.api.core.type;
 
 import com.datastax.oss.protocol.internal.ProtocolConstants;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface MapType extends DataType {
 
-  @NonNull
+  @Nonnull
   DataType getKeyType();
 
-  @NonNull
+  @Nonnull
   DataType getValueType();
 
   boolean isFrozen();
 
-  @NonNull
+  @Nonnull
   @Override
   default String asCql(boolean includeFrozen, boolean pretty) {
     String template = (isFrozen() && includeFrozen) ? "frozen<map<%s, %s>>" : "map<%s, %s>";

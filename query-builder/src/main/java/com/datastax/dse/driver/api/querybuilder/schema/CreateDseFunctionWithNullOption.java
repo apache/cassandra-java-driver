@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface CreateDseFunctionWithNullOption {
   /**
@@ -31,6 +31,6 @@ public interface CreateDseFunctionWithNullOption {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
-  @NonNull
-  CreateDseFunctionWithType returnsType(@NonNull DataType dataType);
+  @Nonnull
+  CreateDseFunctionWithType returnsType(@Nonnull DataType dataType);
 }

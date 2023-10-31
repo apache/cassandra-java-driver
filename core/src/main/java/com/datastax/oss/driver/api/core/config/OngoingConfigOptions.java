@@ -17,48 +17,48 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 
 /** An object where config options can be set programmatically. */
 public interface OngoingConfigOptions<SelfT extends OngoingConfigOptions<SelfT>> {
 
-  @NonNull
-  SelfT withBoolean(@NonNull DriverOption option, boolean value);
+  @Nonnull
+  SelfT withBoolean(@Nonnull DriverOption option, boolean value);
 
-  @NonNull
-  SelfT withBooleanList(@NonNull DriverOption option, @NonNull List<Boolean> value);
+  @Nonnull
+  SelfT withBooleanList(@Nonnull DriverOption option, @Nonnull List<Boolean> value);
 
-  @NonNull
-  SelfT withInt(@NonNull DriverOption option, int value);
+  @Nonnull
+  SelfT withInt(@Nonnull DriverOption option, int value);
 
-  @NonNull
-  SelfT withIntList(@NonNull DriverOption option, @NonNull List<Integer> value);
+  @Nonnull
+  SelfT withIntList(@Nonnull DriverOption option, @Nonnull List<Integer> value);
 
-  @NonNull
-  SelfT withLong(@NonNull DriverOption option, long value);
+  @Nonnull
+  SelfT withLong(@Nonnull DriverOption option, long value);
 
-  @NonNull
-  SelfT withLongList(@NonNull DriverOption option, @NonNull List<Long> value);
+  @Nonnull
+  SelfT withLongList(@Nonnull DriverOption option, @Nonnull List<Long> value);
 
-  @NonNull
-  SelfT withDouble(@NonNull DriverOption option, double value);
+  @Nonnull
+  SelfT withDouble(@Nonnull DriverOption option, double value);
 
-  @NonNull
-  SelfT withDoubleList(@NonNull DriverOption option, @NonNull List<Double> value);
+  @Nonnull
+  SelfT withDoubleList(@Nonnull DriverOption option, @Nonnull List<Double> value);
 
-  @NonNull
-  SelfT withString(@NonNull DriverOption option, @NonNull String value);
+  @Nonnull
+  SelfT withString(@Nonnull DriverOption option, @Nonnull String value);
 
   /**
    * Note that this is just a shortcut to call {@link #withString(DriverOption, String)} with {@code
    * value.getName()}.
    */
-  @NonNull
-  default SelfT withClass(@NonNull DriverOption option, @NonNull Class<?> value) {
+  @Nonnull
+  default SelfT withClass(@Nonnull DriverOption option, @Nonnull Class<?> value) {
     return withString(option, value.getName());
   }
 
@@ -66,29 +66,29 @@ public interface OngoingConfigOptions<SelfT extends OngoingConfigOptions<SelfT>>
    * Note that this is just a shortcut to call {@link #withStringList(DriverOption, List)} with
    * class names obtained from {@link Class#getName()}.
    */
-  @NonNull
-  default SelfT withClassList(@NonNull DriverOption option, @NonNull List<Class<?>> values) {
+  @Nonnull
+  default SelfT withClassList(@Nonnull DriverOption option, @Nonnull List<Class<?>> values) {
     return withStringList(option, values.stream().map(Class::getName).collect(Collectors.toList()));
   }
 
-  @NonNull
-  SelfT withStringList(@NonNull DriverOption option, @NonNull List<String> value);
+  @Nonnull
+  SelfT withStringList(@Nonnull DriverOption option, @Nonnull List<String> value);
 
-  @NonNull
-  SelfT withStringMap(@NonNull DriverOption option, @NonNull Map<String, String> value);
+  @Nonnull
+  SelfT withStringMap(@Nonnull DriverOption option, @Nonnull Map<String, String> value);
 
-  @NonNull
-  SelfT withBytes(@NonNull DriverOption option, long value);
+  @Nonnull
+  SelfT withBytes(@Nonnull DriverOption option, long value);
 
-  @NonNull
-  SelfT withBytesList(@NonNull DriverOption option, @NonNull List<Long> value);
+  @Nonnull
+  SelfT withBytesList(@Nonnull DriverOption option, @Nonnull List<Long> value);
 
-  @NonNull
-  SelfT withDuration(@NonNull DriverOption option, @NonNull Duration value);
+  @Nonnull
+  SelfT withDuration(@Nonnull DriverOption option, @Nonnull Duration value);
 
-  @NonNull
-  SelfT withDurationList(@NonNull DriverOption option, @NonNull List<Duration> value);
+  @Nonnull
+  SelfT withDurationList(@Nonnull DriverOption option, @Nonnull List<Duration> value);
 
-  @NonNull
-  SelfT without(@NonNull DriverOption option);
+  @Nonnull
+  SelfT without(@Nonnull DriverOption option);
 }

@@ -37,10 +37,10 @@ import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.retry.DefaultRetryPolicy;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import javax.annotation.Nonnull;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -90,8 +90,8 @@ public class AllNodesFailedIT {
     @Override
     @Deprecated
     public RetryDecision onReadTimeout(
-        @NonNull Request request,
-        @NonNull ConsistencyLevel cl,
+        @Nonnull Request request,
+        @Nonnull ConsistencyLevel cl,
         int blockFor,
         int received,
         boolean dataPresent,

@@ -19,20 +19,20 @@ package com.datastax.dse.driver.api.querybuilder.schema;
 
 import com.datastax.dse.driver.internal.querybuilder.schema.DefaultDseGraphEdgeSide;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 public interface DseGraphEdgeSide {
 
   /** Starts the definition of a graph edge side by designating the from/to table. */
-  @NonNull
-  static DseGraphEdgeSide table(@NonNull CqlIdentifier tableId) {
+  @Nonnull
+  static DseGraphEdgeSide table(@Nonnull CqlIdentifier tableId) {
     return new DefaultDseGraphEdgeSide(tableId);
   }
 
   /** Shortcut for {@link #table(CqlIdentifier) table(CqlIdentifier.fromCql(tableName))}. */
-  @NonNull
-  static DseGraphEdgeSide table(@NonNull String tableName) {
+  @Nonnull
+  static DseGraphEdgeSide table(@Nonnull String tableName) {
     return table(CqlIdentifier.fromCql(tableName));
   }
 
@@ -41,15 +41,15 @@ public interface DseGraphEdgeSide {
    *
    * <p>Call this method multiple times if the partition key is composite.
    */
-  @NonNull
-  DseGraphEdgeSide withPartitionKey(@NonNull CqlIdentifier columnId);
+  @Nonnull
+  DseGraphEdgeSide withPartitionKey(@Nonnull CqlIdentifier columnId);
 
   /**
    * Shortcut for {@link #withPartitionKey(CqlIdentifier)
    * withPartitionKey(CqlIdentifier.fromCql(columnName))}.
    */
-  @NonNull
-  default DseGraphEdgeSide withPartitionKey(@NonNull String columnName) {
+  @Nonnull
+  default DseGraphEdgeSide withPartitionKey(@Nonnull String columnName) {
     return withPartitionKey(CqlIdentifier.fromCql(columnName));
   }
 
@@ -58,24 +58,24 @@ public interface DseGraphEdgeSide {
    *
    * <p>Call this method multiple times to add more than one clustering column.
    */
-  @NonNull
-  DseGraphEdgeSide withClusteringColumn(@NonNull CqlIdentifier columnId);
+  @Nonnull
+  DseGraphEdgeSide withClusteringColumn(@Nonnull CqlIdentifier columnId);
 
   /**
    * Shortcut for {@link #withClusteringColumn(CqlIdentifier)
    * withClusteringColumn(CqlIdentifier.fromCql(columnName))}.
    */
-  @NonNull
-  default DseGraphEdgeSide withClusteringColumn(@NonNull String columnName) {
+  @Nonnull
+  default DseGraphEdgeSide withClusteringColumn(@Nonnull String columnName) {
     return withClusteringColumn(CqlIdentifier.fromCql(columnName));
   }
 
-  @NonNull
+  @Nonnull
   CqlIdentifier getTableId();
 
-  @NonNull
+  @Nonnull
   List<CqlIdentifier> getPartitionKeyColumns();
 
-  @NonNull
+  @Nonnull
   List<CqlIdentifier> getClusteringColumns();
 }

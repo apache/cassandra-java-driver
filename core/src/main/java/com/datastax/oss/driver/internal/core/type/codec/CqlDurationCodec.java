@@ -27,40 +27,40 @@ import com.datastax.oss.driver.internal.core.type.util.VIntCoding;
 import com.datastax.oss.driver.shaded.guava.common.io.ByteArrayDataOutput;
 import com.datastax.oss.driver.shaded.guava.common.io.ByteStreams;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.DataInput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class CqlDurationCodec implements TypeCodec<CqlDuration> {
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<CqlDuration> getJavaType() {
     return GenericType.CQL_DURATION;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.DURATION;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof CqlDuration;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == CqlDuration.class;
   }
 
   @Nullable
   @Override
-  public ByteBuffer encode(@Nullable CqlDuration value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable CqlDuration value, @Nonnull ProtocolVersion protocolVersion) {
     if (value == null) {
       return null;
     }
@@ -85,7 +85,7 @@ public class CqlDurationCodec implements TypeCodec<CqlDuration> {
 
   @Nullable
   @Override
-  public CqlDuration decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public CqlDuration decode(@Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return null;
     } else {
@@ -102,7 +102,7 @@ public class CqlDurationCodec implements TypeCodec<CqlDuration> {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable CqlDuration value) {
     return (value == null) ? "NULL" : value.toString();

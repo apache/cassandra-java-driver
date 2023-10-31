@@ -17,8 +17,8 @@
  */
 package com.datastax.oss.driver.api.querybuilder.schema;
 
-import edu.umd.cs.findbugs.annotations.CheckReturnValue;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
 
 public interface KeyspaceOptions<SelfT extends KeyspaceOptions<SelfT>>
     extends OptionProvider<SelfT> {
@@ -27,7 +27,7 @@ public interface KeyspaceOptions<SelfT extends KeyspaceOptions<SelfT>>
    * Adjusts durable writes configuration for this keyspace. If set to false, data written to the
    * keyspace will bypass the commit log.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default SelfT withDurableWrites(boolean durableWrites) {
     return withOption("durable_writes", durableWrites);

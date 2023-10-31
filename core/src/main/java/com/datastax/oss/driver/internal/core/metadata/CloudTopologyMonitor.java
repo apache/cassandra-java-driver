@@ -20,11 +20,11 @@ package com.datastax.oss.driver.internal.core.metadata;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.Objects;
 import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class CloudTopologyMonitor extends DefaultTopologyMonitor {
 
@@ -35,12 +35,12 @@ public class CloudTopologyMonitor extends DefaultTopologyMonitor {
     this.cloudProxyAddress = cloudProxyAddress;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   protected EndPoint buildNodeEndPoint(
-      @NonNull AdminRow row,
+      @Nonnull AdminRow row,
       @Nullable InetSocketAddress broadcastRpcAddress,
-      @NonNull EndPoint localEndPoint) {
+      @Nonnull EndPoint localEndPoint) {
     UUID hostId = Objects.requireNonNull(row.getUuid("host_id"));
     return new SniEndPoint(cloudProxyAddress, hostId.toString());
   }

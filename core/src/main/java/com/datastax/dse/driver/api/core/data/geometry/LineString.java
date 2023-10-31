@@ -20,9 +20,9 @@ package com.datastax.dse.driver.api.core.data.geometry;
 import com.datastax.dse.driver.internal.core.data.geometry.DefaultGeometry;
 import com.datastax.dse.driver.internal.core.data.geometry.DefaultLineString;
 import com.esri.core.geometry.ogc.OGCLineString;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 /**
  * The driver-side representation for DSE's {@code LineString}.
@@ -42,8 +42,8 @@ public interface LineString extends Geometry {
    * @throws IllegalArgumentException if the string does not contain a valid Well-known Text
    *     representation.
    */
-  @NonNull
-  static LineString fromWellKnownText(@NonNull String source) {
+  @Nonnull
+  static LineString fromWellKnownText(@Nonnull String source) {
     return new DefaultLineString(DefaultGeometry.fromOgcWellKnownText(source, OGCLineString.class));
   }
 
@@ -57,8 +57,8 @@ public interface LineString extends Geometry {
    * @throws IllegalArgumentException if the provided {@link ByteBuffer} does not contain a valid
    *     Well-known Binary representation.
    */
-  @NonNull
-  static LineString fromWellKnownBinary(@NonNull ByteBuffer source) {
+  @Nonnull
+  static LineString fromWellKnownBinary(@Nonnull ByteBuffer source) {
     return new DefaultLineString(
         DefaultGeometry.fromOgcWellKnownBinary(source, OGCLineString.class));
   }
@@ -75,17 +75,17 @@ public interface LineString extends Geometry {
    *     href="https://tools.ietf.org/html/rfc7946#appendix-A">GeoJSON LineString</a>
    *     representation.
    */
-  @NonNull
-  static LineString fromGeoJson(@NonNull String source) {
+  @Nonnull
+  static LineString fromGeoJson(@Nonnull String source) {
     return new DefaultLineString(DefaultGeometry.fromOgcGeoJson(source, OGCLineString.class));
   }
 
   /** Creates a line string from two or more points. */
-  @NonNull
-  static LineString fromPoints(@NonNull Point p1, @NonNull Point p2, @NonNull Point... pn) {
+  @Nonnull
+  static LineString fromPoints(@Nonnull Point p1, @Nonnull Point p2, @Nonnull Point... pn) {
     return new DefaultLineString(p1, p2, pn);
   }
 
-  @NonNull
+  @Nonnull
   List<Point> getPoints();
 }

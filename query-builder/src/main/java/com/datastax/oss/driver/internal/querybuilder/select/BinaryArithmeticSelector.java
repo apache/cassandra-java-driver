@@ -21,9 +21,9 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.internal.querybuilder.ArithmeticOperator;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -34,14 +34,14 @@ public class BinaryArithmeticSelector extends ArithmeticSelector {
   private final CqlIdentifier alias;
 
   public BinaryArithmeticSelector(
-      @NonNull ArithmeticOperator operator, @NonNull Selector left, @NonNull Selector right) {
+      @Nonnull ArithmeticOperator operator, @Nonnull Selector left, @Nonnull Selector right) {
     this(operator, left, right, null);
   }
 
   public BinaryArithmeticSelector(
-      @NonNull ArithmeticOperator operator,
-      @NonNull Selector left,
-      @NonNull Selector right,
+      @Nonnull ArithmeticOperator operator,
+      @Nonnull Selector left,
+      @Nonnull Selector right,
       @Nullable CqlIdentifier alias) {
     super(operator);
     Preconditions.checkNotNull(left);
@@ -51,14 +51,14 @@ public class BinaryArithmeticSelector extends ArithmeticSelector {
     this.alias = alias;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Selector as(@NonNull CqlIdentifier alias) {
+  public Selector as(@Nonnull CqlIdentifier alias) {
     return new BinaryArithmeticSelector(operator, left, right, alias);
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     appendAndMaybeParenthesize(operator.getPrecedenceLeft(), left, builder);
     builder.append(operator.getSymbol());
     appendAndMaybeParenthesize(operator.getPrecedenceRight(), right, builder);
@@ -67,12 +67,12 @@ public class BinaryArithmeticSelector extends ArithmeticSelector {
     }
   }
 
-  @NonNull
+  @Nonnull
   public Selector getLeft() {
     return left;
   }
 
-  @NonNull
+  @Nonnull
   public Selector getRight() {
     return right;
   }

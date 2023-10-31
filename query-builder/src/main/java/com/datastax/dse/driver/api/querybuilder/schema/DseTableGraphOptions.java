@@ -18,21 +18,21 @@
 package com.datastax.dse.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public interface DseTableGraphOptions<NextT> {
 
   /** Adds a vertex label to this table. */
-  @NonNull
+  @Nonnull
   NextT withVertexLabel(@Nullable CqlIdentifier vertexLabelId);
 
   /**
    * Shortcut for {@link #withVertexLabel(CqlIdentifier)
    * withVertexLabel(CqlIdentifier.fromCql(vertexLabel))}.
    */
-  @NonNull
-  default NextT withVertexLabel(@NonNull String vertexLabelName) {
+  @Nonnull
+  default NextT withVertexLabel(@Nonnull String vertexLabelName) {
     return withVertexLabel(CqlIdentifier.fromCql(vertexLabelName));
   }
 
@@ -41,7 +41,7 @@ public interface DseTableGraphOptions<NextT> {
    *
    * <p>This is a shortcut for {@link #withVertexLabel(CqlIdentifier) withVertexLabel(null)}.
    */
-  @NonNull
+  @Nonnull
   default NextT withVertexLabel() {
     return withVertexLabel((CqlIdentifier) null);
   }
@@ -62,19 +62,19 @@ public interface DseTableGraphOptions<NextT> {
    *                 .withClusteringColumn("software_version"))
    * }</pre>
    */
-  @NonNull
+  @Nonnull
   NextT withEdgeLabel(
       @Nullable CqlIdentifier edgeLabelId,
-      @NonNull DseGraphEdgeSide from,
-      @NonNull DseGraphEdgeSide to);
+      @Nonnull DseGraphEdgeSide from,
+      @Nonnull DseGraphEdgeSide to);
 
   /**
    * Shortcut for {@link #withEdgeLabel(CqlIdentifier, DseGraphEdgeSide, DseGraphEdgeSide)
    * withEdgeLabel(CqlIdentifier.fromCql(edgeLabelName), from, to)}.
    */
-  @NonNull
+  @Nonnull
   default NextT withEdgeLabel(
-      @NonNull String edgeLabelName, @NonNull DseGraphEdgeSide from, @NonNull DseGraphEdgeSide to) {
+      @Nonnull String edgeLabelName, @Nonnull DseGraphEdgeSide from, @Nonnull DseGraphEdgeSide to) {
     return withEdgeLabel(CqlIdentifier.fromCql(edgeLabelName), from, to);
   }
 
@@ -84,8 +84,8 @@ public interface DseTableGraphOptions<NextT> {
    * <p>This is a shortcut for {@link #withEdgeLabel(CqlIdentifier, DseGraphEdgeSide,
    * DseGraphEdgeSide) withEdgeLabel(null, from, to)}.
    */
-  @NonNull
-  default NextT withEdgeLabel(@NonNull DseGraphEdgeSide from, @NonNull DseGraphEdgeSide to) {
+  @Nonnull
+  default NextT withEdgeLabel(@Nonnull DseGraphEdgeSide from, @Nonnull DseGraphEdgeSide to) {
     return withEdgeLabel((CqlIdentifier) null, from, to);
   }
 }

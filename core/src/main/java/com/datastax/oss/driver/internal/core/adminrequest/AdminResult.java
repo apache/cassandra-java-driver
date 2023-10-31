@@ -23,13 +23,13 @@ import com.datastax.oss.driver.shaded.guava.common.collect.AbstractIterator;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
 import com.datastax.oss.protocol.internal.response.result.Rows;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.NotThreadSafe;
 
 @NotThreadSafe // wraps a mutable queue
@@ -57,7 +57,7 @@ public class AdminResult implements Iterable<AdminRow> {
   }
 
   /** This consumes the result's data and can be called only once. */
-  @NonNull
+  @Nonnull
   @Override
   public Iterator<AdminRow> iterator() {
     return new AbstractIterator<AdminRow>() {

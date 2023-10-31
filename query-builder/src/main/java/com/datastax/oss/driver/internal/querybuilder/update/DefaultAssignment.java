@@ -20,8 +20,8 @@ package com.datastax.oss.driver.internal.querybuilder.update;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.api.querybuilder.update.Assignment;
 import com.datastax.oss.driver.internal.querybuilder.lhs.LeftOperand;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -32,14 +32,14 @@ public class DefaultAssignment implements Assignment {
   private final Term rightOperand;
 
   public DefaultAssignment(
-      @NonNull LeftOperand leftOperand, @NonNull String operator, @Nullable Term rightOperand) {
+      @Nonnull LeftOperand leftOperand, @Nonnull String operator, @Nullable Term rightOperand) {
     this.leftOperand = leftOperand;
     this.operator = operator;
     this.rightOperand = rightOperand;
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     leftOperand.appendTo(builder);
     builder.append(operator);
     if (rightOperand != null) {
@@ -52,12 +52,12 @@ public class DefaultAssignment implements Assignment {
     return rightOperand == null || rightOperand.isIdempotent();
   }
 
-  @NonNull
+  @Nonnull
   public LeftOperand getLeftOperand() {
     return leftOperand;
   }
 
-  @NonNull
+  @Nonnull
   public String getOperator() {
     return operator;
   }

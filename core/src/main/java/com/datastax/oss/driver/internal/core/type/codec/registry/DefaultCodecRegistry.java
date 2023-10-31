@@ -28,11 +28,11 @@ import com.datastax.oss.driver.shaded.guava.common.cache.LoadingCache;
 import com.datastax.oss.driver.shaded.guava.common.cache.RemovalListener;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.ExecutionError;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.UncheckedExecutionException;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +53,7 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
    * Creates a new instance that accepts user codecs, with the default built-in codecs and the
    * default cache behavior.
    */
-  public DefaultCodecRegistry(@NonNull String logPrefix) {
+  public DefaultCodecRegistry(@Nonnull String logPrefix) {
     this(logPrefix, CodecRegistryConstants.PRIMITIVE_CODECS);
   }
 
@@ -61,7 +61,7 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
    * Creates a new instance that accepts user codecs, with the given built-in codecs and the default
    * cache behavior.
    */
-  public DefaultCodecRegistry(@NonNull String logPrefix, @NonNull TypeCodec<?>... primitiveCodecs) {
+  public DefaultCodecRegistry(@Nonnull String logPrefix, @Nonnull TypeCodec<?>... primitiveCodecs) {
     this(logPrefix, 0, null, 0, null, primitiveCodecs);
   }
 
@@ -75,12 +75,12 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
    * eviction is that useful anyway.
    */
   public DefaultCodecRegistry(
-      @NonNull String logPrefix,
+      @Nonnull String logPrefix,
       int initialCacheCapacity,
       @Nullable BiFunction<CacheKey, TypeCodec<?>, Integer> cacheWeigher,
       int maximumCacheWeight,
       @Nullable BiConsumer<CacheKey, TypeCodec<?>> cacheRemovalListener,
-      @NonNull TypeCodec<?>... primitiveCodecs) {
+      @Nonnull TypeCodec<?>... primitiveCodecs) {
 
     super(logPrefix, primitiveCodecs);
     CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder();
@@ -93,7 +93,7 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
     CacheLoader<CacheKey, TypeCodec<?>> cacheLoader =
         new CacheLoader<CacheKey, TypeCodec<?>>() {
           @Override
-          public TypeCodec<?> load(@NonNull CacheKey key) throws Exception {
+          public TypeCodec<?> load(@Nonnull CacheKey key) throws Exception {
             return createCodec(key.cqlType, key.javaType, key.isJavaCovariant);
           }
         };

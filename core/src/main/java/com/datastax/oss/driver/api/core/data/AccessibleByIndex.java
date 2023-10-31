@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.api.core.data;
 
 import com.datastax.oss.driver.api.core.type.DataType;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /** A data structure where the values are accessible via an integer index. */
 public interface AccessibleByIndex extends Data {
@@ -31,6 +31,6 @@ public interface AccessibleByIndex extends Data {
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
-  @NonNull
+  @Nonnull
   DataType getType(int i);
 }

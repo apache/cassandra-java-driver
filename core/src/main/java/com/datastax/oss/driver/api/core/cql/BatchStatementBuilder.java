@@ -21,9 +21,9 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.cql.DefaultBatchStatement;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -34,17 +34,17 @@ import net.jcip.annotations.NotThreadSafe;
 @NotThreadSafe
 public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilder, BatchStatement> {
 
-  @NonNull private BatchType batchType;
+  @Nonnull private BatchType batchType;
   @Nullable private CqlIdentifier keyspace;
-  @NonNull private ImmutableList.Builder<BatchableStatement<?>> statementsBuilder;
+  @Nonnull private ImmutableList.Builder<BatchableStatement<?>> statementsBuilder;
   private int statementsCount;
 
-  public BatchStatementBuilder(@NonNull BatchType batchType) {
+  public BatchStatementBuilder(@Nonnull BatchType batchType) {
     this.batchType = batchType;
     this.statementsBuilder = ImmutableList.builder();
   }
 
-  public BatchStatementBuilder(@NonNull BatchStatement template) {
+  public BatchStatementBuilder(@Nonnull BatchStatement template) {
     super(template);
     this.batchType = template.getBatchType();
     this.statementsBuilder = ImmutableList.<BatchableStatement<?>>builder().addAll(template);
@@ -57,8 +57,8 @@ public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilde
    * @return this builder; never {@code null}.
    * @see BatchStatement#getKeyspace()
    */
-  @NonNull
-  public BatchStatementBuilder setKeyspace(@NonNull CqlIdentifier keyspace) {
+  @Nonnull
+  public BatchStatementBuilder setKeyspace(@Nonnull CqlIdentifier keyspace) {
     this.keyspace = keyspace;
     return this;
   }
@@ -69,8 +69,8 @@ public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilde
    *
    * @return this builder; never {@code null}.
    */
-  @NonNull
-  public BatchStatementBuilder setKeyspace(@NonNull String keyspaceName) {
+  @Nonnull
+  public BatchStatementBuilder setKeyspace(@Nonnull String keyspaceName) {
     return setKeyspace(CqlIdentifier.fromCql(keyspaceName));
   }
 
@@ -80,8 +80,8 @@ public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilde
    * @return this builder; never {@code null}.
    * @see BatchStatement#add(BatchableStatement)
    */
-  @NonNull
-  public BatchStatementBuilder addStatement(@NonNull BatchableStatement<?> statement) {
+  @Nonnull
+  public BatchStatementBuilder addStatement(@Nonnull BatchableStatement<?> statement) {
     if (statementsCount >= 0xFFFF) {
       throw new IllegalStateException(
           "Batch statement cannot contain more than " + 0xFFFF + " statements.");
@@ -97,8 +97,8 @@ public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilde
    * @return this builder; never {@code null}.
    * @see BatchStatement#addAll(Iterable)
    */
-  @NonNull
-  public BatchStatementBuilder addStatements(@NonNull Iterable<BatchableStatement<?>> statements) {
+  @Nonnull
+  public BatchStatementBuilder addStatements(@Nonnull Iterable<BatchableStatement<?>> statements) {
     int delta = Iterables.size(statements);
     if (statementsCount + delta > 0xFFFF) {
       throw new IllegalStateException(
@@ -115,8 +115,8 @@ public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilde
    * @return this builder; never {@code null}.
    * @see BatchStatement#addAll(BatchableStatement[])
    */
-  @NonNull
-  public BatchStatementBuilder addStatements(@NonNull BatchableStatement<?>... statements) {
+  @Nonnull
+  public BatchStatementBuilder addStatements(@Nonnull BatchableStatement<?>... statements) {
     return addStatements(Arrays.asList(statements));
   }
 
@@ -125,7 +125,7 @@ public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilde
    *
    * @return this builder; never {@code null}.
    */
-  @NonNull
+  @Nonnull
   public BatchStatementBuilder clearStatements() {
     statementsBuilder = ImmutableList.builder();
     statementsCount = 0;
@@ -134,7 +134,7 @@ public class BatchStatementBuilder extends StatementBuilder<BatchStatementBuilde
 
   /** @return a newly-allocated {@linkplain BatchStatement batch}; never {@code null}.. */
   @Override
-  @NonNull
+  @Nonnull
   public BatchStatement build() {
     return new DefaultBatchStatement(
         batchType,

@@ -23,9 +23,9 @@ import com.datastax.dse.driver.api.core.data.geometry.Geometry;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.util.Strings;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 /** Base class for geospatial type codecs. */
@@ -34,13 +34,13 @@ public abstract class GeometryCodec<T extends Geometry> implements TypeCodec<T> 
 
   @Nullable
   @Override
-  public T decode(@Nullable ByteBuffer bb, @NonNull ProtocolVersion protocolVersion) {
+  public T decode(@Nullable ByteBuffer bb, @Nonnull ProtocolVersion protocolVersion) {
     return bb == null || bb.remaining() == 0 ? null : fromWellKnownBinary(bb.slice());
   }
 
   @Nullable
   @Override
-  public ByteBuffer encode(@Nullable T geometry, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable T geometry, @Nonnull ProtocolVersion protocolVersion) {
     return geometry == null ? null : toWellKnownBinary(geometry);
   }
 
@@ -60,7 +60,7 @@ public abstract class GeometryCodec<T extends Geometry> implements TypeCodec<T> 
     return fromWellKnownText(Strings.unquote(s));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable T geometry) throws IllegalArgumentException {
     return geometry == null ? "NULL" : Strings.quote(toWellKnownText(geometry));
@@ -75,8 +75,8 @@ public abstract class GeometryCodec<T extends Geometry> implements TypeCodec<T> 
    * @throws IllegalArgumentException if the string does not contain a valid Well-known Text
    *     representation.
    */
-  @NonNull
-  protected abstract T fromWellKnownText(@NonNull String source);
+  @Nonnull
+  protected abstract T fromWellKnownText(@Nonnull String source);
 
   /**
    * Creates an instance of a geospatial type from its <a
@@ -88,8 +88,8 @@ public abstract class GeometryCodec<T extends Geometry> implements TypeCodec<T> 
    * @throws IllegalArgumentException if the given {@link ByteBuffer} does not contain a valid
    *     Well-known Binary representation.
    */
-  @NonNull
-  protected abstract T fromWellKnownBinary(@NonNull ByteBuffer bb);
+  @Nonnull
+  protected abstract T fromWellKnownBinary(@Nonnull ByteBuffer bb);
 
   /**
    * Returns a <a href="https://en.wikipedia.org/wiki/Well-known_text">Well-known Text</a> (WKT)
@@ -98,8 +98,8 @@ public abstract class GeometryCodec<T extends Geometry> implements TypeCodec<T> 
    * @param geometry the geospatial object to convert. Cannot be null.
    * @return A Well-known Text representation of the given object.
    */
-  @NonNull
-  protected abstract String toWellKnownText(@NonNull T geometry);
+  @Nonnull
+  protected abstract String toWellKnownText(@Nonnull T geometry);
 
   /**
    * Returns a <a href="https://en.wikipedia.org/wiki/Well-known_text#Well-known_binary">Well-known
@@ -108,6 +108,6 @@ public abstract class GeometryCodec<T extends Geometry> implements TypeCodec<T> 
    * @param geometry the geospatial object to convert. Cannot be null.
    * @return A Well-known Binary representation of the given object.
    */
-  @NonNull
-  protected abstract ByteBuffer toWellKnownBinary(@NonNull T geometry);
+  @Nonnull
+  protected abstract ByteBuffer toWellKnownBinary(@Nonnull T geometry);
 }

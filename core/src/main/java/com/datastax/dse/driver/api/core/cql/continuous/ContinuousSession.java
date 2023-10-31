@@ -24,10 +24,10 @@ import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Session;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
 
 /**
  * A session that has the ability to execute continuous paging queries.
@@ -84,8 +84,8 @@ public interface ContinuousSession extends Session {
    * @param statement the query to execute.
    * @return a synchronous iterable on the results.
    */
-  @NonNull
-  default ContinuousResultSet executeContinuously(@NonNull Statement<?> statement) {
+  @Nonnull
+  default ContinuousResultSet executeContinuously(@Nonnull Statement<?> statement) {
     return Objects.requireNonNull(
         execute(statement, ContinuousCqlRequestSyncProcessor.CONTINUOUS_RESULT_SYNC));
   }
@@ -107,9 +107,9 @@ public interface ContinuousSession extends Session {
    * @param statement the query to execute.
    * @return a future to the first asynchronous result.
    */
-  @NonNull
+  @Nonnull
   default CompletionStage<ContinuousAsyncResultSet> executeContinuouslyAsync(
-      @NonNull Statement<?> statement) {
+      @Nonnull Statement<?> statement) {
     return Objects.requireNonNull(
         execute(statement, ContinuousCqlRequestAsyncProcessor.CONTINUOUS_RESULT_ASYNC));
   }

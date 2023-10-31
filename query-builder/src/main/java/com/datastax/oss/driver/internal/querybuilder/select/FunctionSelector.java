@@ -19,8 +19,8 @@ package com.datastax.oss.driver.internal.querybuilder.select;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -31,24 +31,24 @@ public class FunctionSelector extends CollectionSelector {
 
   public FunctionSelector(
       @Nullable CqlIdentifier keyspaceId,
-      @NonNull CqlIdentifier functionId,
-      @NonNull Iterable<Selector> arguments) {
+      @Nonnull CqlIdentifier functionId,
+      @Nonnull Iterable<Selector> arguments) {
     this(keyspaceId, functionId, arguments, null);
   }
 
   public FunctionSelector(
       @Nullable CqlIdentifier keyspaceId,
-      @NonNull CqlIdentifier functionId,
-      @NonNull Iterable<Selector> elementSelectors,
+      @Nonnull CqlIdentifier functionId,
+      @Nonnull Iterable<Selector> elementSelectors,
       @Nullable CqlIdentifier alias) {
     super(elementSelectors, buildOpening(keyspaceId, functionId), ")", alias);
     this.keyspaceId = keyspaceId;
     this.functionId = functionId;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Selector as(@NonNull CqlIdentifier alias) {
+  public Selector as(@Nonnull CqlIdentifier alias) {
     return new FunctionSelector(keyspaceId, functionId, getElementSelectors(), alias);
   }
 
@@ -57,13 +57,13 @@ public class FunctionSelector extends CollectionSelector {
     return keyspaceId;
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getFunctionId() {
     return functionId;
   }
 
   /** Returns the arguments of the function. */
-  @NonNull
+  @Nonnull
   @Override
   public Iterable<Selector> getElementSelectors() {
     // Overridden only to customize the javadoc

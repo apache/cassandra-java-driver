@@ -23,10 +23,10 @@ import com.datastax.oss.driver.internal.core.time.ServerSideTimestampGenerator;
 import com.datastax.oss.driver.internal.core.util.Sizes;
 import com.datastax.oss.protocol.internal.PrimitiveSizes;
 import com.datastax.oss.protocol.internal.request.query.Values;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A prepared statement in its executable form, with values bound to the variables.
@@ -38,11 +38,11 @@ public interface BoundStatement
     extends BatchableStatement<BoundStatement>, Bindable<BoundStatement> {
 
   /** The prepared statement that was used to create this statement. */
-  @NonNull
+  @Nonnull
   PreparedStatement getPreparedStatement();
 
   /** The values to bind, in their serialized form. */
-  @NonNull
+  @Nonnull
   List<ByteBuffer> getValues();
 
   /**
@@ -56,7 +56,7 @@ public interface BoundStatement
   }
 
   @Override
-  default int computeSizeInBytes(@NonNull DriverContext context) {
+  default int computeSizeInBytes(@Nonnull DriverContext context) {
     int size = Sizes.minimumStatementSize(this, context);
 
     // BoundStatement's additional elements to take into account are:

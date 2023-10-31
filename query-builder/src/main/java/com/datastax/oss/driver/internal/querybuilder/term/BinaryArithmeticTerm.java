@@ -20,8 +20,8 @@ package com.datastax.oss.driver.internal.querybuilder.term;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.ArithmeticOperator;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -31,7 +31,7 @@ public class BinaryArithmeticTerm extends ArithmeticTerm {
   private final Term right;
 
   public BinaryArithmeticTerm(
-      @NonNull ArithmeticOperator operator, @NonNull Term left, @NonNull Term right) {
+      @Nonnull ArithmeticOperator operator, @Nonnull Term left, @Nonnull Term right) {
     super(operator);
     Preconditions.checkNotNull(left);
     Preconditions.checkNotNull(right);
@@ -40,7 +40,7 @@ public class BinaryArithmeticTerm extends ArithmeticTerm {
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     appendAndMaybeParenthesize(operator.getPrecedenceLeft(), left, builder);
     builder.append(operator.getSymbol());
     appendAndMaybeParenthesize(operator.getPrecedenceRight(), right, builder);
@@ -51,12 +51,12 @@ public class BinaryArithmeticTerm extends ArithmeticTerm {
     return left.isIdempotent() && right.isIdempotent();
   }
 
-  @NonNull
+  @Nonnull
   public Term getLeft() {
     return left;
   }
 
-  @NonNull
+  @Nonnull
   public Term getRight() {
     return right;
   }

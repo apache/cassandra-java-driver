@@ -20,7 +20,7 @@ package com.datastax.oss.driver.api.core.servererrors;
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * A failure to reach the required consistency level during the execution of a query.
@@ -41,9 +41,9 @@ public abstract class QueryConsistencyException extends QueryExecutionException 
   private final int blockFor;
 
   protected QueryConsistencyException(
-      @NonNull Node coordinator,
-      @NonNull String message,
-      @NonNull ConsistencyLevel consistencyLevel,
+      @Nonnull Node coordinator,
+      @Nonnull String message,
+      @Nonnull ConsistencyLevel consistencyLevel,
       int received,
       int blockFor,
       ExecutionInfo executionInfo,
@@ -55,7 +55,7 @@ public abstract class QueryConsistencyException extends QueryExecutionException 
   }
 
   /** The consistency level of the operation that failed. */
-  @NonNull
+  @Nonnull
   public ConsistencyLevel getConsistencyLevel() {
     return consistencyLevel;
   }

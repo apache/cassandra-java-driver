@@ -26,12 +26,12 @@ import com.datastax.oss.driver.internal.core.data.DefaultUdtValue;
 import com.datastax.oss.driver.internal.core.data.IdentifierIndex;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -56,12 +56,12 @@ public class DefaultUserDefinedType implements UserDefinedType, Serializable {
   private transient volatile AttachmentPoint attachmentPoint;
 
   public DefaultUserDefinedType(
-      @NonNull CqlIdentifier keyspace,
-      @NonNull CqlIdentifier name,
+      @Nonnull CqlIdentifier keyspace,
+      @Nonnull CqlIdentifier name,
       boolean frozen,
       List<CqlIdentifier> fieldNames,
-      @NonNull List<DataType> fieldTypes,
-      @NonNull AttachmentPoint attachmentPoint) {
+      @Nonnull List<DataType> fieldTypes,
+      @Nonnull AttachmentPoint attachmentPoint) {
     Preconditions.checkNotNull(keyspace);
     Preconditions.checkNotNull(name);
     Preconditions.checkNotNull(fieldNames);
@@ -80,21 +80,21 @@ public class DefaultUserDefinedType implements UserDefinedType, Serializable {
   }
 
   public DefaultUserDefinedType(
-      @NonNull CqlIdentifier keyspace,
-      @NonNull CqlIdentifier name,
+      @Nonnull CqlIdentifier keyspace,
+      @Nonnull CqlIdentifier name,
       boolean frozen,
-      @NonNull List<CqlIdentifier> fieldNames,
-      @NonNull List<DataType> fieldTypes) {
+      @Nonnull List<CqlIdentifier> fieldNames,
+      @Nonnull List<DataType> fieldTypes) {
     this(keyspace, name, frozen, fieldNames, fieldTypes, AttachmentPoint.NONE);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getName() {
     return name;
@@ -105,41 +105,41 @@ public class DefaultUserDefinedType implements UserDefinedType, Serializable {
     return frozen;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<CqlIdentifier> getFieldNames() {
     return fieldNames;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+  public List<Integer> allIndicesOf(@Nonnull CqlIdentifier id) {
     return index.allIndicesOf(id);
   }
 
   @Override
-  public int firstIndexOf(@NonNull CqlIdentifier id) {
+  public int firstIndexOf(@Nonnull CqlIdentifier id) {
     return index.firstIndexOf(id);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull String name) {
+  public List<Integer> allIndicesOf(@Nonnull String name) {
     return index.allIndicesOf(name);
   }
 
   @Override
-  public int firstIndexOf(@NonNull String name) {
+  public int firstIndexOf(@Nonnull String name) {
     return index.firstIndexOf(name);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<DataType> getFieldTypes() {
     return fieldTypes;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public UserDefinedType copy(boolean newFrozen) {
     return (newFrozen == frozen)
@@ -148,15 +148,15 @@ public class DefaultUserDefinedType implements UserDefinedType, Serializable {
             keyspace, name, newFrozen, fieldNames, fieldTypes, attachmentPoint);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public UdtValue newValue() {
     return new DefaultUdtValue(this);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public UdtValue newValue(@NonNull Object... fields) {
+  public UdtValue newValue(@Nonnull Object... fields) {
     return new DefaultUdtValue(this, fields);
   }
 
@@ -166,14 +166,14 @@ public class DefaultUserDefinedType implements UserDefinedType, Serializable {
   }
 
   @Override
-  public void attach(@NonNull AttachmentPoint attachmentPoint) {
+  public void attach(@Nonnull AttachmentPoint attachmentPoint) {
     this.attachmentPoint = attachmentPoint;
     for (DataType fieldType : fieldTypes) {
       fieldType.attach(attachmentPoint);
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public AttachmentPoint getAttachmentPoint() {
     return attachmentPoint;

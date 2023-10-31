@@ -38,10 +38,10 @@ import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nonnull;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -161,12 +161,12 @@ public class ListenersIT {
           new NodeStateListenerBase() {
 
             @Override
-            public void onSessionReady(@NonNull Session session) {
+            public void onSessionReady(@Nonnull Session session) {
               onSessionReadyCalled = true;
             }
 
             @Override
-            public void onUp(@NonNull Node node) {
+            public void onUp(@Nonnull Node node) {
               onUpCalled = true;
             }
 
@@ -187,7 +187,7 @@ public class ListenersIT {
     public MySchemaChangeListener(@SuppressWarnings("unused") DriverContext ignored) {}
 
     @Override
-    public void onSessionReady(@NonNull Session session) {
+    public void onSessionReady(@Nonnull Session session) {
       onSessionReadyLatch.countDown();
     }
 
@@ -205,7 +205,7 @@ public class ListenersIT {
     public MyRequestTracker(@SuppressWarnings("unused") DriverContext ignored) {}
 
     @Override
-    public void onSessionReady(@NonNull Session session) {
+    public void onSessionReady(@Nonnull Session session) {
       onSessionReadyCalled = true;
     }
 

@@ -20,8 +20,8 @@ package com.datastax.oss.driver.api.core.auth;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.internal.core.util.Strings;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -61,7 +61,7 @@ public class ProgrammaticPlainTextAuthProvider extends PlainTextAuthProviderBase
   private volatile char[] authorizationId;
 
   /** Builds an instance for simple username/password authentication. */
-  public ProgrammaticPlainTextAuthProvider(@NonNull String username, @NonNull String password) {
+  public ProgrammaticPlainTextAuthProvider(@Nonnull String username, @Nonnull String password) {
     this(username, password, "");
   }
 
@@ -74,7 +74,7 @@ public class ProgrammaticPlainTextAuthProvider extends PlainTextAuthProviderBase
    * authorizationId to an empty string.
    */
   public ProgrammaticPlainTextAuthProvider(
-      @NonNull String username, @NonNull String password, @NonNull String authorizationId) {
+      @Nonnull String username, @Nonnull String password, @Nonnull String authorizationId) {
     // This will typically be built before the session so we don't know the log prefix yet. Pass an
     // empty string, it's only used in one log message.
     super("");
@@ -91,7 +91,7 @@ public class ProgrammaticPlainTextAuthProvider extends PlainTextAuthProviderBase
    *
    * @param username the new name.
    */
-  public void setUsername(@NonNull String username) {
+  public void setUsername(@Nonnull String username) {
     this.username = Strings.requireNotEmpty(username, "username").toCharArray();
   }
 
@@ -102,7 +102,7 @@ public class ProgrammaticPlainTextAuthProvider extends PlainTextAuthProviderBase
    *
    * @param password the new password.
    */
-  public void setPassword(@NonNull String password) {
+  public void setPassword(@Nonnull String password) {
     this.password = Strings.requireNotEmpty(password, "password").toCharArray();
   }
 
@@ -116,7 +116,7 @@ public class ProgrammaticPlainTextAuthProvider extends PlainTextAuthProviderBase
    *
    * @param authorizationId the new authorization id.
    */
-  public void setAuthorizationId(@NonNull String authorizationId) {
+  public void setAuthorizationId(@Nonnull String authorizationId) {
     this.authorizationId =
         Objects.requireNonNull(authorizationId, "authorizationId cannot be null").toCharArray();
   }
@@ -127,10 +127,10 @@ public class ProgrammaticPlainTextAuthProvider extends PlainTextAuthProviderBase
    * <p>This implementation disregards the endpoint being connected to as well as the authenticator
    * class sent by the server, and always returns the same credentials.
    */
-  @NonNull
+  @Nonnull
   @Override
   protected Credentials getCredentials(
-      @NonNull EndPoint endPoint, @NonNull String serverAuthenticator) {
+      @Nonnull EndPoint endPoint, @Nonnull String serverAuthenticator) {
     return new Credentials(username.clone(), password.clone(), authorizationId.clone());
   }
 }

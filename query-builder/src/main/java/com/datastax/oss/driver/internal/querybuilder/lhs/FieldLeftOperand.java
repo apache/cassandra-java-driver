@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.internal.querybuilder.lhs;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -27,22 +27,22 @@ public class FieldLeftOperand implements LeftOperand {
   private final CqlIdentifier columnId;
   private final CqlIdentifier fieldId;
 
-  public FieldLeftOperand(@NonNull CqlIdentifier columnId, @NonNull CqlIdentifier fieldId) {
+  public FieldLeftOperand(@Nonnull CqlIdentifier columnId, @Nonnull CqlIdentifier fieldId) {
     this.columnId = columnId;
     this.fieldId = fieldId;
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     builder.append(columnId.asCql(true)).append('.').append(fieldId.asCql(true));
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getColumnId() {
     return columnId;
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getFieldId() {
     return fieldId;
   }

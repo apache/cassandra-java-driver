@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.internal.core.config;
 
 import com.datastax.oss.driver.api.core.config.DriverOption;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public enum MockOptions implements DriverOption {
   INT1("int1"),
@@ -32,7 +32,7 @@ public enum MockOptions implements DriverOption {
     this.path = path;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getPath() {
     return path;

@@ -25,10 +25,10 @@ import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -36,35 +36,35 @@ public class UdtCodec implements TypeCodec<UdtValue> {
 
   private final UserDefinedType cqlType;
 
-  public UdtCodec(@NonNull UserDefinedType cqlType) {
+  public UdtCodec(@Nonnull UserDefinedType cqlType) {
     this.cqlType = cqlType;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<UdtValue> getJavaType() {
     return GenericType.UDT_VALUE;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return cqlType;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof UdtValue && ((UdtValue) value).getType().equals(cqlType);
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return UdtValue.class.equals(javaClass);
   }
 
   @Nullable
   @Override
-  public ByteBuffer encode(@Nullable UdtValue value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable UdtValue value, @Nonnull ProtocolVersion protocolVersion) {
     if (value == null) {
       return null;
     }
@@ -96,7 +96,7 @@ public class UdtCodec implements TypeCodec<UdtValue> {
 
   @Nullable
   @Override
-  public UdtValue decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public UdtValue decode(@Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null) {
       return null;
     }
@@ -130,7 +130,7 @@ public class UdtCodec implements TypeCodec<UdtValue> {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable UdtValue value) {
     if (value == null) {

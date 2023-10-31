@@ -18,19 +18,19 @@
 package com.datastax.dse.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface AlterDseTableDropColumn {
   /**
    * Adds column(s) to drop to ALTER TABLE specification. This may be repeated with successive calls
    * to drop columns.
    */
-  @NonNull
-  AlterDseTableDropColumnEnd dropColumns(@NonNull CqlIdentifier... columnNames);
+  @Nonnull
+  AlterDseTableDropColumnEnd dropColumns(@Nonnull CqlIdentifier... columnNames);
 
   /** Shortcut for {@link #dropColumns(CqlIdentifier...)}. */
-  @NonNull
-  default AlterDseTableDropColumnEnd dropColumns(@NonNull String... columnNames) {
+  @Nonnull
+  default AlterDseTableDropColumnEnd dropColumns(@Nonnull String... columnNames) {
     CqlIdentifier ids[] = new CqlIdentifier[columnNames.length];
     for (int i = 0; i < columnNames.length; i++) {
       ids[i] = CqlIdentifier.fromCql(columnNames[i]);
@@ -42,16 +42,16 @@ public interface AlterDseTableDropColumn {
    * Adds a column to drop to ALTER TABLE specification. This may be repeated with successive calls
    * to drop columns. Shortcut for {@link #dropColumns(CqlIdentifier...) #dropColumns(columnName)}.
    */
-  @NonNull
-  default AlterDseTableDropColumnEnd dropColumn(@NonNull CqlIdentifier columnName) {
+  @Nonnull
+  default AlterDseTableDropColumnEnd dropColumn(@Nonnull CqlIdentifier columnName) {
     return dropColumns(columnName);
   }
 
   /**
    * Shortcut for {@link #dropColumn(CqlIdentifier) dropColumn(CqlIdentifier.fromCql(columnName))}.
    */
-  @NonNull
-  default AlterDseTableDropColumnEnd dropColumn(@NonNull String columnName) {
+  @Nonnull
+  default AlterDseTableDropColumnEnd dropColumn(@Nonnull String columnName) {
     return dropColumns(CqlIdentifier.fromCql(columnName));
   }
 }

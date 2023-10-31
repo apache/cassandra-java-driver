@@ -18,8 +18,8 @@
 package com.datastax.oss.driver.api.core.connection;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
+import javax.annotation.Nonnull;
 
 /**
  * Decides how often the driver tries to re-establish lost connections.
@@ -50,8 +50,8 @@ import java.time.Duration;
 public interface ReconnectionPolicy extends AutoCloseable {
 
   /** Creates a new schedule for the given node. */
-  @NonNull
-  ReconnectionSchedule newNodeSchedule(@NonNull Node node);
+  @Nonnull
+  ReconnectionSchedule newNodeSchedule(@Nonnull Node node);
 
   /**
    * Creates a new schedule for the control connection.
@@ -66,7 +66,7 @@ public interface ReconnectionPolicy extends AutoCloseable {
    *           control node, and is now scheduling attempts to connect to another node.
    *     </ul>
    */
-  @NonNull
+  @Nonnull
   ReconnectionSchedule newControlConnectionSchedule(boolean isInitialConnection);
 
   /** Called when the cluster that this policy is associated with closes. */
@@ -79,7 +79,7 @@ public interface ReconnectionPolicy extends AutoCloseable {
    */
   interface ReconnectionSchedule {
     /** How long to wait before the next reconnection attempt. */
-    @NonNull
+    @Nonnull
     Duration nextDelay();
   }
 }

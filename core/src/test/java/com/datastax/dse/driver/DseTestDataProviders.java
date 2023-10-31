@@ -26,9 +26,9 @@ import com.datastax.dse.driver.api.core.graph.ScriptGraphStatement;
 import com.datastax.oss.driver.TestDataProviders;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.tngtech.java.junit.dataprovider.DataProvider;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 
 public class DseTestDataProviders {
 
@@ -90,7 +90,7 @@ public class DseTestDataProviders {
     return TestDataProviders.combine(allDseProtocolVersions(), supportedGraphProtocols());
   }
 
-  @NonNull
+  @Nonnull
   private static Object[][] concat(Object[]... values) {
     return Stream.of(values)
         .flatMap(Arrays::stream)

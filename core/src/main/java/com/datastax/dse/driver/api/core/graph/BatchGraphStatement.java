@@ -20,8 +20,8 @@ package com.datastax.dse.driver.api.core.graph;
 import com.datastax.dse.driver.internal.core.graph.DefaultBatchGraphStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
+import javax.annotation.Nonnull;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 
 /**
@@ -63,7 +63,7 @@ public interface BatchGraphStatement
    *
    * <p>Traversals can be added with {@link #addTraversal(GraphTraversal)}.
    */
-  @NonNull
+  @Nonnull
   static BatchGraphStatement newInstance() {
     return new DefaultBatchGraphStatement(
         ImmutableList.of(),
@@ -83,8 +83,8 @@ public interface BatchGraphStatement
   }
 
   /** Create a new instance from the given list of traversals. */
-  @NonNull
-  static BatchGraphStatement newInstance(@NonNull Iterable<GraphTraversal> traversals) {
+  @Nonnull
+  static BatchGraphStatement newInstance(@Nonnull Iterable<GraphTraversal> traversals) {
     return new DefaultBatchGraphStatement(
         traversals,
         null,
@@ -103,8 +103,8 @@ public interface BatchGraphStatement
   }
 
   /** Create a new instance from the given list of traversals. */
-  @NonNull
-  static BatchGraphStatement newInstance(@NonNull GraphTraversal... traversals) {
+  @Nonnull
+  static BatchGraphStatement newInstance(@Nonnull GraphTraversal... traversals) {
     return newInstance(ImmutableList.copyOf(traversals));
   }
 
@@ -113,7 +113,7 @@ public interface BatchGraphStatement
    *
    * <p>Note that this builder is mutable and not thread-safe.
    */
-  @NonNull
+  @Nonnull
   static BatchGraphStatementBuilder builder() {
     return new BatchGraphStatementBuilder();
   }
@@ -125,8 +125,8 @@ public interface BatchGraphStatement
    *
    * <p>Note that this builder is mutable and not thread-safe.
    */
-  @NonNull
-  static BatchGraphStatementBuilder builder(@NonNull BatchGraphStatement template) {
+  @Nonnull
+  static BatchGraphStatementBuilder builder(@Nonnull BatchGraphStatement template) {
     return new BatchGraphStatementBuilder(template);
   }
 
@@ -135,15 +135,15 @@ public interface BatchGraphStatement
    * #builder()}, or the {@link #addTraversals(Iterable)} method instead to avoid intermediary
    * copies.
    */
-  @NonNull
-  BatchGraphStatement addTraversal(@NonNull GraphTraversal traversal);
+  @Nonnull
+  BatchGraphStatement addTraversal(@Nonnull GraphTraversal traversal);
 
   /**
    * Adds several traversals to this statement. If this method is to be called many times, consider
    * using a {@link #builder()} instead to avoid intermediary copies.
    */
-  @NonNull
-  BatchGraphStatement addTraversals(@NonNull Iterable<GraphTraversal> traversals);
+  @Nonnull
+  BatchGraphStatement addTraversals(@Nonnull Iterable<GraphTraversal> traversals);
 
   /** Get the number of traversals already added to this statement. */
   int size();

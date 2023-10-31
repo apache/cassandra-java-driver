@@ -22,39 +22,39 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class UuidCodec implements TypeCodec<UUID> {
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<UUID> getJavaType() {
     return GenericType.UUID;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.UUID;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof UUID;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == UUID.class;
   }
 
   @Nullable
   @Override
-  public ByteBuffer encode(@Nullable UUID value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable UUID value, @Nonnull ProtocolVersion protocolVersion) {
     if (value == null) {
       return null;
     }
@@ -66,7 +66,7 @@ public class UuidCodec implements TypeCodec<UUID> {
 
   @Nullable
   @Override
-  public UUID decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public UUID decode(@Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return null;
     } else if (bytes.remaining() != 16) {
@@ -77,7 +77,7 @@ public class UuidCodec implements TypeCodec<UUID> {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable UUID value) {
     return (value == null) ? "NULL" : value.toString();

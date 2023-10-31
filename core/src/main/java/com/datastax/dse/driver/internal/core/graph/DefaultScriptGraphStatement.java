@@ -22,11 +22,11 @@ import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -75,13 +75,13 @@ public class DefaultScriptGraphStatement extends GraphStatementBase<ScriptGraphS
 
   //// Script GraphStatement level options
 
-  @NonNull
+  @Nonnull
   @Override
   public String getScript() {
     return script;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ScriptGraphStatement setSystemQuery(@Nullable Boolean newValue) {
     return new DefaultScriptGraphStatement(
@@ -109,15 +109,15 @@ public class DefaultScriptGraphStatement extends GraphStatementBase<ScriptGraphS
     return isSystemQuery;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, Object> getQueryParams() {
     return this.queryParams;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public ScriptGraphStatement setQueryParam(@NonNull String name, @Nullable Object value) {
+  public ScriptGraphStatement setQueryParam(@Nonnull String name, @Nullable Object value) {
     NullAllowingImmutableMap.Builder<String, Object> newQueryParamsBuilder =
         NullAllowingImmutableMap.builder();
     for (Map.Entry<String, Object> entry : queryParams.entrySet()) {
@@ -129,9 +129,9 @@ public class DefaultScriptGraphStatement extends GraphStatementBase<ScriptGraphS
     return setQueryParams(newQueryParamsBuilder.build());
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public ScriptGraphStatement removeQueryParam(@NonNull String name) {
+  public ScriptGraphStatement removeQueryParam(@Nonnull String name) {
     if (!queryParams.containsKey(name)) {
       return this;
     } else {

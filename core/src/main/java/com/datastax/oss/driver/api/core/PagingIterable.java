@@ -24,13 +24,13 @@ import com.datastax.oss.driver.internal.core.PagingIterableWrapper;
 import com.datastax.oss.driver.internal.core.cql.PagingIterableSpliterator;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * An iterable of elements which are fetched synchronously by the driver, possibly in multiple
@@ -51,7 +51,7 @@ import java.util.function.Function;
 public interface PagingIterable<ElementT> extends Iterable<ElementT> {
 
   /** Metadata about the columns returned by the CQL request that was used to build this result. */
-  @NonNull
+  @Nonnull
   ColumnDefinitions getColumnDefinitions();
 
   /**
@@ -65,7 +65,7 @@ public interface PagingIterable<ElementT> extends Iterable<ElementT> {
    *
    * @see #getExecutionInfos()
    */
-  @NonNull
+  @Nonnull
   default ExecutionInfo getExecutionInfo() {
     List<ExecutionInfo> infos = getExecutionInfos();
     return infos.get(infos.size() - 1);
@@ -78,7 +78,7 @@ public interface PagingIterable<ElementT> extends Iterable<ElementT> {
    * <p>This will have multiple elements if the query is paged, since the driver performs blocking
    * background queries to fetch additional pages transparently as the result set is being iterated.
    */
-  @NonNull
+  @Nonnull
   List<ExecutionInfo> getExecutionInfos();
 
   /**
@@ -103,7 +103,7 @@ public interface PagingIterable<ElementT> extends Iterable<ElementT> {
    * Therefore it is crucial to only call this method for queries that are known to return a
    * reasonable number of results.
    */
-  @NonNull
+  @Nonnull
   @SuppressWarnings("MixedMutabilityReturnType")
   default List<ElementT> all() {
     if (!iterator().hasNext()) {
@@ -159,7 +159,7 @@ public interface PagingIterable<ElementT> extends Iterable<ElementT> {
    * <p>Note that both instances share the same underlying data: consuming elements from the
    * transformed iterable will also consume them from this object, and vice-versa.
    */
-  @NonNull
+  @Nonnull
   default <TargetElementT> PagingIterable<TargetElementT> map(
       Function<? super ElementT, ? extends TargetElementT> elementMapper) {
     return new PagingIterableWrapper<>(this, elementMapper);
@@ -178,7 +178,7 @@ public interface PagingIterable<ElementT> extends Iterable<ElementT> {
    * iterable should <em>not</em> be consumed through calls to other methods such as {@link
    * #iterator()}, {@link #one()} or {@link #all()}; doing so will result in unpredictable results.
    */
-  @NonNull
+  @Nonnull
   @Override
   default Spliterator<ElementT> spliterator() {
     return new PagingIterableSpliterator<>(this);

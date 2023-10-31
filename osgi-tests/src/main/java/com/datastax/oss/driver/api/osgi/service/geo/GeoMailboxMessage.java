@@ -23,8 +23,8 @@ import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 
 @Entity
 @CqlName("messages_by_location")
@@ -44,10 +44,10 @@ public class GeoMailboxMessage {
   public GeoMailboxMessage() {}
 
   public GeoMailboxMessage(
-      @NonNull String recipient,
-      @NonNull Point location,
-      @NonNull String sender,
-      @NonNull String body) {
+      @Nonnull String recipient,
+      @Nonnull Point location,
+      @Nonnull String sender,
+      @Nonnull String body) {
     this.location = location;
     this.recipient = recipient;
     this.sender = sender;

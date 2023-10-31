@@ -607,7 +607,7 @@ The driver team uses annotations to document certain aspects of the code:
 
 * thread safety with [Java Concurrency in Practice](http://jcip.net/annotations/doc/index.html)
   annotations `@Immutable`, `@ThreadSafe`, `@NotThreadSafe` and `@GuardedBy`;
-* nullability with [SpotBugs](https://spotbugs.github.io/) annotations `@Nullable` and `@NonNull`.
+* nullability with [SpotBugs](https://spotbugs.github.io/) annotations `@Nullable` and `@Nonnull`.
 
 This is mostly used during development; while these annotations are retained in class files, they
 serve no purpose at runtime. If you want to minimize the number of JARs in your classpath, you can
@@ -624,8 +624,8 @@ exclude them:
       <artifactId>jcip-annotations</artifactId>
     </exclusion>
     <exclusion>
-      <groupId>com.github.spotbugs</groupId>
-      <artifactId>spotbugs-annotations</artifactId>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
     </exclusion>
   </exclusions>
 </dependency>

@@ -22,8 +22,8 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -54,9 +54,9 @@ public class NoSpeculativeExecutionPolicy implements SpeculativeExecutionPolicy 
   @Override
   @SuppressWarnings("unused")
   public long nextExecution(
-      @NonNull Node node,
+      @Nonnull Node node,
       @Nullable CqlIdentifier keyspace,
-      @NonNull Request request,
+      @Nonnull Request request,
       int runningExecutions) {
     // never start speculative executions
     return -1;

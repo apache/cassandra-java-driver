@@ -24,7 +24,7 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * A server-side timeout during a read query.
@@ -39,8 +39,8 @@ public class ReadTimeoutException extends QueryConsistencyException {
   private final boolean dataPresent;
 
   public ReadTimeoutException(
-      @NonNull Node coordinator,
-      @NonNull ConsistencyLevel consistencyLevel,
+      @Nonnull Node coordinator,
+      @Nonnull ConsistencyLevel consistencyLevel,
       int received,
       int blockFor,
       boolean dataPresent) {
@@ -59,9 +59,9 @@ public class ReadTimeoutException extends QueryConsistencyException {
   }
 
   private ReadTimeoutException(
-      @NonNull Node coordinator,
-      @NonNull String message,
-      @NonNull ConsistencyLevel consistencyLevel,
+      @Nonnull Node coordinator,
+      @Nonnull String message,
+      @Nonnull ConsistencyLevel consistencyLevel,
       int received,
       int blockFor,
       boolean dataPresent,
@@ -101,7 +101,7 @@ public class ReadTimeoutException extends QueryConsistencyException {
     return dataPresent;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new ReadTimeoutException(

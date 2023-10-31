@@ -20,7 +20,7 @@ package com.datastax.oss.driver.api.core.cql;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.detach.Detachable;
 import com.datastax.oss.driver.api.core.type.DataType;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * Metadata about a CQL column.
@@ -31,15 +31,15 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  */
 public interface ColumnDefinition extends Detachable {
 
-  @NonNull
+  @Nonnull
   CqlIdentifier getKeyspace();
 
-  @NonNull
+  @Nonnull
   CqlIdentifier getTable();
 
-  @NonNull
+  @Nonnull
   CqlIdentifier getName();
 
-  @NonNull
+  @Nonnull
   DataType getType();
 }

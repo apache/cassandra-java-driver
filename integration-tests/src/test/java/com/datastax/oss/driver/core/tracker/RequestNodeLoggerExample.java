@@ -24,7 +24,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogFormatter;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogger;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public class RequestNodeLoggerExample extends RequestLogger {
 
@@ -34,12 +34,12 @@ public class RequestNodeLoggerExample extends RequestLogger {
 
   @Override
   public void onNodeError(
-      @NonNull Request request,
-      @NonNull Throwable error,
+      @Nonnull Request request,
+      @Nonnull Throwable error,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String logPrefix) {
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node,
+      @Nonnull String logPrefix) {
     if (!executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED)) {
       return;
     }
@@ -71,11 +71,11 @@ public class RequestNodeLoggerExample extends RequestLogger {
 
   @Override
   public void onNodeSuccess(
-      @NonNull Request request,
+      @Nonnull Request request,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String logPrefix) {
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node,
+      @Nonnull String logPrefix) {
     boolean successEnabled =
         executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED);
     boolean slowEnabled =

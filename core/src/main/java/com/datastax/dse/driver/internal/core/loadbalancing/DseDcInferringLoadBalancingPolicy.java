@@ -19,7 +19,7 @@ package com.datastax.dse.driver.internal.core.loadbalancing;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.internal.core.loadbalancing.DcInferringLoadBalancingPolicy;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * @deprecated This class only exists for backward compatibility. It is equivalent to {@link
@@ -28,7 +28,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 @Deprecated
 public class DseDcInferringLoadBalancingPolicy extends DcInferringLoadBalancingPolicy {
   public DseDcInferringLoadBalancingPolicy(
-      @NonNull DriverContext context, @NonNull String profileName) {
+      @Nonnull DriverContext context, @Nonnull String profileName) {
     super(context, profileName);
   }
 }

@@ -19,10 +19,10 @@ package com.datastax.oss.driver.api.core.ssl;
 
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
@@ -52,7 +52,7 @@ public class ProgrammaticSslEngineFactory implements SslEngineFactory {
    *
    * @param sslContext the {@link SSLContext} to use.
    */
-  public ProgrammaticSslEngineFactory(@NonNull SSLContext sslContext) {
+  public ProgrammaticSslEngineFactory(@Nonnull SSLContext sslContext) {
     this(sslContext, null);
   }
 
@@ -64,7 +64,7 @@ public class ProgrammaticSslEngineFactory implements SslEngineFactory {
    * @param cipherSuites the cipher suites to use, or null to use the default ones.
    */
   public ProgrammaticSslEngineFactory(
-      @NonNull SSLContext sslContext, @Nullable String[] cipherSuites) {
+      @Nonnull SSLContext sslContext, @Nullable String[] cipherSuites) {
     this(sslContext, cipherSuites, false);
   }
 
@@ -77,7 +77,7 @@ public class ProgrammaticSslEngineFactory implements SslEngineFactory {
    *     validation will be done using HTTPS algorithm.
    */
   public ProgrammaticSslEngineFactory(
-      @NonNull SSLContext sslContext,
+      @Nonnull SSLContext sslContext,
       @Nullable String[] cipherSuites,
       boolean requireHostnameValidation) {
     this.sslContext = sslContext;
@@ -85,9 +85,9 @@ public class ProgrammaticSslEngineFactory implements SslEngineFactory {
     this.requireHostnameValidation = requireHostnameValidation;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public SSLEngine newSslEngine(@NonNull EndPoint remoteEndpoint) {
+  public SSLEngine newSslEngine(@Nonnull EndPoint remoteEndpoint) {
     SSLEngine engine;
     SocketAddress remoteAddress = remoteEndpoint.resolve();
     if (remoteAddress instanceof InetSocketAddress) {

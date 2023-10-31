@@ -19,10 +19,10 @@ package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.cql.DefaultPrepareRequest;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
 
 /**
  * A session that offers user-friendly methods to execute CQL requests asynchronously.
@@ -38,8 +38,8 @@ public interface AsyncCqlSession extends Session {
    * @param statement the CQL query to execute (that can be any {@code Statement}).
    * @return a {@code CompletionStage} that, once complete, will produce the async result set.
    */
-  @NonNull
-  default CompletionStage<AsyncResultSet> executeAsync(@NonNull Statement<?> statement) {
+  @Nonnull
+  default CompletionStage<AsyncResultSet> executeAsync(@Nonnull Statement<?> statement) {
     return Objects.requireNonNull(
         execute(statement, Statement.ASYNC), "The CQL processor should never return a null result");
   }
@@ -55,8 +55,8 @@ public interface AsyncCqlSession extends Session {
    * @return a {@code CompletionStage} that, once complete, will produce the async result set.
    * @see SimpleStatement#newInstance(String)
    */
-  @NonNull
-  default CompletionStage<AsyncResultSet> executeAsync(@NonNull String query) {
+  @Nonnull
+  default CompletionStage<AsyncResultSet> executeAsync(@Nonnull String query) {
     return executeAsync(SimpleStatement.newInstance(query));
   }
 
@@ -73,9 +73,9 @@ public interface AsyncCqlSession extends Session {
    * @return a {@code CompletionStage} that, once complete, will produce the async result set.
    * @see SimpleStatement#newInstance(String, Object...)
    */
-  @NonNull
+  @Nonnull
   default CompletionStage<AsyncResultSet> executeAsync(
-      @NonNull String query, @NonNull Object... values) {
+      @Nonnull String query, @Nonnull Object... values) {
     return executeAsync(SimpleStatement.newInstance(query, values));
   }
 
@@ -92,9 +92,9 @@ public interface AsyncCqlSession extends Session {
    * @return a {@code CompletionStage} that, once complete, will produce the async result set.
    * @see SimpleStatement#newInstance(String, Map)
    */
-  @NonNull
+  @Nonnull
   default CompletionStage<AsyncResultSet> executeAsync(
-      @NonNull String query, @NonNull Map<String, Object> values) {
+      @Nonnull String query, @Nonnull Map<String, Object> values) {
     return executeAsync(SimpleStatement.newInstance(query, values));
   }
 
@@ -112,8 +112,8 @@ public interface AsyncCqlSession extends Session {
    * @param statement the CQL query to prepare (that can be any {@code SimpleStatement}).
    * @return a {@code CompletionStage} that, once complete, will produce the prepared statement.
    */
-  @NonNull
-  default CompletionStage<PreparedStatement> prepareAsync(@NonNull SimpleStatement statement) {
+  @Nonnull
+  default CompletionStage<PreparedStatement> prepareAsync(@Nonnull SimpleStatement statement) {
     return Objects.requireNonNull(
         execute(new DefaultPrepareRequest(statement), PrepareRequest.ASYNC),
         "The CQL prepare processor should never return a null result");
@@ -129,8 +129,8 @@ public interface AsyncCqlSession extends Session {
    * @param query the CQL query string to prepare.
    * @return a {@code CompletionStage} that, once complete, will produce the prepared statement.
    */
-  @NonNull
-  default CompletionStage<PreparedStatement> prepareAsync(@NonNull String query) {
+  @Nonnull
+  default CompletionStage<PreparedStatement> prepareAsync(@Nonnull String query) {
     return Objects.requireNonNull(
         execute(new DefaultPrepareRequest(query), PrepareRequest.ASYNC),
         "The CQL prepare processor should never return a null result");
@@ -151,7 +151,7 @@ public interface AsyncCqlSession extends Session {
    * @param request the {@code PrepareRequest} to prepare.
    * @return a {@code CompletionStage} that, once complete, will produce the prepared statement.
    */
-  @NonNull
+  @Nonnull
   default CompletionStage<PreparedStatement> prepareAsync(PrepareRequest request) {
     return Objects.requireNonNull(
         execute(request, PrepareRequest.ASYNC),

@@ -23,13 +23,13 @@ import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -96,7 +96,7 @@ public class OffsetPager {
   public interface Page<ElementT> {
 
     /** The elements in the page. */
-    @NonNull
+    @Nonnull
     List<ElementT> getElements();
 
     /**
@@ -138,9 +138,9 @@ public class OffsetPager {
    *     iterable.
    * @throws IllegalArgumentException if the conditions on the arguments are not respected.
    */
-  @NonNull
+  @Nonnull
   public <ElementT> Page<ElementT> getPage(
-      @NonNull PagingIterable<ElementT> iterable, final int targetPageNumber) {
+      @Nonnull PagingIterable<ElementT> iterable, final int targetPageNumber) {
 
     throwIfIllegalArguments(iterable, targetPageNumber);
 
@@ -184,10 +184,10 @@ public class OffsetPager {
    *     page was past the end of the iterable.
    * @throws IllegalArgumentException if the conditions on the arguments are not respected.
    */
-  @NonNull
+  @Nonnull
   public <ElementT, IterableT extends AsyncPagingIterable<ElementT, IterableT>>
       CompletionStage<Page<ElementT>> getPage(
-          @NonNull IterableT iterable, final int targetPageNumber) {
+          @Nonnull IterableT iterable, final int targetPageNumber) {
 
     // Throw IllegalArgumentException directly instead of failing the stage, since it signals
     // blatant programming errors
@@ -199,7 +199,7 @@ public class OffsetPager {
     return pageFuture;
   }
 
-  private void throwIfIllegalArguments(@NonNull Object iterable, int targetPageNumber) {
+  private void throwIfIllegalArguments(@Nonnull Object iterable, int targetPageNumber) {
     Objects.requireNonNull(iterable);
     if (targetPageNumber < 1) {
       throw new IllegalArgumentException(
@@ -215,12 +215,12 @@ public class OffsetPager {
    * manually.
    */
   private <IterableT extends AsyncPagingIterable<ElementT, IterableT>, ElementT> void getPage(
-      @NonNull IterableT iterable,
+      @Nonnull IterableT iterable,
       final int targetPageNumber,
       int currentPageNumber,
       int currentPageSize,
-      @NonNull List<ElementT> currentPageElements,
-      @NonNull CompletableFuture<Page<ElementT>> pageFuture) {
+      @Nonnull List<ElementT> currentPageElements,
+      @Nonnull CompletableFuture<Page<ElementT>> pageFuture) {
 
     // Note: iterable.currentPage()/fetchNextPage() refer to protocol-level pages, do not confuse
     // with logical pages handled by this class
@@ -296,13 +296,13 @@ public class OffsetPager {
     private final int pageNumber;
     private final boolean isLast;
 
-    DefaultPage(@NonNull List<ElementT> elements, int pageNumber, boolean isLast) {
+    DefaultPage(@Nonnull List<ElementT> elements, int pageNumber, boolean isLast) {
       this.elements = ImmutableList.copyOf(elements);
       this.pageNumber = pageNumber;
       this.isLast = isLast;
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public List<ElementT> getElements() {
       return elements;

@@ -18,20 +18,20 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public interface CreateIndexOnTable {
 
   /** Specifies the column to create the index on. */
-  @NonNull
-  default CreateIndex andColumn(@NonNull CqlIdentifier columnName) {
+  @Nonnull
+  default CreateIndex andColumn(@Nonnull CqlIdentifier columnName) {
     return andColumn(columnName, null);
   }
 
   /** Shortcut for {@link #andColumn(CqlIdentifier) andColumn(CqlIdentifier.fromCql(columnName)}. */
-  @NonNull
-  default CreateIndex andColumn(@NonNull String columnName) {
+  @Nonnull
+  default CreateIndex andColumn(@Nonnull String columnName) {
     return andColumn(CqlIdentifier.fromCql(columnName));
   }
 
@@ -39,8 +39,8 @@ public interface CreateIndexOnTable {
    * Specifies to create the index on the given columns' keys, this must be done against a <code>map
    * </code> column.
    */
-  @NonNull
-  default CreateIndex andColumnKeys(@NonNull CqlIdentifier columnName) {
+  @Nonnull
+  default CreateIndex andColumnKeys(@Nonnull CqlIdentifier columnName) {
     return andColumn(columnName, "KEYS");
   }
 
@@ -48,8 +48,8 @@ public interface CreateIndexOnTable {
    * Shortcut for {@link #andColumnKeys(CqlIdentifier)
    * andColumnKeys(CqlIdentifier.fromCql(columnName)}.
    */
-  @NonNull
-  default CreateIndex andColumnKeys(@NonNull String columnName) {
+  @Nonnull
+  default CreateIndex andColumnKeys(@Nonnull String columnName) {
     return andColumnKeys(CqlIdentifier.fromCql(columnName));
   }
 
@@ -57,8 +57,8 @@ public interface CreateIndexOnTable {
    * Specifies to create the index on the given columns' values, this must be done against a <code>
    * map</code> column.
    */
-  @NonNull
-  default CreateIndex andColumnValues(@NonNull CqlIdentifier columnName) {
+  @Nonnull
+  default CreateIndex andColumnValues(@Nonnull CqlIdentifier columnName) {
     return andColumn(columnName, "VALUES");
   }
 
@@ -66,8 +66,8 @@ public interface CreateIndexOnTable {
    * Shortcut for {@link #andColumnValues(CqlIdentifier)
    * andColumnValues(CqlIdentifier.fromCql(columnName)}.
    */
-  @NonNull
-  default CreateIndex andColumnValues(@NonNull String columnName) {
+  @Nonnull
+  default CreateIndex andColumnValues(@Nonnull String columnName) {
     return andColumnValues(CqlIdentifier.fromCql(columnName));
   }
 
@@ -75,8 +75,8 @@ public interface CreateIndexOnTable {
    * Specifies to create the index on the given columns' entries (key-value pairs), this must be
    * done against a <code>map</code> column.
    */
-  @NonNull
-  default CreateIndex andColumnEntries(@NonNull CqlIdentifier columnName) {
+  @Nonnull
+  default CreateIndex andColumnEntries(@Nonnull CqlIdentifier columnName) {
     return andColumn(columnName, "ENTRIES");
   }
 
@@ -84,8 +84,8 @@ public interface CreateIndexOnTable {
    * Shortcut for {@link #andColumnEntries(CqlIdentifier)
    * andColumnEntries(CqlIdentifier.fromCql(columnName)}.
    */
-  @NonNull
-  default CreateIndex andColumnEntries(@NonNull String columnName) {
+  @Nonnull
+  default CreateIndex andColumnEntries(@Nonnull String columnName) {
     return andColumnEntries(CqlIdentifier.fromCql(columnName));
   }
 
@@ -93,8 +93,8 @@ public interface CreateIndexOnTable {
    * Specifies to create the index on the given columns' entire value, this must be done against a
    * <code>frozen</code> collection column.
    */
-  @NonNull
-  default CreateIndex andColumnFull(@NonNull CqlIdentifier columnName) {
+  @Nonnull
+  default CreateIndex andColumnFull(@Nonnull CqlIdentifier columnName) {
     return andColumn(columnName, "FULL");
   }
 
@@ -102,8 +102,8 @@ public interface CreateIndexOnTable {
    * Shortcut for {@link #andColumnFull(CqlIdentifier)
    * andColumnFull(CqlIdentifier.fromCql(columnName)}.
    */
-  @NonNull
-  default CreateIndex andColumnFull(@NonNull String columnName) {
+  @Nonnull
+  default CreateIndex andColumnFull(@Nonnull String columnName) {
     return andColumnFull(CqlIdentifier.fromCql(columnName));
   }
 
@@ -112,15 +112,15 @@ public interface CreateIndexOnTable {
    * not be used in the general case, unless there is an additional index type to use beyond KEYS,
    * VALUES, ENTRIES, or FULL.
    */
-  @NonNull
-  CreateIndex andColumn(@NonNull CqlIdentifier columnName, @Nullable String indexType);
+  @Nonnull
+  CreateIndex andColumn(@Nonnull CqlIdentifier columnName, @Nullable String indexType);
 
   /**
    * Shortcut for {@link #andColumn(CqlIdentifier,String)
    * andColumn(CqlIdentifier.fromCql(columnName),indexType}.
    */
-  @NonNull
-  default CreateIndex andColumn(@NonNull String columnName, @NonNull String indexType) {
+  @Nonnull
+  default CreateIndex andColumn(@Nonnull String columnName, @Nonnull String indexType) {
     return andColumn(CqlIdentifier.fromCql(columnName), indexType);
   }
 }

@@ -39,10 +39,10 @@ import com.datastax.oss.driver.internal.querybuilder.select.RangeSelector;
 import com.datastax.oss.driver.internal.querybuilder.select.SetSelector;
 import com.datastax.oss.driver.internal.querybuilder.select.TupleSelector;
 import com.datastax.oss.driver.internal.querybuilder.select.TypeHintSelector;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A selected element in a SELECT query.
@@ -68,26 +68,26 @@ import java.util.Map;
 public interface Selector extends CqlSnippet {
 
   /** Selects all columns, as in {@code SELECT *}. */
-  @NonNull
+  @Nonnull
   static Selector all() {
     return AllSelector.INSTANCE;
   }
 
   /** Selects the count of all returned rows, as in {@code SELECT count(*)}. */
-  @NonNull
+  @Nonnull
   static Selector countAll() {
     return new CountAllSelector();
   }
 
   /** Selects a particular column by its CQL identifier. */
-  @NonNull
-  static Selector column(@NonNull CqlIdentifier columnId) {
+  @Nonnull
+  static Selector column(@Nonnull CqlIdentifier columnId) {
     return new ColumnSelector(columnId);
   }
 
   /** Shortcut for {@link #column(CqlIdentifier) column(CqlIdentifier.fromCql(columnName))} */
-  @NonNull
-  static Selector column(@NonNull String columnName) {
+  @Nonnull
+  static Selector column(@Nonnull String columnName) {
     return column(CqlIdentifier.fromCql(columnName));
   }
 
@@ -96,8 +96,8 @@ public interface Selector extends CqlSnippet {
    *
    * <p>This is available in Cassandra 4 and above.
    */
-  @NonNull
-  static Selector add(@NonNull Selector left, @NonNull Selector right) {
+  @Nonnull
+  static Selector add(@Nonnull Selector left, @Nonnull Selector right) {
     return new BinaryArithmeticSelector(ArithmeticOperator.SUM, left, right);
   }
 
@@ -106,8 +106,8 @@ public interface Selector extends CqlSnippet {
    *
    * <p>This is available in Cassandra 4 and above.
    */
-  @NonNull
-  static Selector subtract(@NonNull Selector left, @NonNull Selector right) {
+  @Nonnull
+  static Selector subtract(@Nonnull Selector left, @Nonnull Selector right) {
     return new BinaryArithmeticSelector(ArithmeticOperator.DIFFERENCE, left, right);
   }
 
@@ -119,8 +119,8 @@ public interface Selector extends CqlSnippet {
    * <p>The arguments will be parenthesized if they are instances of {@link #add} or {@link
    * #subtract}. If they are raw selectors, you might have to parenthesize them yourself.
    */
-  @NonNull
-  static Selector multiply(@NonNull Selector left, @NonNull Selector right) {
+  @Nonnull
+  static Selector multiply(@Nonnull Selector left, @Nonnull Selector right) {
     return new BinaryArithmeticSelector(ArithmeticOperator.PRODUCT, left, right);
   }
 
@@ -132,8 +132,8 @@ public interface Selector extends CqlSnippet {
    * <p>The arguments will be parenthesized if they are instances of {@link #add} or {@link
    * #subtract}. If they are raw selectors, you might have to parenthesize them yourself.
    */
-  @NonNull
-  static Selector divide(@NonNull Selector left, @NonNull Selector right) {
+  @Nonnull
+  static Selector divide(@Nonnull Selector left, @Nonnull Selector right) {
     return new BinaryArithmeticSelector(ArithmeticOperator.QUOTIENT, left, right);
   }
 
@@ -145,8 +145,8 @@ public interface Selector extends CqlSnippet {
    * <p>The arguments will be parenthesized if they are instances of {@link #add} or {@link
    * #subtract}. If they are raw selectors, you might have to parenthesize them yourself.
    */
-  @NonNull
-  static Selector remainder(@NonNull Selector left, @NonNull Selector right) {
+  @Nonnull
+  static Selector remainder(@Nonnull Selector left, @Nonnull Selector right) {
     return new BinaryArithmeticSelector(ArithmeticOperator.REMAINDER, left, right);
   }
 
@@ -158,14 +158,14 @@ public interface Selector extends CqlSnippet {
    * <p>The argument will be parenthesized if it is an instance of {@link #add} or {@link
    * #subtract}. If it is a raw selector, you might have to parenthesize it yourself.
    */
-  @NonNull
-  static Selector negate(@NonNull Selector argument) {
+  @Nonnull
+  static Selector negate(@Nonnull Selector argument) {
     return new OppositeSelector(argument);
   }
 
   /** Selects a field inside of a UDT column, as in {@code SELECT user.name}. */
-  @NonNull
-  static Selector field(@NonNull Selector udt, @NonNull CqlIdentifier fieldId) {
+  @Nonnull
+  static Selector field(@Nonnull Selector udt, @Nonnull CqlIdentifier fieldId) {
     return new FieldSelector(udt, fieldId);
   }
 
@@ -173,8 +173,8 @@ public interface Selector extends CqlSnippet {
    * Shortcut for {@link #field(Selector, CqlIdentifier) getUdtField(udt,
    * CqlIdentifier.fromCql(fieldName))}.
    */
-  @NonNull
-  static Selector field(@NonNull Selector udt, @NonNull String fieldName) {
+  @Nonnull
+  static Selector field(@Nonnull Selector udt, @Nonnull String fieldName) {
     return field(udt, CqlIdentifier.fromCql(fieldName));
   }
 
@@ -182,8 +182,8 @@ public interface Selector extends CqlSnippet {
    * Shortcut to select a UDT field when the UDT is a simple column (as opposed to a more complex
    * selection, like a nested UDT).
    */
-  @NonNull
-  static Selector field(@NonNull CqlIdentifier udtColumnId, @NonNull CqlIdentifier fieldId) {
+  @Nonnull
+  static Selector field(@Nonnull CqlIdentifier udtColumnId, @Nonnull CqlIdentifier fieldId) {
     return field(column(udtColumnId), fieldId);
   }
 
@@ -191,8 +191,8 @@ public interface Selector extends CqlSnippet {
    * Shortcut for {@link #field(CqlIdentifier, CqlIdentifier)
    * field(CqlIdentifier.fromCql(udtColumnName), CqlIdentifier.fromCql(fieldName))}.
    */
-  @NonNull
-  static Selector field(@NonNull String udtColumnName, @NonNull String fieldName) {
+  @Nonnull
+  static Selector field(@Nonnull String udtColumnName, @Nonnull String fieldName) {
     return field(CqlIdentifier.fromCql(udtColumnName), CqlIdentifier.fromCql(fieldName));
   }
 
@@ -202,8 +202,8 @@ public interface Selector extends CqlSnippet {
    * <p>As of Cassandra 4, this is only allowed in SELECT for map and set columns. DELETE accepts
    * list elements as well.
    */
-  @NonNull
-  static Selector element(@NonNull Selector collection, @NonNull Term index) {
+  @Nonnull
+  static Selector element(@Nonnull Selector collection, @Nonnull Term index) {
     return new ElementSelector(collection, index);
   }
 
@@ -213,8 +213,8 @@ public interface Selector extends CqlSnippet {
    * <p>In other words, this is the equivalent of {@link #element(Selector, Term)
    * element(column(collectionId), index)}.
    */
-  @NonNull
-  static Selector element(@NonNull CqlIdentifier collectionId, @NonNull Term index) {
+  @Nonnull
+  static Selector element(@Nonnull CqlIdentifier collectionId, @Nonnull Term index) {
     return element(column(collectionId), index);
   }
 
@@ -222,8 +222,8 @@ public interface Selector extends CqlSnippet {
    * Shortcut for {@link #element(CqlIdentifier, Term)
    * element(CqlIdentifier.fromCql(collectionName), index)}.
    */
-  @NonNull
-  static Selector element(@NonNull String collectionName, @NonNull Term index) {
+  @Nonnull
+  static Selector element(@Nonnull String collectionName, @Nonnull Term index) {
     return element(CqlIdentifier.fromCql(collectionName), index);
   }
 
@@ -239,8 +239,8 @@ public interface Selector extends CqlSnippet {
    * @param right the right bound (inclusive). Can be {@code null} to indicate that the slice is
    *     only left-bound.
    */
-  @NonNull
-  static Selector range(@NonNull Selector collection, @Nullable Term left, @Nullable Term right) {
+  @Nonnull
+  static Selector range(@Nonnull Selector collection, @Nullable Term left, @Nullable Term right) {
     return new RangeSelector(collection, left, right);
   }
 
@@ -250,9 +250,9 @@ public interface Selector extends CqlSnippet {
    * <p>In other words, this is the equivalent of {@link #range(Selector, Term, Term)}
    * range(column(collectionId), left, right)}.
    */
-  @NonNull
+  @Nonnull
   static Selector range(
-      @NonNull CqlIdentifier collectionId, @Nullable Term left, @Nullable Term right) {
+      @Nonnull CqlIdentifier collectionId, @Nullable Term left, @Nullable Term right) {
     return range(column(collectionId), left, right);
   }
 
@@ -260,8 +260,8 @@ public interface Selector extends CqlSnippet {
    * Shortcut for {@link #range(CqlIdentifier, Term, Term)
    * range(CqlIdentifier.fromCql(collectionName), left, right)}.
    */
-  @NonNull
-  static Selector range(@NonNull String collectionName, @Nullable Term left, @Nullable Term right) {
+  @Nonnull
+  static Selector range(@Nonnull String collectionName, @Nullable Term left, @Nullable Term right) {
     return range(CqlIdentifier.fromCql(collectionName), left, right);
   }
 
@@ -274,14 +274,14 @@ public interface Selector extends CqlSnippet {
    *
    * @throws IllegalArgumentException if any of the selectors is aliased.
    */
-  @NonNull
-  static Selector listOf(@NonNull Iterable<Selector> elementSelectors) {
+  @Nonnull
+  static Selector listOf(@Nonnull Iterable<Selector> elementSelectors) {
     return new ListSelector(elementSelectors);
   }
 
   /** Var-arg equivalent of {@link #listOf(Iterable)}. */
-  @NonNull
-  static Selector listOf(@NonNull Selector... elementSelectors) {
+  @Nonnull
+  static Selector listOf(@Nonnull Selector... elementSelectors) {
     return listOf(Arrays.asList(elementSelectors));
   }
 
@@ -294,14 +294,14 @@ public interface Selector extends CqlSnippet {
    *
    * @throws IllegalArgumentException if any of the selectors is aliased.
    */
-  @NonNull
-  static Selector setOf(@NonNull Iterable<Selector> elementSelectors) {
+  @Nonnull
+  static Selector setOf(@Nonnull Iterable<Selector> elementSelectors) {
     return new SetSelector(elementSelectors);
   }
 
   /** Var-arg equivalent of {@link #setOf(Iterable)}. */
-  @NonNull
-  static Selector setOf(@NonNull Selector... elementSelectors) {
+  @Nonnull
+  static Selector setOf(@Nonnull Selector... elementSelectors) {
     return setOf(Arrays.asList(elementSelectors));
   }
 
@@ -312,14 +312,14 @@ public interface Selector extends CqlSnippet {
    *
    * @throws IllegalArgumentException if any of the selectors is aliased.
    */
-  @NonNull
-  static Selector tupleOf(@NonNull Iterable<Selector> elementSelectors) {
+  @Nonnull
+  static Selector tupleOf(@Nonnull Iterable<Selector> elementSelectors) {
     return new TupleSelector(elementSelectors);
   }
 
   /** Var-arg equivalent of {@link #tupleOf(Iterable)}. */
-  @NonNull
-  static Selector tupleOf(@NonNull Selector... elementSelectors) {
+  @Nonnull
+  static Selector tupleOf(@Nonnull Selector... elementSelectors) {
     return tupleOf(Arrays.asList(elementSelectors));
   }
 
@@ -343,8 +343,8 @@ public interface Selector extends CqlSnippet {
    *
    * @throws IllegalArgumentException if any of the selectors is aliased.
    */
-  @NonNull
-  static Selector mapOf(@NonNull Map<Selector, Selector> elementSelectors) {
+  @Nonnull
+  static Selector mapOf(@Nonnull Map<Selector, Selector> elementSelectors) {
     return mapOf(elementSelectors, null, null);
   }
 
@@ -357,9 +357,9 @@ public interface Selector extends CqlSnippet {
    *
    * @see #mapOf(Map)
    */
-  @NonNull
+  @Nonnull
   static Selector mapOf(
-      @NonNull Map<Selector, Selector> elementSelectors,
+      @Nonnull Map<Selector, Selector> elementSelectors,
       @Nullable DataType keyType,
       @Nullable DataType valueType) {
     return new MapSelector(elementSelectors, keyType, valueType);
@@ -371,8 +371,8 @@ public interface Selector extends CqlSnippet {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link QueryBuilder#udt(CqlIdentifier)}.
    */
-  @NonNull
-  static Selector typeHint(@NonNull Selector selector, @NonNull DataType targetType) {
+  @Nonnull
+  static Selector typeHint(@Nonnull Selector selector, @Nonnull DataType targetType) {
     return new TypeHintSelector(selector, targetType);
   }
 
@@ -383,15 +383,15 @@ public interface Selector extends CqlSnippet {
    *
    * @throws IllegalArgumentException if any of the selectors is aliased.
    */
-  @NonNull
+  @Nonnull
   static Selector function(
-      @NonNull CqlIdentifier functionId, @NonNull Iterable<Selector> arguments) {
+      @Nonnull CqlIdentifier functionId, @Nonnull Iterable<Selector> arguments) {
     return new FunctionSelector(null, functionId, arguments);
   }
 
   /** Var-arg equivalent of {@link #function(CqlIdentifier, Iterable)}. */
-  @NonNull
-  static Selector function(@NonNull CqlIdentifier functionId, @NonNull Selector... arguments) {
+  @Nonnull
+  static Selector function(@Nonnull CqlIdentifier functionId, @Nonnull Selector... arguments) {
     return function(functionId, Arrays.asList(arguments));
   }
 
@@ -399,14 +399,14 @@ public interface Selector extends CqlSnippet {
    * Shortcut for {@link #function(CqlIdentifier, Iterable)
    * function(CqlIdentifier.fromCql(functionName), arguments)}.
    */
-  @NonNull
-  static Selector function(@NonNull String functionName, @NonNull Iterable<Selector> arguments) {
+  @Nonnull
+  static Selector function(@Nonnull String functionName, @Nonnull Iterable<Selector> arguments) {
     return function(CqlIdentifier.fromCql(functionName), arguments);
   }
 
   /** Var-arg equivalent of {@link #function(String, Iterable)}. */
-  @NonNull
-  static Selector function(@NonNull String functionName, @NonNull Selector... arguments) {
+  @Nonnull
+  static Selector function(@Nonnull String functionName, @Nonnull Selector... arguments) {
     return function(functionName, Arrays.asList(arguments));
   }
 
@@ -417,20 +417,20 @@ public interface Selector extends CqlSnippet {
    *
    * @throws IllegalArgumentException if any of the selectors is aliased.
    */
-  @NonNull
+  @Nonnull
   static Selector function(
       @Nullable CqlIdentifier keyspaceId,
-      @NonNull CqlIdentifier functionId,
-      @NonNull Iterable<Selector> arguments) {
+      @Nonnull CqlIdentifier functionId,
+      @Nonnull Iterable<Selector> arguments) {
     return new FunctionSelector(keyspaceId, functionId, arguments);
   }
 
   /** Var-arg equivalent of {@link #function(CqlIdentifier, CqlIdentifier, Iterable)}. */
-  @NonNull
+  @Nonnull
   static Selector function(
       @Nullable CqlIdentifier keyspaceId,
-      @NonNull CqlIdentifier functionId,
-      @NonNull Selector... arguments) {
+      @Nonnull CqlIdentifier functionId,
+      @Nonnull Selector... arguments) {
     return function(keyspaceId, functionId, Arrays.asList(arguments));
   }
 
@@ -438,11 +438,11 @@ public interface Selector extends CqlSnippet {
    * Shortcut for {@link #function(CqlIdentifier, CqlIdentifier, Iterable)}
    * function(CqlIdentifier.fromCql(functionName), arguments)}.
    */
-  @NonNull
+  @Nonnull
   static Selector function(
       @Nullable String keyspaceName,
-      @NonNull String functionName,
-      @NonNull Iterable<Selector> arguments) {
+      @Nonnull String functionName,
+      @Nonnull Iterable<Selector> arguments) {
     return function(
         keyspaceName == null ? null : CqlIdentifier.fromCql(keyspaceName),
         CqlIdentifier.fromCql(functionName),
@@ -450,9 +450,9 @@ public interface Selector extends CqlSnippet {
   }
 
   /** Var-arg equivalent of {@link #function(String, String, Iterable)}. */
-  @NonNull
+  @Nonnull
   static Selector function(
-      @Nullable String keyspaceName, @NonNull String functionName, @NonNull Selector... arguments) {
+      @Nullable String keyspaceName, @Nonnull String functionName, @Nonnull Selector... arguments) {
     return function(keyspaceName, functionName, Arrays.asList(arguments));
   }
 
@@ -460,16 +460,16 @@ public interface Selector extends CqlSnippet {
    * Shortcut to select the result of the built-in {@code writetime} function, as in {@code SELECT
    * writetime(c)}.
    */
-  @NonNull
-  static Selector writeTime(@NonNull CqlIdentifier columnId) {
+  @Nonnull
+  static Selector writeTime(@Nonnull CqlIdentifier columnId) {
     return function("writetime", column(columnId));
   }
 
   /**
    * Shortcut for {@link #writeTime(CqlIdentifier) writeTime(CqlIdentifier.fromCql(columnName))}.
    */
-  @NonNull
-  static Selector writeTime(@NonNull String columnName) {
+  @Nonnull
+  static Selector writeTime(@Nonnull String columnName) {
     return writeTime(CqlIdentifier.fromCql(columnName));
   }
 
@@ -477,14 +477,14 @@ public interface Selector extends CqlSnippet {
    * Shortcut to select the result of the built-in {@code ttl} function, as in {@code SELECT
    * ttl(c)}.
    */
-  @NonNull
-  static Selector ttl(@NonNull CqlIdentifier columnId) {
+  @Nonnull
+  static Selector ttl(@Nonnull CqlIdentifier columnId) {
     return function("ttl", column(columnId));
   }
 
   /** Shortcut for {@link #ttl(CqlIdentifier) ttl(CqlIdentifier.fromCql(columnName))}. */
-  @NonNull
-  static Selector ttl(@NonNull String columnName) {
+  @Nonnull
+  static Selector ttl(@Nonnull String columnName) {
     return ttl(CqlIdentifier.fromCql(columnName));
   }
 
@@ -496,28 +496,28 @@ public interface Selector extends CqlSnippet {
    *
    * @throws IllegalArgumentException if the selector is aliased.
    */
-  @NonNull
-  static Selector cast(@NonNull Selector selector, @NonNull DataType targetType) {
+  @Nonnull
+  static Selector cast(@Nonnull Selector selector, @Nonnull DataType targetType) {
     return new CastSelector(selector, targetType);
   }
 
   /** Shortcut to select the result of the built-in {@code toDate} function on a simple column. */
-  @NonNull
-  static Selector toDate(@NonNull CqlIdentifier columnId) {
+  @Nonnull
+  static Selector toDate(@Nonnull CqlIdentifier columnId) {
     return function("todate", Selector.column(columnId));
   }
 
   /** Shortcut for {@link #toDate(CqlIdentifier) toDate(CqlIdentifier.fromCql(columnName))}. */
-  @NonNull
-  static Selector toDate(@NonNull String columnName) {
+  @Nonnull
+  static Selector toDate(@Nonnull String columnName) {
     return toDate(CqlIdentifier.fromCql(columnName));
   }
 
   /**
    * Shortcut to select the result of the built-in {@code toTimestamp} function on a simple column.
    */
-  @NonNull
-  static Selector toTimestamp(@NonNull CqlIdentifier columnId) {
+  @Nonnull
+  static Selector toTimestamp(@Nonnull CqlIdentifier columnId) {
     return function("totimestamp", Selector.column(columnId));
   }
 
@@ -525,8 +525,8 @@ public interface Selector extends CqlSnippet {
    * Shortcut for {@link #toTimestamp(CqlIdentifier)
    * toTimestamp(CqlIdentifier.fromCql(columnName))}.
    */
-  @NonNull
-  static Selector toTimestamp(@NonNull String columnName) {
+  @Nonnull
+  static Selector toTimestamp(@Nonnull String columnName) {
     return toTimestamp(CqlIdentifier.fromCql(columnName));
   }
 
@@ -534,8 +534,8 @@ public interface Selector extends CqlSnippet {
    * Shortcut to select the result of the built-in {@code toUnixTimestamp} function on a simple
    * column.
    */
-  @NonNull
-  static Selector toUnixTimestamp(@NonNull CqlIdentifier columnId) {
+  @Nonnull
+  static Selector toUnixTimestamp(@Nonnull CqlIdentifier columnId) {
     return function("tounixtimestamp", Selector.column(columnId));
   }
 
@@ -543,18 +543,18 @@ public interface Selector extends CqlSnippet {
    * Shortcut for {@link #toUnixTimestamp(CqlIdentifier)
    * toUnixTimestamp(CqlIdentifier.fromCql(columnName))}.
    */
-  @NonNull
-  static Selector toUnixTimestamp(@NonNull String columnName) {
+  @Nonnull
+  static Selector toUnixTimestamp(@Nonnull String columnName) {
     return toUnixTimestamp(CqlIdentifier.fromCql(columnName));
   }
 
   /** Aliases the selector, as in {@code SELECT count(*) AS total}. */
-  @NonNull
-  Selector as(@NonNull CqlIdentifier alias);
+  @Nonnull
+  Selector as(@Nonnull CqlIdentifier alias);
 
   /** Shortcut for {@link #as(CqlIdentifier) as(CqlIdentifier.fromCql(alias))} */
-  @NonNull
-  default Selector as(@NonNull String alias) {
+  @Nonnull
+  default Selector as(@Nonnull String alias) {
     return as(CqlIdentifier.fromCql(alias));
   }
 

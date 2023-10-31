@@ -19,7 +19,7 @@ package com.datastax.oss.driver.api.core.retry;
 
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.retry.DefaultRetryVerdict;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * The verdict returned by a {@link RetryPolicy} determining what to do when a request failed. A
@@ -42,7 +42,7 @@ public interface RetryVerdict {
   RetryVerdict RETHROW = new DefaultRetryVerdict(RetryDecision.RETHROW);
 
   /** @return The retry decision to apply. */
-  @NonNull
+  @Nonnull
   RetryDecision getRetryDecision();
 
   /**
@@ -56,8 +56,8 @@ public interface RetryVerdict {
    * @param previous The request that was just executed (and failed).
    * @return The request to retry.
    */
-  @NonNull
-  default <RequestT extends Request> RequestT getRetryRequest(@NonNull RequestT previous) {
+  @Nonnull
+  default <RequestT extends Request> RequestT getRetryRequest(@Nonnull RequestT previous) {
     return previous;
   }
 }

@@ -22,24 +22,24 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /** Common super-class for all codecs which map a CQL vector type onto a primitive array */
 public abstract class AbstractVectorToArrayCodec<ArrayT> implements TypeCodec<ArrayT> {
 
-  @NonNull protected final VectorType cqlType;
-  @NonNull protected final GenericType<ArrayT> javaType;
+  @Nonnull protected final VectorType cqlType;
+  @Nonnull protected final GenericType<ArrayT> javaType;
 
   /**
    * @param cqlType The CQL type. Must be a list type.
    * @param arrayType The Java type. Must be an array class.
    */
   protected AbstractVectorToArrayCodec(
-      @NonNull VectorType cqlType, @NonNull GenericType<ArrayT> arrayType) {
+      @Nonnull VectorType cqlType, @Nonnull GenericType<ArrayT> arrayType) {
     this.cqlType = Objects.requireNonNull(cqlType, "cqlType cannot be null");
     this.javaType = Objects.requireNonNull(arrayType, "arrayType cannot be null");
     if (!arrayType.isArray()) {
@@ -47,13 +47,13 @@ public abstract class AbstractVectorToArrayCodec<ArrayT> implements TypeCodec<Ar
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<ArrayT> getJavaType() {
     return this.javaType;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return this.cqlType;
@@ -61,7 +61,7 @@ public abstract class AbstractVectorToArrayCodec<ArrayT> implements TypeCodec<Ar
 
   @Nullable
   @Override
-  public ByteBuffer encode(@Nullable ArrayT array, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable ArrayT array, @Nonnull ProtocolVersion protocolVersion) {
     if (array == null) {
       return null;
     }
@@ -77,7 +77,7 @@ public abstract class AbstractVectorToArrayCodec<ArrayT> implements TypeCodec<Ar
 
   @Nullable
   @Override
-  public ArrayT decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public ArrayT decode(@Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       throw new IllegalArgumentException(
           "Input ByteBuffer must not be null and must have non-zero remaining bytes");
@@ -102,7 +102,7 @@ public abstract class AbstractVectorToArrayCodec<ArrayT> implements TypeCodec<Ar
    *
    * @return a new array instance with a size matching the specified vector.
    */
-  @NonNull
+  @Nonnull
   protected abstract ArrayT newInstance();
 
   /**
@@ -121,10 +121,10 @@ public abstract class AbstractVectorToArrayCodec<ArrayT> implements TypeCodec<Ar
    * @param protocolVersion The protocol version to use.
    */
   protected abstract void serializeElement(
-      @NonNull ByteBuffer output,
-      @NonNull ArrayT array,
+      @Nonnull ByteBuffer output,
+      @Nonnull ArrayT array,
       int index,
-      @NonNull ProtocolVersion protocolVersion);
+      @Nonnull ProtocolVersion protocolVersion);
 
   /**
    * Read the {@code index}th element of {@code array} from {@code input}.
@@ -135,8 +135,8 @@ public abstract class AbstractVectorToArrayCodec<ArrayT> implements TypeCodec<Ar
    * @param protocolVersion The protocol version to use.
    */
   protected abstract void deserializeElement(
-      @NonNull ByteBuffer input,
-      @NonNull ArrayT array,
+      @Nonnull ByteBuffer input,
+      @Nonnull ArrayT array,
       int index,
-      @NonNull ProtocolVersion protocolVersion);
+      @Nonnull ProtocolVersion protocolVersion);
 }

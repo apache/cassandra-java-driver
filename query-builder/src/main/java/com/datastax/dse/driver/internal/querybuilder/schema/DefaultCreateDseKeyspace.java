@@ -23,8 +23,8 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.internal.querybuilder.schema.OptionsUtils;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -34,39 +34,39 @@ public class DefaultCreateDseKeyspace implements CreateDseKeyspace, CreateDseKey
   private final boolean ifNotExists;
   private final ImmutableMap<String, Object> options;
 
-  public DefaultCreateDseKeyspace(@NonNull CqlIdentifier keyspaceName) {
+  public DefaultCreateDseKeyspace(@Nonnull CqlIdentifier keyspaceName) {
     this(keyspaceName, false, ImmutableMap.of());
   }
 
   public DefaultCreateDseKeyspace(
-      @NonNull CqlIdentifier keyspaceName,
+      @Nonnull CqlIdentifier keyspaceName,
       boolean ifNotExists,
-      @NonNull ImmutableMap<String, Object> options) {
+      @Nonnull ImmutableMap<String, Object> options) {
     this.keyspaceName = keyspaceName;
     this.ifNotExists = ifNotExists;
     this.options = options;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateDseKeyspace withOption(@NonNull String name, @NonNull Object value) {
+  public CreateDseKeyspace withOption(@Nonnull String name, @Nonnull Object value) {
     return new DefaultCreateDseKeyspace(
         keyspaceName, ifNotExists, ImmutableCollections.append(options, name, value));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseKeyspaceStart ifNotExists() {
     return new DefaultCreateDseKeyspace(keyspaceName, true, options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateDseKeyspace withReplicationOptions(@NonNull Map<String, Object> replicationOptions) {
+  public CreateDseKeyspace withReplicationOptions(@Nonnull Map<String, Object> replicationOptions) {
     return withOption("replication", replicationOptions);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder();
@@ -86,13 +86,13 @@ public class DefaultCreateDseKeyspace implements CreateDseKeyspace, CreateDseKey
     return asCql();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, Object> getOptions() {
     return options;
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getKeyspace() {
     return keyspaceName;
   }

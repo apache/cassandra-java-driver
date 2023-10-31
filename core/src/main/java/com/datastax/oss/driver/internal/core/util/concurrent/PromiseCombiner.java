@@ -17,12 +17,12 @@
  */
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.Promise;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -40,7 +40,7 @@ public class PromiseCombiner {
    * @param parents The parent futures.
    */
   public static void combine(
-      @NonNull Promise<Void> aggregatePromise, @NonNull Future<?>... parents) {
+      @Nonnull Promise<Void> aggregatePromise, @Nonnull Future<?>... parents) {
     PromiseCombinerListener listener =
         new PromiseCombinerListener(aggregatePromise, parents.length);
     for (Future<?> parent : parents) {

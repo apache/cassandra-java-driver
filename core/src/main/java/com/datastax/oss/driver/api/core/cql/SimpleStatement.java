@@ -28,10 +28,10 @@ import com.datastax.oss.driver.internal.core.util.Sizes;
 import com.datastax.oss.protocol.internal.PrimitiveSizes;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableList;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A one-off CQL statement consisting of a query string with optional placeholders, and a set of
@@ -62,7 +62,7 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    *
    * <p>Note that the returned object is <b>immutable</b>.
    */
-  static SimpleStatement newInstance(@NonNull String cqlQuery) {
+  static SimpleStatement newInstance(@Nonnull String cqlQuery) {
     return new DefaultSimpleStatement(
         cqlQuery,
         NullAllowingImmutableList.of(),
@@ -96,7 +96,7 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    *     be {@code null}, but the vararg array itself can't.
    */
   static SimpleStatement newInstance(
-      @NonNull String cqlQuery, @NonNull Object... positionalValues) {
+      @Nonnull String cqlQuery, @Nonnull Object... positionalValues) {
     return new DefaultSimpleStatement(
         cqlQuery,
         NullAllowingImmutableList.of(positionalValues),
@@ -127,7 +127,7 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    * <p>Note that the returned object is <b>immutable</b>.
    */
   static SimpleStatement newInstance(
-      @NonNull String cqlQuery, @NonNull Map<String, Object> namedValues) {
+      @Nonnull String cqlQuery, @Nonnull Map<String, Object> namedValues) {
     return new DefaultSimpleStatement(
         cqlQuery,
         NullAllowingImmutableList.of(),
@@ -156,8 +156,8 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    *
    * <p>Note that this builder is mutable and not thread-safe.
    */
-  @NonNull
-  static SimpleStatementBuilder builder(@NonNull String query) {
+  @Nonnull
+  static SimpleStatementBuilder builder(@Nonnull String query) {
     return new SimpleStatementBuilder(query);
   }
 
@@ -167,12 +167,12 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    *
    * <p>Note that this builder is mutable and not thread-safe.
    */
-  @NonNull
-  static SimpleStatementBuilder builder(@NonNull SimpleStatement template) {
+  @Nonnull
+  static SimpleStatementBuilder builder(@Nonnull SimpleStatement template) {
     return new SimpleStatementBuilder(template);
   }
 
-  @NonNull
+  @Nonnull
   String getQuery();
 
   /**
@@ -196,8 +196,8 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    * @see #setPositionalValues(List)
    * @see #setNamedValuesWithIds(Map)
    */
-  @NonNull
-  SimpleStatement setQuery(@NonNull String newQuery);
+  @Nonnull
+  SimpleStatement setQuery(@Nonnull String newQuery);
 
   /**
    * Sets the CQL keyspace to associate with the query.
@@ -208,19 +208,19 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    *
    * @see Request#getKeyspace()
    */
-  @NonNull
+  @Nonnull
   SimpleStatement setKeyspace(@Nullable CqlIdentifier newKeyspace);
 
   /**
    * Shortcut for {@link #setKeyspace(CqlIdentifier)
    * setKeyspace(CqlIdentifier.fromCql(newKeyspaceName))}.
    */
-  @NonNull
-  default SimpleStatement setKeyspace(@NonNull String newKeyspaceName) {
+  @Nonnull
+  default SimpleStatement setKeyspace(@Nonnull String newKeyspaceName) {
     return setKeyspace(CqlIdentifier.fromCql(newKeyspaceName));
   }
 
-  @NonNull
+  @Nonnull
   List<Object> getPositionalValues();
 
   /**
@@ -235,10 +235,10 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    *
    * @see #setQuery(String)
    */
-  @NonNull
-  SimpleStatement setPositionalValues(@NonNull List<Object> newPositionalValues);
+  @Nonnull
+  SimpleStatement setPositionalValues(@Nonnull List<Object> newPositionalValues);
 
-  @NonNull
+  @Nonnull
   Map<CqlIdentifier, Object> getNamedValues();
 
   /**
@@ -255,20 +255,20 @@ public interface SimpleStatement extends BatchableStatement<SimpleStatement> {
    *
    * @see #setQuery(String)
    */
-  @NonNull
-  SimpleStatement setNamedValuesWithIds(@NonNull Map<CqlIdentifier, Object> newNamedValues);
+  @Nonnull
+  SimpleStatement setNamedValuesWithIds(@Nonnull Map<CqlIdentifier, Object> newNamedValues);
 
   /**
    * Shortcut for {@link #setNamedValuesWithIds(Map)} with raw strings as value names. The keys are
    * converted on the fly with {@link CqlIdentifier#fromCql(String)}.
    */
-  @NonNull
-  default SimpleStatement setNamedValues(@NonNull Map<String, Object> newNamedValues) {
+  @Nonnull
+  default SimpleStatement setNamedValues(@Nonnull Map<String, Object> newNamedValues) {
     return setNamedValuesWithIds(DefaultSimpleStatement.wrapKeys(newNamedValues));
   }
 
   @Override
-  default int computeSizeInBytes(@NonNull DriverContext context) {
+  default int computeSizeInBytes(@Nonnull DriverContext context) {
     int size = Sizes.minimumStatementSize(this, context);
 
     // SimpleStatement's additional elements to take into account are:

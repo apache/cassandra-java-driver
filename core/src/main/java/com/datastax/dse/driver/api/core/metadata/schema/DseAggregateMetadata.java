@@ -20,8 +20,8 @@ package com.datastax.dse.driver.api.core.metadata.schema;
 import com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 /**
  * Specialized aggregate metadata for DSE.
@@ -49,7 +49,7 @@ public interface DseAggregateMetadata extends AggregateMetadata {
     return Optional.of(isDeterministic());
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default String describe(boolean pretty) {
     // Easiest to just copy the OSS describe() method and add in DETERMINISTIC

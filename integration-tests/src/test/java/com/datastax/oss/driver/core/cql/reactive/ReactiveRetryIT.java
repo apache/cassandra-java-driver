@@ -49,8 +49,6 @@ import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.codec.ConsistencyLevel;
 import com.datastax.oss.simulacron.server.BoundCluster;
 import com.google.common.collect.Iterables;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.reactivex.Flowable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -62,6 +60,8 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.TreeSet;
 import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -174,29 +174,29 @@ public class ReactiveRetryIT {
     }
 
     @Override
-    public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
+    public void init(@Nonnull Map<UUID, Node> nodes, @Nonnull DistanceReporter distanceReporter) {
       this.nodes.addAll(nodes.values());
       this.nodes.forEach(n -> distanceReporter.setDistance(n, NodeDistance.LOCAL));
       iterator = Iterables.cycle(this.nodes).iterator();
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public Queue<Node> newQueryPlan(@Nullable Request request, @Nullable Session session) {
       return new ArrayDeque<>(Collections.singleton(iterator.next()));
     }
 
     @Override
-    public void onAdd(@NonNull Node node) {}
+    public void onAdd(@Nonnull Node node) {}
 
     @Override
-    public void onUp(@NonNull Node node) {}
+    public void onUp(@Nonnull Node node) {}
 
     @Override
-    public void onDown(@NonNull Node node) {}
+    public void onDown(@Nonnull Node node) {}
 
     @Override
-    public void onRemove(@NonNull Node node) {}
+    public void onRemove(@Nonnull Node node) {}
 
     @Override
     public void close() {}

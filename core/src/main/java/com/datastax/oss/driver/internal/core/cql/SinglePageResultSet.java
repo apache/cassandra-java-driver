@@ -25,11 +25,11 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.internal.core.PagingIterableWrapper;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.NotThreadSafe;
 
 @NotThreadSafe
@@ -41,19 +41,19 @@ public class SinglePageResultSet implements ResultSet {
     assert !onlyPage.hasMorePages();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ColumnDefinitions getColumnDefinitions() {
     return onlyPage.getColumnDefinitions();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ExecutionInfo getExecutionInfo() {
     return onlyPage.getExecutionInfo();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<ExecutionInfo> getExecutionInfos() {
     // Assuming this will be called 0 or 1 time, avoid creating the list if it's 0.
@@ -70,13 +70,13 @@ public class SinglePageResultSet implements ResultSet {
     return onlyPage.remaining();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Iterator<Row> iterator() {
     return onlyPage.currentPage().iterator();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Spliterator<Row> spliterator() {
     return PagingIterableSpliterator.builder(this)
@@ -84,7 +84,7 @@ public class SinglePageResultSet implements ResultSet {
         .build();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public <TargetElementT> PagingIterable<TargetElementT> map(
       Function<? super Row, ? extends TargetElementT> elementMapper) {

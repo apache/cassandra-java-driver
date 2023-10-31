@@ -21,9 +21,9 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 /**
  * Specialized function metadata for DSE.
@@ -123,10 +123,10 @@ public interface DseFunctionMetadata extends FunctionMetadata {
    *
    * @return the argument names that the function is monotonic on.
    */
-  @NonNull
+  @Nonnull
   List<CqlIdentifier> getMonotonicArgumentNames();
 
-  @NonNull
+  @Nonnull
   @Override
   default String describe(boolean pretty) {
     ScriptBuilder builder = new ScriptBuilder(pretty);

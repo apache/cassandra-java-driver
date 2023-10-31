@@ -18,9 +18,9 @@
 package com.datastax.oss.driver.api.core.type.codec;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A specialized short codec that knows how to deal with primitive types.
@@ -31,19 +31,19 @@ import java.nio.ByteBuffer;
 public interface PrimitiveShortCodec extends TypeCodec<Short> {
 
   @Nullable
-  ByteBuffer encodePrimitive(short value, @NonNull ProtocolVersion protocolVersion);
+  ByteBuffer encodePrimitive(short value, @Nonnull ProtocolVersion protocolVersion);
 
-  short decodePrimitive(@Nullable ByteBuffer value, @NonNull ProtocolVersion protocolVersion);
+  short decodePrimitive(@Nullable ByteBuffer value, @Nonnull ProtocolVersion protocolVersion);
 
   @Nullable
   @Override
-  default ByteBuffer encode(@Nullable Short value, @NonNull ProtocolVersion protocolVersion) {
+  default ByteBuffer encode(@Nullable Short value, @Nonnull ProtocolVersion protocolVersion) {
     return (value == null) ? null : encodePrimitive(value, protocolVersion);
   }
 
   @Nullable
   @Override
-  default Short decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  default Short decode(@Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     return (bytes == null || bytes.remaining() == 0)
         ? null
         : decodePrimitive(bytes, protocolVersion);

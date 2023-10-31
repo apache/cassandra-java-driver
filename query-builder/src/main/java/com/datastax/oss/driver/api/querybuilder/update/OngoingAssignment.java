@@ -20,8 +20,8 @@ package com.datastax.oss.driver.api.querybuilder.update;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
+import javax.annotation.Nonnull;
 
 public interface OngoingAssignment {
 
@@ -35,8 +35,8 @@ public interface OngoingAssignment {
    * <p>If you add multiple assignments as one, consider {@link #set(Iterable)} as a more efficient
    * alternative.
    */
-  @NonNull
-  UpdateWithAssignments set(@NonNull Assignment assignment);
+  @Nonnull
+  UpdateWithAssignments set(@Nonnull Assignment assignment);
 
   /**
    * Adds multiple assignments at once.
@@ -47,12 +47,12 @@ public interface OngoingAssignment {
    * <p>To create the argument, use one of the factory methods in {@link Assignment}, for example
    * Assignment{@link #setColumn(CqlIdentifier, Term)}.
    */
-  @NonNull
-  UpdateWithAssignments set(@NonNull Iterable<Assignment> additionalAssignments);
+  @Nonnull
+  UpdateWithAssignments set(@Nonnull Iterable<Assignment> additionalAssignments);
 
   /** Var-arg equivalent of {@link #set(Iterable)}. */
-  @NonNull
-  default UpdateWithAssignments set(@NonNull Assignment... assignments) {
+  @Nonnull
+  default UpdateWithAssignments set(@Nonnull Assignment... assignments) {
     return set(Arrays.asList(assignments));
   }
 
@@ -63,8 +63,8 @@ public interface OngoingAssignment {
    *
    * @see Assignment#setColumn(CqlIdentifier, Term)
    */
-  @NonNull
-  default UpdateWithAssignments setColumn(@NonNull CqlIdentifier columnId, @NonNull Term value) {
+  @Nonnull
+  default UpdateWithAssignments setColumn(@Nonnull CqlIdentifier columnId, @Nonnull Term value) {
     return set(Assignment.setColumn(columnId, value));
   }
 
@@ -74,8 +74,8 @@ public interface OngoingAssignment {
    *
    * @see Assignment#setColumn(String, Term)
    */
-  @NonNull
-  default UpdateWithAssignments setColumn(@NonNull String columnName, @NonNull Term value) {
+  @Nonnull
+  default UpdateWithAssignments setColumn(@Nonnull String columnName, @Nonnull Term value) {
     return setColumn(CqlIdentifier.fromCql(columnName), value);
   }
 
@@ -87,9 +87,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#setField(CqlIdentifier, CqlIdentifier, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments setField(
-      @NonNull CqlIdentifier columnId, @NonNull CqlIdentifier fieldId, @NonNull Term value) {
+      @Nonnull CqlIdentifier columnId, @Nonnull CqlIdentifier fieldId, @Nonnull Term value) {
     return set(Assignment.setField(columnId, fieldId, value));
   }
 
@@ -99,9 +99,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#setField(String, String, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments setField(
-      @NonNull String columnName, @NonNull String fieldName, @NonNull Term value) {
+      @Nonnull String columnName, @Nonnull String fieldName, @Nonnull Term value) {
     return setField(CqlIdentifier.fromCql(columnName), CqlIdentifier.fromCql(fieldName), value);
   }
 
@@ -113,9 +113,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#setMapValue(CqlIdentifier, Term, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments setMapValue(
-      @NonNull CqlIdentifier columnId, @NonNull Term key, @NonNull Term value) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term key, @Nonnull Term value) {
     return set(Assignment.setMapValue(columnId, key, value));
   }
 
@@ -125,9 +125,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#setMapValue(String, Term, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments setMapValue(
-      @NonNull String columnName, @NonNull Term key, @NonNull Term value) {
+      @Nonnull String columnName, @Nonnull Term key, @Nonnull Term value) {
     return setMapValue(CqlIdentifier.fromCql(columnName), key, value);
   }
 
@@ -139,9 +139,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#setListValue(CqlIdentifier, Term, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments setListValue(
-      @NonNull CqlIdentifier columnId, @NonNull Term index, @NonNull Term value) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term index, @Nonnull Term value) {
     return set(Assignment.setListValue(columnId, index, value));
   }
 
@@ -151,9 +151,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#setListValue(String, Term, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments setListValue(
-      @NonNull String columnName, @NonNull Term index, @NonNull Term value) {
+      @Nonnull String columnName, @Nonnull Term index, @Nonnull Term value) {
     return setListValue(CqlIdentifier.fromCql(columnName), index, value);
   }
 
@@ -164,8 +164,8 @@ public interface OngoingAssignment {
    *
    * @see Assignment#increment(CqlIdentifier, Term)
    */
-  @NonNull
-  default UpdateWithAssignments increment(@NonNull CqlIdentifier columnId, @NonNull Term amount) {
+  @Nonnull
+  default UpdateWithAssignments increment(@Nonnull CqlIdentifier columnId, @Nonnull Term amount) {
     return set(Assignment.increment(columnId, amount));
   }
 
@@ -175,8 +175,8 @@ public interface OngoingAssignment {
    *
    * @see Assignment#increment(String, Term)
    */
-  @NonNull
-  default UpdateWithAssignments increment(@NonNull String columnName, @NonNull Term amount) {
+  @Nonnull
+  default UpdateWithAssignments increment(@Nonnull String columnName, @Nonnull Term amount) {
     return increment(CqlIdentifier.fromCql(columnName), amount);
   }
 
@@ -188,8 +188,8 @@ public interface OngoingAssignment {
    *
    * @see Assignment#increment(CqlIdentifier)
    */
-  @NonNull
-  default UpdateWithAssignments increment(@NonNull CqlIdentifier columnId) {
+  @Nonnull
+  default UpdateWithAssignments increment(@Nonnull CqlIdentifier columnId) {
     return increment(columnId, QueryBuilder.literal(1));
   }
 
@@ -198,8 +198,8 @@ public interface OngoingAssignment {
    *
    * @see Assignment#increment(CqlIdentifier)
    */
-  @NonNull
-  default UpdateWithAssignments increment(@NonNull String columnName) {
+  @Nonnull
+  default UpdateWithAssignments increment(@Nonnull String columnName) {
     return increment(CqlIdentifier.fromCql(columnName));
   }
 
@@ -210,8 +210,8 @@ public interface OngoingAssignment {
    *
    * @see Assignment#decrement(CqlIdentifier, Term)
    */
-  @NonNull
-  default UpdateWithAssignments decrement(@NonNull CqlIdentifier columnId, @NonNull Term amount) {
+  @Nonnull
+  default UpdateWithAssignments decrement(@Nonnull CqlIdentifier columnId, @Nonnull Term amount) {
     return set(Assignment.decrement(columnId, amount));
   }
 
@@ -221,8 +221,8 @@ public interface OngoingAssignment {
    *
    * @see Assignment#decrement(String, Term)
    */
-  @NonNull
-  default UpdateWithAssignments decrement(@NonNull String columnName, @NonNull Term amount) {
+  @Nonnull
+  default UpdateWithAssignments decrement(@Nonnull String columnName, @Nonnull Term amount) {
     return decrement(CqlIdentifier.fromCql(columnName), amount);
   }
 
@@ -233,8 +233,8 @@ public interface OngoingAssignment {
    *
    * @see Assignment#decrement(CqlIdentifier)
    */
-  @NonNull
-  default UpdateWithAssignments decrement(@NonNull CqlIdentifier columnId) {
+  @Nonnull
+  default UpdateWithAssignments decrement(@Nonnull CqlIdentifier columnId) {
     return decrement(columnId, QueryBuilder.literal(1));
   }
 
@@ -243,8 +243,8 @@ public interface OngoingAssignment {
    *
    * @see Assignment#decrement(String)
    */
-  @NonNull
-  default UpdateWithAssignments decrement(@NonNull String columnName) {
+  @Nonnull
+  default UpdateWithAssignments decrement(@Nonnull String columnName) {
     return decrement(CqlIdentifier.fromCql(columnName));
   }
 
@@ -257,8 +257,8 @@ public interface OngoingAssignment {
    *
    * @see Assignment#append(CqlIdentifier, Term)
    */
-  @NonNull
-  default UpdateWithAssignments append(@NonNull CqlIdentifier columnId, @NonNull Term suffix) {
+  @Nonnull
+  default UpdateWithAssignments append(@Nonnull CqlIdentifier columnId, @Nonnull Term suffix) {
     return set(Assignment.append(columnId, suffix));
   }
 
@@ -268,8 +268,8 @@ public interface OngoingAssignment {
    *
    * @see Assignment#append(String, Term)
    */
-  @NonNull
-  default UpdateWithAssignments append(@NonNull String columnName, @NonNull Term suffix) {
+  @Nonnull
+  default UpdateWithAssignments append(@Nonnull String columnName, @Nonnull Term suffix) {
     return append(CqlIdentifier.fromCql(columnName), suffix);
   }
 
@@ -283,9 +283,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#appendListElement(CqlIdentifier, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments appendListElement(
-      @NonNull CqlIdentifier columnId, @NonNull Term suffix) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term suffix) {
     return set(Assignment.appendListElement(columnId, suffix));
   }
 
@@ -295,9 +295,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#appendListElement(String, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments appendListElement(
-      @NonNull String columnName, @NonNull Term suffix) {
+      @Nonnull String columnName, @Nonnull Term suffix) {
     return appendListElement(CqlIdentifier.fromCql(columnName), suffix);
   }
 
@@ -311,9 +311,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#appendSetElement(CqlIdentifier, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments appendSetElement(
-      @NonNull CqlIdentifier columnId, @NonNull Term suffix) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term suffix) {
     return set(Assignment.appendSetElement(columnId, suffix));
   }
 
@@ -321,8 +321,8 @@ public interface OngoingAssignment {
    * Shortcut for {@link #appendSetElement(CqlIdentifier, Term)
    * appendSetElement(CqlIdentifier.fromCql(columnName), suffix)}.
    */
-  @NonNull
-  default UpdateWithAssignments appendSetElement(@NonNull String columnName, @NonNull Term suffix) {
+  @Nonnull
+  default UpdateWithAssignments appendSetElement(@Nonnull String columnName, @Nonnull Term suffix) {
     return appendSetElement(CqlIdentifier.fromCql(columnName), suffix);
   }
 
@@ -336,9 +336,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#appendMapEntry(CqlIdentifier, Term, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments appendMapEntry(
-      @NonNull CqlIdentifier columnId, @NonNull Term key, @NonNull Term value) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term key, @Nonnull Term value) {
     return set(Assignment.appendMapEntry(columnId, key, value));
   }
 
@@ -348,9 +348,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#appendMapEntry(String, Term, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments appendMapEntry(
-      @NonNull String columnName, @NonNull Term key, @NonNull Term value) {
+      @Nonnull String columnName, @Nonnull Term key, @Nonnull Term value) {
     return appendMapEntry(CqlIdentifier.fromCql(columnName), key, value);
   }
 
@@ -363,8 +363,8 @@ public interface OngoingAssignment {
    *
    * @see Assignment#prepend(CqlIdentifier, Term)
    */
-  @NonNull
-  default UpdateWithAssignments prepend(@NonNull CqlIdentifier columnId, @NonNull Term prefix) {
+  @Nonnull
+  default UpdateWithAssignments prepend(@Nonnull CqlIdentifier columnId, @Nonnull Term prefix) {
     return set(Assignment.prepend(columnId, prefix));
   }
 
@@ -374,8 +374,8 @@ public interface OngoingAssignment {
    *
    * @see Assignment#prepend(String, Term)
    */
-  @NonNull
-  default UpdateWithAssignments prepend(@NonNull String columnName, @NonNull Term prefix) {
+  @Nonnull
+  default UpdateWithAssignments prepend(@Nonnull String columnName, @Nonnull Term prefix) {
     return prepend(CqlIdentifier.fromCql(columnName), prefix);
   }
 
@@ -389,9 +389,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#prependListElement(CqlIdentifier, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments prependListElement(
-      @NonNull CqlIdentifier columnId, @NonNull Term suffix) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term suffix) {
     return set(Assignment.prependListElement(columnId, suffix));
   }
 
@@ -401,9 +401,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#prependListElement(String, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments prependListElement(
-      @NonNull String columnName, @NonNull Term suffix) {
+      @Nonnull String columnName, @Nonnull Term suffix) {
     return prependListElement(CqlIdentifier.fromCql(columnName), suffix);
   }
 
@@ -417,9 +417,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#prependSetElement(CqlIdentifier, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments prependSetElement(
-      @NonNull CqlIdentifier columnId, @NonNull Term suffix) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term suffix) {
     return set(Assignment.prependSetElement(columnId, suffix));
   }
 
@@ -429,9 +429,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#prependSetElement(String, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments prependSetElement(
-      @NonNull String columnName, @NonNull Term suffix) {
+      @Nonnull String columnName, @Nonnull Term suffix) {
     return prependSetElement(CqlIdentifier.fromCql(columnName), suffix);
   }
 
@@ -445,9 +445,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#prependMapEntry(CqlIdentifier, Term, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments prependMapEntry(
-      @NonNull CqlIdentifier columnId, @NonNull Term key, @NonNull Term value) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term key, @Nonnull Term value) {
     return set(Assignment.prependMapEntry(columnId, key, value));
   }
 
@@ -457,9 +457,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#prependMapEntry(String, Term, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments prependMapEntry(
-      @NonNull String columnName, @NonNull Term key, @NonNull Term value) {
+      @Nonnull String columnName, @Nonnull Term key, @Nonnull Term value) {
     return prependMapEntry(CqlIdentifier.fromCql(columnName), key, value);
   }
 
@@ -478,9 +478,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#remove(CqlIdentifier, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments remove(
-      @NonNull CqlIdentifier columnId, @NonNull Term collectionToRemove) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term collectionToRemove) {
     return set(Assignment.remove(columnId, collectionToRemove));
   }
 
@@ -490,9 +490,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#remove(String, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments remove(
-      @NonNull String columnName, @NonNull Term collectionToRemove) {
+      @Nonnull String columnName, @Nonnull Term collectionToRemove) {
     return remove(CqlIdentifier.fromCql(columnName), collectionToRemove);
   }
 
@@ -506,9 +506,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#removeListElement(CqlIdentifier, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments removeListElement(
-      @NonNull CqlIdentifier columnId, @NonNull Term suffix) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term suffix) {
     return set(Assignment.removeListElement(columnId, suffix));
   }
 
@@ -518,9 +518,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#removeListElement(String, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments removeListElement(
-      @NonNull String columnName, @NonNull Term suffix) {
+      @Nonnull String columnName, @Nonnull Term suffix) {
     return removeListElement(CqlIdentifier.fromCql(columnName), suffix);
   }
 
@@ -534,9 +534,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#removeSetElement(CqlIdentifier, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments removeSetElement(
-      @NonNull CqlIdentifier columnId, @NonNull Term suffix) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term suffix) {
     return set(Assignment.removeSetElement(columnId, suffix));
   }
 
@@ -544,8 +544,8 @@ public interface OngoingAssignment {
    * Shortcut for {@link #removeSetElement(CqlIdentifier, Term)
    * removeSetElement(CqlIdentifier.fromCql(columnName), suffix)}.
    */
-  @NonNull
-  default UpdateWithAssignments removeSetElement(@NonNull String columnName, @NonNull Term suffix) {
+  @Nonnull
+  default UpdateWithAssignments removeSetElement(@Nonnull String columnName, @Nonnull Term suffix) {
     return removeSetElement(CqlIdentifier.fromCql(columnName), suffix);
   }
 
@@ -559,9 +559,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#removeMapEntry(CqlIdentifier, Term, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments removeMapEntry(
-      @NonNull CqlIdentifier columnId, @NonNull Term key, @NonNull Term value) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term key, @Nonnull Term value) {
     return set(Assignment.removeMapEntry(columnId, key, value));
   }
 
@@ -571,9 +571,9 @@ public interface OngoingAssignment {
    *
    * @see Assignment#removeMapEntry(String, Term, Term)
    */
-  @NonNull
+  @Nonnull
   default UpdateWithAssignments removeMapEntry(
-      @NonNull String columnName, @NonNull Term key, @NonNull Term value) {
+      @Nonnull String columnName, @Nonnull Term key, @Nonnull Term value) {
     return removeMapEntry(CqlIdentifier.fromCql(columnName), key, value);
   }
 }

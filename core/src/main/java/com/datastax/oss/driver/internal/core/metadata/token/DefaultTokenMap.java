@@ -31,7 +31,6 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSetMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.SetMultimap;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Collections;
@@ -40,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,11 +50,11 @@ public class DefaultTokenMap implements TokenMap {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultTokenMap.class);
 
   public static DefaultTokenMap build(
-      @NonNull Collection<Node> nodes,
-      @NonNull Collection<KeyspaceMetadata> keyspaces,
-      @NonNull TokenFactory tokenFactory,
-      @NonNull ReplicationStrategyFactory replicationStrategyFactory,
-      @NonNull String logPrefix) {
+      @Nonnull Collection<Node> nodes,
+      @Nonnull Collection<KeyspaceMetadata> keyspaces,
+      @Nonnull TokenFactory tokenFactory,
+      @Nonnull ReplicationStrategyFactory replicationStrategyFactory,
+      @Nonnull String logPrefix) {
 
     TokenToPrimaryAndRing tmp = buildTokenToPrimaryAndRing(nodes, tokenFactory);
     Map<Token, Node> tokenToPrimary = tmp.tokenToPrimary;
@@ -128,64 +128,64 @@ public class DefaultTokenMap implements TokenMap {
     return tokenFactory;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Token parse(@NonNull String tokenString) {
+  public Token parse(@Nonnull String tokenString) {
     return tokenFactory.parse(tokenString);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public String format(@NonNull Token token) {
+  public String format(@Nonnull Token token) {
     return tokenFactory.format(token);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Token newToken(@NonNull ByteBuffer... partitionKey) {
+  public Token newToken(@Nonnull ByteBuffer... partitionKey) {
     return tokenFactory.hash(RoutingKey.compose(partitionKey));
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public TokenRange newTokenRange(@NonNull Token start, @NonNull Token end) {
+  public TokenRange newTokenRange(@Nonnull Token start, @Nonnull Token end) {
     return tokenFactory.range(start, end);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Set<TokenRange> getTokenRanges() {
     return tokenRanges;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Set<TokenRange> getTokenRanges(@NonNull Node node) {
+  public Set<TokenRange> getTokenRanges(@Nonnull Node node) {
     return tokenRangesByPrimary.get(node);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Set<TokenRange> getTokenRanges(@NonNull CqlIdentifier keyspace, @NonNull Node replica) {
+  public Set<TokenRange> getTokenRanges(@Nonnull CqlIdentifier keyspace, @Nonnull Node replica) {
     KeyspaceTokenMap keyspaceMap = getKeyspaceMap(keyspace);
     return (keyspaceMap == null) ? Collections.emptySet() : keyspaceMap.getTokenRanges(replica);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Set<Node> getReplicas(@NonNull CqlIdentifier keyspace, @NonNull ByteBuffer partitionKey) {
+  public Set<Node> getReplicas(@Nonnull CqlIdentifier keyspace, @Nonnull ByteBuffer partitionKey) {
     KeyspaceTokenMap keyspaceMap = getKeyspaceMap(keyspace);
     return (keyspaceMap == null) ? Collections.emptySet() : keyspaceMap.getReplicas(partitionKey);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Set<Node> getReplicas(@NonNull CqlIdentifier keyspace, @NonNull Token token) {
+  public Set<Node> getReplicas(@Nonnull CqlIdentifier keyspace, @Nonnull Token token) {
     KeyspaceTokenMap keyspaceMap = getKeyspaceMap(keyspace);
     return (keyspaceMap == null) ? Collections.emptySet() : keyspaceMap.getReplicas(token);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getPartitionerName() {
     return tokenFactory.getPartitionerName();
@@ -198,9 +198,9 @@ public class DefaultTokenMap implements TokenMap {
 
   /** Called when only the schema has changed. */
   public DefaultTokenMap refresh(
-      @NonNull Collection<Node> nodes,
-      @NonNull Collection<KeyspaceMetadata> keyspaces,
-      @NonNull ReplicationStrategyFactory replicationStrategyFactory) {
+      @Nonnull Collection<Node> nodes,
+      @Nonnull Collection<KeyspaceMetadata> keyspaces,
+      @Nonnull ReplicationStrategyFactory replicationStrategyFactory) {
 
     Map<CqlIdentifier, Map<String, String>> newReplicationConfigs =
         buildReplicationConfigs(keyspaces, logPrefix);

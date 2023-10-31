@@ -18,14 +18,14 @@
 package com.datastax.oss.driver.internal.core.loadbalancing.nodeset;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -36,7 +36,7 @@ public class MultiDcNodeSet implements NodeSet {
   private final Map<String, Set<Node>> nodes = new ConcurrentHashMap<>();
 
   @Override
-  public boolean add(@NonNull Node node) {
+  public boolean add(@Nonnull Node node) {
     AtomicBoolean added = new AtomicBoolean();
     nodes.compute(
         getMapKey(node),
@@ -56,7 +56,7 @@ public class MultiDcNodeSet implements NodeSet {
   }
 
   @Override
-  public boolean remove(@NonNull Node node) {
+  public boolean remove(@Nonnull Node node) {
     AtomicBoolean removed = new AtomicBoolean();
     nodes.compute(
         getMapKey(node),
@@ -72,7 +72,7 @@ public class MultiDcNodeSet implements NodeSet {
   }
 
   @Override
-  @NonNull
+  @Nonnull
   public Set<Node> dc(@Nullable String dc) {
     return nodes.getOrDefault(getMapKey(dc), Collections.emptySet());
   }
@@ -82,12 +82,12 @@ public class MultiDcNodeSet implements NodeSet {
     return nodes.keySet();
   }
 
-  @NonNull
-  private String getMapKey(@NonNull Node node) {
+  @Nonnull
+  private String getMapKey(@Nonnull Node node) {
     return getMapKey(node.getDatacenter());
   }
 
-  @NonNull
+  @Nonnull
   private String getMapKey(@Nullable String dc) {
     return dc == null ? UNKNOWN_DC : dc;
   }

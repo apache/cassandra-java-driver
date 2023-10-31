@@ -17,12 +17,12 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.annotation.Nonnull;
 
 /**
  * Tracing information for a query.
@@ -33,10 +33,10 @@ import java.util.UUID;
  */
 public interface QueryTrace {
 
-  @NonNull
+  @Nonnull
   UUID getTracingId();
 
-  @NonNull
+  @Nonnull
   String getRequestType();
 
   /** The server-side duration of the query in microseconds. */
@@ -46,7 +46,7 @@ public interface QueryTrace {
    * @deprecated returns the coordinator IP, but {@link #getCoordinatorAddress()} should be
    *     preferred, since C* 4.0 and above now returns the port was well.
    */
-  @NonNull
+  @Nonnull
   @Deprecated
   InetAddress getCoordinator();
 
@@ -60,13 +60,13 @@ public interface QueryTrace {
    *
    * @since 4.6.0
    */
-  @NonNull
+  @Nonnull
   default InetSocketAddress getCoordinatorAddress() {
     return new InetSocketAddress(getCoordinator(), 0);
   }
 
   /** The parameters attached to this trace. */
-  @NonNull
+  @Nonnull
   Map<String, String> getParameters();
 
   /** The server-side timestamp of the start of this query. */
@@ -80,6 +80,6 @@ public interface QueryTrace {
    * requested just after the return of the query (the only guarantee being that the list will
    * contain the events pertaining to the coordinator).
    */
-  @NonNull
+  @Nonnull
   List<TraceEvent> getEvents();
 }

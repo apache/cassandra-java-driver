@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface OngoingCreateType {
 
@@ -33,15 +33,15 @@ public interface OngoingCreateType {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
-  @NonNull
-  CreateType withField(@NonNull CqlIdentifier identifier, @NonNull DataType dataType);
+  @Nonnull
+  CreateType withField(@Nonnull CqlIdentifier identifier, @Nonnull DataType dataType);
 
   /**
    * Shortcut for {@link #withField(CqlIdentifier, DataType)} (CqlIdentifier, DataType)
    * withField(CqlIdentifier.asCql(columnName), dataType)}.
    */
-  @NonNull
-  default CreateType withField(@NonNull String columnName, @NonNull DataType dataType) {
+  @Nonnull
+  default CreateType withField(@Nonnull String columnName, @Nonnull DataType dataType) {
     return withField(CqlIdentifier.fromCql(columnName), dataType);
   }
 }

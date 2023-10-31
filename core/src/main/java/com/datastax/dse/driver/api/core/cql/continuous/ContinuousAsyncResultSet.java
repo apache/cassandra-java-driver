@@ -21,9 +21,9 @@ import com.datastax.oss.driver.api.core.AsyncPagingIterable;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CancellationException;
+import javax.annotation.Nonnull;
 
 /**
  * The result of an {@linkplain ContinuousSession#executeContinuouslyAsync(Statement) asynchronous
@@ -73,7 +73,7 @@ public interface ContinuousAsyncResultSet
    * <p>Note: because the driver does not support query traces for continuous queries, {@link
    * ExecutionInfo#getTracingId()} will always be {@code null}.
    */
-  @NonNull
+  @Nonnull
   @Override
   ExecutionInfo getExecutionInfo();
 }

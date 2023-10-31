@@ -20,14 +20,14 @@ package com.datastax.oss.driver.api.core.metadata.schema;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.RelationParser;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 /** A materialized view in the schema metadata. */
 public interface ViewMetadata extends RelationMetadata {
 
   /** The table that this view is based on. */
-  @NonNull
+  @Nonnull
   CqlIdentifier getBaseTable();
 
   /**
@@ -36,10 +36,10 @@ public interface ViewMetadata extends RelationMetadata {
    */
   boolean includesAllColumns();
 
-  @NonNull
+  @Nonnull
   Optional<String> getWhereClause();
 
-  @NonNull
+  @Nonnull
   @Override
   default String describe(boolean pretty) {
     ScriptBuilder builder =
@@ -101,7 +101,7 @@ public interface ViewMetadata extends RelationMetadata {
     return builder.append(";").build();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   default String describeWithChildren(boolean pretty) {
     return describe(pretty); // A view has no children

@@ -41,13 +41,13 @@ import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.entity.EntityHelper;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.core.util.CollectionsUtils;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT> {
 
@@ -80,26 +80,26 @@ public abstract class EntityHelperBase<EntityT> implements EntityHelper<EntityT>
     return keyspaceId;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getTableId() {
     return tableId;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   @Deprecated
   public <SettableT extends SettableByName<SettableT>> SettableT set(
-      @NonNull EntityT entity,
-      @NonNull SettableT target,
-      @NonNull NullSavingStrategy nullSavingStrategy) {
+      @Nonnull EntityT entity,
+      @Nonnull SettableT target,
+      @Nonnull NullSavingStrategy nullSavingStrategy) {
     return set(entity, target, nullSavingStrategy, false);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   @Deprecated
-  public EntityT get(@NonNull GettableByName source) {
+  public EntityT get(@Nonnull GettableByName source) {
     return get(source, false);
   }
 

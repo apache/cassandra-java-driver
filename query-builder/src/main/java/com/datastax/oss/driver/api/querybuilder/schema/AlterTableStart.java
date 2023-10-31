@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface AlterTableStart
     extends AlterTableWithOptions,
@@ -31,7 +31,7 @@ public interface AlterTableStart
         AlterTableRenameColumn {
 
   /** Completes ALTER TABLE specifying that compact storage should be removed from the table. */
-  @NonNull
+  @Nonnull
   BuildableQuery dropCompactStorage();
 
   /**
@@ -40,15 +40,15 @@ public interface AlterTableStart
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
-  @NonNull
-  BuildableQuery alterColumn(@NonNull CqlIdentifier columnName, @NonNull DataType dataType);
+  @Nonnull
+  BuildableQuery alterColumn(@Nonnull CqlIdentifier columnName, @Nonnull DataType dataType);
 
   /**
    * Shortcut for {@link #alterColumn(CqlIdentifier,DataType)
    * alterColumn(CqlIdentifier.fromCql(columnName,dataType)}.
    */
-  @NonNull
-  default BuildableQuery alterColumn(@NonNull String columnName, @NonNull DataType dataType) {
+  @Nonnull
+  default BuildableQuery alterColumn(@Nonnull String columnName, @Nonnull DataType dataType) {
     return alterColumn(CqlIdentifier.fromCql(columnName), dataType);
   }
 }

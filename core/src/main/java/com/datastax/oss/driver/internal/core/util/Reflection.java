@@ -27,14 +27,14 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ListMultimap;
 import com.datastax.oss.driver.shaded.guava.common.collect.MultimapBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +51,7 @@ public class Reflection {
    * @return null if the class does not exist or could not be loaded.
    */
   @Nullable
-  public static Class<?> loadClass(@Nullable ClassLoader classLoader, @NonNull String className) {
+  public static Class<?> loadClass(@Nullable ClassLoader classLoader, @Nonnull String className) {
     try {
       Class<?> clazz;
       if (classLoader == null) {
@@ -276,7 +276,7 @@ public class Reflection {
     return components.build();
   }
 
-  @NonNull
+  @Nonnull
   private static <ComponentT> ComponentT resolveClass(
       InternalDriverContext context,
       String profileName,

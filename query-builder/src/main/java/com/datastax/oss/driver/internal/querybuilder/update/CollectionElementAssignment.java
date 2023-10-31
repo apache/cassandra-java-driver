@@ -21,8 +21,8 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.api.querybuilder.update.Assignment;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -49,10 +49,10 @@ public abstract class CollectionElementAssignment implements Assignment {
   private final char closing;
 
   protected CollectionElementAssignment(
-      @NonNull CqlIdentifier columnId,
-      @NonNull Operator operator,
+      @Nonnull CqlIdentifier columnId,
+      @Nonnull Operator operator,
       @Nullable Term key,
-      @NonNull Term value,
+      @Nonnull Term value,
       char opening,
       char closing) {
     Preconditions.checkNotNull(columnId);
@@ -66,7 +66,7 @@ public abstract class CollectionElementAssignment implements Assignment {
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     builder.append(String.format(operator.pattern, columnId.asCql(true), buildRightOperand()));
   }
 
@@ -86,7 +86,7 @@ public abstract class CollectionElementAssignment implements Assignment {
     return (key == null || key.isIdempotent()) && value.isIdempotent();
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getColumnId() {
     return columnId;
   }
@@ -96,7 +96,7 @@ public abstract class CollectionElementAssignment implements Assignment {
     return key;
   }
 
-  @NonNull
+  @Nonnull
   public Term getValue() {
     return value;
   }

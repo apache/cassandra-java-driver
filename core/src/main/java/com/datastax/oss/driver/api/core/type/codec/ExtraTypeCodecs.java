@@ -42,7 +42,6 @@ import com.datastax.oss.driver.internal.core.type.codec.extras.time.TimestampMil
 import com.datastax.oss.driver.internal.core.type.codec.extras.time.ZonedTimestampCodec;
 import com.datastax.oss.driver.internal.core.type.codec.extras.vector.FloatVectorToArrayCodec;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -50,6 +49,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 /**
  * Additional codecs that can be registered to handle different type mappings.
@@ -317,8 +317,8 @@ public class ExtraTypeCodecs {
    * @see TypeCodecs#TIMESTAMP
    * @see ExtraTypeCodecs#TIMESTAMP_UTC
    */
-  @NonNull
-  public static TypeCodec<Instant> timestampAt(@NonNull ZoneId timeZone) {
+  @Nonnull
+  public static TypeCodec<Instant> timestampAt(@Nonnull ZoneId timeZone) {
     return new TimestampCodec(timeZone);
   }
 
@@ -340,8 +340,8 @@ public class ExtraTypeCodecs {
    * @see ExtraTypeCodecs#TIMESTAMP_MILLIS_SYSTEM
    * @see ExtraTypeCodecs#TIMESTAMP_MILLIS_UTC
    */
-  @NonNull
-  public static PrimitiveLongCodec timestampMillisAt(@NonNull ZoneId timeZone) {
+  @Nonnull
+  public static PrimitiveLongCodec timestampMillisAt(@Nonnull ZoneId timeZone) {
     return new TimestampMillisCodec(timeZone);
   }
 
@@ -359,8 +359,8 @@ public class ExtraTypeCodecs {
    * @see ExtraTypeCodecs#ZONED_TIMESTAMP_UTC
    * @see ExtraTypeCodecs#ZONED_TIMESTAMP_PERSISTED
    */
-  @NonNull
-  public static TypeCodec<ZonedDateTime> zonedTimestampAt(@NonNull ZoneId timeZone) {
+  @Nonnull
+  public static TypeCodec<ZonedDateTime> zonedTimestampAt(@Nonnull ZoneId timeZone) {
     return new ZonedTimestampCodec(timeZone);
   }
 
@@ -377,8 +377,8 @@ public class ExtraTypeCodecs {
    * @see ExtraTypeCodecs#LOCAL_TIMESTAMP_UTC
    * @see #localTimestampAt(ZoneId)
    */
-  @NonNull
-  public static TypeCodec<LocalDateTime> localTimestampAt(@NonNull ZoneId timeZone) {
+  @Nonnull
+  public static TypeCodec<LocalDateTime> localTimestampAt(@Nonnull ZoneId timeZone) {
     return new LocalTimestampCodec(timeZone);
   }
 
@@ -392,8 +392,8 @@ public class ExtraTypeCodecs {
    * ExtraTypeCodecs#LONG_LIST_TO_ARRAY}, {@link ExtraTypeCodecs#FLOAT_LIST_TO_ARRAY} or {@link
    * ExtraTypeCodecs#DOUBLE_LIST_TO_ARRAY} instead.
    */
-  @NonNull
-  public static <T> TypeCodec<T[]> listToArrayOf(@NonNull TypeCodec<T> elementCodec) {
+  @Nonnull
+  public static <T> TypeCodec<T[]> listToArrayOf(@Nonnull TypeCodec<T> elementCodec) {
     return new ObjectListToArrayCodec<>(elementCodec);
   }
 
@@ -412,9 +412,9 @@ public class ExtraTypeCodecs {
    * fairly straightforward to implement a codec with {@link MappingCodec}, using {@link
    * TypeCodecs#INT} as the "inner" codec.
    */
-  @NonNull
+  @Nonnull
   public static <EnumT extends Enum<EnumT>> TypeCodec<EnumT> enumOrdinalsOf(
-      @NonNull Class<EnumT> enumClass) {
+      @Nonnull Class<EnumT> enumClass) {
     return new EnumOrdinalCodec<>(enumClass);
   }
 
@@ -424,9 +424,9 @@ public class ExtraTypeCodecs {
    *
    * @see #enumOrdinalsOf(Class)
    */
-  @NonNull
+  @Nonnull
   public static <EnumT extends Enum<EnumT>> TypeCodec<EnumT> enumNamesOf(
-      @NonNull Class<EnumT> enumClass) {
+      @Nonnull Class<EnumT> enumClass) {
     return new EnumNameCodec<>(enumClass);
   }
 
@@ -434,8 +434,8 @@ public class ExtraTypeCodecs {
    * Builds a new codec that wraps another codec's Java type into {@link Optional} instances
    * (mapping CQL null to {@link Optional#empty()}).
    */
-  @NonNull
-  public static <T> TypeCodec<Optional<T>> optionalOf(@NonNull TypeCodec<T> innerCodec) {
+  @Nonnull
+  public static <T> TypeCodec<Optional<T>> optionalOf(@Nonnull TypeCodec<T> innerCodec) {
     return new OptionalCodec<>(innerCodec);
   }
 
@@ -445,8 +445,8 @@ public class ExtraTypeCodecs {
    *
    * @see <a href="http://wiki.fasterxml.com/JacksonHome">Jackson JSON Library</a>
    */
-  @NonNull
-  public static <T> TypeCodec<T> json(@NonNull GenericType<T> javaType) {
+  @Nonnull
+  public static <T> TypeCodec<T> json(@Nonnull GenericType<T> javaType) {
     return new JsonCodec<>(javaType);
   }
 
@@ -456,8 +456,8 @@ public class ExtraTypeCodecs {
    *
    * @see <a href="http://wiki.fasterxml.com/JacksonHome">Jackson JSON Library</a>
    */
-  @NonNull
-  public static <T> TypeCodec<T> json(@NonNull Class<T> javaType) {
+  @Nonnull
+  public static <T> TypeCodec<T> json(@Nonnull Class<T> javaType) {
     return new JsonCodec<>(javaType);
   }
 
@@ -467,9 +467,9 @@ public class ExtraTypeCodecs {
    *
    * @see <a href="http://wiki.fasterxml.com/JacksonHome">Jackson JSON Library</a>
    */
-  @NonNull
+  @Nonnull
   public static <T> TypeCodec<T> json(
-      @NonNull GenericType<T> javaType, @NonNull ObjectMapper objectMapper) {
+      @Nonnull GenericType<T> javaType, @Nonnull ObjectMapper objectMapper) {
     return new JsonCodec<>(javaType, objectMapper);
   }
 
@@ -479,9 +479,9 @@ public class ExtraTypeCodecs {
    *
    * @see <a href="http://wiki.fasterxml.com/JacksonHome">Jackson JSON Library</a>
    */
-  @NonNull
+  @Nonnull
   public static <T> TypeCodec<T> json(
-      @NonNull Class<T> javaType, @NonNull ObjectMapper objectMapper) {
+      @Nonnull Class<T> javaType, @Nonnull ObjectMapper objectMapper) {
     return new JsonCodec<>(javaType, objectMapper);
   }
 

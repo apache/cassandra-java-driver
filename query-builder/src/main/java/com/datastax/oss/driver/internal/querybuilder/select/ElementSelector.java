@@ -21,9 +21,9 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -33,12 +33,12 @@ public class ElementSelector implements Selector {
   private final Term index;
   private final CqlIdentifier alias;
 
-  public ElementSelector(@NonNull Selector collection, @NonNull Term index) {
+  public ElementSelector(@Nonnull Selector collection, @Nonnull Term index) {
     this(collection, index, null);
   }
 
   public ElementSelector(
-      @NonNull Selector collection, @NonNull Term index, @Nullable CqlIdentifier alias) {
+      @Nonnull Selector collection, @Nonnull Term index, @Nullable CqlIdentifier alias) {
     Preconditions.checkNotNull(collection);
     Preconditions.checkNotNull(index);
     this.collection = collection;
@@ -46,14 +46,14 @@ public class ElementSelector implements Selector {
     this.alias = alias;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Selector as(@NonNull CqlIdentifier alias) {
+  public Selector as(@Nonnull CqlIdentifier alias) {
     return new ElementSelector(collection, index, alias);
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     collection.appendTo(builder);
     builder.append('[');
     index.appendTo(builder);
@@ -63,12 +63,12 @@ public class ElementSelector implements Selector {
     }
   }
 
-  @NonNull
+  @Nonnull
   public Selector getCollection() {
     return collection;
   }
 
-  @NonNull
+  @Nonnull
   public Term getIndex() {
     return index;
   }

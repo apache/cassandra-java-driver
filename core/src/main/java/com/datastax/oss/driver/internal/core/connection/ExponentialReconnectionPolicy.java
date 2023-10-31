@@ -23,9 +23,9 @@ import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,14 +117,14 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
     return maxDelayMs;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public ReconnectionSchedule newNodeSchedule(@NonNull Node node) {
+  public ReconnectionSchedule newNodeSchedule(@Nonnull Node node) {
     LOG.debug("[{}] Creating new schedule for {}", logPrefix, node);
     return new ExponentialSchedule();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ReconnectionSchedule newControlConnectionSchedule(
       @SuppressWarnings("ignored") boolean isInitialConnection) {
@@ -141,7 +141,7 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
 
     private int attempts;
 
-    @NonNull
+    @Nonnull
     @Override
     public Duration nextDelay() {
       long delay = (attempts > maxAttempts) ? maxDelayMs : calculateDelayWithJitter();

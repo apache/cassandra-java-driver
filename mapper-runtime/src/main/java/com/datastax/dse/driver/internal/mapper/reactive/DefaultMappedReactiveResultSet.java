@@ -22,9 +22,9 @@ import com.datastax.dse.driver.api.core.cql.reactive.ReactiveRow;
 import com.datastax.dse.driver.api.mapper.reactive.MappedReactiveResultSet;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -44,36 +44,36 @@ public class DefaultMappedReactiveResultSet<EntityT> implements MappedReactiveRe
         public void cancel() {}
       };
 
-  @NonNull private final ReactiveResultSet source;
+  @Nonnull private final ReactiveResultSet source;
 
-  @NonNull private final Function<ReactiveRow, EntityT> mapper;
+  @Nonnull private final Function<ReactiveRow, EntityT> mapper;
 
   public DefaultMappedReactiveResultSet(
-      @NonNull ReactiveResultSet source, @NonNull Function<ReactiveRow, EntityT> mapper) {
+      @Nonnull ReactiveResultSet source, @Nonnull Function<ReactiveRow, EntityT> mapper) {
     this.source = source;
     this.mapper = mapper;
   }
 
   @Override
-  @NonNull
+  @Nonnull
   public Publisher<? extends ColumnDefinitions> getColumnDefinitions() {
     return source.getColumnDefinitions();
   }
 
   @Override
-  @NonNull
+  @Nonnull
   public Publisher<? extends ExecutionInfo> getExecutionInfos() {
     return source.getExecutionInfos();
   }
 
   @Override
-  @NonNull
+  @Nonnull
   public Publisher<Boolean> wasApplied() {
     return source.wasApplied();
   }
 
   @Override
-  public void subscribe(@NonNull Subscriber<? super EntityT> subscriber) {
+  public void subscribe(@Nonnull Subscriber<? super EntityT> subscriber) {
     // As per rule 1.9, we need to throw an NPE if subscriber is null
     Objects.requireNonNull(subscriber, "Subscriber cannot be null");
     // As per rule 1.11, this publisher supports multiple subscribers in a unicast configuration,
@@ -102,12 +102,12 @@ public class DefaultMappedReactiveResultSet<EntityT> implements MappedReactiveRe
     private volatile Subscription upstreamSubscription;
     private volatile boolean terminated;
 
-    MappedReactiveResultSetSubscriber(@NonNull Subscriber<? super EntityT> subscriber) {
+    MappedReactiveResultSetSubscriber(@Nonnull Subscriber<? super EntityT> subscriber) {
       this.downstreamSubscriber = subscriber;
     }
 
     @Override
-    public void onSubscribe(@NonNull Subscription subscription) {
+    public void onSubscribe(@Nonnull Subscription subscription) {
       // As per rule 2.13, we need to throw NPE if the subscription is null
       Objects.requireNonNull(subscription, "Subscription cannot be null");
       // As per rule 2.12, Subscriber.onSubscribe MUST be called at most once for a given subscriber
@@ -137,7 +137,7 @@ public class DefaultMappedReactiveResultSet<EntityT> implements MappedReactiveRe
     }
 
     @Override
-    public void onNext(@NonNull ReactiveRow row) {
+    public void onNext(@Nonnull ReactiveRow row) {
       LOG.trace("Received onNext: {}", row);
       if (upstreamSubscription == null) {
         LOG.error("Publisher violated $1.09 by signalling onNext prior to onSubscribe.");
@@ -177,7 +177,7 @@ public class DefaultMappedReactiveResultSet<EntityT> implements MappedReactiveRe
     }
 
     @Override
-    public void onError(@NonNull Throwable error) {
+    public void onError(@Nonnull Throwable error) {
       LOG.trace("Received onError", error);
       if (upstreamSubscription == null) {
         LOG.error("Publisher violated $1.09 by signalling onError prior to onSubscribe.");

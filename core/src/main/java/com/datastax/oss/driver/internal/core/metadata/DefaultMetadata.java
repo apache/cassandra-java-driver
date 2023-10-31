@@ -29,12 +29,12 @@ import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,25 +66,25 @@ public class DefaultMetadata implements Metadata {
     this.clusterName = clusterName;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<UUID, Node> getNodes() {
     return nodes;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<CqlIdentifier, KeyspaceMetadata> getKeyspaces() {
     return keyspaces;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<TokenMap> getTokenMap() {
     return Optional.ofNullable(tokenMap);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<String> getClusterName() {
     return Optional.ofNullable(clusterName);

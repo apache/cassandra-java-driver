@@ -21,11 +21,11 @@ import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.MapType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -40,7 +40,7 @@ public class DefaultMapType implements MapType, Serializable {
   /** @serial */
   private final boolean frozen;
 
-  public DefaultMapType(@NonNull DataType keyType, @NonNull DataType valueType, boolean frozen) {
+  public DefaultMapType(@Nonnull DataType keyType, @Nonnull DataType valueType, boolean frozen) {
     Preconditions.checkNotNull(keyType);
     Preconditions.checkNotNull(valueType);
     this.keyType = keyType;
@@ -48,13 +48,13 @@ public class DefaultMapType implements MapType, Serializable {
     this.frozen = frozen;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getKeyType() {
     return keyType;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getValueType() {
     return valueType;
@@ -71,7 +71,7 @@ public class DefaultMapType implements MapType, Serializable {
   }
 
   @Override
-  public void attach(@NonNull AttachmentPoint attachmentPoint) {
+  public void attach(@Nonnull AttachmentPoint attachmentPoint) {
     keyType.attach(attachmentPoint);
     valueType.attach(attachmentPoint);
   }

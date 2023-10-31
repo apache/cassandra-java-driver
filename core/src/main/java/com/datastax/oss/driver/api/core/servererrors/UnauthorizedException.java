@@ -21,8 +21,8 @@ import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Indicates that a query cannot be performed due to the authorization restrictions of the logged
@@ -33,19 +33,19 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  */
 public class UnauthorizedException extends QueryValidationException {
 
-  public UnauthorizedException(@NonNull Node coordinator, @NonNull String message) {
+  public UnauthorizedException(@Nonnull Node coordinator, @Nonnull String message) {
     this(coordinator, message, null, false);
   }
 
   private UnauthorizedException(
-      @NonNull Node coordinator,
-      @NonNull String message,
+      @Nonnull Node coordinator,
+      @Nonnull String message,
       @Nullable ExecutionInfo executionInfo,
       boolean writableStackTrace) {
     super(coordinator, message, executionInfo, writableStackTrace);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new UnauthorizedException(getCoordinator(), getMessage(), getExecutionInfo(), true);

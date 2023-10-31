@@ -19,8 +19,6 @@ package com.datastax.dse.driver.internal.core.search;
 
 import com.datastax.dse.driver.api.core.data.time.DateRangePrecision;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -32,12 +30,14 @@ import java.util.Calendar;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class DateRangeUtil {
 
   /** Sets all the fields smaller than the given unit to their lowest possible value. */
-  @NonNull
-  public static ZonedDateTime roundDown(@NonNull ZonedDateTime date, @NonNull ChronoUnit unit) {
+  @Nonnull
+  public static ZonedDateTime roundDown(@Nonnull ZonedDateTime date, @Nonnull ChronoUnit unit) {
     switch (unit) {
       case YEARS:
         return date.with(TemporalAdjusters.firstDayOfYear()).truncatedTo(ChronoUnit.DAYS);
@@ -55,8 +55,8 @@ public class DateRangeUtil {
   }
 
   /** Sets all the fields smaller than the given unit to their highest possible value. */
-  @NonNull
-  public static ZonedDateTime roundUp(@NonNull ZonedDateTime date, @NonNull ChronoUnit unit) {
+  @Nonnull
+  public static ZonedDateTime roundUp(@Nonnull ZonedDateTime date, @Nonnull ChronoUnit unit) {
     return roundDown(date, unit)
         .plus(1, unit)
         // Even though ZDT has nanosecond-precision, DSE only rounds to millisecond precision so be

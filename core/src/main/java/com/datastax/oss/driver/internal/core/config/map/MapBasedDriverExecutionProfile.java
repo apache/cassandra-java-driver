@@ -22,13 +22,13 @@ import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSortedSet;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
+import javax.annotation.Nonnull;
 
 /** @see MapBasedDriverConfigLoader */
 public class MapBasedDriverExecutionProfile implements DriverExecutionProfile {
@@ -62,22 +62,22 @@ public class MapBasedDriverExecutionProfile implements DriverExecutionProfile {
     this.defaultProfile = defaultProfile;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getName() {
     return profileName;
   }
 
   @Override
-  public boolean isDefined(@NonNull DriverOption option) {
+  public boolean isDefined(@Nonnull DriverOption option) {
     return profile.containsKey(option) || defaultProfile.containsKey(option);
   }
 
   // Driver options don't encode the type, everything relies on the user putting the right types in
   // the backing map, so no point in trying to type-check.
   @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
-  @NonNull
-  private <T> T get(@NonNull DriverOption option) {
+  @Nonnull
+  private <T> T get(@Nonnull DriverOption option) {
     Object value = profile.getOrDefault(option, defaultProfile.get(option));
     if (value == null) {
       throw new IllegalArgumentException("Missing configuration option " + option.getPath());
@@ -86,91 +86,91 @@ public class MapBasedDriverExecutionProfile implements DriverExecutionProfile {
   }
 
   @Override
-  public boolean getBoolean(@NonNull DriverOption option) {
+  public boolean getBoolean(@Nonnull DriverOption option) {
     return get(option);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Boolean> getBooleanList(@NonNull DriverOption option) {
-    return get(option);
-  }
-
-  @Override
-  public int getInt(@NonNull DriverOption option) {
-    return get(option);
-  }
-
-  @NonNull
-  @Override
-  public List<Integer> getIntList(@NonNull DriverOption option) {
+  public List<Boolean> getBooleanList(@Nonnull DriverOption option) {
     return get(option);
   }
 
   @Override
-  public long getLong(@NonNull DriverOption option) {
+  public int getInt(@Nonnull DriverOption option) {
     return get(option);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Long> getLongList(@NonNull DriverOption option) {
-    return get(option);
-  }
-
-  @Override
-  public double getDouble(@NonNull DriverOption option) {
-    return get(option);
-  }
-
-  @NonNull
-  @Override
-  public List<Double> getDoubleList(@NonNull DriverOption option) {
-    return get(option);
-  }
-
-  @NonNull
-  @Override
-  public String getString(@NonNull DriverOption option) {
-    return get(option);
-  }
-
-  @NonNull
-  @Override
-  public List<String> getStringList(@NonNull DriverOption option) {
-    return get(option);
-  }
-
-  @NonNull
-  @Override
-  public Map<String, String> getStringMap(@NonNull DriverOption option) {
+  public List<Integer> getIntList(@Nonnull DriverOption option) {
     return get(option);
   }
 
   @Override
-  public long getBytes(@NonNull DriverOption option) {
+  public long getLong(@Nonnull DriverOption option) {
     return get(option);
   }
 
-  @NonNull
+  @Nonnull
+  @Override
+  public List<Long> getLongList(@Nonnull DriverOption option) {
+    return get(option);
+  }
+
+  @Override
+  public double getDouble(@Nonnull DriverOption option) {
+    return get(option);
+  }
+
+  @Nonnull
+  @Override
+  public List<Double> getDoubleList(@Nonnull DriverOption option) {
+    return get(option);
+  }
+
+  @Nonnull
+  @Override
+  public String getString(@Nonnull DriverOption option) {
+    return get(option);
+  }
+
+  @Nonnull
+  @Override
+  public List<String> getStringList(@Nonnull DriverOption option) {
+    return get(option);
+  }
+
+  @Nonnull
+  @Override
+  public Map<String, String> getStringMap(@Nonnull DriverOption option) {
+    return get(option);
+  }
+
+  @Override
+  public long getBytes(@Nonnull DriverOption option) {
+    return get(option);
+  }
+
+  @Nonnull
   @Override
   public List<Long> getBytesList(DriverOption option) {
     return get(option);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Duration getDuration(@NonNull DriverOption option) {
+  public Duration getDuration(@Nonnull DriverOption option) {
     return get(option);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Duration> getDurationList(@NonNull DriverOption option) {
+  public List<Duration> getDurationList(@Nonnull DriverOption option) {
     return get(option);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SortedSet<Map.Entry<String, Object>> entrySet() {
     ImmutableSortedSet.Builder<Map.Entry<String, Object>> builder =

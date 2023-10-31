@@ -24,9 +24,9 @@ import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.RelationParser;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 /**
  * Specialized table metadata, that handles the graph-specific properties introduced in DSE 6.8.
@@ -41,7 +41,7 @@ public interface DseGraphTableMetadata extends DseTableMetadata {
    *
    * <p>This is mutually exclusive with {@link #getEdge()}.
    */
-  @NonNull
+  @Nonnull
   Optional<DseVertexMetadata> getVertex();
 
   /**
@@ -49,10 +49,10 @@ public interface DseGraphTableMetadata extends DseTableMetadata {
    *
    * <p>This is mutually exclusive with {@link #getVertex()}.
    */
-  @NonNull
+  @Nonnull
   Optional<DseEdgeMetadata> getEdge();
 
-  @NonNull
+  @Nonnull
   @Override
   default String describe(boolean pretty) {
     ScriptBuilder builder = new ScriptBuilder(pretty);

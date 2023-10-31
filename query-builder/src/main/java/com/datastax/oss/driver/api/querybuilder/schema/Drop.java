@@ -18,11 +18,11 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface Drop extends BuildableQuery {
 
   /** Adds 'IF EXISTS" to the drop specification. */
-  @NonNull
+  @Nonnull
   Drop ifExists();
 }

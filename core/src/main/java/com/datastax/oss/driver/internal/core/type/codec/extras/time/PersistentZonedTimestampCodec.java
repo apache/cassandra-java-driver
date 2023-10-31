@@ -25,12 +25,12 @@ import com.datastax.oss.driver.api.core.type.codec.MappingCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -55,18 +55,18 @@ public class PersistentZonedTimestampCodec extends MappingCodec<TupleValue, Zone
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     Objects.requireNonNull(value);
     return value instanceof ZonedDateTime;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public TupleType getCqlType() {
     return CQL_TYPE;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable ZonedDateTime value) {
     if (value == null) {

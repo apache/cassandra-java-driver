@@ -18,13 +18,13 @@
 package com.datastax.oss.driver.api.core.metadata;
 
 import com.datastax.oss.driver.api.core.session.Session;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.GuardedBy;
 
 /**
@@ -87,13 +87,13 @@ public class SafeInitNodeStateListener implements NodeStateListener {
    * @param replayInitEvents whether to record events during initialization and replay them to the
    *     child listener once it's created, or just ignore them.
    */
-  public SafeInitNodeStateListener(@NonNull NodeStateListener delegate, boolean replayInitEvents) {
+  public SafeInitNodeStateListener(@Nonnull NodeStateListener delegate, boolean replayInitEvents) {
     this.delegate = Objects.requireNonNull(delegate);
     this.replayInitEvents = replayInitEvents;
   }
 
   @Override
-  public void onSessionReady(@NonNull Session session) {
+  public void onSessionReady(@Nonnull Session session) {
     lock.writeLock().lock();
     try {
       if (!sessionReady) {
@@ -111,22 +111,22 @@ public class SafeInitNodeStateListener implements NodeStateListener {
   }
 
   @Override
-  public void onAdd(@NonNull Node node) {
+  public void onAdd(@Nonnull Node node) {
     onEvent(node, InitEvent.Type.ADD);
   }
 
   @Override
-  public void onUp(@NonNull Node node) {
+  public void onUp(@Nonnull Node node) {
     onEvent(node, InitEvent.Type.UP);
   }
 
   @Override
-  public void onDown(@NonNull Node node) {
+  public void onDown(@Nonnull Node node) {
     onEvent(node, InitEvent.Type.DOWN);
   }
 
   @Override
-  public void onRemove(@NonNull Node node) {
+  public void onRemove(@Nonnull Node node) {
     onEvent(node, InitEvent.Type.REMOVE);
   }
 
@@ -183,12 +183,12 @@ public class SafeInitNodeStateListener implements NodeStateListener {
     final Node node;
     final Type type;
 
-    InitEvent(@NonNull Node node, @NonNull Type type) {
+    InitEvent(@Nonnull Node node, @Nonnull Type type) {
       this.node = Objects.requireNonNull(node);
       this.type = Objects.requireNonNull(type);
     }
 
-    void invoke(@NonNull NodeStateListener target) {
+    void invoke(@Nonnull NodeStateListener target) {
       type.listenerMethod.accept(Objects.requireNonNull(target), node);
     }
   }

@@ -20,10 +20,10 @@ package com.datastax.oss.driver.api.core;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Indicates that we've attempted to connect to a Cassandra node with a protocol version that it
@@ -39,18 +39,18 @@ public class UnsupportedProtocolVersionException extends DriverException {
   private final EndPoint endPoint;
   private final List<ProtocolVersion> attemptedVersions;
 
-  @NonNull
+  @Nonnull
   public static UnsupportedProtocolVersionException forSingleAttempt(
-      @NonNull EndPoint endPoint, @NonNull ProtocolVersion attemptedVersion) {
+      @Nonnull EndPoint endPoint, @Nonnull ProtocolVersion attemptedVersion) {
     String message =
         String.format("[%s] Host does not support protocol version %s", endPoint, attemptedVersion);
     return new UnsupportedProtocolVersionException(
         endPoint, message, Collections.singletonList(attemptedVersion), null);
   }
 
-  @NonNull
+  @Nonnull
   public static UnsupportedProtocolVersionException forNegotiation(
-      @NonNull EndPoint endPoint, @NonNull List<ProtocolVersion> attemptedVersions) {
+      @Nonnull EndPoint endPoint, @Nonnull List<ProtocolVersion> attemptedVersions) {
     String message =
         String.format(
             "[%s] Protocol negotiation failed: could not find a common version (attempted: %s). "
@@ -62,8 +62,8 @@ public class UnsupportedProtocolVersionException extends DriverException {
 
   public UnsupportedProtocolVersionException(
       @Nullable EndPoint endPoint, // technically nullable, but should never be in real life
-      @NonNull String message,
-      @NonNull List<ProtocolVersion> attemptedVersions) {
+      @Nonnull String message,
+      @Nonnull List<ProtocolVersion> attemptedVersions) {
     this(endPoint, message, attemptedVersions, null);
   }
 
@@ -84,12 +84,12 @@ public class UnsupportedProtocolVersionException extends DriverException {
   }
 
   /** The versions that were attempted. */
-  @NonNull
+  @Nonnull
   public List<ProtocolVersion> getAttemptedVersions() {
     return attemptedVersions;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new UnsupportedProtocolVersionException(

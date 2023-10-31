@@ -31,9 +31,9 @@ import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.internal.querybuilder.schema.OptionsUtils;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -60,7 +60,7 @@ public class DefaultCreateDseTable
   private final DseTableVertexOperation vertexOperation;
   private final DseTableEdgeOperation edgeOperation;
 
-  public DefaultCreateDseTable(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier tableName) {
+  public DefaultCreateDseTable(@Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier tableName) {
     this(
         keyspace,
         tableName,
@@ -79,18 +79,18 @@ public class DefaultCreateDseTable
 
   public DefaultCreateDseTable(
       @Nullable CqlIdentifier keyspace,
-      @NonNull CqlIdentifier tableName,
+      @Nonnull CqlIdentifier tableName,
       boolean ifNotExists,
       boolean compactStorage,
-      @NonNull ImmutableMap<CqlIdentifier, DataType> columnsInOrder,
-      @NonNull ImmutableSet<CqlIdentifier> partitionKeyColumns,
-      @NonNull ImmutableSet<CqlIdentifier> clusteringKeyColumns,
-      @NonNull ImmutableSet<CqlIdentifier> staticColumns,
-      @NonNull ImmutableSet<CqlIdentifier> regularColumns,
-      @NonNull ImmutableMap<CqlIdentifier, ClusteringOrder> orderings,
+      @Nonnull ImmutableMap<CqlIdentifier, DataType> columnsInOrder,
+      @Nonnull ImmutableSet<CqlIdentifier> partitionKeyColumns,
+      @Nonnull ImmutableSet<CqlIdentifier> clusteringKeyColumns,
+      @Nonnull ImmutableSet<CqlIdentifier> staticColumns,
+      @Nonnull ImmutableSet<CqlIdentifier> regularColumns,
+      @Nonnull ImmutableMap<CqlIdentifier, ClusteringOrder> orderings,
       @Nullable DseTableVertexOperation vertexOperation,
       @Nullable DseTableEdgeOperation edgeOperation,
-      @NonNull ImmutableMap<String, Object> options) {
+      @Nonnull ImmutableMap<String, Object> options) {
     this.keyspace = keyspace;
     this.tableName = tableName;
     this.ifNotExists = ifNotExists;
@@ -106,7 +106,7 @@ public class DefaultCreateDseTable
     this.edgeOperation = edgeOperation;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseTableStart ifNotExists() {
     return new DefaultCreateDseTable(
@@ -125,10 +125,10 @@ public class DefaultCreateDseTable
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseTable withPartitionKey(
-      @NonNull CqlIdentifier columnName, @NonNull DataType dataType) {
+      @Nonnull CqlIdentifier columnName, @Nonnull DataType dataType) {
     return new DefaultCreateDseTable(
         keyspace,
         tableName,
@@ -145,10 +145,10 @@ public class DefaultCreateDseTable
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseTable withClusteringColumn(
-      @NonNull CqlIdentifier columnName, @NonNull DataType dataType) {
+      @Nonnull CqlIdentifier columnName, @Nonnull DataType dataType) {
     return new DefaultCreateDseTable(
         keyspace,
         tableName,
@@ -165,9 +165,9 @@ public class DefaultCreateDseTable
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateDseTable withColumn(@NonNull CqlIdentifier columnName, @NonNull DataType dataType) {
+  public CreateDseTable withColumn(@Nonnull CqlIdentifier columnName, @Nonnull DataType dataType) {
     return new DefaultCreateDseTable(
         keyspace,
         tableName,
@@ -184,10 +184,10 @@ public class DefaultCreateDseTable
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseTable withStaticColumn(
-      @NonNull CqlIdentifier columnName, @NonNull DataType dataType) {
+      @Nonnull CqlIdentifier columnName, @Nonnull DataType dataType) {
     return new DefaultCreateDseTable(
         keyspace,
         tableName,
@@ -204,7 +204,7 @@ public class DefaultCreateDseTable
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseTableWithOptions withCompactStorage() {
     return new DefaultCreateDseTable(
@@ -223,23 +223,23 @@ public class DefaultCreateDseTable
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseTableWithOptions withClusteringOrderByIds(
-      @NonNull Map<CqlIdentifier, ClusteringOrder> orderings) {
+      @Nonnull Map<CqlIdentifier, ClusteringOrder> orderings) {
     return withClusteringOrders(ImmutableCollections.concat(this.orderings, orderings));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseTableWithOptions withClusteringOrder(
-      @NonNull CqlIdentifier columnName, @NonNull ClusteringOrder order) {
+      @Nonnull CqlIdentifier columnName, @Nonnull ClusteringOrder order) {
     return withClusteringOrders(ImmutableCollections.append(orderings, columnName, order));
   }
 
-  @NonNull
+  @Nonnull
   public CreateDseTableWithOptions withClusteringOrders(
-      @NonNull ImmutableMap<CqlIdentifier, ClusteringOrder> orderings) {
+      @Nonnull ImmutableMap<CqlIdentifier, ClusteringOrder> orderings) {
     return new DefaultCreateDseTable(
         keyspace,
         tableName,
@@ -256,7 +256,7 @@ public class DefaultCreateDseTable
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseTableWithOptions withVertexLabel(@Nullable CqlIdentifier vertexLabelId) {
     return new DefaultCreateDseTable(
@@ -275,12 +275,12 @@ public class DefaultCreateDseTable
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseTableWithOptions withEdgeLabel(
       @Nullable CqlIdentifier edgeLabelId,
-      @NonNull DseGraphEdgeSide from,
-      @NonNull DseGraphEdgeSide to) {
+      @Nonnull DseGraphEdgeSide from,
+      @Nonnull DseGraphEdgeSide to) {
     return new DefaultCreateDseTable(
         keyspace,
         tableName,
@@ -297,9 +297,9 @@ public class DefaultCreateDseTable
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateDseTable withOption(@NonNull String name, @NonNull Object value) {
+  public CreateDseTable withOption(@Nonnull String name, @Nonnull Object value) {
     return new DefaultCreateDseTable(
         keyspace,
         tableName,
@@ -316,7 +316,7 @@ public class DefaultCreateDseTable
         ImmutableCollections.append(options, name, value));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder();
@@ -423,7 +423,7 @@ public class DefaultCreateDseTable
     return asCql();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, Object> getOptions() {
     return options;
@@ -434,7 +434,7 @@ public class DefaultCreateDseTable
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getTable() {
     return tableName;
   }
@@ -447,32 +447,32 @@ public class DefaultCreateDseTable
     return compactStorage;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableMap<CqlIdentifier, DataType> getColumnsInOrder() {
     return columnsInOrder;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableSet<CqlIdentifier> getPartitionKeyColumns() {
     return partitionKeyColumns;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableSet<CqlIdentifier> getClusteringKeyColumns() {
     return clusteringKeyColumns;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableSet<CqlIdentifier> getStaticColumns() {
     return staticColumns;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableSet<CqlIdentifier> getRegularColumns() {
     return regularColumns;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableMap<CqlIdentifier, ClusteringOrder> getOrderings() {
     return orderings;
   }

@@ -22,11 +22,11 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -44,20 +44,20 @@ public class MapCodec<KeyT, ValueT> implements TypeCodec<Map<KeyT, ValueT>> {
     this.javaType = GenericType.mapOf(keyCodec.getJavaType(), valueCodec.getJavaType());
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<Map<KeyT, ValueT>> getJavaType() {
     return javaType;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return cqlType;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     if (value instanceof Map) {
       // runtime type ok, now check key and value types
       Map<?, ?> map = (Map<?, ?>) value;
@@ -73,7 +73,7 @@ public class MapCodec<KeyT, ValueT> implements TypeCodec<Map<KeyT, ValueT>> {
   @Override
   @Nullable
   public ByteBuffer encode(
-      @Nullable Map<KeyT, ValueT> value, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable Map<KeyT, ValueT> value, @Nonnull ProtocolVersion protocolVersion) {
     // An int indicating the number of key/value pairs in the map, followed by the pairs. Each pair
     // is a byte array representing the serialized key, preceded by an int indicating its size,
     // followed by the value in the same format.
@@ -128,7 +128,7 @@ public class MapCodec<KeyT, ValueT> implements TypeCodec<Map<KeyT, ValueT>> {
   @Nullable
   @Override
   public Map<KeyT, ValueT> decode(
-      @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return new LinkedHashMap<>(0);
     } else {
@@ -164,7 +164,7 @@ public class MapCodec<KeyT, ValueT> implements TypeCodec<Map<KeyT, ValueT>> {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable Map<KeyT, ValueT> value) {
     if (value == null) {

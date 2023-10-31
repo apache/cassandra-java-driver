@@ -19,12 +19,12 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -36,8 +36,8 @@ import net.jcip.annotations.NotThreadSafe;
 @NotThreadSafe
 public class PagingIterableSpliterator<ElementT> implements Spliterator<ElementT> {
 
-  @NonNull
-  public static <ElementT> Builder<ElementT> builder(@NonNull PagingIterable<ElementT> iterable) {
+  @Nonnull
+  public static <ElementT> Builder<ElementT> builder(@Nonnull PagingIterable<ElementT> iterable) {
     return new Builder<>(iterable);
   }
 
@@ -55,12 +55,12 @@ public class PagingIterableSpliterator<ElementT> implements Spliterator<ElementT
    *
    * @param iterable The {@link PagingIterable} to create a spliterator for.
    */
-  public PagingIterableSpliterator(@NonNull PagingIterable<ElementT> iterable) {
+  public PagingIterableSpliterator(@Nonnull PagingIterable<ElementT> iterable) {
     this(iterable, Long.MAX_VALUE, DEFAULT_CHUNK_SIZE);
   }
 
   private PagingIterableSpliterator(
-      @NonNull PagingIterable<ElementT> iterable, long estimatedSize, int chunkSize) {
+      @Nonnull PagingIterable<ElementT> iterable, long estimatedSize, int chunkSize) {
     this.iterable = Objects.requireNonNull(iterable, "iterable cannot be null");
     this.estimatedSize = estimatedSize;
     this.chunkSize = chunkSize;
@@ -136,25 +136,25 @@ public class PagingIterableSpliterator<ElementT> implements Spliterator<ElementT
     private long estimatedSize = Long.MAX_VALUE;
     private int chunkSize = DEFAULT_CHUNK_SIZE;
 
-    Builder(@NonNull PagingIterable<ElementT> iterable) {
+    Builder(@Nonnull PagingIterable<ElementT> iterable) {
       this.iterable = iterable;
     }
 
-    @NonNull
+    @Nonnull
     public Builder<ElementT> withEstimatedSize(long estimatedSize) {
       Preconditions.checkArgument(estimatedSize >= 0, "estimatedSize must be >= 0");
       this.estimatedSize = estimatedSize;
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder<ElementT> withChunkSize(int chunkSize) {
       Preconditions.checkArgument(chunkSize > 0, "chunkSize must be > 0");
       this.chunkSize = chunkSize;
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public PagingIterableSpliterator<ElementT> build() {
       return new PagingIterableSpliterator<>(iterable, estimatedSize, chunkSize);
     }

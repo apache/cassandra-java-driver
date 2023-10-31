@@ -18,11 +18,11 @@
 package com.datastax.oss.driver.internal.core.loadbalancing.nodeset;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -31,17 +31,17 @@ public class DcAgnosticNodeSet implements NodeSet {
   private final Set<Node> nodes = new CopyOnWriteArraySet<>();
 
   @Override
-  public boolean add(@NonNull Node node) {
+  public boolean add(@Nonnull Node node) {
     return nodes.add(node);
   }
 
   @Override
-  public boolean remove(@NonNull Node node) {
+  public boolean remove(@Nonnull Node node) {
     return nodes.remove(node);
   }
 
   @Override
-  @NonNull
+  @Nonnull
   public Set<Node> dc(@Nullable String dc) {
     return nodes;
   }

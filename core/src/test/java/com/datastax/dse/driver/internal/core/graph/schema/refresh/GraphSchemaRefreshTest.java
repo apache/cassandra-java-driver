@@ -41,10 +41,10 @@ import com.datastax.oss.driver.internal.core.metadata.schema.events.TableChangeE
 import com.datastax.oss.driver.internal.core.metadata.schema.refresh.SchemaRefresh;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -358,7 +358,7 @@ public class GraphSchemaRefreshTest {
   }
 
   private static DefaultDseKeyspaceMetadata newKeyspace(
-      CqlIdentifier name, String graphEngine, @NonNull Map<CqlIdentifier, TableMetadata> tables) {
+      CqlIdentifier name, String graphEngine, @Nonnull Map<CqlIdentifier, TableMetadata> tables) {
     return new DefaultDseKeyspaceMetadata(
         name,
         false,
@@ -373,8 +373,8 @@ public class GraphSchemaRefreshTest {
   }
 
   private static DefaultDseTableMetadata newTable(
-      @NonNull CqlIdentifier keyspace,
-      @NonNull CqlIdentifier name,
+      @Nonnull CqlIdentifier keyspace,
+      @Nonnull CqlIdentifier name,
       @Nullable DseVertexMetadata vertex,
       @Nullable DseEdgeMetadata edge) {
     ImmutableList<ColumnMetadata> cols =
@@ -401,9 +401,9 @@ public class GraphSchemaRefreshTest {
   }
 
   private static DefaultDseEdgeMetadata newEdgeMetadata(
-      @NonNull CqlIdentifier labelName,
-      @NonNull CqlIdentifier fromTable,
-      @NonNull CqlIdentifier toTable) {
+      @Nonnull CqlIdentifier labelName,
+      @Nonnull CqlIdentifier fromTable,
+      @Nonnull CqlIdentifier toTable) {
     return new DefaultDseEdgeMetadata(
         labelName,
         fromTable,

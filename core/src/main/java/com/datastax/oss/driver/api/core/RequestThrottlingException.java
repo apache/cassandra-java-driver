@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * Thrown if the session uses a request throttler, and it didn't allow the current request to
@@ -29,7 +29,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  */
 public class RequestThrottlingException extends DriverException {
 
-  public RequestThrottlingException(@NonNull String message) {
+  public RequestThrottlingException(@Nonnull String message) {
     this(message, null);
   }
 
@@ -37,7 +37,7 @@ public class RequestThrottlingException extends DriverException {
     super(message, executionInfo, null, true);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new RequestThrottlingException(getMessage(), getExecutionInfo());

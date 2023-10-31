@@ -24,14 +24,14 @@ import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Handles conversions from / to GraphExecutionInfo and ExecutionInfo since GraphExecutionInfo has
@@ -50,13 +50,13 @@ public class GraphExecutionInfoConverter {
       com.datastax.dse.driver.api.core.graph.GraphExecutionInfo graphExecutionInfo) {
     return new ExecutionInfo() {
 
-      @NonNull
+      @Nonnull
       @Override
       public Request getRequest() {
         return graphExecutionInfo.getStatement();
       }
 
-      @NonNull
+      @Nonnull
       @Override
       public Statement<?> getStatement() {
         throw new ClassCastException("GraphStatement cannot be cast to Statement");
@@ -78,7 +78,7 @@ public class GraphExecutionInfoConverter {
         return graphExecutionInfo.getSuccessfulExecutionIndex();
       }
 
-      @NonNull
+      @Nonnull
       @Override
       public List<Entry<Node, Throwable>> getErrors() {
         return graphExecutionInfo.getErrors();
@@ -90,13 +90,13 @@ public class GraphExecutionInfoConverter {
         return null;
       }
 
-      @NonNull
+      @Nonnull
       @Override
       public List<String> getWarnings() {
         return graphExecutionInfo.getWarnings();
       }
 
-      @NonNull
+      @Nonnull
       @Override
       public Map<String, ByteBuffer> getIncomingPayload() {
         return graphExecutionInfo.getIncomingPayload();
@@ -113,7 +113,7 @@ public class GraphExecutionInfoConverter {
         return null;
       }
 
-      @NonNull
+      @Nonnull
       @Override
       public CompletionStage<QueryTrace> getQueryTraceAsync() {
         return CompletableFutures.failedFuture(

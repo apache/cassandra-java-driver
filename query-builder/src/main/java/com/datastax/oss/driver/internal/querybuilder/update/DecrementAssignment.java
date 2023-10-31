@@ -19,13 +19,13 @@ package com.datastax.oss.driver.internal.querybuilder.update;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
 public class DecrementAssignment extends CounterAssignment {
 
-  public DecrementAssignment(@NonNull CqlIdentifier columnId, @NonNull Term value) {
+  public DecrementAssignment(@Nonnull CqlIdentifier columnId, @Nonnull Term value) {
     super(columnId, Operator.DECREMENT, value);
   }
 }

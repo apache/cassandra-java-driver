@@ -18,8 +18,6 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,6 +25,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 import net.jcip.annotations.NotThreadSafe;
 
@@ -64,25 +64,25 @@ public class DefaultNodeInfo implements NodeInfo {
     this.extras = (builder.extras == null) ? Collections.emptyMap() : builder.extras;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public EndPoint getEndPoint() {
     return endPoint;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<InetSocketAddress> getBroadcastRpcAddress() {
     return Optional.ofNullable(broadcastRpcAddress);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<InetSocketAddress> getBroadcastAddress() {
     return Optional.ofNullable(broadcastAddress);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<InetSocketAddress> getListenAddress() {
     return Optional.ofNullable(listenAddress);
@@ -118,7 +118,7 @@ public class DefaultNodeInfo implements NodeInfo {
     return extras;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public UUID getHostId() {
     return hostId;
@@ -144,7 +144,7 @@ public class DefaultNodeInfo implements NodeInfo {
     private UUID hostId;
     private UUID schemaVersion;
 
-    public Builder withEndPoint(@NonNull EndPoint endPoint) {
+    public Builder withEndPoint(@Nonnull EndPoint endPoint) {
       this.endPoint = endPoint;
       return this;
     }
@@ -189,7 +189,7 @@ public class DefaultNodeInfo implements NodeInfo {
       return this;
     }
 
-    public Builder withHostId(@NonNull UUID hostId) {
+    public Builder withHostId(@Nonnull UUID hostId) {
       this.hostId = hostId;
       return this;
     }
@@ -199,7 +199,7 @@ public class DefaultNodeInfo implements NodeInfo {
       return this;
     }
 
-    public Builder withExtra(@NonNull String key, @Nullable Object value) {
+    public Builder withExtra(@Nonnull String key, @Nullable Object value) {
       if (value != null) {
         if (this.extras == null) {
           this.extras = new HashMap<>();

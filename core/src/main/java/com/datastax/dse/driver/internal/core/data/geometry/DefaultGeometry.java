@@ -25,11 +25,11 @@ import com.esri.core.geometry.GeometryException;
 import com.esri.core.geometry.SpatialReference;
 import com.esri.core.geometry.ogc.OGCGeometry;
 import com.esri.core.geometry.ogc.OGCLineString;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -46,9 +46,9 @@ public abstract class DefaultGeometry implements Geometry, Serializable {
    */
   public static final SpatialReference SPATIAL_REFERENCE_4326 = SpatialReference.create(4326);
 
-  @NonNull
+  @Nonnull
   public static <T extends OGCGeometry> T fromOgcWellKnownText(
-      @NonNull String source, @NonNull Class<T> klass) {
+      @Nonnull String source, @Nonnull Class<T> klass) {
     OGCGeometry geometry;
     try {
       geometry = OGCGeometry.fromText(source);
@@ -59,9 +59,9 @@ public abstract class DefaultGeometry implements Geometry, Serializable {
     return klass.cast(geometry);
   }
 
-  @NonNull
+  @Nonnull
   public static <T extends OGCGeometry> T fromOgcWellKnownBinary(
-      @NonNull ByteBuffer source, @NonNull Class<T> klass) {
+      @Nonnull ByteBuffer source, @Nonnull Class<T> klass) {
     OGCGeometry geometry;
     try {
       geometry = OGCGeometry.fromBinary(source);
@@ -72,9 +72,9 @@ public abstract class DefaultGeometry implements Geometry, Serializable {
     return klass.cast(geometry);
   }
 
-  @NonNull
+  @Nonnull
   public static <T extends OGCGeometry> T fromOgcGeoJson(
-      @NonNull String source, @NonNull Class<T> klass) {
+      @Nonnull String source, @Nonnull Class<T> klass) {
     OGCGeometry geometry;
     try {
       geometry = OGCGeometry.fromGeoJson(source);
@@ -95,7 +95,7 @@ public abstract class DefaultGeometry implements Geometry, Serializable {
 
   private final OGCGeometry ogcGeometry;
 
-  protected DefaultGeometry(@NonNull OGCGeometry ogcGeometry) {
+  protected DefaultGeometry(@Nonnull OGCGeometry ogcGeometry) {
     this.ogcGeometry = ogcGeometry;
     Preconditions.checkNotNull(ogcGeometry);
     validateOgcGeometry(ogcGeometry);
@@ -116,8 +116,8 @@ public abstract class DefaultGeometry implements Geometry, Serializable {
     }
   }
 
-  @NonNull
-  public static ImmutableList<Point> getPoints(@NonNull OGCLineString lineString) {
+  @Nonnull
+  public static ImmutableList<Point> getPoints(@Nonnull OGCLineString lineString) {
     ImmutableList.Builder<Point> builder = ImmutableList.builder();
     for (int i = 0; i < lineString.numPoints(); i++) {
       builder.add(new DefaultPoint(lineString.pointN(i)));
@@ -129,36 +129,36 @@ public abstract class DefaultGeometry implements Geometry, Serializable {
     return new com.esri.core.geometry.Point(p.X(), p.Y());
   }
 
-  @NonNull
+  @Nonnull
   public OGCGeometry getOgcGeometry() {
     return ogcGeometry;
   }
 
-  @NonNull
+  @Nonnull
   public com.esri.core.geometry.Geometry getEsriGeometry() {
     return ogcGeometry.getEsriGeometry();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asWellKnownText() {
     return ogcGeometry.asText();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ByteBuffer asWellKnownBinary() {
     return WkbUtil.asLittleEndianBinary(ogcGeometry);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asGeoJson() {
     return ogcGeometry.asGeoJson();
   }
 
   @Override
-  public boolean contains(@NonNull Geometry other) {
+  public boolean contains(@Nonnull Geometry other) {
     Preconditions.checkNotNull(other);
     if (other instanceof DefaultGeometry) {
       DefaultGeometry defautlOther = (DefaultGeometry) other;

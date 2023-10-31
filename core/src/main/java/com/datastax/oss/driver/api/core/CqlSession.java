@@ -25,7 +25,7 @@ import com.datastax.dse.driver.api.core.graph.reactive.ReactiveGraphSession;
 import com.datastax.oss.driver.api.core.cql.AsyncCqlSession;
 import com.datastax.oss.driver.api.core.cql.SyncCqlSession;
 import com.datastax.oss.driver.api.core.session.Session;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * The default session type built by the driver.
@@ -63,7 +63,7 @@ public interface CqlSession
    *
    * @return {@code CqlSessionBuilder} to create a new instance.
    */
-  @NonNull
+  @Nonnull
   static CqlSessionBuilder builder() {
     return new CqlSessionBuilder();
   }

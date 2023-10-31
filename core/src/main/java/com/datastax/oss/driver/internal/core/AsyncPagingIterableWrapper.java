@@ -22,10 +22,10 @@ import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.shaded.guava.common.collect.AbstractIterator;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Iterator;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
 
 public class AsyncPagingIterableWrapper<SourceT, TargetT>
     implements MappedAsyncPagingIterable<TargetT> {
@@ -54,13 +54,13 @@ public class AsyncPagingIterableWrapper<SourceT, TargetT>
     this.currentPage = () -> iterator;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ColumnDefinitions getColumnDefinitions() {
     return source.getColumnDefinitions();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ExecutionInfo getExecutionInfo() {
     return source.getExecutionInfo();
@@ -71,7 +71,7 @@ public class AsyncPagingIterableWrapper<SourceT, TargetT>
     return source.remaining();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Iterable<TargetT> currentPage() {
     return currentPage;
@@ -82,7 +82,7 @@ public class AsyncPagingIterableWrapper<SourceT, TargetT>
     return source.hasMorePages();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<MappedAsyncPagingIterable<TargetT>> fetchNextPage()
       throws IllegalStateException {

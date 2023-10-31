@@ -44,8 +44,6 @@ import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.util.concurrent.EventExecutor;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -59,6 +57,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,13 +149,13 @@ public class DefaultSession implements CqlSession {
     return singleThreaded.initFuture;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getName() {
     return context.getSessionName();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Metadata getMetadata() {
     return metadataManager.getMetadata();
@@ -166,13 +166,13 @@ public class DefaultSession implements CqlSession {
     return metadataManager.isSchemaEnabled();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Metadata> setSchemaMetadataEnabled(@Nullable Boolean newValue) {
     return metadataManager.setSchemaEnabled(newValue);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Metadata> refreshSchemaAsync() {
     return metadataManager
@@ -180,25 +180,25 @@ public class DefaultSession implements CqlSession {
         .thenApply(RefreshSchemaResult::getMetadata);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Boolean> checkSchemaAgreementAsync() {
     return context.getTopologyMonitor().checkSchemaAgreement();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverContext getContext() {
     return context;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<CqlIdentifier> getKeyspace() {
     return Optional.ofNullable(poolManager.getKeyspace());
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<Metrics> getMetrics() {
     return context.getMetricsFactory().getMetrics();
@@ -211,12 +211,12 @@ public class DefaultSession implements CqlSession {
    * session. Calling it from anywhere else is highly discouraged, as an invalid keyspace would
    * wreak havoc (close all connections and make the session unusable).
    */
-  @NonNull
-  public CompletionStage<Void> setKeyspace(@NonNull CqlIdentifier newKeyspace) {
+  @Nonnull
+  public CompletionStage<Void> setKeyspace(@Nonnull CqlIdentifier newKeyspace) {
     return poolManager.setKeyspace(newKeyspace);
   }
 
-  @NonNull
+  @Nonnull
   public Map<Node, ChannelPool> getPools() {
     return poolManager.getPools();
   }
@@ -224,7 +224,7 @@ public class DefaultSession implements CqlSession {
   @Nullable
   @Override
   public <RequestT extends Request, ResultT> ResultT execute(
-      @NonNull RequestT request, @NonNull GenericType<ResultT> resultType) {
+      @Nonnull RequestT request, @Nonnull GenericType<ResultT> resultType) {
     RequestProcessor<RequestT, ResultT> processor =
         processorRegistry.processorFor(request, resultType);
     return isClosed()
@@ -233,7 +233,7 @@ public class DefaultSession implements CqlSession {
   }
 
   @Nullable
-  public DriverChannel getChannel(@NonNull Node node, @NonNull String logPrefix) {
+  public DriverChannel getChannel(@Nonnull Node node, @Nonnull String logPrefix) {
     ChannelPool pool = poolManager.getPools().get(node);
     if (pool == null) {
       LOG.trace("[{}] No pool to {}, skipping", logPrefix, node);
@@ -252,29 +252,29 @@ public class DefaultSession implements CqlSession {
     }
   }
 
-  @NonNull
+  @Nonnull
   public ConcurrentMap<ByteBuffer, RepreparePayload> getRepreparePayloads() {
     return poolManager.getRepreparePayloads();
   }
 
-  @NonNull
+  @Nonnull
   public SessionMetricUpdater getMetricUpdater() {
     return metricUpdater;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Void> closeFuture() {
     return singleThreaded.closeFuture;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Void> closeAsync() {
     return closeSafely(singleThreaded::close);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Void> forceCloseAsync() {
     return closeSafely(singleThreaded::forceClose);

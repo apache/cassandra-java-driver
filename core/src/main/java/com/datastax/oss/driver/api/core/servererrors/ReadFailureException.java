@@ -24,10 +24,10 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetAddress;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A non-timeout error during a read query.
@@ -47,13 +47,13 @@ public class ReadFailureException extends QueryConsistencyException {
   private final Map<InetAddress, Integer> reasonMap;
 
   public ReadFailureException(
-      @NonNull Node coordinator,
-      @NonNull ConsistencyLevel consistencyLevel,
+      @Nonnull Node coordinator,
+      @Nonnull ConsistencyLevel consistencyLevel,
       int received,
       int blockFor,
       int numFailures,
       boolean dataPresent,
-      @NonNull Map<InetAddress, Integer> reasonMap) {
+      @Nonnull Map<InetAddress, Integer> reasonMap) {
     this(
         coordinator,
         String.format(
@@ -71,14 +71,14 @@ public class ReadFailureException extends QueryConsistencyException {
   }
 
   private ReadFailureException(
-      @NonNull Node coordinator,
-      @NonNull String message,
-      @NonNull ConsistencyLevel consistencyLevel,
+      @Nonnull Node coordinator,
+      @Nonnull String message,
+      @Nonnull ConsistencyLevel consistencyLevel,
       int received,
       int blockFor,
       int numFailures,
       boolean dataPresent,
-      @NonNull Map<InetAddress, Integer> reasonMap,
+      @Nonnull Map<InetAddress, Integer> reasonMap,
       @Nullable ExecutionInfo executionInfo,
       boolean writableStackTrace) {
     super(
@@ -130,12 +130,12 @@ public class ReadFailureException extends QueryConsistencyException {
    * <p>This feature is available for protocol v5 or above only. With lower protocol versions, the
    * map will always be empty.
    */
-  @NonNull
+  @Nonnull
   public Map<InetAddress, Integer> getReasonMap() {
     return reasonMap;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new ReadFailureException(

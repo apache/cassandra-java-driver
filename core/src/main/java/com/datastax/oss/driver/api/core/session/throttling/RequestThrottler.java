@@ -17,8 +17,8 @@
  */
 package com.datastax.oss.driver.api.core.session.throttling;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.Closeable;
+import javax.annotation.Nonnull;
 
 /**
  * Limits the number of concurrent requests executed by the driver.
@@ -34,19 +34,19 @@ public interface RequestThrottler extends Closeable {
    * Registers a new request to be throttled. The throttler will invoke {@link
    * Throttled#onThrottleReady(boolean)} when the request is allowed to proceed.
    */
-  void register(@NonNull Throttled request);
+  void register(@Nonnull Throttled request);
 
   /**
    * Signals that a request has succeeded. This indicates to the throttler that another request
    * might be started.
    */
-  void signalSuccess(@NonNull Throttled request);
+  void signalSuccess(@Nonnull Throttled request);
 
   /**
    * Signals that a request has failed. This indicates to the throttler that another request might
    * be started.
    */
-  void signalError(@NonNull Throttled request, @NonNull Throwable error);
+  void signalError(@Nonnull Throttled request, @Nonnull Throwable error);
 
   /**
    * Signals that a request has timed out. This indicates to the throttler that this request has
@@ -55,5 +55,5 @@ public interface RequestThrottler extends Closeable {
    * <p>Note: requests are responsible for handling their own timeout. The throttler does not
    * perform time-based eviction on pending requests.
    */
-  void signalTimeout(@NonNull Throttled request);
+  void signalTimeout(@Nonnull Throttled request);
 }

@@ -19,26 +19,26 @@ package com.datastax.dse.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.querybuilder.schema.KeyspaceOptions;
 import com.datastax.oss.driver.api.querybuilder.schema.KeyspaceReplicationOptions;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
+import javax.annotation.Nonnull;
 
 public interface AlterDseKeyspaceStart
     extends KeyspaceOptions<AlterDseKeyspace>, KeyspaceReplicationOptions<AlterDseKeyspace> {
 
-  @NonNull
+  @Nonnull
   @Override
-  AlterDseKeyspace withOption(@NonNull String name, @NonNull Object value);
+  AlterDseKeyspace withOption(@Nonnull String name, @Nonnull Object value);
 
   /**
    * Adjusts durable writes configuration for this keyspace. If set to false, data written to the
    * keyspace will bypass the commit log.
    */
-  @NonNull
+  @Nonnull
   @Override
   AlterDseKeyspace withDurableWrites(boolean durableWrites);
 
   /** Adjusts the graph engine that will be used to interpret this keyspace. */
-  @NonNull
+  @Nonnull
   AlterDseKeyspace withGraphEngine(String graphEngine);
 
   /**
@@ -46,9 +46,9 @@ public interface AlterDseKeyspaceStart
    * strategy, otherwise it is advisable to use {@link #withSimpleStrategy(int)} or {@link
    * #withNetworkTopologyStrategy(Map)}.
    */
-  @NonNull
+  @Nonnull
   @Override
-  AlterDseKeyspace withReplicationOptions(@NonNull Map<String, Object> replicationOptions);
+  AlterDseKeyspace withReplicationOptions(@Nonnull Map<String, Object> replicationOptions);
 
   /**
    * Adds SimpleStrategy replication options with the given replication factor.
@@ -56,7 +56,7 @@ public interface AlterDseKeyspaceStart
    * <p>Note that using this will overwrite any previous use of this method or {@link
    * #withNetworkTopologyStrategy(Map)}.
    */
-  @NonNull
+  @Nonnull
   @Override
   AlterDseKeyspace withSimpleStrategy(int replicationFactor);
 
@@ -70,7 +70,7 @@ public interface AlterDseKeyspaceStart
    * @param replications Mapping of data center name to replication factor to use for that data
    *     center.
    */
-  @NonNull
+  @Nonnull
   @Override
-  AlterDseKeyspace withNetworkTopologyStrategy(@NonNull Map<String, Integer> replications);
+  AlterDseKeyspace withNetworkTopologyStrategy(@Nonnull Map<String, Integer> replications);
 }

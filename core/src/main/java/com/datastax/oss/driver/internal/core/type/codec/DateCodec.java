@@ -26,12 +26,12 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.Strings;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -39,31 +39,31 @@ public class DateCodec implements TypeCodec<LocalDate> {
 
   private static final LocalDate EPOCH = LocalDate.of(1970, 1, 1);
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<LocalDate> getJavaType() {
     return GenericType.LOCAL_DATE;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.DATE;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof LocalDate;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == LocalDate.class;
   }
 
   @Nullable
   @Override
-  public ByteBuffer encode(@Nullable LocalDate value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable LocalDate value, @Nonnull ProtocolVersion protocolVersion) {
     if (value == null) {
       return null;
     }
@@ -74,7 +74,7 @@ public class DateCodec implements TypeCodec<LocalDate> {
 
   @Nullable
   @Override
-  public LocalDate decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public LocalDate decode(@Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return null;
     }
@@ -83,7 +83,7 @@ public class DateCodec implements TypeCodec<LocalDate> {
     return EPOCH.plusDays(signed);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable LocalDate value) {
     return (value == null) ? "NULL" : Strings.quote(DateTimeFormatter.ISO_LOCAL_DATE.format(value));

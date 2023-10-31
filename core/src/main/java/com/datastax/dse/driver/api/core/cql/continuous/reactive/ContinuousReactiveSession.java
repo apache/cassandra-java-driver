@@ -23,8 +23,8 @@ import com.datastax.dse.driver.internal.core.cql.continuous.reactive.ContinuousC
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.session.Session;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import org.reactivestreams.Publisher;
 
 /**
@@ -59,8 +59,8 @@ public interface ContinuousReactiveSession extends Session {
    * @param query the query to execute.
    * @return The {@link Publisher} that will publish the returned results.
    */
-  @NonNull
-  default ContinuousReactiveResultSet executeContinuouslyReactive(@NonNull String query) {
+  @Nonnull
+  default ContinuousReactiveResultSet executeContinuouslyReactive(@Nonnull String query) {
     return executeContinuouslyReactive(SimpleStatement.newInstance(query));
   }
 
@@ -76,8 +76,8 @@ public interface ContinuousReactiveSession extends Session {
    * @param statement the statement to execute.
    * @return The {@link Publisher} that will publish the returned results.
    */
-  @NonNull
-  default ContinuousReactiveResultSet executeContinuouslyReactive(@NonNull Statement<?> statement) {
+  @Nonnull
+  default ContinuousReactiveResultSet executeContinuouslyReactive(@Nonnull Statement<?> statement) {
     return Objects.requireNonNull(
         execute(statement, ContinuousCqlRequestReactiveProcessor.CONTINUOUS_REACTIVE_RESULT_SET));
   }

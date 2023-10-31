@@ -24,9 +24,9 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
 import com.datastax.oss.driver.api.mapper.result.MapperResultProducer;
 import com.datastax.oss.driver.api.mapper.result.MapperResultProducerService;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A runtime context that gets passed from the mapper to DAO components to share global resources
@@ -34,7 +34,7 @@ import java.util.Map;
  */
 public interface MapperContext {
 
-  @NonNull
+  @Nonnull
   CqlSession getSession();
 
   /**
@@ -77,7 +77,7 @@ public interface MapperContext {
    * <p>The results of this method are cached at the mapper level. If no instance of this class
    * exists yet for this mapper, a new instance is built by looking for a public no-arg constructor.
    */
-  @NonNull
+  @Nonnull
   NameConverter getNameConverter(Class<? extends NameConverter> converterClass);
 
   /**
@@ -86,7 +86,7 @@ public interface MapperContext {
    *
    * <p>The returned map is immutable. If no state was set on the builder, it will be empty.
    */
-  @NonNull
+  @Nonnull
   Map<Object, Object> getCustomState();
 
   /**
@@ -100,6 +100,6 @@ public interface MapperContext {
    *
    * @throws IllegalArgumentException if no producer was registered for this type.
    */
-  @NonNull
-  MapperResultProducer getResultProducer(@NonNull GenericType<?> resultToProduce);
+  @Nonnull
+  MapperResultProducer getResultProducer(@Nonnull GenericType<?> resultToProduce);
 }

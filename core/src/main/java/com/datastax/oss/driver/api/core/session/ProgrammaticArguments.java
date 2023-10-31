@@ -32,8 +32,6 @@ import com.datastax.oss.driver.internal.core.metadata.schema.MultiplexingSchemaC
 import com.datastax.oss.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +39,8 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Predicate;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * The arguments that can be set programmatically when building a session.
@@ -50,7 +50,7 @@ import java.util.function.Predicate;
  */
 public class ProgrammaticArguments {
 
-  @NonNull
+  @Nonnull
   public static Builder builder() {
     return new Builder();
   }
@@ -73,13 +73,13 @@ public class ProgrammaticArguments {
   private final Object metricRegistry;
 
   private ProgrammaticArguments(
-      @NonNull List<TypeCodec<?>> typeCodecs,
+      @Nonnull List<TypeCodec<?>> typeCodecs,
       @Nullable NodeStateListener nodeStateListener,
       @Nullable SchemaChangeListener schemaChangeListener,
       @Nullable RequestTracker requestTracker,
-      @NonNull Map<String, String> localDatacenters,
-      @NonNull Map<String, Predicate<Node>> nodeFilters,
-      @NonNull Map<String, NodeDistanceEvaluator> nodeDistanceEvaluators,
+      @Nonnull Map<String, String> localDatacenters,
+      @Nonnull Map<String, Predicate<Node>> nodeFilters,
+      @Nonnull Map<String, NodeDistanceEvaluator> nodeDistanceEvaluators,
       @Nullable ClassLoader classLoader,
       @Nullable AuthProvider authProvider,
       @Nullable SslEngineFactory sslEngineFactory,
@@ -108,7 +108,7 @@ public class ProgrammaticArguments {
     this.metricRegistry = metricRegistry;
   }
 
-  @NonNull
+  @Nonnull
   public List<TypeCodec<?>> getTypeCodecs() {
     return typeCodecs;
   }
@@ -128,19 +128,19 @@ public class ProgrammaticArguments {
     return requestTracker;
   }
 
-  @NonNull
+  @Nonnull
   public Map<String, String> getLocalDatacenters() {
     return localDatacenters;
   }
 
-  @NonNull
+  @Nonnull
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public Map<String, Predicate<Node>> getNodeFilters() {
     return nodeFilters;
   }
 
-  @NonNull
+  @Nonnull
   public Map<String, NodeDistanceEvaluator> getNodeDistanceEvaluators() {
     return nodeDistanceEvaluators;
   }
@@ -211,20 +211,20 @@ public class ProgrammaticArguments {
     private MutableCodecRegistry codecRegistry;
     private Object metricRegistry;
 
-    @NonNull
-    public Builder addTypeCodecs(@NonNull TypeCodec<?>... typeCodecs) {
+    @Nonnull
+    public Builder addTypeCodecs(@Nonnull TypeCodec<?>... typeCodecs) {
       this.typeCodecsBuilder.add(typeCodecs);
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder withNodeStateListener(@Nullable NodeStateListener nodeStateListener) {
       this.nodeStateListener = nodeStateListener;
       return this;
     }
 
-    @NonNull
-    public Builder addNodeStateListener(@NonNull NodeStateListener nodeStateListener) {
+    @Nonnull
+    public Builder addNodeStateListener(@Nonnull NodeStateListener nodeStateListener) {
       Objects.requireNonNull(nodeStateListener, "nodeStateListener cannot be null");
       if (this.nodeStateListener == null) {
         this.nodeStateListener = nodeStateListener;
@@ -243,14 +243,14 @@ public class ProgrammaticArguments {
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder withSchemaChangeListener(@Nullable SchemaChangeListener schemaChangeListener) {
       this.schemaChangeListener = schemaChangeListener;
       return this;
     }
 
-    @NonNull
-    public Builder addSchemaChangeListener(@NonNull SchemaChangeListener schemaChangeListener) {
+    @Nonnull
+    public Builder addSchemaChangeListener(@Nonnull SchemaChangeListener schemaChangeListener) {
       Objects.requireNonNull(schemaChangeListener, "schemaChangeListener cannot be null");
       if (this.schemaChangeListener == null) {
         this.schemaChangeListener = schemaChangeListener;
@@ -269,14 +269,14 @@ public class ProgrammaticArguments {
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder withRequestTracker(@Nullable RequestTracker requestTracker) {
       this.requestTracker = requestTracker;
       return this;
     }
 
-    @NonNull
-    public Builder addRequestTracker(@NonNull RequestTracker requestTracker) {
+    @Nonnull
+    public Builder addRequestTracker(@Nonnull RequestTracker requestTracker) {
       Objects.requireNonNull(requestTracker, "requestTracker cannot be null");
       if (this.requestTracker == null) {
         this.requestTracker = requestTracker;
@@ -294,20 +294,20 @@ public class ProgrammaticArguments {
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder withLocalDatacenter(
-        @NonNull String profileName, @NonNull String localDatacenter) {
+        @Nonnull String profileName, @Nonnull String localDatacenter) {
       this.localDatacentersBuilder.put(profileName, localDatacenter);
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder clearDatacenters() {
       this.localDatacentersBuilder = ImmutableMap.builder();
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder withLocalDatacenters(Map<String, String> localDatacenters) {
       for (Map.Entry<String, String> entry : localDatacenters.entrySet()) {
         this.localDatacentersBuilder.put(entry.getKey(), entry.getValue());
@@ -315,14 +315,14 @@ public class ProgrammaticArguments {
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder withNodeDistanceEvaluator(
-        @NonNull String profileName, @NonNull NodeDistanceEvaluator nodeDistanceEvaluator) {
+        @Nonnull String profileName, @Nonnull NodeDistanceEvaluator nodeDistanceEvaluator) {
       this.nodeDistanceEvaluatorsBuilder.put(profileName, nodeDistanceEvaluator);
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder withNodeDistanceEvaluators(
         Map<String, NodeDistanceEvaluator> nodeDistanceReporters) {
       for (Entry<String, NodeDistanceEvaluator> entry : nodeDistanceReporters.entrySet()) {
@@ -334,10 +334,10 @@ public class ProgrammaticArguments {
     /**
      * @deprecated Use {@link #withNodeDistanceEvaluator(String, NodeDistanceEvaluator)} instead.
      */
-    @NonNull
+    @Nonnull
     @Deprecated
     public Builder withNodeFilter(
-        @NonNull String profileName, @NonNull Predicate<Node> nodeFilter) {
+        @Nonnull String profileName, @Nonnull Predicate<Node> nodeFilter) {
       this.nodeFiltersBuilder.put(profileName, nodeFilter);
       this.nodeDistanceEvaluatorsBuilder.put(
           profileName, new NodeFilterToDistanceEvaluatorAdapter(nodeFilter));
@@ -345,7 +345,7 @@ public class ProgrammaticArguments {
     }
 
     /** @deprecated Use {@link #withNodeDistanceEvaluators(Map)} instead. */
-    @NonNull
+    @Nonnull
     @Deprecated
     public Builder withNodeFilters(Map<String, Predicate<Node>> nodeFilters) {
       for (Map.Entry<String, Predicate<Node>> entry : nodeFilters.entrySet()) {
@@ -356,61 +356,61 @@ public class ProgrammaticArguments {
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder withClassLoader(@Nullable ClassLoader classLoader) {
       this.classLoader = classLoader;
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder withCloudProxyAddress(@Nullable InetSocketAddress cloudAddress) {
       this.cloudProxyAddress = cloudAddress;
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder withAuthProvider(@Nullable AuthProvider authProvider) {
       this.authProvider = authProvider;
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder withSslEngineFactory(@Nullable SslEngineFactory sslEngineFactory) {
       this.sslEngineFactory = sslEngineFactory;
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder withStartupClientId(@Nullable UUID startupClientId) {
       this.startupClientId = startupClientId;
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder withStartupApplicationName(@Nullable String startupApplicationName) {
       this.startupApplicationName = startupApplicationName;
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder withStartupApplicationVersion(@Nullable String startupApplicationVersion) {
       this.startupApplicationVersion = startupApplicationVersion;
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder withCodecRegistry(@Nullable MutableCodecRegistry codecRegistry) {
       this.codecRegistry = codecRegistry;
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public Builder withMetricRegistry(@Nullable Object metricRegistry) {
       this.metricRegistry = metricRegistry;
       return this;
     }
 
-    @NonNull
+    @Nonnull
     public ProgrammaticArguments build() {
       return new ProgrammaticArguments(
           typeCodecsBuilder.build(),

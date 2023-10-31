@@ -39,11 +39,11 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
@@ -141,7 +141,7 @@ public class GeneratedCodePatterns {
    * variable already exists.
    */
   public static void bindParameters(
-      @NonNull List<? extends VariableElement> parameters,
+      @Nonnull List<? extends VariableElement> parameters,
       CodeBlock.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass,
       ProcessorContext context,
@@ -169,8 +169,8 @@ public class GeneratedCodePatterns {
    * variable already exists.
    */
   public static void bindParameters(
-      @NonNull List<? extends VariableElement> parameters,
-      @NonNull List<CodeBlock> bindMarkerNames,
+      @Nonnull List<? extends VariableElement> parameters,
+      @Nonnull List<CodeBlock> bindMarkerNames,
       CodeBlock.Builder methodBuilder,
       BindableHandlingSharedCode enclosingClass,
       ProcessorContext context,

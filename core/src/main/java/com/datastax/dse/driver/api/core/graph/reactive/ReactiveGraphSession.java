@@ -20,8 +20,8 @@ package com.datastax.dse.driver.api.core.graph.reactive;
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.dse.driver.internal.core.graph.reactive.ReactiveGraphRequestProcessor;
 import com.datastax.oss.driver.api.core.session.Session;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 
 /**
  * A {@link Session} that offers utility methods to issue graph queries using reactive-style
@@ -41,8 +41,8 @@ public interface ReactiveGraphSession extends Session {
    * @see ReactiveGraphResultSet
    * @see ReactiveGraphNode
    */
-  @NonNull
-  default ReactiveGraphResultSet executeReactive(@NonNull GraphStatement<?> statement) {
+  @Nonnull
+  default ReactiveGraphResultSet executeReactive(@Nonnull GraphStatement<?> statement) {
     return Objects.requireNonNull(
         execute(statement, ReactiveGraphRequestProcessor.REACTIVE_GRAPH_RESULT_SET));
   }

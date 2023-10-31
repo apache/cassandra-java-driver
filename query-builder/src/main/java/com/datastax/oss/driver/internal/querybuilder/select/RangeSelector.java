@@ -21,9 +21,9 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -34,12 +34,12 @@ public class RangeSelector implements Selector {
   private final Term right;
   private final CqlIdentifier alias;
 
-  public RangeSelector(@NonNull Selector collection, @Nullable Term left, @Nullable Term right) {
+  public RangeSelector(@Nonnull Selector collection, @Nullable Term left, @Nullable Term right) {
     this(collection, left, right, null);
   }
 
   public RangeSelector(
-      @NonNull Selector collection,
+      @Nonnull Selector collection,
       @Nullable Term left,
       @Nullable Term right,
       @Nullable CqlIdentifier alias) {
@@ -52,14 +52,14 @@ public class RangeSelector implements Selector {
     this.alias = alias;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Selector as(@NonNull CqlIdentifier alias) {
+  public Selector as(@Nonnull CqlIdentifier alias) {
     return new RangeSelector(collection, left, right, alias);
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     collection.appendTo(builder);
     builder.append('[');
     if (left != null) {
@@ -75,7 +75,7 @@ public class RangeSelector implements Selector {
     }
   }
 
-  @NonNull
+  @Nonnull
   public Selector getCollection() {
     return collection;
   }

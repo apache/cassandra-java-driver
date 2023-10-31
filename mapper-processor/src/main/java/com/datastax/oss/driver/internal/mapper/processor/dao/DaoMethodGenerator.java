@@ -33,8 +33,6 @@ import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -42,6 +40,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.ExecutableElement;
@@ -75,7 +75,7 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
 
   @Nullable
   protected DaoReturnType parseAndValidateReturnType(
-      @NonNull Set<DaoReturnTypeKind> validKinds, @NonNull String annotationName) {
+      @Nonnull Set<DaoReturnTypeKind> validKinds, @Nonnull String annotationName) {
     DaoReturnType returnType =
         context
             .getCodeGeneratorFactory()

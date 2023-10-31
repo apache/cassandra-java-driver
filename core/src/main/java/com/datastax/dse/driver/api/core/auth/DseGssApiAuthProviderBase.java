@@ -25,8 +25,6 @@ import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.security.PrivilegedActionException;
@@ -34,6 +32,8 @@ import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.security.auth.Subject;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
@@ -72,25 +72,25 @@ public abstract class DseGssApiAuthProviderBase implements AuthProvider {
    *     when you have multiple driver instances executing in the same JVM). Config-based
    *     implementations fill this with {@link Session#getName()}.
    */
-  protected DseGssApiAuthProviderBase(@NonNull String logPrefix) {
+  protected DseGssApiAuthProviderBase(@Nonnull String logPrefix) {
     this.logPrefix = Objects.requireNonNull(logPrefix);
   }
 
-  @NonNull
+  @Nonnull
   protected abstract GssApiOptions getOptions(
-      @NonNull EndPoint endPoint, @NonNull String serverAuthenticator);
+      @Nonnull EndPoint endPoint, @Nonnull String serverAuthenticator);
 
-  @NonNull
+  @Nonnull
   @Override
   public Authenticator newAuthenticator(
-      @NonNull EndPoint endPoint, @NonNull String serverAuthenticator)
+      @Nonnull EndPoint endPoint, @Nonnull String serverAuthenticator)
       throws AuthenticationException {
     return new GssApiAuthenticator(
         getOptions(endPoint, serverAuthenticator), endPoint, serverAuthenticator);
   }
 
   @Override
-  public void onMissingChallenge(@NonNull EndPoint endPoint) {
+  public void onMissingChallenge(@Nonnull EndPoint endPoint) {
     LOG.warn(
         "[{}] {} did not send an authentication challenge; "
             + "This is suspicious because the driver expects authentication",
@@ -111,7 +111,7 @@ public abstract class DseGssApiAuthProviderBase implements AuthProvider {
   @Immutable
   public static class GssApiOptions {
 
-    @NonNull
+    @Nonnull
     public static Builder builder() {
       return new Builder();
     }
@@ -127,7 +127,7 @@ public abstract class DseGssApiAuthProviderBase implements AuthProvider {
         @Nullable Subject subject,
         @Nullable String saslProtocol,
         @Nullable String authorizationId,
-        @NonNull Map<String, String> saslProperties) {
+        @Nonnull Map<String, String> saslProperties) {
       this.loginConfiguration = loginConfiguration;
       this.subject = subject;
       this.saslProtocol = saslProtocol;
@@ -155,7 +155,7 @@ public abstract class DseGssApiAuthProviderBase implements AuthProvider {
       return authorizationId;
     }
 
-    @NonNull
+    @Nonnull
     public Map<String, String> getSaslProperties() {
       return saslProperties;
     }
@@ -183,7 +183,7 @@ public abstract class DseGssApiAuthProviderBase implements AuthProvider {
        *
        * @see #withLoginConfiguration(Map)
        */
-      @NonNull
+      @Nonnull
       public Builder withLoginConfiguration(@Nullable Configuration loginConfiguration) {
         this.loginConfiguration = loginConfiguration;
         return this;
@@ -198,7 +198,7 @@ public abstract class DseGssApiAuthProviderBase implements AuthProvider {
        * if both are called, the subject takes precedence, and the login configuration will be
        * ignored.
        */
-      @NonNull
+      @Nonnull
       public Builder withLoginConfiguration(@Nullable Map<String, String> loginConfiguration) {
         this.loginConfiguration = fetchLoginConfiguration(loginConfiguration);
         return this;
@@ -210,7 +210,7 @@ public abstract class DseGssApiAuthProviderBase implements AuthProvider {
        * <p>You MUST call either this method or {@link #withLoginConfiguration(Configuration)}; if
        * both are called, the subject takes precedence, and the login configuration will be ignored.
        */
-      @NonNull
+      @Nonnull
       public Builder withSubject(@Nullable Subject subject) {
         this.subject = subject;
         return this;
@@ -220,14 +220,14 @@ public abstract class DseGssApiAuthProviderBase implements AuthProvider {
        * Sets the SASL protocol name to use; should match the username of the Kerberos service
        * principal used by the DSE server.
        */
-      @NonNull
+      @Nonnull
       public Builder withSaslProtocol(@Nullable String saslProtocol) {
         this.saslProtocol = saslProtocol;
         return this;
       }
 
       /** Sets the authorization ID (allows proxy authentication). */
-      @NonNull
+      @Nonnull
       public Builder withAuthorizationId(@Nullable String authorizationId) {
         this.authorizationId = authorizationId;
         return this;
@@ -243,13 +243,13 @@ public abstract class DseGssApiAuthProviderBase implements AuthProvider {
        * javax.security.sasl.qop = auth
        * </pre>
        */
-      @NonNull
-      public Builder addSaslProperty(@NonNull String name, @NonNull String value) {
+      @Nonnull
+      public Builder addSaslProperty(@Nonnull String name, @Nonnull String value) {
         this.saslProperties.put(Objects.requireNonNull(name), Objects.requireNonNull(value));
         return this;
       }
 
-      @NonNull
+      @Nonnull
       public GssApiOptions build() {
         return new GssApiOptions(
             loginConfiguration,
@@ -328,13 +328,13 @@ public abstract class DseGssApiAuthProviderBase implements AuthProvider {
       this.endPoint = endPoint;
     }
 
-    @NonNull
+    @Nonnull
     @Override
     protected ByteBuffer getMechanism() {
       return MECHANISM;
     }
 
-    @NonNull
+    @Nonnull
     @Override
     protected ByteBuffer getInitialServerChallenge() {
       return SERVER_INITIAL_CHALLENGE;

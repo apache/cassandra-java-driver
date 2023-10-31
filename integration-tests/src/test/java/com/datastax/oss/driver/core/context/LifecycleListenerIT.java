@@ -34,10 +34,10 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.server.RejectScope;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nonnull;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -118,7 +118,7 @@ public class LifecycleListenerIT {
       this.listeners = ImmutableList.of(listener);
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public List<LifecycleListener> getLifecycleListeners() {
       return listeners;

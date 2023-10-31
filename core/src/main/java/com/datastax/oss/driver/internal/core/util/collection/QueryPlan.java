@@ -20,9 +20,9 @@ package com.datastax.oss.driver.internal.core.util.collection;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Iterator;
 import java.util.Queue;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -61,7 +61,7 @@ public interface QueryPlan extends Queue<Node> {
    * queue at the time of the call, and are not affected by further modifications. Successive calls
    * to this method will return different objects.
    */
-  @NonNull
+  @Nonnull
   @Override
   Iterator<Node> iterator();
 

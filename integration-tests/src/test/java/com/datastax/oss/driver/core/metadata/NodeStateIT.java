@@ -56,7 +56,6 @@ import com.datastax.oss.simulacron.common.cluster.NodeConnectionReport;
 import com.datastax.oss.simulacron.common.stubbing.CloseType;
 import com.datastax.oss.simulacron.server.BoundNode;
 import com.datastax.oss.simulacron.server.RejectScope;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -74,6 +73,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nonnull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -677,7 +677,7 @@ public class NodeStateIT {
     }
 
     @Override
-    public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
+    public void init(@Nonnull Map<UUID, Node> nodes, @Nonnull DistanceReporter distanceReporter) {
       this.distanceReporter = distanceReporter;
       for (Node node : nodes.values()) {
         liveNodes.add(node);
@@ -701,9 +701,9 @@ public class NodeStateIT {
       }
     }
 
-    @NonNull
+    @Nonnull
     @Override
-    public Queue<Node> newQueryPlan(@NonNull Request request, @NonNull Session session) {
+    public Queue<Node> newQueryPlan(@Nonnull Request request, @Nonnull Session session) {
       Object[] snapshot = liveNodes.toArray();
       Queue<Node> queryPlan = new ConcurrentLinkedQueue<>();
       int start = offset.getAndIncrement(); // Note: offset overflow won't be an issue in tests
@@ -714,7 +714,7 @@ public class NodeStateIT {
     }
 
     @Override
-    public void onAdd(@NonNull Node node) {
+    public void onAdd(@Nonnull Node node) {
       if (ignoredNodes.contains(node)) {
         distanceReporter.setDistance(node, NodeDistance.IGNORED);
       } else {
@@ -725,19 +725,19 @@ public class NodeStateIT {
     }
 
     @Override
-    public void onUp(@NonNull Node node) {
+    public void onUp(@Nonnull Node node) {
       if (!ignoredNodes.contains(node)) {
         liveNodes.add(node);
       }
     }
 
     @Override
-    public void onDown(@NonNull Node node) {
+    public void onDown(@Nonnull Node node) {
       liveNodes.remove(node);
     }
 
     @Override
-    public void onRemove(@NonNull Node node) {
+    public void onRemove(@Nonnull Node node) {
       liveNodes.remove(node);
     }
 

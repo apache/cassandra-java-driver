@@ -68,7 +68,7 @@ you can register one or more listeners to get notified when changes occur:
 NodeStateListener listener =
     new NodeStateListenerBase() {
       @Override
-      public void onUp(@NonNull Node node) {
+      public void onUp(@Nonnull Node node) {
         System.out.printf("%s went UP%n", node);
       }
     };

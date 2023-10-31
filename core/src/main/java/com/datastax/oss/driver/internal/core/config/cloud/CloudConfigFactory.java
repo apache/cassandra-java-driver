@@ -25,7 +25,6 @@ import com.datastax.oss.driver.shaded.guava.common.net.HostAndPort;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -47,6 +46,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import javax.annotation.Nonnull;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -68,8 +68,8 @@ public class CloudConfigFactory {
    * @throws IOException If the Cloud configuration cannot be read.
    * @throws GeneralSecurityException If the Cloud SSL context cannot be created.
    */
-  @NonNull
-  public CloudConfig createCloudConfig(@NonNull URL cloudConfigUrl)
+  @Nonnull
+  public CloudConfig createCloudConfig(@Nonnull URL cloudConfigUrl)
       throws IOException, GeneralSecurityException {
     Objects.requireNonNull(cloudConfigUrl, "cloudConfigUrl cannot be null");
     return createCloudConfig(cloudConfigUrl.openStream());
@@ -85,8 +85,8 @@ public class CloudConfigFactory {
    * @throws IOException If the Cloud configuration cannot be read.
    * @throws GeneralSecurityException If the Cloud SSL context cannot be created.
    */
-  @NonNull
-  public CloudConfig createCloudConfig(@NonNull InputStream cloudConfig)
+  @Nonnull
+  public CloudConfig createCloudConfig(@Nonnull InputStream cloudConfig)
       throws IOException, GeneralSecurityException {
     Objects.requireNonNull(cloudConfig, "cloudConfig cannot be null");
     JsonNode configJson = null;
@@ -143,7 +143,7 @@ public class CloudConfigFactory {
     return new CloudConfig(sniProxyAddress, endPoints, localDatacenter, sslEngineFactory);
   }
 
-  @NonNull
+  @Nonnull
   protected char[] getKeyStorePassword(JsonNode configFile) {
     if (configFile.has("keyStorePassword")) {
       return configFile.get("keyStorePassword").asText().toCharArray();
@@ -152,7 +152,7 @@ public class CloudConfigFactory {
     }
   }
 
-  @NonNull
+  @Nonnull
   protected char[] getTrustStorePassword(JsonNode configFile) {
     if (configFile.has("trustStorePassword")) {
       return configFile.get("trustStorePassword").asText().toCharArray();
@@ -161,7 +161,7 @@ public class CloudConfigFactory {
     }
   }
 
-  @NonNull
+  @Nonnull
   protected URL getMetadataServiceUrl(JsonNode configFile) throws MalformedURLException {
     if (configFile.has("host")) {
       String metadataServiceHost = configFile.get("host").asText();
@@ -183,12 +183,12 @@ public class CloudConfigFactory {
     }
   }
 
-  @NonNull
+  @Nonnull
   protected SSLContext createSslContext(
-      @NonNull ByteArrayInputStream keyStoreInputStream,
-      @NonNull char[] keyStorePassword,
-      @NonNull ByteArrayInputStream trustStoreInputStream,
-      @NonNull char[] trustStorePassword)
+      @Nonnull ByteArrayInputStream keyStoreInputStream,
+      @Nonnull char[] keyStorePassword,
+      @Nonnull ByteArrayInputStream trustStoreInputStream,
+      @Nonnull char[] trustStorePassword)
       throws IOException, GeneralSecurityException {
     KeyManagerFactory kmf = createKeyManagerFactory(keyStoreInputStream, keyStorePassword);
     TrustManagerFactory tmf = createTrustManagerFactory(trustStoreInputStream, trustStorePassword);
@@ -197,9 +197,9 @@ public class CloudConfigFactory {
     return sslContext;
   }
 
-  @NonNull
+  @Nonnull
   protected KeyManagerFactory createKeyManagerFactory(
-      @NonNull InputStream keyStoreInputStream, @NonNull char[] keyStorePassword)
+      @Nonnull InputStream keyStoreInputStream, @Nonnull char[] keyStorePassword)
       throws IOException, GeneralSecurityException {
     KeyStore ks = KeyStore.getInstance("JKS");
     ks.load(keyStoreInputStream, keyStorePassword);
@@ -209,9 +209,9 @@ public class CloudConfigFactory {
     return kmf;
   }
 
-  @NonNull
+  @Nonnull
   protected TrustManagerFactory createTrustManagerFactory(
-      @NonNull InputStream trustStoreInputStream, @NonNull char[] trustStorePassword)
+      @Nonnull InputStream trustStoreInputStream, @Nonnull char[] trustStorePassword)
       throws IOException, GeneralSecurityException {
     KeyStore ts = KeyStore.getInstance("JKS");
     ts.load(trustStoreInputStream, trustStorePassword);
@@ -222,9 +222,9 @@ public class CloudConfigFactory {
     return tmf;
   }
 
-  @NonNull
+  @Nonnull
   protected BufferedReader fetchProxyMetadata(
-      @NonNull URL metadataServiceUrl, @NonNull SSLContext sslContext) throws IOException {
+      @Nonnull URL metadataServiceUrl, @Nonnull SSLContext sslContext) throws IOException {
     try {
       HttpsURLConnection connection = (HttpsURLConnection) metadataServiceUrl.openConnection();
       connection.setSSLSocketFactory(sslContext.getSocketFactory());
@@ -243,8 +243,8 @@ public class CloudConfigFactory {
     }
   }
 
-  @NonNull
-  protected String getLocalDatacenter(@NonNull JsonNode proxyMetadata) {
+  @Nonnull
+  protected String getLocalDatacenter(@Nonnull JsonNode proxyMetadata) {
     JsonNode contactInfo = getContactInfo(proxyMetadata);
     if (contactInfo.has("local_dc")) {
       return contactInfo.get("local_dc").asText();
@@ -253,8 +253,8 @@ public class CloudConfigFactory {
     }
   }
 
-  @NonNull
-  protected InetSocketAddress getSniProxyAddress(@NonNull JsonNode proxyMetadata) {
+  @Nonnull
+  protected InetSocketAddress getSniProxyAddress(@Nonnull JsonNode proxyMetadata) {
     JsonNode contactInfo = getContactInfo(proxyMetadata);
     if (contactInfo.has("sni_proxy_address")) {
       HostAndPort sniProxyHostAndPort =
@@ -270,9 +270,9 @@ public class CloudConfigFactory {
     }
   }
 
-  @NonNull
+  @Nonnull
   protected List<EndPoint> getEndPoints(
-      @NonNull JsonNode proxyMetadata, @NonNull InetSocketAddress sniProxyAddress) {
+      @Nonnull JsonNode proxyMetadata, @Nonnull InetSocketAddress sniProxyAddress) {
     JsonNode contactInfo = getContactInfo(proxyMetadata);
     if (contactInfo.has("contact_points")) {
       List<EndPoint> endPoints = new ArrayList<>();
@@ -286,8 +286,8 @@ public class CloudConfigFactory {
     }
   }
 
-  @NonNull
-  protected JsonNode getContactInfo(@NonNull JsonNode proxyMetadata) {
+  @Nonnull
+  protected JsonNode getContactInfo(@Nonnull JsonNode proxyMetadata) {
     if (proxyMetadata.has("contact_info")) {
       return proxyMetadata.get("contact_info");
     } else {

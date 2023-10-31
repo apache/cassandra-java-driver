@@ -19,13 +19,13 @@ package com.datastax.oss.driver.internal.querybuilder.update;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
 public class PrependAssignment extends CollectionAssignment {
 
-  public PrependAssignment(@NonNull CqlIdentifier columnId, @NonNull Term prefix) {
+  public PrependAssignment(@Nonnull CqlIdentifier columnId, @Nonnull Term prefix) {
     super(columnId, Operator.PREPEND, prefix);
   }
 }

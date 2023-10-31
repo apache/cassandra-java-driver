@@ -21,8 +21,6 @@ import com.datastax.dse.driver.api.core.auth.BaseDseAuthenticator;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -30,6 +28,8 @@ import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +53,7 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
    *     when you have multiple driver instances executing in the same JVM). Built-in
    *     implementations fill this with {@link Session#getName()}.
    */
-  protected PlainTextAuthProviderBase(@NonNull String logPrefix) {
+  protected PlainTextAuthProviderBase(@Nonnull String logPrefix) {
     this.logPrefix = Objects.requireNonNull(logPrefix);
   }
 
@@ -65,21 +65,21 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
    * @param endPoint The endpoint being contacted.
    * @param serverAuthenticator The authenticator class sent by the endpoint.
    */
-  @NonNull
+  @Nonnull
   protected abstract Credentials getCredentials(
-      @NonNull EndPoint endPoint, @NonNull String serverAuthenticator);
+      @Nonnull EndPoint endPoint, @Nonnull String serverAuthenticator);
 
-  @NonNull
+  @Nonnull
   @Override
   public Authenticator newAuthenticator(
-      @NonNull EndPoint endPoint, @NonNull String serverAuthenticator)
+      @Nonnull EndPoint endPoint, @Nonnull String serverAuthenticator)
       throws AuthenticationException {
     return new PlainTextAuthenticator(
         getCredentials(endPoint, serverAuthenticator), endPoint, serverAuthenticator);
   }
 
   @Override
-  public void onMissingChallenge(@NonNull EndPoint endPoint) {
+  public void onMissingChallenge(@Nonnull EndPoint endPoint) {
     LOG.warn(
         "[{}] {} did not send an authentication challenge; "
             + "This is suspicious because the driver expects authentication",
@@ -106,18 +106,18 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
      * Cassandra, the authorizationId will be ignored.
      */
     public Credentials(
-        @NonNull char[] username, @NonNull char[] password, @NonNull char[] authorizationId) {
+        @Nonnull char[] username, @Nonnull char[] password, @Nonnull char[] authorizationId) {
       this.username = Objects.requireNonNull(username);
       this.password = Objects.requireNonNull(password);
       this.authorizationId = Objects.requireNonNull(authorizationId);
     }
 
     /** Builds an instance for simple username/password authentication. */
-    public Credentials(@NonNull char[] username, @NonNull char[] password) {
+    public Credentials(@Nonnull char[] username, @Nonnull char[] password) {
       this(username, password, new char[0]);
     }
 
-    @NonNull
+    @Nonnull
     public char[] getUsername() {
       return username;
     }
@@ -127,17 +127,17 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
      *     #getUsername()}, which should be used instead.
      */
     @Deprecated
-    @NonNull
+    @Nonnull
     public char[] getAuthenticationId() {
       return username;
     }
 
-    @NonNull
+    @Nonnull
     public char[] getPassword() {
       return password;
     }
 
-    @NonNull
+    @Nonnull
     public char[] getAuthorizationId() {
       return authorizationId;
     }
@@ -165,13 +165,13 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
 
     private static final EndPoint DUMMY_END_POINT =
         new EndPoint() {
-          @NonNull
+          @Nonnull
           @Override
           public SocketAddress resolve() {
             return new InetSocketAddress("127.0.0.1", 9042);
           }
 
-          @NonNull
+          @Nonnull
           @Override
           public String asMetricPrefix() {
             return ""; // will never be used
@@ -182,9 +182,9 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
     private final EndPoint endPoint;
 
     protected PlainTextAuthenticator(
-        @NonNull Credentials credentials,
-        @NonNull EndPoint endPoint,
-        @NonNull String serverAuthenticator) {
+        @Nonnull Credentials credentials,
+        @Nonnull EndPoint endPoint,
+        @Nonnull String serverAuthenticator) {
       super(serverAuthenticator);
 
       Objects.requireNonNull(credentials);
@@ -216,7 +216,7 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
      *     constructor {@code PlainTextAuthenticator(Credentials, EndPoint, String)} instead.
      */
     @Deprecated
-    protected PlainTextAuthenticator(@NonNull Credentials credentials) {
+    protected PlainTextAuthenticator(@Nonnull Credentials credentials) {
       this(
           credentials,
           // It's unlikely that this class was ever extended by third parties, but if it was, assume
@@ -240,13 +240,13 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
       }
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public ByteBuffer getMechanism() {
       return MECHANISM;
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public ByteBuffer getInitialServerChallenge() {
       return SERVER_INITIAL_CHALLENGE;

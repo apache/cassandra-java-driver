@@ -33,8 +33,6 @@ import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.ArrayUtils;
 import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
 import com.datastax.oss.driver.internal.core.util.collection.SimpleQueryPlan;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.BitSet;
 import java.util.Map;
 import java.util.Optional;
@@ -44,6 +42,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLongArray;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,13 +100,13 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
   protected final Map<Node, Long> upTimes = new ConcurrentHashMap<>();
   private final boolean avoidSlowReplicas;
 
-  public DefaultLoadBalancingPolicy(@NonNull DriverContext context, @NonNull String profileName) {
+  public DefaultLoadBalancingPolicy(@Nonnull DriverContext context, @Nonnull String profileName) {
     super(context, profileName);
     this.avoidSlowReplicas =
         profile.getBoolean(DefaultDriverOption.LOAD_BALANCING_POLICY_SLOW_AVOIDANCE, true);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<RequestTracker> getRequestTracker() {
     if (avoidSlowReplicas) {
@@ -116,13 +116,13 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes) {
+  protected Optional<String> discoverLocalDc(@Nonnull Map<UUID, Node> nodes) {
     return new MandatoryLocalDcHelper(context, profile, logPrefix).discoverLocalDc(nodes);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Queue<Node> newQueryPlan(@Nullable Request request, @Nullable Session session) {
     if (!avoidSlowReplicas) {
@@ -236,22 +236,22 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
 
   @Override
   public void onNodeSuccess(
-      @NonNull Request request,
+      @Nonnull Request request,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String logPrefix) {
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node,
+      @Nonnull String logPrefix) {
     updateResponseTimes(node);
   }
 
   @Override
   public void onNodeError(
-      @NonNull Request request,
-      @NonNull Throwable error,
+      @Nonnull Request request,
+      @Nonnull Throwable error,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String logPrefix) {
+      @Nonnull DriverExecutionProfile executionProfile,
+      @Nonnull Node node,
+      @Nonnull String logPrefix) {
     updateResponseTimes(node);
   }
 
@@ -265,15 +265,15 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
     return ThreadLocalRandom.current().nextInt(4);
   }
 
-  protected boolean isUnhealthy(@NonNull Node node, @NonNull Session session, long now) {
+  protected boolean isUnhealthy(@Nonnull Node node, @Nonnull Session session, long now) {
     return isBusy(node, session) && isResponseRateInsufficient(node, now);
   }
 
-  protected boolean isBusy(@NonNull Node node, @NonNull Session session) {
+  protected boolean isBusy(@Nonnull Node node, @Nonnull Session session) {
     return getInFlight(node, session) >= MAX_IN_FLIGHT_THRESHOLD;
   }
 
-  protected boolean isResponseRateInsufficient(@NonNull Node node, long now) {
+  protected boolean isResponseRateInsufficient(@Nonnull Node node, long now) {
     // response rate is considered insufficient when less than 2 responses were obtained in
     // the past interval delimited by RESPONSE_COUNT_RESET_INTERVAL_NANOS.
     if (responseTimes.containsKey(node)) {
@@ -287,7 +287,7 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
     return true;
   }
 
-  protected void updateResponseTimes(@NonNull Node node) {
+  protected void updateResponseTimes(@Nonnull Node node) {
     responseTimes.compute(
         node,
         (n, array) -> {
@@ -310,7 +310,7 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
         });
   }
 
-  protected int getInFlight(@NonNull Node node, @NonNull Session session) {
+  protected int getInFlight(@Nonnull Node node, @Nonnull Session session) {
     // The cast will always succeed because there's no way to replace the internal session impl
     ChannelPool pool = ((DefaultSession) session).getPools().get(node);
     // Note: getInFlight() includes orphaned ids, which is what we want as we need to account

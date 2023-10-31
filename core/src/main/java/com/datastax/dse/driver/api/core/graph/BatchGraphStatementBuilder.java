@@ -19,7 +19,7 @@ package com.datastax.dse.driver.api.core.graph;
 
 import com.datastax.dse.driver.internal.core.graph.DefaultBatchGraphStatement;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.NotThreadSafe;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 
@@ -46,8 +46,8 @@ public class BatchGraphStatementBuilder
   }
 
   /** Add a traversal to this builder to include in the generated {@link BatchGraphStatement}. */
-  @NonNull
-  public BatchGraphStatementBuilder addTraversal(@NonNull GraphTraversal traversal) {
+  @Nonnull
+  public BatchGraphStatementBuilder addTraversal(@Nonnull GraphTraversal traversal) {
     traversalsBuilder.add(traversal);
     traversalsCount += 1;
     return this;
@@ -56,8 +56,8 @@ public class BatchGraphStatementBuilder
   /**
    * Add several traversals to this builder to include in the generated {@link BatchGraphStatement}.
    */
-  @NonNull
-  public BatchGraphStatementBuilder addTraversals(@NonNull Iterable<GraphTraversal> traversals) {
+  @Nonnull
+  public BatchGraphStatementBuilder addTraversals(@Nonnull Iterable<GraphTraversal> traversals) {
     for (GraphTraversal traversal : traversals) {
       traversalsBuilder.add(traversal);
       traversalsCount += 1;
@@ -68,8 +68,8 @@ public class BatchGraphStatementBuilder
   /**
    * Add several traversals to this builder to include in the generated {@link BatchGraphStatement}.
    */
-  @NonNull
-  public BatchGraphStatementBuilder addTraversals(@NonNull GraphTraversal... traversals) {
+  @Nonnull
+  public BatchGraphStatementBuilder addTraversals(@Nonnull GraphTraversal... traversals) {
     for (GraphTraversal traversal : traversals) {
       traversalsBuilder.add(traversal);
       traversalsCount += 1;
@@ -78,7 +78,7 @@ public class BatchGraphStatementBuilder
   }
 
   /** Clears all the traversals previously added to this builder. */
-  @NonNull
+  @Nonnull
   public BatchGraphStatementBuilder clearTraversals() {
     traversalsBuilder = ImmutableList.builder();
     traversalsCount = 0;
@@ -90,7 +90,7 @@ public class BatchGraphStatementBuilder
     return traversalsCount;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BatchGraphStatement build() {
     return new DefaultBatchGraphStatement(

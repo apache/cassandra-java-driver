@@ -22,38 +22,38 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveByteCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class TinyIntCodec implements PrimitiveByteCodec {
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<Byte> getJavaType() {
     return GenericType.BYTE;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.TINYINT;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof Byte;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == Byte.class || javaClass == byte.class;
   }
 
   @Nullable
   @Override
-  public ByteBuffer encodePrimitive(byte value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encodePrimitive(byte value, @Nonnull ProtocolVersion protocolVersion) {
     ByteBuffer bytes = ByteBuffer.allocate(1);
     bytes.put(0, value);
     return bytes;
@@ -61,7 +61,7 @@ public class TinyIntCodec implements PrimitiveByteCodec {
 
   @Override
   public byte decodePrimitive(
-      @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return 0;
     } else if (bytes.remaining() != 1) {
@@ -72,7 +72,7 @@ public class TinyIntCodec implements PrimitiveByteCodec {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable Byte value) {
     return (value == null) ? "NULL" : Byte.toString(value);

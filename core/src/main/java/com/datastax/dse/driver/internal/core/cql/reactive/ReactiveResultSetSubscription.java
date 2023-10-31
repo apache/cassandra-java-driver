@@ -25,8 +25,6 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Objects;
@@ -36,6 +34,8 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -106,10 +106,10 @@ public class ReactiveResultSetSubscription<ResultSetT extends AsyncPagingIterabl
   private volatile boolean cancelled = false;
 
   ReactiveResultSetSubscription(
-      @NonNull Subscriber<? super ReactiveRow> mainSubscriber,
-      @NonNull Subscriber<ColumnDefinitions> columnDefinitionsSubscriber,
-      @NonNull Subscriber<ExecutionInfo> executionInfosSubscriber,
-      @NonNull Subscriber<Boolean> wasAppliedSubscriber) {
+      @Nonnull Subscriber<? super ReactiveRow> mainSubscriber,
+      @Nonnull Subscriber<ColumnDefinitions> columnDefinitionsSubscriber,
+      @Nonnull Subscriber<ExecutionInfo> executionInfosSubscriber,
+      @Nonnull Subscriber<Boolean> wasAppliedSubscriber) {
     this.mainSubscriber = mainSubscriber;
     this.columnDefinitionsSubscriber = columnDefinitionsSubscriber;
     this.executionInfosSubscriber = executionInfosSubscriber;
@@ -124,7 +124,7 @@ public class ReactiveResultSetSubscription<ResultSetT extends AsyncPagingIterabl
    *
    * @param firstPage The future that, when complete, will produce the first page.
    */
-  void start(@NonNull Callable<CompletionStage<ResultSetT>> firstPage) {
+  void start(@Nonnull Callable<CompletionStage<ResultSetT>> firstPage) {
     firstSubscriberRequestArrived.thenAccept(
         (aVoid) -> fetchNextPageAndEnqueue(new Page<>(firstPage), true));
   }
@@ -312,7 +312,7 @@ public class ReactiveResultSetSubscription<ResultSetT extends AsyncPagingIterabl
    * concurrently due to the fact that one can only fetch the next page when the current one is
    * arrived and enqueued.
    */
-  private void fetchNextPageAndEnqueue(@NonNull Page<ResultSetT> current, boolean firstPage) {
+  private void fetchNextPageAndEnqueue(@Nonnull Page<ResultSetT> current, boolean firstPage) {
     current
         .fetchNextPage()
         // as soon as the response arrives,
@@ -361,7 +361,7 @@ public class ReactiveResultSetSubscription<ResultSetT extends AsyncPagingIterabl
             });
   }
 
-  private void doOnNext(@NonNull ReactiveRow result) {
+  private void doOnNext(@Nonnull ReactiveRow result) {
     try {
       mainSubscriber.onNext(result);
     } catch (Throwable t) {
@@ -389,7 +389,7 @@ public class ReactiveResultSetSubscription<ResultSetT extends AsyncPagingIterabl
 
   // package-private because it can be invoked by the publisher if the subscription handshake
   // process fails.
-  void doOnError(@NonNull Throwable error) {
+  void doOnError(@Nonnull Throwable error) {
     try {
       // Then we signal the error downstream, as per rules 1.2 and 1.4.
       mainSubscriber.onError(error);
@@ -425,8 +425,8 @@ public class ReactiveResultSetSubscription<ResultSetT extends AsyncPagingIterabl
    * @param rs the result object to convert.
    * @return a new page.
    */
-  @NonNull
-  private Page<ResultSetT> toPage(@NonNull ResultSetT rs) {
+  @Nonnull
+  private Page<ResultSetT> toPage(@Nonnull ResultSetT rs) {
     ExecutionInfo executionInfo = rs.getExecutionInfo();
     Iterator<ReactiveRow> results =
         Iterators.transform(
@@ -436,8 +436,8 @@ public class ReactiveResultSetSubscription<ResultSetT extends AsyncPagingIterabl
   }
 
   /** Converts the given error into a {@link Page}, containing the error as its only element. */
-  @NonNull
-  private Page<ResultSetT> toErrorPage(@NonNull Throwable t) {
+  @Nonnull
+  private Page<ResultSetT> toErrorPage(@Nonnull Throwable t) {
     return new Page<>(Iterators.singletonIterator(t), null);
   }
 
@@ -447,18 +447,18 @@ public class ReactiveResultSetSubscription<ResultSetT extends AsyncPagingIterabl
    */
   static class Page<ResultSetT extends AsyncPagingIterable<Row, ResultSetT>> {
 
-    @NonNull final Iterator<?> iterator;
+    @Nonnull final Iterator<?> iterator;
 
     // A pointer to the next page, or null if this is the last page.
     @Nullable final Callable<CompletionStage<ResultSetT>> nextPage;
 
     /** called only from start() */
-    Page(@NonNull Callable<CompletionStage<ResultSetT>> nextPage) {
+    Page(@Nonnull Callable<CompletionStage<ResultSetT>> nextPage) {
       this.iterator = Collections.emptyIterator();
       this.nextPage = nextPage;
     }
 
-    Page(@NonNull Iterator<?> iterator, @Nullable Callable<CompletionStage<ResultSetT>> nextPage) {
+    Page(@Nonnull Iterator<?> iterator, @Nullable Callable<CompletionStage<ResultSetT>> nextPage) {
       this.iterator = iterator;
       this.nextPage = nextPage;
     }
@@ -467,7 +467,7 @@ public class ReactiveResultSetSubscription<ResultSetT extends AsyncPagingIterabl
       return nextPage != null;
     }
 
-    @NonNull
+    @Nonnull
     CompletionStage<ResultSetT> fetchNextPage() {
       try {
         return Objects.requireNonNull(nextPage).call();
@@ -485,7 +485,7 @@ public class ReactiveResultSetSubscription<ResultSetT extends AsyncPagingIterabl
       return iterator.hasNext();
     }
 
-    @NonNull
+    @Nonnull
     Object nextRow() {
       return iterator.next();
     }

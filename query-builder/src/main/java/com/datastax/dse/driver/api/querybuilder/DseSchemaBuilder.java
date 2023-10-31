@@ -33,8 +33,8 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import com.datastax.oss.driver.api.querybuilder.schema.CreateAggregateStart;
 import com.datastax.oss.driver.api.querybuilder.schema.CreateFunctionStart;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * An extension of {@link com.datastax.oss.driver.api.querybuilder.SchemaBuilder} for building
@@ -46,15 +46,15 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * Starts a CREATE AGGREGATE query with the given aggregate name. This assumes the keyspace name
    * is already qualified for the Session or Statement.
    */
-  @NonNull
-  public static CreateDseAggregateStart createDseAggregate(@NonNull CqlIdentifier aggregateId) {
+  @Nonnull
+  public static CreateDseAggregateStart createDseAggregate(@Nonnull CqlIdentifier aggregateId) {
     return new DefaultCreateDseAggregate(aggregateId);
   }
 
   /** Starts a CREATE AGGREGATE query with the given aggregate name for the given keyspace name. */
-  @NonNull
+  @Nonnull
   public static CreateDseAggregateStart createDseAggregate(
-      @Nullable CqlIdentifier keyspaceId, @NonNull CqlIdentifier aggregateId) {
+      @Nullable CqlIdentifier keyspaceId, @Nonnull CqlIdentifier aggregateId) {
     return new DefaultCreateDseAggregate(keyspaceId, aggregateId);
   }
 
@@ -62,8 +62,8 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * Shortcut for {@link #createDseAggregate(CqlIdentifier)
    * createDseAggregate(CqlIdentifier.fromCql(aggregateName))}.
    */
-  @NonNull
-  public static CreateDseAggregateStart createDseAggregate(@NonNull String aggregateName) {
+  @Nonnull
+  public static CreateDseAggregateStart createDseAggregate(@Nonnull String aggregateName) {
     return new DefaultCreateDseAggregate(CqlIdentifier.fromCql(aggregateName));
   }
 
@@ -71,9 +71,9 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * Shortcut for {@link #createAggregate(CqlIdentifier, CqlIdentifier)
    * createDseAggregate(CqlIdentifier.fromCql(keyspaceName), CqlIdentifier.fromCql(aggregateName))}.
    */
-  @NonNull
+  @Nonnull
   public static CreateDseAggregateStart createDseAggregate(
-      @Nullable String keyspaceName, @NonNull String aggregateName) {
+      @Nullable String keyspaceName, @Nonnull String aggregateName) {
     return new DefaultCreateDseAggregate(
         keyspaceName == null ? null : CqlIdentifier.fromCql(keyspaceName),
         CqlIdentifier.fromCql(aggregateName));
@@ -87,8 +87,8 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * DSE-specific features, such as the {@code DETERMINISTIC} keyword, use {@link
    * #createDseAggregate(CqlIdentifier)}.
    */
-  @NonNull
-  public static CreateAggregateStart createAggregate(@NonNull CqlIdentifier aggregateName) {
+  @Nonnull
+  public static CreateAggregateStart createAggregate(@Nonnull CqlIdentifier aggregateName) {
     return SchemaBuilder.createAggregate(aggregateName);
   }
 
@@ -99,9 +99,9 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * DSE-specific features, such as the {@code DETERMINISTIC} keyword, use {@link
    * #createDseAggregate(CqlIdentifier, CqlIdentifier)}.
    */
-  @NonNull
+  @Nonnull
   public static CreateAggregateStart createAggregate(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier aggregateName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier aggregateName) {
     return SchemaBuilder.createAggregate(keyspace, aggregateName);
   }
 
@@ -113,8 +113,8 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * DSE-specific features, such as the {@code DETERMINISTIC} keyword, use {@link
    * #createDseAggregate(String)}.
    */
-  @NonNull
-  public static CreateAggregateStart createAggregate(@NonNull String aggregateName) {
+  @Nonnull
+  public static CreateAggregateStart createAggregate(@Nonnull String aggregateName) {
     return SchemaBuilder.createAggregate(aggregateName);
   }
 
@@ -126,9 +126,9 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * DSE-specific features, such as the {@code DETERMINISTIC} keyword, use {@link
    * #createDseAggregate(String, String)}.
    */
-  @NonNull
+  @Nonnull
   public static CreateAggregateStart createAggregate(
-      @Nullable String keyspace, @NonNull String aggregateName) {
+      @Nullable String keyspace, @Nonnull String aggregateName) {
     return SchemaBuilder.createAggregate(keyspace, aggregateName);
   }
 
@@ -136,15 +136,15 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * Starts a CREATE FUNCTION query with the given function name. This assumes the keyspace name is
    * already qualified for the Session or Statement.
    */
-  @NonNull
-  public static CreateDseFunctionStart createDseFunction(@NonNull CqlIdentifier functionId) {
+  @Nonnull
+  public static CreateDseFunctionStart createDseFunction(@Nonnull CqlIdentifier functionId) {
     return new DefaultCreateDseFunction(functionId);
   }
 
   /** Starts a CREATE FUNCTION query with the given function name for the given keyspace name. */
-  @NonNull
+  @Nonnull
   public static CreateDseFunctionStart createDseFunction(
-      @Nullable CqlIdentifier keyspaceId, @NonNull CqlIdentifier functionId) {
+      @Nullable CqlIdentifier keyspaceId, @Nonnull CqlIdentifier functionId) {
     return new DefaultCreateDseFunction(keyspaceId, functionId);
   }
 
@@ -152,8 +152,8 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * Shortcut for {@link #createFunction(CqlIdentifier)
    * createFunction(CqlIdentifier.fromCql(functionName)}
    */
-  @NonNull
-  public static CreateDseFunctionStart createDseFunction(@NonNull String functionName) {
+  @Nonnull
+  public static CreateDseFunctionStart createDseFunction(@Nonnull String functionName) {
     return new DefaultCreateDseFunction(CqlIdentifier.fromCql(functionName));
   }
 
@@ -161,9 +161,9 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * Shortcut for {@link #createFunction(CqlIdentifier, CqlIdentifier)
    * createFunction(CqlIdentifier.fromCql(keyspaceName), CqlIdentifier.fromCql(functionName)}
    */
-  @NonNull
+  @Nonnull
   public static CreateDseFunctionStart createDseFunction(
-      @Nullable String keyspaceName, @NonNull String functionName) {
+      @Nullable String keyspaceName, @Nonnull String functionName) {
     return new DefaultCreateDseFunction(
         keyspaceName == null ? null : CqlIdentifier.fromCql(keyspaceName),
         CqlIdentifier.fromCql(functionName));
@@ -177,8 +177,8 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * DSE-specific features, such as the {@code MONOTONIC} or {@code DETERMINISTIC} keywords, use
    * {@link #createDseFunction(CqlIdentifier)}.
    */
-  @NonNull
-  public static CreateFunctionStart createFunction(@NonNull CqlIdentifier functionName) {
+  @Nonnull
+  public static CreateFunctionStart createFunction(@Nonnull CqlIdentifier functionName) {
     return SchemaBuilder.createFunction(functionName);
   }
 
@@ -189,9 +189,9 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * DSE-specific features, such as the {@code MONOTONIC} or {@code DETERMINISTIC} keywords, use
    * {@link #createDseFunction(CqlIdentifier,CqlIdentifier)}.
    */
-  @NonNull
+  @Nonnull
   public static CreateFunctionStart createFunction(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier functionName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier functionName) {
     return SchemaBuilder.createFunction(keyspace, functionName);
   }
 
@@ -203,8 +203,8 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * DSE-specific features, such as the {@code MONOTONIC} or {@code DETERMINISTIC} keywords, use
    * {@link #createDseFunction(String)}.
    */
-  @NonNull
-  public static CreateFunctionStart createFunction(@NonNull String functionName) {
+  @Nonnull
+  public static CreateFunctionStart createFunction(@Nonnull String functionName) {
     return SchemaBuilder.createFunction(functionName);
   }
 
@@ -216,15 +216,15 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * DSE-specific features, such as the {@code MONOTONIC} or {@code DETERMINISTIC} keywords, use
    * {@link #createDseFunction(String, String)}.
    */
-  @NonNull
+  @Nonnull
   public static CreateFunctionStart createFunction(
-      @Nullable String keyspace, @NonNull String functionName) {
+      @Nullable String keyspace, @Nonnull String functionName) {
     return SchemaBuilder.createFunction(keyspace, functionName);
   }
 
   /** Starts a CREATE KEYSPACE query. */
-  @NonNull
-  public static CreateDseKeyspaceStart createDseKeyspace(@NonNull CqlIdentifier keyspaceName) {
+  @Nonnull
+  public static CreateDseKeyspaceStart createDseKeyspace(@Nonnull CqlIdentifier keyspaceName) {
     return new DefaultCreateDseKeyspace(keyspaceName);
   }
 
@@ -232,14 +232,14 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * Shortcut for {@link #createDseKeyspace(CqlIdentifier)
    * createKeyspace(CqlIdentifier.fromCql(keyspaceName))}
    */
-  @NonNull
-  public static CreateDseKeyspaceStart createDseKeyspace(@NonNull String keyspaceName) {
+  @Nonnull
+  public static CreateDseKeyspaceStart createDseKeyspace(@Nonnull String keyspaceName) {
     return createDseKeyspace(CqlIdentifier.fromCql(keyspaceName));
   }
 
   /** Starts an ALTER KEYSPACE query. */
-  @NonNull
-  public static AlterDseKeyspaceStart alterDseKeyspace(@NonNull CqlIdentifier keyspaceName) {
+  @Nonnull
+  public static AlterDseKeyspaceStart alterDseKeyspace(@Nonnull CqlIdentifier keyspaceName) {
     return new DefaultAlterDseKeyspace(keyspaceName);
   }
 
@@ -247,8 +247,8 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * Shortcut for {@link #alterDseKeyspace(CqlIdentifier)
    * alterKeyspace(CqlIdentifier.fromCql(keyspaceName)}.
    */
-  @NonNull
-  public static AlterDseKeyspaceStart alterDseKeyspace(@NonNull String keyspaceName) {
+  @Nonnull
+  public static AlterDseKeyspaceStart alterDseKeyspace(@Nonnull String keyspaceName) {
     return DseSchemaBuilder.alterDseKeyspace(CqlIdentifier.fromCql(keyspaceName));
   }
 
@@ -256,15 +256,15 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * Starts a CREATE TABLE query with the given table name. This assumes the keyspace name is
    * already qualified for the Session or Statement.
    */
-  @NonNull
-  public static CreateDseTableStart createDseTable(@NonNull CqlIdentifier tableName) {
+  @Nonnull
+  public static CreateDseTableStart createDseTable(@Nonnull CqlIdentifier tableName) {
     return createDseTable(null, tableName);
   }
 
   /** Starts a CREATE TABLE query with the given table name for the given keyspace name. */
-  @NonNull
+  @Nonnull
   public static CreateDseTableStart createDseTable(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier tableName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier tableName) {
     return new DefaultCreateDseTable(keyspace, tableName);
   }
 
@@ -272,8 +272,8 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * Shortcut for {@link #createDseTable(CqlIdentifier)
    * createDseTable(CqlIdentifier.fromCql(tableName)}
    */
-  @NonNull
-  public static CreateDseTableStart createDseTable(@NonNull String tableName) {
+  @Nonnull
+  public static CreateDseTableStart createDseTable(@Nonnull String tableName) {
     return createDseTable(CqlIdentifier.fromCql(tableName));
   }
 
@@ -281,9 +281,9 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * Shortcut for {@link #createDseTable(CqlIdentifier,CqlIdentifier)
    * createDseTable(CqlIdentifier.fromCql(keyspaceName),CqlIdentifier.fromCql(tableName)}
    */
-  @NonNull
+  @Nonnull
   public static CreateDseTableStart createDseTable(
-      @Nullable String keyspace, @NonNull String tableName) {
+      @Nullable String keyspace, @Nonnull String tableName) {
     return createDseTable(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace),
         CqlIdentifier.fromCql(tableName));
@@ -293,15 +293,15 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * Starts an ALTER TABLE query with the given table name. This assumes the keyspace name is
    * already qualified for the Session or Statement.
    */
-  @NonNull
-  public static AlterDseTableStart alterDseTable(@NonNull CqlIdentifier tableName) {
+  @Nonnull
+  public static AlterDseTableStart alterDseTable(@Nonnull CqlIdentifier tableName) {
     return new DefaultAlterDseTable(tableName);
   }
 
   /** Starts an ALTER TABLE query with the given table name for the given keyspace name. */
-  @NonNull
+  @Nonnull
   public static AlterDseTableStart alterDseTable(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier tableName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier tableName) {
     return new DefaultAlterDseTable(keyspace, tableName);
   }
 
@@ -309,8 +309,8 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * Shortcut for {@link #alterDseTable(CqlIdentifier)
    * alterDseTable(CqlIdentifier.fromCql(tableName)}
    */
-  @NonNull
-  public static AlterDseTableStart alterDseTable(@NonNull String tableName) {
+  @Nonnull
+  public static AlterDseTableStart alterDseTable(@Nonnull String tableName) {
     return alterDseTable(CqlIdentifier.fromCql(tableName));
   }
 
@@ -318,9 +318,9 @@ public class DseSchemaBuilder extends SchemaBuilder {
    * Shortcut for {@link #alterDseTable(CqlIdentifier,CqlIdentifier)
    * alterDseTable(CqlIdentifier.fromCql(keyspaceName),CqlIdentifier.fromCql(tableName)}
    */
-  @NonNull
+  @Nonnull
   public static AlterDseTableStart alterDseTable(
-      @Nullable String keyspace, @NonNull String tableName) {
+      @Nullable String keyspace, @Nonnull String tableName) {
     return alterDseTable(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace),
         CqlIdentifier.fromCql(tableName));

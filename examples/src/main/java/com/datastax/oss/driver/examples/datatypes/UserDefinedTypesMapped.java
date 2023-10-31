@@ -28,9 +28,9 @@ import com.datastax.oss.driver.api.core.type.codec.MappingCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Inserts and retrieves values in columns of user-defined types.
@@ -103,11 +103,11 @@ public class UserDefinedTypesMapped {
   /** The custom codec that will convert to and from {@link Coordinates}. */
   public static class CoordinatesCodec extends MappingCodec<UdtValue, Coordinates> {
 
-    public CoordinatesCodec(@NonNull TypeCodec<UdtValue> innerCodec) {
+    public CoordinatesCodec(@Nonnull TypeCodec<UdtValue> innerCodec) {
       super(innerCodec, GenericType.of(Coordinates.class));
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public UserDefinedType getCqlType() {
       return (UserDefinedType) super.getCqlType();

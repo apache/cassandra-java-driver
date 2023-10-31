@@ -30,11 +30,11 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.data.ValuesHelper;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -111,25 +111,25 @@ public class DefaultPreparedStatement implements PreparedStatement {
     this.protocolVersion = protocolVersion;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ByteBuffer getId() {
     return id;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getQuery() {
     return repreparePayload.query;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ColumnDefinitions getVariableDefinitions() {
     return variableDefinitions;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<Integer> getPartitionKeyIndices() {
     return partitionKeyIndices;
@@ -140,7 +140,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
     return resultMetadata.resultMetadataId;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ColumnDefinitions getResultSetDefinitions() {
     return resultMetadata.resultSetDefinitions;
@@ -148,13 +148,13 @@ public class DefaultPreparedStatement implements PreparedStatement {
 
   @Override
   public void setResultMetadata(
-      @NonNull ByteBuffer newResultMetadataId, @NonNull ColumnDefinitions newResultSetDefinitions) {
+      @Nonnull ByteBuffer newResultMetadataId, @Nonnull ColumnDefinitions newResultSetDefinitions) {
     this.resultMetadata = new ResultMetadata(newResultMetadataId, newResultSetDefinitions);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public BoundStatement bind(@NonNull Object... values) {
+  public BoundStatement bind(@Nonnull Object... values) {
     return new DefaultBoundStatement(
         this,
         variableDefinitions,
@@ -180,9 +180,9 @@ public class DefaultPreparedStatement implements PreparedStatement {
         Statement.NO_NOW_IN_SECONDS);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public BoundStatementBuilder boundStatementBuilder(@NonNull Object... values) {
+  public BoundStatementBuilder boundStatementBuilder(@Nonnull Object... values) {
     return new BoundStatementBuilder(
         this,
         variableDefinitions,

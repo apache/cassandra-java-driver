@@ -19,12 +19,12 @@ package com.datastax.dse.driver.api.core.data.time;
 
 import com.datastax.dse.driver.internal.core.search.DateRangeUtil;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.text.ParseException;
 import java.time.ZonedDateTime;
 import java.util.Calendar;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A date range bound.
@@ -62,8 +62,8 @@ public class DateRangeBound {
    * @throws NullPointerException if {@code lowerBound} is {@code null}.
    * @throws ParseException if the given input cannot be parsed.
    */
-  @NonNull
-  public static DateRangeBound parseLowerBound(@NonNull String source) throws ParseException {
+  @Nonnull
+  public static DateRangeBound parseLowerBound(@Nonnull String source) throws ParseException {
     Preconditions.checkNotNull(source);
     Calendar calendar = DateRangeUtil.parseCalendar(source);
     DateRangePrecision precision = DateRangeUtil.getPrecision(calendar);
@@ -119,7 +119,7 @@ public class DateRangeBound {
   @Nullable private final ZonedDateTime timestamp;
   @Nullable private final DateRangePrecision precision;
 
-  private DateRangeBound(@NonNull ZonedDateTime timestamp, @NonNull DateRangePrecision precision) {
+  private DateRangeBound(@Nonnull ZonedDateTime timestamp, @Nonnull DateRangePrecision precision) {
     Preconditions.checkNotNull(timestamp);
     Preconditions.checkNotNull(precision);
     this.timestamp = timestamp;
@@ -142,7 +142,7 @@ public class DateRangeBound {
    *
    * @throws IllegalStateException if this bound is {@linkplain #isUnbounded() unbounded}.
    */
-  @NonNull
+  @Nonnull
   public ZonedDateTime getTimestamp() {
     if (isUnbounded()) {
       throw new IllegalStateException(
@@ -157,7 +157,7 @@ public class DateRangeBound {
    *
    * @throws IllegalStateException if this bound is {@linkplain #isUnbounded() unbounded}.
    */
-  @NonNull
+  @Nonnull
   public DateRangePrecision getPrecision() {
     if (isUnbounded()) {
       throw new IllegalStateException(
@@ -181,7 +181,7 @@ public class DateRangeBound {
    * DateRangePrecision#MILLISECOND millisecond} precision, where the symbol "Z" is always appended
    * to the resulting string.
    */
-  @NonNull
+  @Nonnull
   @Override
   public String toString() {
     if (isUnbounded()) {

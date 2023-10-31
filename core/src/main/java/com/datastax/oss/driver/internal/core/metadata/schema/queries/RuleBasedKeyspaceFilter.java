@@ -18,7 +18,6 @@
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -28,6 +27,7 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +57,7 @@ class RuleBasedKeyspaceFilter implements KeyspaceFilter {
   private final boolean isDebugEnabled;
   private final Set<String> loggedKeyspaces;
 
-  RuleBasedKeyspaceFilter(@NonNull String logPrefix, @NonNull List<String> specs) {
+  RuleBasedKeyspaceFilter(@Nonnull String logPrefix, @Nonnull List<String> specs) {
     assert !specs.isEmpty(); // see KeyspaceFilter#newInstance
 
     this.logPrefix = logPrefix;
@@ -111,14 +111,14 @@ class RuleBasedKeyspaceFilter implements KeyspaceFilter {
     loggedKeyspaces = isDebugEnabled ? new HashSet<>() : null;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getWhereClause() {
     return whereClause;
   }
 
   @Override
-  public boolean includes(@NonNull String keyspace) {
+  public boolean includes(@Nonnull String keyspace) {
     if (exactIncludes.contains(keyspace)) {
       log(keyspace, true, "it is included by name");
       return true;
@@ -157,7 +157,7 @@ class RuleBasedKeyspaceFilter implements KeyspaceFilter {
     }
   }
 
-  private void log(@NonNull String keyspace, boolean include, @NonNull String reason) {
+  private void log(@Nonnull String keyspace, boolean include, @Nonnull String reason) {
     if (isDebugEnabled && loggedKeyspaces.add(keyspace)) {
       LOG.debug(
           "[{}] Filtering {} '{}' because {}", logPrefix, include ? "in" : "out", keyspace, reason);

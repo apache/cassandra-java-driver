@@ -22,8 +22,8 @@ import com.datastax.dse.driver.api.core.data.geometry.Point;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.esri.core.geometry.Polyline;
 import com.esri.core.geometry.ogc.OGCLineString;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -41,17 +41,17 @@ public class DefaultLineString extends DefaultGeometry implements LineString {
 
   private final List<Point> points;
 
-  public DefaultLineString(@NonNull Point p1, @NonNull Point p2, @NonNull Point... pn) {
+  public DefaultLineString(@Nonnull Point p1, @Nonnull Point p2, @Nonnull Point... pn) {
     super(fromPoints(p1, p2, pn));
     this.points = ImmutableList.<Point>builder().add(p1).add(p2).add(pn).build();
   }
 
-  public DefaultLineString(@NonNull OGCLineString lineString) {
+  public DefaultLineString(@Nonnull OGCLineString lineString) {
     super(lineString);
     this.points = getPoints(lineString);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<Point> getPoints() {
     return points;

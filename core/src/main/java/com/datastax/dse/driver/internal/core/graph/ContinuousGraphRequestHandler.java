@@ -35,7 +35,6 @@ import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.shaded.guava.common.base.MoreObjects;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.response.result.Rows;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Duration;
@@ -43,6 +42,7 @@ import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -58,12 +58,12 @@ public class ContinuousGraphRequestHandler
   private final Duration globalTimeout;
 
   ContinuousGraphRequestHandler(
-      @NonNull GraphStatement<?> statement,
-      @NonNull DefaultSession session,
-      @NonNull InternalDriverContext context,
-      @NonNull String sessionLogPrefix,
-      @NonNull GraphBinaryModule graphBinaryModule,
-      @NonNull GraphSupportChecker graphSupportChecker) {
+      @Nonnull GraphStatement<?> statement,
+      @Nonnull DefaultSession session,
+      @Nonnull InternalDriverContext context,
+      @Nonnull String sessionLogPrefix,
+      @Nonnull GraphBinaryModule graphBinaryModule,
+      @Nonnull GraphSupportChecker graphSupportChecker) {
     super(
         statement,
         session,
@@ -87,41 +87,41 @@ public class ContinuousGraphRequestHandler
     throttler.register(this);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   protected Duration getGlobalTimeout() {
     return globalTimeout;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected Duration getPageTimeout(@NonNull GraphStatement<?> statement, int pageNumber) {
+  protected Duration getPageTimeout(@Nonnull GraphStatement<?> statement, int pageNumber) {
     return Duration.ZERO;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected Duration getReviseRequestTimeout(@NonNull GraphStatement<?> statement) {
+  protected Duration getReviseRequestTimeout(@Nonnull GraphStatement<?> statement) {
     return Duration.ZERO;
   }
 
   @Override
-  protected int getMaxEnqueuedPages(@NonNull GraphStatement<?> statement) {
+  protected int getMaxEnqueuedPages(@Nonnull GraphStatement<?> statement) {
     DriverExecutionProfile executionProfile =
         Conversions.resolveExecutionProfile(statement, context);
     return executionProfile.getInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES);
   }
 
   @Override
-  protected int getMaxPages(@NonNull GraphStatement<?> statement) {
+  protected int getMaxPages(@Nonnull GraphStatement<?> statement) {
     DriverExecutionProfile executionProfile =
         Conversions.resolveExecutionProfile(statement, context);
     return executionProfile.getInt(DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_PAGES);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected Message getMessage(@NonNull GraphStatement<?> statement) {
+  protected Message getMessage(@Nonnull GraphStatement<?> statement) {
     DriverExecutionProfile executionProfile =
         Conversions.resolveExecutionProfile(statement, context);
     GraphProtocol subProtocol =
@@ -131,13 +131,13 @@ public class ContinuousGraphRequestHandler
   }
 
   @Override
-  protected boolean isTracingEnabled(@NonNull GraphStatement<?> statement) {
+  protected boolean isTracingEnabled(@Nonnull GraphStatement<?> statement) {
     return statement.isTracing();
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected Map<String, ByteBuffer> createPayload(@NonNull GraphStatement<?> statement) {
+  protected Map<String, ByteBuffer> createPayload(@Nonnull GraphStatement<?> statement) {
     DriverExecutionProfile executionProfile =
         Conversions.resolveExecutionProfile(statement, context);
     GraphProtocol subProtocol =
@@ -146,19 +146,19 @@ public class ContinuousGraphRequestHandler
         statement, subProtocol, executionProfile, context, graphBinaryModule);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected AsyncGraphResultSet createEmptyResultSet(@NonNull ExecutionInfo executionInfo) {
+  protected AsyncGraphResultSet createEmptyResultSet(@Nonnull ExecutionInfo executionInfo) {
     return ContinuousAsyncGraphResultSet.empty(executionInfo);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   protected ContinuousAsyncGraphResultSet createResultSet(
-      @NonNull GraphStatement<?> statement,
-      @NonNull Rows rows,
-      @NonNull ExecutionInfo executionInfo,
-      @NonNull ColumnDefinitions columnDefinitions)
+      @Nonnull GraphStatement<?> statement,
+      @Nonnull Rows rows,
+      @Nonnull ExecutionInfo executionInfo,
+      @Nonnull ColumnDefinitions columnDefinitions)
       throws IOException {
     DriverExecutionProfile executionProfile =
         Conversions.resolveExecutionProfile(statement, context);
@@ -185,7 +185,7 @@ public class ContinuousGraphRequestHandler
   }
 
   @Override
-  protected int pageNumber(@NonNull AsyncGraphResultSet resultSet) {
+  protected int pageNumber(@Nonnull AsyncGraphResultSet resultSet) {
     return ((ContinuousAsyncGraphResultSet) resultSet).pageNumber();
   }
 }

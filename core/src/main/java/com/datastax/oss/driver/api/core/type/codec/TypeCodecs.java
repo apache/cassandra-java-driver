@@ -55,7 +55,6 @@ import com.datastax.oss.driver.internal.core.type.codec.VarIntCodec;
 import com.datastax.oss.driver.internal.core.type.codec.VectorCodec;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -69,6 +68,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nonnull;
 
 /**
  * Constants and factory methods to obtain instances of the driver's default type codecs.
@@ -163,8 +163,8 @@ public class TypeCodecs {
    *
    * @param cqlType the fully-qualified name of the custom type.
    */
-  @NonNull
-  public static TypeCodec<ByteBuffer> custom(@NonNull DataType cqlType) {
+  @Nonnull
+  public static TypeCodec<ByteBuffer> custom(@Nonnull DataType cqlType) {
     Preconditions.checkArgument(cqlType instanceof CustomType, "cqlType must be a custom type");
     return new CustomCodec((CustomType) cqlType);
   }
@@ -173,8 +173,8 @@ public class TypeCodecs {
    * Builds a new codec that maps a CQL list to a Java list, using the given codec to map each
    * element.
    */
-  @NonNull
-  public static <T> TypeCodec<List<T>> listOf(@NonNull TypeCodec<T> elementCodec) {
+  @Nonnull
+  public static <T> TypeCodec<List<T>> listOf(@Nonnull TypeCodec<T> elementCodec) {
     return new ListCodec<>(DataTypes.listOf(elementCodec.getCqlType()), elementCodec);
   }
 
@@ -182,8 +182,8 @@ public class TypeCodecs {
    * Builds a new codec that maps a CQL set to a Java set, using the given codec to map each
    * element.
    */
-  @NonNull
-  public static <T> TypeCodec<Set<T>> setOf(@NonNull TypeCodec<T> elementCodec) {
+  @Nonnull
+  public static <T> TypeCodec<Set<T>> setOf(@Nonnull TypeCodec<T> elementCodec) {
     return new SetCodec<>(DataTypes.setOf(elementCodec.getCqlType()), elementCodec);
   }
 
@@ -191,9 +191,9 @@ public class TypeCodecs {
    * Builds a new codec that maps a CQL map to a Java map, using the given codecs to map each key
    * and value.
    */
-  @NonNull
+  @Nonnull
   public static <K, V> TypeCodec<Map<K, V>> mapOf(
-      @NonNull TypeCodec<K> keyCodec, @NonNull TypeCodec<V> valueCodec) {
+      @Nonnull TypeCodec<K> keyCodec, @Nonnull TypeCodec<V> valueCodec) {
     return new MapCodec<>(
         DataTypes.mapOf(keyCodec.getCqlType(), valueCodec.getCqlType()), keyCodec, valueCodec);
   }
@@ -205,19 +205,19 @@ public class TypeCodecs {
    * <p>Note that the components of a {@link TupleValue} are stored in their encoded form. They are
    * encoded/decoded on the fly when you set or get them, using the codec registry.
    */
-  @NonNull
-  public static TypeCodec<TupleValue> tupleOf(@NonNull TupleType cqlType) {
+  @Nonnull
+  public static TypeCodec<TupleValue> tupleOf(@Nonnull TupleType cqlType) {
     return new TupleCodec(cqlType);
   }
 
   public static <SubtypeT extends Number> TypeCodec<CqlVector<SubtypeT>> vectorOf(
-      @NonNull VectorType type, @NonNull TypeCodec<SubtypeT> subtypeCodec) {
+      @Nonnull VectorType type, @Nonnull TypeCodec<SubtypeT> subtypeCodec) {
     return new VectorCodec(
         DataTypes.vectorOf(subtypeCodec.getCqlType(), type.getDimensions()), subtypeCodec);
   }
 
   public static <SubtypeT extends Number> TypeCodec<CqlVector<SubtypeT>> vectorOf(
-      int dimensions, @NonNull TypeCodec<SubtypeT> subtypeCodec) {
+      int dimensions, @Nonnull TypeCodec<SubtypeT> subtypeCodec) {
     return new VectorCodec(DataTypes.vectorOf(subtypeCodec.getCqlType(), dimensions), subtypeCodec);
   }
 
@@ -228,8 +228,8 @@ public class TypeCodecs {
    * <p>Note that the fields of a {@link UdtValue} are stored in their encoded form. They are
    * encoded/decoded on the fly when you set or get them, using the codec registry.
    */
-  @NonNull
-  public static TypeCodec<UdtValue> udtOf(@NonNull UserDefinedType cqlType) {
+  @Nonnull
+  public static TypeCodec<UdtValue> udtOf(@Nonnull UserDefinedType cqlType) {
     return new UdtCodec(cqlType);
   }
 
@@ -257,8 +257,8 @@ public class TypeCodecs {
    * <p>This exists for historical reasons: the method was originally defined in this class, but
    * technically it belongs to {@link ExtraTypeCodecs} because this is not a built-in mapping.
    */
-  @NonNull
-  public static TypeCodec<ZonedDateTime> zonedTimestampAt(@NonNull ZoneId timeZone) {
+  @Nonnull
+  public static TypeCodec<ZonedDateTime> zonedTimestampAt(@Nonnull ZoneId timeZone) {
     return ExtraTypeCodecs.zonedTimestampAt(timeZone);
   }
 }

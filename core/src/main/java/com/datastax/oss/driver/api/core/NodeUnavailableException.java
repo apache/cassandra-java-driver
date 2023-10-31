@@ -18,8 +18,8 @@
 package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 
 /**
  * Indicates that a {@link Node} was selected in a query plan, but it had no connection available.
@@ -49,13 +49,13 @@ public class NodeUnavailableException extends DriverException {
     this.node = Objects.requireNonNull(node);
   }
 
-  @NonNull
+  @Nonnull
   public Node getNode() {
     return node;
   }
 
   @Override
-  @NonNull
+  @Nonnull
   public DriverException copy() {
     return new NodeUnavailableException(node);
   }

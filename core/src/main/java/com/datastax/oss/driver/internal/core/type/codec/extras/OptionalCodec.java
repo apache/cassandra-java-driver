@@ -20,12 +20,12 @@ package com.datastax.oss.driver.internal.core.type.codec.extras;
 import com.datastax.oss.driver.api.core.type.codec.MappingCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -36,14 +36,14 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class OptionalCodec<T> extends MappingCodec<T, Optional<T>> {
 
-  public OptionalCodec(@NonNull TypeCodec<T> innerCodec) {
+  public OptionalCodec(@Nonnull TypeCodec<T> innerCodec) {
     super(
         Objects.requireNonNull(innerCodec, "innerCodec must not be null"),
         GenericType.optionalOf(innerCodec.getJavaType()));
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     Objects.requireNonNull(value);
     if (value instanceof Optional) {
       Optional<?> optional = (Optional<?>) value;

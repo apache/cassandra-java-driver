@@ -20,7 +20,6 @@ package com.datastax.dse.driver.api.core.data.time;
 import com.datastax.dse.driver.internal.core.search.DateRangeUtil;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -29,6 +28,7 @@ import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 import java.util.Map;
+import javax.annotation.Nonnull;
 
 /** The precision of a {@link DateRangeBound}. */
 public enum DateRangePrecision {
@@ -172,8 +172,8 @@ public enum DateRangePrecision {
    * <p>Temporal fields smaller than this precision will be rounded up; other fields will be left
    * untouched.
    */
-  @NonNull
-  public ZonedDateTime roundUp(@NonNull ZonedDateTime timestamp) {
+  @Nonnull
+  public ZonedDateTime roundUp(@Nonnull ZonedDateTime timestamp) {
     Preconditions.checkNotNull(timestamp);
     return DateRangeUtil.roundUp(timestamp, roundingUnit);
   }
@@ -184,8 +184,8 @@ public enum DateRangePrecision {
    * <p>Temporal fields smaller than this precision will be rounded down; other fields will be left
    * untouched.
    */
-  @NonNull
-  public ZonedDateTime roundDown(@NonNull ZonedDateTime timestamp) {
+  @Nonnull
+  public ZonedDateTime roundDown(@Nonnull ZonedDateTime timestamp) {
     Preconditions.checkNotNull(timestamp);
     return DateRangeUtil.roundDown(timestamp, roundingUnit);
   }

@@ -20,10 +20,10 @@ package com.datastax.oss.driver.api.core.type.codec;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A {@link TypeCodec} that maps instances of {@code InnerT}, a driver supported Java type, to
@@ -56,13 +56,13 @@ public abstract class MappingCodec<InnerT, OuterT> implements TypeCodec<OuterT> 
    * @param outerJavaType The outer Java type; must not be null.
    */
   protected MappingCodec(
-      @NonNull TypeCodec<InnerT> innerCodec, @NonNull GenericType<OuterT> outerJavaType) {
+      @Nonnull TypeCodec<InnerT> innerCodec, @Nonnull GenericType<OuterT> outerJavaType) {
     this.innerCodec = Objects.requireNonNull(innerCodec, "innerCodec cannot be null");
     this.outerJavaType = Objects.requireNonNull(outerJavaType, "outerJavaType cannot be null");
   }
 
   /** @return The type of {@code OuterT}. */
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<OuterT> getJavaType() {
     return outerJavaType;
@@ -73,23 +73,23 @@ public abstract class MappingCodec<InnerT, OuterT> implements TypeCodec<OuterT> 
     return innerCodec.getJavaType();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return innerCodec.getCqlType();
   }
 
   @Override
-  public ByteBuffer encode(OuterT value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(OuterT value, @Nonnull ProtocolVersion protocolVersion) {
     return innerCodec.encode(outerToInner(value), protocolVersion);
   }
 
   @Override
-  public OuterT decode(ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public OuterT decode(ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     return innerToOuter(innerCodec.decode(bytes, protocolVersion));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(OuterT value) {
     return innerCodec.format(outerToInner(value));

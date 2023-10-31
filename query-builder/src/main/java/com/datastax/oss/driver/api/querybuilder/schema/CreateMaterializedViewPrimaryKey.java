@@ -19,7 +19,7 @@ package com.datastax.oss.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface CreateMaterializedViewPrimaryKey
     extends CreateMaterializedViewPrimaryKeyStart,
@@ -30,15 +30,15 @@ public interface CreateMaterializedViewPrimaryKey
    *
    * <p>Clustering columns are added in the order of their declaration.
    */
-  @NonNull
-  CreateMaterializedViewPrimaryKey withClusteringColumn(@NonNull CqlIdentifier columnName);
+  @Nonnull
+  CreateMaterializedViewPrimaryKey withClusteringColumn(@Nonnull CqlIdentifier columnName);
 
   /**
    * Shortcut for {@link #withClusteringColumn(CqlIdentifier)
    * withClusteringColumn(CqlIdentifier.asCql(columnName)}.
    */
-  @NonNull
-  default CreateMaterializedViewPrimaryKey withClusteringColumn(@NonNull String columnName) {
+  @Nonnull
+  default CreateMaterializedViewPrimaryKey withClusteringColumn(@Nonnull String columnName) {
     return withClusteringColumn(CqlIdentifier.fromCql(columnName));
   }
 }

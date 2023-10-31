@@ -19,12 +19,12 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.cql.QueryTrace;
 import com.datastax.oss.driver.api.core.cql.TraceEvent;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -55,13 +55,13 @@ public class DefaultQueryTrace implements QueryTrace {
     this.events = events;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public UUID getTracingId() {
     return tracingId;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getRequestType() {
     return requestType;
@@ -72,20 +72,20 @@ public class DefaultQueryTrace implements QueryTrace {
     return durationMicros;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   @Deprecated
   public InetAddress getCoordinator() {
     return coordinator.getAddress();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public InetSocketAddress getCoordinatorAddress() {
     return coordinator;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, String> getParameters() {
     return parameters;
@@ -96,7 +96,7 @@ public class DefaultQueryTrace implements QueryTrace {
     return startedAt;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<TraceEvent> getEvents() {
     return events;

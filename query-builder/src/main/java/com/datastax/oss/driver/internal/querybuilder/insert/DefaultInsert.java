@@ -32,9 +32,9 @@ import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -54,16 +54,16 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
   private final Object ttlInSeconds;
   private final boolean ifNotExists;
 
-  public DefaultInsert(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
+  public DefaultInsert(@Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier table) {
     this(keyspace, table, null, null, ImmutableMap.of(), null, null, false);
   }
 
   public DefaultInsert(
       @Nullable CqlIdentifier keyspace,
-      @NonNull CqlIdentifier table,
+      @Nonnull CqlIdentifier table,
       @Nullable Term json,
       @Nullable MissingJsonBehavior missingJsonBehavior,
-      @NonNull ImmutableMap<CqlIdentifier, Term> assignments,
+      @Nonnull ImmutableMap<CqlIdentifier, Term> assignments,
       @Nullable Object timestamp,
       @Nullable Object ttlInSeconds,
       boolean ifNotExists) {
@@ -89,9 +89,9 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
     this.ifNotExists = ifNotExists;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public JsonInsert json(@NonNull String json) {
+  public JsonInsert json(@Nonnull String json) {
     return new DefaultInsert(
         keyspace,
         table,
@@ -103,9 +103,9 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ifNotExists);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public JsonInsert json(@NonNull BindMarker json) {
+  public JsonInsert json(@Nonnull BindMarker json) {
     return new DefaultInsert(
         keyspace,
         table,
@@ -117,9 +117,9 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ifNotExists);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public <T> JsonInsert json(@NonNull T value, @NonNull TypeCodec<T> codec) {
+  public <T> JsonInsert json(@Nonnull T value, @Nonnull TypeCodec<T> codec) {
     return new DefaultInsert(
         keyspace,
         table,
@@ -131,7 +131,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ifNotExists);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public JsonInsert defaultNull() {
     return new DefaultInsert(
@@ -145,7 +145,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ifNotExists);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public JsonInsert defaultUnset() {
     return new DefaultInsert(
@@ -159,9 +159,9 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ifNotExists);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public RegularInsert value(@NonNull CqlIdentifier columnId, @NonNull Term value) {
+  public RegularInsert value(@Nonnull CqlIdentifier columnId, @Nonnull Term value) {
     return new DefaultInsert(
         keyspace,
         table,
@@ -173,9 +173,9 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ifNotExists);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public RegularInsert valuesByIds(@NonNull Map<CqlIdentifier, Term> newAssignments) {
+  public RegularInsert valuesByIds(@Nonnull Map<CqlIdentifier, Term> newAssignments) {
     return new DefaultInsert(
         keyspace,
         table,
@@ -187,14 +187,14 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ifNotExists);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Insert ifNotExists() {
     return new DefaultInsert(
         keyspace, table, json, missingJsonBehavior, assignments, timestamp, ttlInSeconds, true);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Insert usingTimestamp(long timestamp) {
     return new DefaultInsert(
@@ -208,7 +208,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ifNotExists);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Insert usingTimestamp(@Nullable BindMarker timestamp) {
     return new DefaultInsert(
@@ -222,7 +222,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ifNotExists);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Insert usingTtl(int ttlInSeconds) {
     return new DefaultInsert(
@@ -236,7 +236,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ifNotExists);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Insert usingTtl(@Nullable BindMarker ttlInSeconds) {
     return new DefaultInsert(
@@ -250,7 +250,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
         ifNotExists);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder("INSERT INTO ");
@@ -290,21 +290,21 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
     return builder.toString();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement build() {
     return builder().build();
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public SimpleStatement build(@NonNull Object... values) {
+  public SimpleStatement build(@Nonnull Object... values) {
     return builder().addPositionalValues(values).build();
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public SimpleStatement build(@NonNull Map<String, Object> namedValues) {
+  public SimpleStatement build(@Nonnull Map<String, Object> namedValues) {
     SimpleStatementBuilder builder = builder();
     for (Map.Entry<String, Object> entry : namedValues.entrySet()) {
       builder.addNamedValue(entry.getKey(), entry.getValue());
@@ -312,7 +312,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
     return builder.build();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatementBuilder builder() {
     return SimpleStatement.builder(asCql()).setIdempotence(isIdempotent());
@@ -337,7 +337,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getTable() {
     return table;
   }
@@ -352,7 +352,7 @@ public class DefaultInsert implements InsertInto, RegularInsert, JsonInsert {
     return missingJsonBehavior;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableMap<CqlIdentifier, Term> getAssignments() {
     return assignments;
   }

@@ -33,7 +33,6 @@ import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigParseOptions;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.io.File;
@@ -44,6 +43,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,9 +71,9 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
             .getConfig(DEFAULT_ROOT_PATH);
       };
 
-  @NonNull
+  @Nonnull
   public static DefaultDriverConfigLoader fromClasspath(
-      @NonNull String resourceBaseName, @NonNull ClassLoader appClassLoader) {
+      @Nonnull String resourceBaseName, @Nonnull ClassLoader appClassLoader) {
     return new DefaultDriverConfigLoader(
         () -> {
           ConfigFactory.invalidateCaches();
@@ -89,8 +89,8 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
         });
   }
 
-  @NonNull
-  public static DriverConfigLoader fromFile(@NonNull File file) {
+  @Nonnull
+  public static DriverConfigLoader fromFile(@Nonnull File file) {
     return new DefaultDriverConfigLoader(
         () -> {
           ConfigFactory.invalidateCaches();
@@ -103,8 +103,8 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
         });
   }
 
-  @NonNull
-  public static DriverConfigLoader fromUrl(@NonNull URL url) {
+  @Nonnull
+  public static DriverConfigLoader fromUrl(@Nonnull URL url) {
     return new DefaultDriverConfigLoader(
         () -> {
           ConfigFactory.invalidateCaches();
@@ -117,8 +117,8 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
         });
   }
 
-  @NonNull
-  public static DefaultDriverConfigLoader fromString(@NonNull String contents) {
+  @Nonnull
+  public static DefaultDriverConfigLoader fromString(@Nonnull String contents) {
     return new DefaultDriverConfigLoader(
         () -> {
           ConfigFactory.invalidateCaches();
@@ -160,7 +160,7 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
    * loader}. This constructor enables config reloading (that is, {@link #supportsReloading} will
    * return true).
    */
-  public DefaultDriverConfigLoader(@NonNull ClassLoader appClassLoader) {
+  public DefaultDriverConfigLoader(@Nonnull ClassLoader appClassLoader) {
     this(
         () -> {
           ConfigFactory.invalidateCaches();
@@ -180,7 +180,7 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
    * @param configSupplier A supplier for the Typesafe {@link Config}; it will be invoked once when
    *     this object is instantiated, and at each reload attempt, if reloading is enabled.
    */
-  public DefaultDriverConfigLoader(@NonNull Supplier<Config> configSupplier) {
+  public DefaultDriverConfigLoader(@Nonnull Supplier<Config> configSupplier) {
     this(configSupplier, true);
   }
 
@@ -193,24 +193,24 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
    * @param supportsReloading Whether config reloading should be enabled or not.
    */
   public DefaultDriverConfigLoader(
-      @NonNull Supplier<Config> configSupplier, boolean supportsReloading) {
+      @Nonnull Supplier<Config> configSupplier, boolean supportsReloading) {
     this.configSupplier = configSupplier;
     this.driverConfig = new TypesafeDriverConfig(configSupplier.get());
     this.supportsReloading = supportsReloading;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverConfig getInitialConfig() {
     return driverConfig;
   }
 
   @Override
-  public void onDriverInit(@NonNull DriverContext driverContext) {
+  public void onDriverInit(@Nonnull DriverContext driverContext) {
     this.singleThreaded = new SingleThreaded((InternalDriverContext) driverContext);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public final CompletionStage<Boolean> reload() {
     if (supportsReloading) {
@@ -230,7 +230,7 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
   }
 
   /** For internal use only, this leaks a Typesafe config type. */
-  @NonNull
+  @Nonnull
   public Supplier<Config> getConfigSupplier() {
     return configSupplier;
   }
@@ -269,7 +269,7 @@ public class DefaultDriverConfigLoader implements DriverConfigLoader {
    *     DriverConfigLoader#programmaticBuilder()} instead.
    */
   @Deprecated
-  @NonNull
+  @Nonnull
   public static DefaultDriverConfigLoaderBuilder builder() {
     return new DefaultDriverConfigLoaderBuilder();
   }

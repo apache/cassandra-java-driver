@@ -22,10 +22,10 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.DataTypeParser;
 import com.datastax.oss.driver.shaded.guava.common.collect.Multimap;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
 
 /**
  * The system rows returned by the queries for a schema refresh, categorized by keyspace/table where
@@ -36,7 +36,7 @@ import java.util.Map;
 public interface SchemaRows {
 
   /** The node that was used to retrieve the schema information. */
-  @NonNull
+  @Nonnull
   Node getNode();
 
   List<AdminRow> keyspaces();

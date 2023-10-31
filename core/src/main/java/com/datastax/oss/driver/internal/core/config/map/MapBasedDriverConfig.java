@@ -20,10 +20,10 @@ package com.datastax.oss.driver.internal.core.config.map;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nonnull;
 
 /** @see MapBasedDriverConfigLoader */
 public class MapBasedDriverConfig implements DriverConfig {
@@ -40,13 +40,13 @@ public class MapBasedDriverConfig implements DriverConfig {
     createMissingProfiles();
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DriverExecutionProfile getProfile(@NonNull String profileName) {
+  public DriverExecutionProfile getProfile(@Nonnull String profileName) {
     return profiles.computeIfAbsent(profileName, this::newProfile);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, ? extends DriverExecutionProfile> getProfiles() {
     // Refresh in case profiles were added to the backing map

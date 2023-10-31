@@ -17,7 +17,7 @@
  */
 package com.datastax.oss.driver.api.querybuilder.schema;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface CreateTableStart extends OngoingPartitionKey {
 
@@ -25,6 +25,6 @@ public interface CreateTableStart extends OngoingPartitionKey {
    * Adds IF NOT EXISTS to the create table specification. This indicates that the table should not
    * be created if it already exists.
    */
-  @NonNull
+  @Nonnull
   CreateTableStart ifNotExists();
 }

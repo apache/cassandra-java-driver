@@ -19,7 +19,7 @@ package com.datastax.dse.driver.api.core.auth;
 
 import com.datastax.oss.driver.api.core.auth.AuthProvider;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * {@link AuthProvider} that provides GSSAPI authenticator instances for clients to connect to DSE
@@ -165,10 +165,10 @@ public class ProgrammaticDseGssApiAuthProvider extends DseGssApiAuthProviderBase
     this.options = options;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   protected GssApiOptions getOptions(
-      @NonNull EndPoint endPoint, @NonNull String serverAuthenticator) {
+      @Nonnull EndPoint endPoint, @Nonnull String serverAuthenticator) {
     return options;
   }
 }

@@ -22,25 +22,25 @@ import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
 import com.datastax.oss.driver.api.core.retry.RetryVerdict;
 import com.datastax.oss.driver.api.core.session.Request;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public class ConsistencyDowngradingRetryVerdict implements RetryVerdict {
 
   private final ConsistencyLevel consistencyLevel;
 
-  public ConsistencyDowngradingRetryVerdict(@NonNull ConsistencyLevel consistencyLevel) {
+  public ConsistencyDowngradingRetryVerdict(@Nonnull ConsistencyLevel consistencyLevel) {
     this.consistencyLevel = consistencyLevel;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public RetryDecision getRetryDecision() {
     return RetryDecision.RETRY_SAME;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public <RequestT extends Request> RequestT getRetryRequest(@NonNull RequestT previous) {
+  public <RequestT extends Request> RequestT getRetryRequest(@Nonnull RequestT previous) {
     if (previous instanceof Statement) {
       Statement<?> statement = (Statement<?>) previous;
       @SuppressWarnings("unchecked")

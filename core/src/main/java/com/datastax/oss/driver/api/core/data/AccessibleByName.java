@@ -20,9 +20,9 @@ package com.datastax.oss.driver.api.core.data;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.internal.core.util.Loggers;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 /**
  * A data structure where the values are accessible via a name string.
@@ -57,8 +57,8 @@ public interface AccessibleByName extends AccessibleByIndex {
    *     <p>Implementors should always override this method (all built-in driver implementations
    *     do).
    */
-  @NonNull
-  default List<Integer> allIndicesOf(@NonNull String name) {
+  @Nonnull
+  default List<Integer> allIndicesOf(@Nonnull String name) {
     Loggers.ACCESSIBLE_BY_NAME.warn(
         "{} should override allIndicesOf(String), the default implementation is a "
             + "workaround for backward compatibility, it only returns the first occurrence",
@@ -72,7 +72,7 @@ public interface AccessibleByName extends AccessibleByIndex {
    *
    * @throws IllegalArgumentException if the name is invalid.
    */
-  int firstIndexOf(@NonNull String name);
+  int firstIndexOf(@Nonnull String name);
 
   /**
    * Returns the CQL type of the value for the first occurrence of {@code name}.
@@ -82,6 +82,6 @@ public interface AccessibleByName extends AccessibleByIndex {
    *
    * @throws IllegalArgumentException if the name is invalid.
    */
-  @NonNull
-  DataType getType(@NonNull String name);
+  @Nonnull
+  DataType getType(@Nonnull String name);
 }

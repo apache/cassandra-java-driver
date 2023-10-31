@@ -18,7 +18,7 @@
 package com.datastax.dse.driver.api.core.auth;
 
 import com.datastax.oss.driver.api.core.auth.PlainTextAuthProviderBase;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -30,7 +30,7 @@ import net.jcip.annotations.ThreadSafe;
 @Deprecated
 public abstract class DsePlainTextAuthProviderBase extends PlainTextAuthProviderBase {
 
-  protected DsePlainTextAuthProviderBase(@NonNull String logPrefix) {
+  protected DsePlainTextAuthProviderBase(@Nonnull String logPrefix) {
     super(logPrefix);
   }
 }

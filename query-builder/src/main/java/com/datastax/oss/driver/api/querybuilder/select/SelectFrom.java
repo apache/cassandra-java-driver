@@ -17,7 +17,7 @@
  */
 package com.datastax.oss.driver.api.querybuilder.select;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * The beginning of a SELECT query.
@@ -30,9 +30,9 @@ public interface SelectFrom extends OngoingSelection {
   // Implementation note - this interface exists to make the following a compile-time error:
   // selectFrom("foo").distinct().build()
 
-  @NonNull
+  @Nonnull
   SelectFrom json();
 
-  @NonNull
+  @Nonnull
   SelectFrom distinct();
 }

@@ -24,13 +24,13 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.UserDefinedTypeParser;
 import com.datastax.oss.driver.internal.core.type.DefaultUserDefinedType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -68,7 +68,7 @@ public class ShallowUserDefinedType implements UserDefinedType, Serializable {
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getName() {
     return name;
@@ -79,68 +79,68 @@ public class ShallowUserDefinedType implements UserDefinedType, Serializable {
     return frozen;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<CqlIdentifier> getFieldNames() {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+  public List<Integer> allIndicesOf(@Nonnull CqlIdentifier id) {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
   @Override
-  public int firstIndexOf(@NonNull CqlIdentifier id) {
+  public int firstIndexOf(@Nonnull CqlIdentifier id) {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull String name) {
+  public List<Integer> allIndicesOf(@Nonnull String name) {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
   @Override
-  public int firstIndexOf(@NonNull String name) {
+  public int firstIndexOf(@Nonnull String name) {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<DataType> getFieldTypes() {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public UserDefinedType copy(boolean newFrozen) {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public UdtValue newValue() {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public UdtValue newValue(@NonNull Object... fields) {
+  public UdtValue newValue(@Nonnull Object... fields) {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public AttachmentPoint getAttachmentPoint() {
     throw new UnsupportedOperationException(
@@ -154,7 +154,7 @@ public class ShallowUserDefinedType implements UserDefinedType, Serializable {
   }
 
   @Override
-  public void attach(@NonNull AttachmentPoint attachmentPoint) {
+  public void attach(@Nonnull AttachmentPoint attachmentPoint) {
     throw new UnsupportedOperationException(
         "This implementation should only be used internally, this is likely a driver bug");
   }

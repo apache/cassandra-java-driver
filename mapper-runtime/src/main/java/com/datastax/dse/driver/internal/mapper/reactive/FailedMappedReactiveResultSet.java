@@ -21,7 +21,7 @@ import com.datastax.dse.driver.api.mapper.reactive.MappedReactiveResultSet;
 import com.datastax.dse.driver.internal.core.cql.reactive.FailedPublisher;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import org.reactivestreams.Publisher;
 
 /**
@@ -35,19 +35,19 @@ public class FailedMappedReactiveResultSet<EntityT> extends FailedPublisher<Enti
     super(error);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Publisher<? extends ColumnDefinitions> getColumnDefinitions() {
     return new FailedPublisher<>(error);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Publisher<? extends ExecutionInfo> getExecutionInfos() {
     return new FailedPublisher<>(error);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Publisher<Boolean> wasApplied() {
     return new FailedPublisher<>(error);

@@ -35,7 +35,7 @@ import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteType;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,11 +128,11 @@ public class ConsistencyDowngradingRetryPolicy implements RetryPolicy {
 
   @SuppressWarnings("unused")
   public ConsistencyDowngradingRetryPolicy(
-      @NonNull DriverContext context, @NonNull String profileName) {
+      @Nonnull DriverContext context, @Nonnull String profileName) {
     this(context.getSessionName() + "|" + profileName);
   }
 
-  public ConsistencyDowngradingRetryPolicy(@NonNull String logPrefix) {
+  public ConsistencyDowngradingRetryPolicy(@Nonnull String logPrefix) {
     this.logPrefix = logPrefix;
   }
 
@@ -146,8 +146,8 @@ public class ConsistencyDowngradingRetryPolicy implements RetryPolicy {
    */
   @Override
   public RetryVerdict onReadTimeoutVerdict(
-      @NonNull Request request,
-      @NonNull ConsistencyLevel cl,
+      @Nonnull Request request,
+      @Nonnull ConsistencyLevel cl,
       int blockFor,
       int received,
       boolean dataPresent,
@@ -202,9 +202,9 @@ public class ConsistencyDowngradingRetryPolicy implements RetryPolicy {
    */
   @Override
   public RetryVerdict onWriteTimeoutVerdict(
-      @NonNull Request request,
-      @NonNull ConsistencyLevel cl,
-      @NonNull WriteType writeType,
+      @Nonnull Request request,
+      @Nonnull ConsistencyLevel cl,
+      @Nonnull WriteType writeType,
       int blockFor,
       int received,
       int retryCount) {
@@ -246,8 +246,8 @@ public class ConsistencyDowngradingRetryPolicy implements RetryPolicy {
    */
   @Override
   public RetryVerdict onUnavailableVerdict(
-      @NonNull Request request,
-      @NonNull ConsistencyLevel cl,
+      @Nonnull Request request,
+      @Nonnull ConsistencyLevel cl,
       int required,
       int alive,
       int retryCount) {
@@ -271,7 +271,7 @@ public class ConsistencyDowngradingRetryPolicy implements RetryPolicy {
 
   @Override
   public RetryVerdict onRequestAbortedVerdict(
-      @NonNull Request request, @NonNull Throwable error, int retryCount) {
+      @Nonnull Request request, @Nonnull Throwable error, int retryCount) {
     RetryVerdict verdict =
         error instanceof ClosedConnectionException || error instanceof HeartbeatException
             ? RetryVerdict.RETRY_NEXT
@@ -290,7 +290,7 @@ public class ConsistencyDowngradingRetryPolicy implements RetryPolicy {
 
   @Override
   public RetryVerdict onErrorResponseVerdict(
-      @NonNull Request request, @NonNull CoordinatorException error, int retryCount) {
+      @Nonnull Request request, @Nonnull CoordinatorException error, int retryCount) {
     RetryVerdict verdict =
         error instanceof WriteFailureException || error instanceof ReadFailureException
             ? RetryVerdict.RETHROW
@@ -310,8 +310,8 @@ public class ConsistencyDowngradingRetryPolicy implements RetryPolicy {
   @Override
   @Deprecated
   public RetryDecision onReadTimeout(
-      @NonNull Request request,
-      @NonNull ConsistencyLevel cl,
+      @Nonnull Request request,
+      @Nonnull ConsistencyLevel cl,
       int blockFor,
       int received,
       boolean dataPresent,
@@ -322,9 +322,9 @@ public class ConsistencyDowngradingRetryPolicy implements RetryPolicy {
   @Override
   @Deprecated
   public RetryDecision onWriteTimeout(
-      @NonNull Request request,
-      @NonNull ConsistencyLevel cl,
-      @NonNull WriteType writeType,
+      @Nonnull Request request,
+      @Nonnull ConsistencyLevel cl,
+      @Nonnull WriteType writeType,
       int blockFor,
       int received,
       int retryCount) {
@@ -334,8 +334,8 @@ public class ConsistencyDowngradingRetryPolicy implements RetryPolicy {
   @Override
   @Deprecated
   public RetryDecision onUnavailable(
-      @NonNull Request request,
-      @NonNull ConsistencyLevel cl,
+      @Nonnull Request request,
+      @Nonnull ConsistencyLevel cl,
       int required,
       int alive,
       int retryCount) {
@@ -345,14 +345,14 @@ public class ConsistencyDowngradingRetryPolicy implements RetryPolicy {
   @Override
   @Deprecated
   public RetryDecision onRequestAborted(
-      @NonNull Request request, @NonNull Throwable error, int retryCount) {
+      @Nonnull Request request, @Nonnull Throwable error, int retryCount) {
     throw new UnsupportedOperationException("onRequestAborted");
   }
 
   @Override
   @Deprecated
   public RetryDecision onErrorResponse(
-      @NonNull Request request, @NonNull CoordinatorException error, int retryCount) {
+      @Nonnull Request request, @Nonnull CoordinatorException error, int retryCount) {
     throw new UnsupportedOperationException("onErrorResponse");
   }
 

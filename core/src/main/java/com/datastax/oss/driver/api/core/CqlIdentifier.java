@@ -19,11 +19,11 @@ package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.internal.core.util.Strings;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Locale;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -71,8 +71,8 @@ public class CqlIdentifier implements Serializable {
   // One exception is named getters, where we keep raw strings with the 3.x rules.
 
   /** Creates an identifier from its {@link CqlIdentifier CQL form}. */
-  @NonNull
-  public static CqlIdentifier fromCql(@NonNull String cql) {
+  @Nonnull
+  public static CqlIdentifier fromCql(@Nonnull String cql) {
     Preconditions.checkNotNull(cql, "cql must not be null");
     final String internal;
     if (Strings.isDoubleQuoted(cql)) {
@@ -86,8 +86,8 @@ public class CqlIdentifier implements Serializable {
   }
 
   /** Creates an identifier from its {@link CqlIdentifier internal form}. */
-  @NonNull
-  public static CqlIdentifier fromInternal(@NonNull String internal) {
+  @Nonnull
+  public static CqlIdentifier fromInternal(@Nonnull String internal) {
     Preconditions.checkNotNull(internal, "internal must not be null");
     return new CqlIdentifier(internal);
   }
@@ -104,7 +104,7 @@ public class CqlIdentifier implements Serializable {
    *
    * @return the identifier in its exact case, unquoted.
    */
-  @NonNull
+  @Nonnull
   public String asInternal() {
     return this.internal;
   }
@@ -117,7 +117,7 @@ public class CqlIdentifier implements Serializable {
    *     {@code false}, always use the double-quoted form (this is slightly more efficient since we
    *     don't need to inspect the string).
    */
-  @NonNull
+  @Nonnull
   public String asCql(boolean pretty) {
     if (pretty) {
       return Strings.needsDoubleQuotes(internal) ? Strings.doubleQuote(internal) : internal;

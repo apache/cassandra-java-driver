@@ -19,12 +19,12 @@ package com.datastax.oss.driver.internal.core.type.codec;
 
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class CounterCodec extends BigIntCodec {
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.COUNTER;

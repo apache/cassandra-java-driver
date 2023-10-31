@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface CreateDseTable
     extends BuildableQuery, OngoingDsePartitionKey, CreateDseTableWithOptions {
@@ -38,17 +38,17 @@ public interface CreateDseTable
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
-  @NonNull
+  @Nonnull
   CreateDseTable withClusteringColumn(
-      @NonNull CqlIdentifier columnName, @NonNull DataType dataType);
+      @Nonnull CqlIdentifier columnName, @Nonnull DataType dataType);
 
   /**
    * Shortcut for {@link #withClusteringColumn(CqlIdentifier, DataType)
    * withClusteringColumn(CqlIdentifier.asCql(columnName), dataType)}.
    */
-  @NonNull
+  @Nonnull
   default CreateDseTable withClusteringColumn(
-      @NonNull String columnName, @NonNull DataType dataType) {
+      @Nonnull String columnName, @Nonnull DataType dataType) {
     return withClusteringColumn(CqlIdentifier.fromCql(columnName), dataType);
   }
 
@@ -58,15 +58,15 @@ public interface CreateDseTable
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
-  @NonNull
-  CreateDseTable withColumn(@NonNull CqlIdentifier columnName, @NonNull DataType dataType);
+  @Nonnull
+  CreateDseTable withColumn(@Nonnull CqlIdentifier columnName, @Nonnull DataType dataType);
 
   /**
    * Shortcut for {@link #withColumn(CqlIdentifier, DataType)
    * withColumn(CqlIdentifier.asCql(columnName), dataType)}.
    */
-  @NonNull
-  default CreateDseTable withColumn(@NonNull String columnName, @NonNull DataType dataType) {
+  @Nonnull
+  default CreateDseTable withColumn(@Nonnull String columnName, @Nonnull DataType dataType) {
     return withColumn(CqlIdentifier.fromCql(columnName), dataType);
   }
 
@@ -79,15 +79,15 @@ public interface CreateDseTable
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
-  @NonNull
-  CreateDseTable withStaticColumn(@NonNull CqlIdentifier columnName, @NonNull DataType dataType);
+  @Nonnull
+  CreateDseTable withStaticColumn(@Nonnull CqlIdentifier columnName, @Nonnull DataType dataType);
 
   /**
    * Shortcut for {@link #withStaticColumn(CqlIdentifier, DataType)
    * withStaticColumn(CqlIdentifier.asCql(columnName), dataType)}.
    */
-  @NonNull
-  default CreateDseTable withStaticColumn(@NonNull String columnName, @NonNull DataType dataType) {
+  @Nonnull
+  default CreateDseTable withStaticColumn(@Nonnull String columnName, @Nonnull DataType dataType) {
     return withStaticColumn(CqlIdentifier.fromCql(columnName), dataType);
   }
 }

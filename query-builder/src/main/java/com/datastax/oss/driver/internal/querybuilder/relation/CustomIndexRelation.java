@@ -20,7 +20,7 @@ package com.datastax.oss.driver.internal.querybuilder.relation;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -29,13 +29,13 @@ public class CustomIndexRelation implements Relation {
   private final CqlIdentifier indexId;
   private final Term expression;
 
-  public CustomIndexRelation(@NonNull CqlIdentifier indexId, @NonNull Term expression) {
+  public CustomIndexRelation(@Nonnull CqlIdentifier indexId, @Nonnull Term expression) {
     this.indexId = indexId;
     this.expression = expression;
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     builder.append("expr(").append(indexId.asCql(true)).append(',');
     expression.appendTo(builder);
     builder.append(')');
@@ -46,12 +46,12 @@ public class CustomIndexRelation implements Relation {
     return false;
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getIndexId() {
     return indexId;
   }
 
-  @NonNull
+  @Nonnull
   public Term getExpression() {
     return expression;
   }

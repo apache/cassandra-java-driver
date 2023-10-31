@@ -17,13 +17,13 @@
  */
 package com.datastax.dse.driver.internal.core.cql.reactive;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.Nonnull;
 import org.reactivestreams.Processor;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
@@ -210,7 +210,7 @@ public class SimpleUnicastProcessor<ElementT>
     }
   }
 
-  private void doOnNext(@NonNull ElementT result) {
+  private void doOnNext(@Nonnull ElementT result) {
     try {
       subscriber.onNext(result);
     } catch (Throwable t) {
@@ -236,7 +236,7 @@ public class SimpleUnicastProcessor<ElementT>
     cancel();
   }
 
-  private void doOnError(@NonNull Throwable error) {
+  private void doOnError(@Nonnull Throwable error) {
     try {
       // Then we signal the error downstream, as per rules 1.2 and 1.4.
       subscriber.onError(error);

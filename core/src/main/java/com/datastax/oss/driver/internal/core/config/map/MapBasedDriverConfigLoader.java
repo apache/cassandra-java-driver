@@ -25,32 +25,32 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
+import javax.annotation.Nonnull;
 
 public class MapBasedDriverConfigLoader implements DriverConfigLoader, Consumer<OptionsMap> {
 
-  @NonNull private final OptionsMap source;
-  @NonNull private final Map<String, Map<DriverOption, Object>> rawMap;
+  @Nonnull private final OptionsMap source;
+  @Nonnull private final Map<String, Map<DriverOption, Object>> rawMap;
   private volatile EventBus eventBus;
 
   public MapBasedDriverConfigLoader(
-      @NonNull OptionsMap source, @NonNull Map<String, Map<DriverOption, Object>> rawMap) {
+      @Nonnull OptionsMap source, @Nonnull Map<String, Map<DriverOption, Object>> rawMap) {
     this.source = source;
     this.rawMap = rawMap;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverConfig getInitialConfig() {
     return new MapBasedDriverConfig(rawMap);
   }
 
   @Override
-  public void onDriverInit(@NonNull DriverContext context) {
+  public void onDriverInit(@Nonnull DriverContext context) {
     eventBus = ((InternalDriverContext) context).getEventBus();
     source.addChangeListener(this);
   }
@@ -61,7 +61,7 @@ public class MapBasedDriverConfigLoader implements DriverConfigLoader, Consumer<
     eventBus.fire(ConfigChangeEvent.INSTANCE);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Boolean> reload() {
     return CompletableFuture.completedFuture(true);

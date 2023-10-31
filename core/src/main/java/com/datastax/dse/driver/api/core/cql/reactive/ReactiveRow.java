@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.type.DataTypes;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * A row produced by a {@linkplain ReactiveResultSet reactive result set}.
@@ -44,7 +44,7 @@ public interface ReactiveRow extends Row {
    * @return the column definitions contained in this row.
    * @see ReactiveResultSet#getColumnDefinitions()
    */
-  @NonNull
+  @Nonnull
   @Override
   ColumnDefinitions getColumnDefinitions();
 
@@ -57,7 +57,7 @@ public interface ReactiveRow extends Row {
    * @return the execution information for the paged request that produced this result.
    * @see ReactiveResultSet#getExecutionInfos()
    */
-  @NonNull
+  @Nonnull
   ExecutionInfo getExecutionInfo();
 
   /**

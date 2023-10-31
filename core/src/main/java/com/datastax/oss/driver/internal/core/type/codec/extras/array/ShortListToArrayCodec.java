@@ -20,9 +20,9 @@ package com.datastax.oss.driver.internal.core.type.codec.extras.array;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -41,12 +41,12 @@ public class ShortListToArrayCodec extends AbstractPrimitiveListToArrayCodec<sho
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return short[].class.equals(javaClass);
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     Objects.requireNonNull(value);
     return value instanceof short[];
   }
@@ -58,33 +58,33 @@ public class ShortListToArrayCodec extends AbstractPrimitiveListToArrayCodec<sho
 
   @Override
   protected void serializeElement(
-      @NonNull ByteBuffer output,
-      @NonNull short[] array,
+      @Nonnull ByteBuffer output,
+      @Nonnull short[] array,
       int index,
-      @NonNull ProtocolVersion protocolVersion) {
+      @Nonnull ProtocolVersion protocolVersion) {
     output.putShort(array[index]);
   }
 
   @Override
   protected void deserializeElement(
-      @NonNull ByteBuffer input,
-      @NonNull short[] array,
+      @Nonnull ByteBuffer input,
+      @Nonnull short[] array,
       int index,
-      @NonNull ProtocolVersion protocolVersion) {
+      @Nonnull ProtocolVersion protocolVersion) {
     array[index] = input.getShort();
   }
 
   @Override
-  protected void formatElement(@NonNull StringBuilder output, @NonNull short[] array, int index) {
+  protected void formatElement(@Nonnull StringBuilder output, @Nonnull short[] array, int index) {
     output.append(array[index]);
   }
 
   @Override
-  protected void parseElement(@NonNull String input, @NonNull short[] array, int index) {
+  protected void parseElement(@Nonnull String input, @Nonnull short[] array, int index) {
     array[index] = Short.parseShort(input);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   protected short[] newInstance(int size) {
     return new short[size];

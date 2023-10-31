@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface AlterTableAddColumn {
   /**
@@ -30,15 +30,15 @@ public interface AlterTableAddColumn {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
-  @NonNull
-  AlterTableAddColumnEnd addColumn(@NonNull CqlIdentifier columnName, @NonNull DataType dataType);
+  @Nonnull
+  AlterTableAddColumnEnd addColumn(@Nonnull CqlIdentifier columnName, @Nonnull DataType dataType);
 
   /**
    * Shortcut for {@link #addColumn(CqlIdentifier, DataType)
    * addColumn(CqlIdentifier.asCql(columnName), dataType)}.
    */
-  @NonNull
-  default AlterTableAddColumnEnd addColumn(@NonNull String columnName, @NonNull DataType dataType) {
+  @Nonnull
+  default AlterTableAddColumnEnd addColumn(@Nonnull String columnName, @Nonnull DataType dataType) {
     return addColumn(CqlIdentifier.fromCql(columnName), dataType);
   }
 
@@ -48,17 +48,17 @@ public interface AlterTableAddColumn {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
-  @NonNull
+  @Nonnull
   AlterTableAddColumnEnd addStaticColumn(
-      @NonNull CqlIdentifier columnName, @NonNull DataType dataType);
+      @Nonnull CqlIdentifier columnName, @Nonnull DataType dataType);
 
   /**
    * Shortcut for {@link #addStaticColumn(CqlIdentifier, DataType)
    * addStaticColumn(CqlIdentifier.asCql(columnName), dataType)}.
    */
-  @NonNull
+  @Nonnull
   default AlterTableAddColumnEnd addStaticColumn(
-      @NonNull String columnName, @NonNull DataType dataType) {
+      @Nonnull String columnName, @Nonnull DataType dataType) {
     return addStaticColumn(CqlIdentifier.fromCql(columnName), dataType);
   }
 }

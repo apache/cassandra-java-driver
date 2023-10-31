@@ -18,21 +18,21 @@
 package com.datastax.dse.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface CreateDseFunctionWithType {
   /**
    * Adds LANGUAGE to the create function specification. This is used to specify what language is
    * used in the function body.
    */
-  @NonNull
-  CreateDseFunctionWithLanguage withLanguage(@NonNull String language);
+  @Nonnull
+  CreateDseFunctionWithLanguage withLanguage(@Nonnull String language);
 
   /**
    * Adds "LANGUAGE java" to create function specification. Shortcut for {@link
    * #withLanguage(String) withLanguage("java")}.
    */
-  @NonNull
+  @Nonnull
   default CreateDseFunctionWithLanguage withJavaLanguage() {
     return withLanguage("java");
   }
@@ -41,7 +41,7 @@ public interface CreateDseFunctionWithType {
    * Adds "LANGUAGE javascript" to create function specification. Shortcut for {@link
    * #withLanguage(String) withLanguage("javascript")}.
    */
-  @NonNull
+  @Nonnull
   default CreateDseFunctionWithLanguage withJavaScriptLanguage() {
     return withLanguage("javascript");
   }
@@ -50,14 +50,14 @@ public interface CreateDseFunctionWithType {
    * Adds "DETERMINISTIC" to create function specification. This is used to specify that this
    * function always returns the same output for a given input.
    */
-  @NonNull
+  @Nonnull
   CreateDseFunctionWithType deterministic();
 
   /**
    * Adds "MONOTONIC" to create function specification. This is used to specify that this function
    * is either entirely non-increasing, or entirely non-decreasing.
    */
-  @NonNull
+  @Nonnull
   CreateDseFunctionWithType monotonic();
 
   /**
@@ -65,15 +65,15 @@ public interface CreateDseFunctionWithType {
    * function has only a single column that is monotonic. If the function is fully monotonic, use
    * {@link #monotonic()} instead.
    */
-  @NonNull
-  CreateDseFunctionWithType monotonicOn(@NonNull CqlIdentifier monotonicColumn);
+  @Nonnull
+  CreateDseFunctionWithType monotonicOn(@Nonnull CqlIdentifier monotonicColumn);
 
   /**
    * Shortcut for {@link #monotonicOn(CqlIdentifier)
    * monotonicOn(CqlIdentifier.fromCql(monotonicColumn))}.
    */
-  @NonNull
-  default CreateDseFunctionWithType monotonicOn(@NonNull String monotonicColumn) {
+  @Nonnull
+  default CreateDseFunctionWithType monotonicOn(@Nonnull String monotonicColumn) {
     return monotonicOn(CqlIdentifier.fromCql(monotonicColumn));
   }
 }

@@ -23,49 +23,49 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
 public class VarIntCodec implements TypeCodec<BigInteger> {
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<BigInteger> getJavaType() {
     return GenericType.BIG_INTEGER;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return DataTypes.VARINT;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     return value instanceof BigInteger;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return BigInteger.class.isAssignableFrom(javaClass);
   }
 
   @Nullable
   @Override
-  public ByteBuffer encode(@Nullable BigInteger value, @NonNull ProtocolVersion protocolVersion) {
+  public ByteBuffer encode(@Nullable BigInteger value, @Nonnull ProtocolVersion protocolVersion) {
     return (value == null) ? null : ByteBuffer.wrap(value.toByteArray());
   }
 
   @Nullable
   @Override
-  public BigInteger decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public BigInteger decode(@Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     return (bytes == null) || bytes.remaining() == 0 ? null : new BigInteger(Bytes.getArray(bytes));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable BigInteger value) {
     return (value == null) ? "NULL" : value.toString();

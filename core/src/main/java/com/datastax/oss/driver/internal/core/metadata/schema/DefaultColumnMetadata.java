@@ -20,9 +20,9 @@ package com.datastax.oss.driver.internal.core.metadata.schema;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.type.DataType;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.Serializable;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -30,17 +30,17 @@ public class DefaultColumnMetadata implements ColumnMetadata, Serializable {
 
   private static final long serialVersionUID = 1;
 
-  @NonNull private final CqlIdentifier keyspace;
-  @NonNull private final CqlIdentifier parent;
-  @NonNull private final CqlIdentifier name;
-  @NonNull private final DataType dataType;
+  @Nonnull private final CqlIdentifier keyspace;
+  @Nonnull private final CqlIdentifier parent;
+  @Nonnull private final CqlIdentifier name;
+  @Nonnull private final DataType dataType;
   private final boolean isStatic;
 
   public DefaultColumnMetadata(
-      @NonNull CqlIdentifier keyspace,
-      @NonNull CqlIdentifier parent,
-      @NonNull CqlIdentifier name,
-      @NonNull DataType dataType,
+      @Nonnull CqlIdentifier keyspace,
+      @Nonnull CqlIdentifier parent,
+      @Nonnull CqlIdentifier name,
+      @Nonnull DataType dataType,
       boolean isStatic) {
     this.keyspace = keyspace;
     this.parent = parent;
@@ -49,25 +49,25 @@ public class DefaultColumnMetadata implements ColumnMetadata, Serializable {
     this.isStatic = isStatic;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getParent() {
     return parent;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getName() {
     return name;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getType() {
     return dataType;

@@ -22,12 +22,12 @@ import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import com.datastax.oss.driver.shaded.guava.common.primitives.Ints;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -118,7 +118,7 @@ public class RawColumn implements Comparable<RawColumn> {
   }
 
   @Override
-  public int compareTo(@NonNull RawColumn that) {
+  public int compareTo(@Nonnull RawColumn that) {
     // First, order by kind. Then order partition key and clustering columns by position. For
     // other kinds, order by column name.
     if (!this.kind.equals(that.kind)) {

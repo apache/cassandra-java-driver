@@ -17,50 +17,50 @@
  */
 package com.datastax.oss.driver.api.querybuilder.schema.compaction;
 
-import edu.umd.cs.findbugs.annotations.CheckReturnValue;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
 
 public interface SizeTieredCompactionStrategy<SelfT extends SizeTieredCompactionStrategy<SelfT>>
     extends CompactionStrategy<SelfT> {
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default SelfT withMaxThreshold(int maxThreshold) {
     return withOption("max_threshold", maxThreshold);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default SelfT withMinThreshold(int minThreshold) {
     return withOption("min_threshold", minThreshold);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default SelfT withMinSSTableSizeInBytes(long bytes) {
     return withOption("min_sstable_size", bytes);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default SelfT withOnlyPurgeRepairedTombstones(boolean enabled) {
     return withOption("only_purge_repaired_tombstones", enabled);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default SelfT withBucketHigh(double bucketHigh) {
     return withOption("bucket_high", bucketHigh);
   }
 
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default SelfT withBucketLow(double bucketHigh) {
     return withOption("bucket_low", bucketHigh);
   }
 
   // 2.1 only
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default SelfT withColdReadsToOmit(double ratio) {
     return withOption("cold_reads_to_omit", ratio);

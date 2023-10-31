@@ -22,12 +22,12 @@ import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 
@@ -69,9 +69,9 @@ public class DefaultBatchGraphStatement extends GraphStatementBase<BatchGraphSta
     this.traversals = ImmutableList.copyOf(traversals);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DefaultBatchGraphStatement addTraversal(@NonNull GraphTraversal newTraversal) {
+  public DefaultBatchGraphStatement addTraversal(@Nonnull GraphTraversal newTraversal) {
     return new DefaultBatchGraphStatement(
         ImmutableList.<GraphTraversal>builder().addAll(traversals).add(newTraversal).build(),
         isIdempotent(),
@@ -89,9 +89,9 @@ public class DefaultBatchGraphStatement extends GraphStatementBase<BatchGraphSta
         getWriteConsistencyLevel());
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DefaultBatchGraphStatement addTraversals(@NonNull Iterable<GraphTraversal> newTraversals) {
+  public DefaultBatchGraphStatement addTraversals(@Nonnull Iterable<GraphTraversal> newTraversals) {
     return new DefaultBatchGraphStatement(
         ImmutableList.<GraphTraversal>builder().addAll(traversals).addAll(newTraversals).build(),
         isIdempotent(),
@@ -146,7 +146,7 @@ public class DefaultBatchGraphStatement extends GraphStatementBase<BatchGraphSta
         writeConsistencyLevel);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Iterator<GraphTraversal> iterator() {
     return this.traversals.iterator();

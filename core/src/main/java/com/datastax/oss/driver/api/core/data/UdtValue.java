@@ -19,7 +19,7 @@ package com.datastax.oss.driver.api.core.data;
 
 import com.datastax.oss.driver.api.core.detach.Detachable;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * Driver-side representation of an instance of a CQL user defined type.
@@ -35,7 +35,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public interface UdtValue
     extends GettableById, GettableByName, SettableById<UdtValue>, SettableByName<UdtValue> {
 
-  @NonNull
+  @Nonnull
   UserDefinedType getType();
 
   /**
@@ -57,7 +57,7 @@ public interface UdtValue
    *       might be undesirable to leak data in application logs.
    * </ul>
    */
-  @NonNull
+  @Nonnull
   default String getFormattedContents() {
     return codecRegistry().codecFor(getType(), UdtValue.class).format(this);
   }

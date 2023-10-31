@@ -22,13 +22,13 @@ import static com.datastax.oss.driver.api.core.config.DriverExecutionProfile.DEF
 import static org.mockito.Mockito.reset;
 
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.UUID;
+import javax.annotation.Nonnull;
 
 public class DcInferringLoadBalancingPolicyEventsTest extends BasicLoadBalancingPolicyEventsTest {
 
   @Override
-  @NonNull
+  @Nonnull
   protected BasicLoadBalancingPolicy createAndInitPolicy() {
     DcInferringLoadBalancingPolicy policy =
         new DcInferringLoadBalancingPolicy(context, DEFAULT_NAME);

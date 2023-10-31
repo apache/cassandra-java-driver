@@ -20,9 +20,9 @@ package com.datastax.oss.driver.internal.querybuilder.select;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -31,31 +31,31 @@ public class ColumnSelector implements Selector {
   private final CqlIdentifier columnId;
   private final CqlIdentifier alias;
 
-  public ColumnSelector(@NonNull CqlIdentifier columnId) {
+  public ColumnSelector(@Nonnull CqlIdentifier columnId) {
     this(columnId, null);
   }
 
-  public ColumnSelector(@NonNull CqlIdentifier columnId, @Nullable CqlIdentifier alias) {
+  public ColumnSelector(@Nonnull CqlIdentifier columnId, @Nullable CqlIdentifier alias) {
     Preconditions.checkNotNull(columnId);
     this.columnId = columnId;
     this.alias = alias;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Selector as(@NonNull CqlIdentifier alias) {
+  public Selector as(@Nonnull CqlIdentifier alias) {
     return new ColumnSelector(columnId, alias);
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     builder.append(columnId.asCql(true));
     if (alias != null) {
       builder.append(" AS ").append(alias.asCql(true));
     }
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getColumnId() {
     return columnId;
   }

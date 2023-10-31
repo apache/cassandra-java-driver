@@ -18,9 +18,9 @@
 package com.datastax.dse.driver.api.core.auth;
 
 import com.datastax.oss.driver.api.core.auth.SyncAuthenticator;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -35,7 +35,7 @@ public abstract class BaseDseAuthenticator implements SyncAuthenticator {
 
   private final String serverAuthenticator;
 
-  protected BaseDseAuthenticator(@NonNull String serverAuthenticator) {
+  protected BaseDseAuthenticator(@Nonnull String serverAuthenticator) {
     this.serverAuthenticator = serverAuthenticator;
   }
 
@@ -52,7 +52,7 @@ public abstract class BaseDseAuthenticator implements SyncAuthenticator {
    * This must be either a {@linkplain ByteBuffer#asReadOnlyBuffer() read-only} buffer, or a new
    * instance every time.
    */
-  @NonNull
+  @Nonnull
   protected abstract ByteBuffer getMechanism();
 
   /**
@@ -68,7 +68,7 @@ public abstract class BaseDseAuthenticator implements SyncAuthenticator {
    * This must be either a {@linkplain ByteBuffer#asReadOnlyBuffer() read-only} buffer, or a new
    * instance every time.
    */
-  @NonNull
+  @Nonnull
   protected abstract ByteBuffer getInitialServerChallenge();
 
   @Nullable

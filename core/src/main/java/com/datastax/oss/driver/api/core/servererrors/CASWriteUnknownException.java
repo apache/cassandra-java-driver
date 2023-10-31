@@ -24,7 +24,7 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.session.Request;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * The result of a CAS operation is in an unknown state.
@@ -37,8 +37,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public class CASWriteUnknownException extends QueryConsistencyException {
 
   public CASWriteUnknownException(
-      @NonNull Node coordinator,
-      @NonNull ConsistencyLevel consistencyLevel,
+      @Nonnull Node coordinator,
+      @Nonnull ConsistencyLevel consistencyLevel,
       int received,
       int blockFor) {
     this(
@@ -54,9 +54,9 @@ public class CASWriteUnknownException extends QueryConsistencyException {
   }
 
   private CASWriteUnknownException(
-      @NonNull Node coordinator,
-      @NonNull String message,
-      @NonNull ConsistencyLevel consistencyLevel,
+      @Nonnull Node coordinator,
+      @Nonnull String message,
+      @Nonnull ConsistencyLevel consistencyLevel,
       int received,
       int blockFor,
       ExecutionInfo executionInfo,
@@ -71,7 +71,7 @@ public class CASWriteUnknownException extends QueryConsistencyException {
         writableStackTrace);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new CASWriteUnknownException(

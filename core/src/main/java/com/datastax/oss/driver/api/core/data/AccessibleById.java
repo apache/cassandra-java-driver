@@ -20,9 +20,9 @@ package com.datastax.oss.driver.api.core.data;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.internal.core.util.Loggers;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 /**
  * A data structure where the values are accessible via a CQL identifier.
@@ -41,8 +41,8 @@ public interface AccessibleById extends AccessibleByIndex {
    *     <p>Implementors should always override this method (all built-in driver implementations
    *     do).
    */
-  @NonNull
-  default List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+  @Nonnull
+  default List<Integer> allIndicesOf(@Nonnull CqlIdentifier id) {
     Loggers.ACCESSIBLE_BY_ID.warn(
         "{} should override allIndicesOf(CqlIdentifier), the default implementation is a "
             + "workaround for backward compatibility, it only returns the first occurrence",
@@ -56,7 +56,7 @@ public interface AccessibleById extends AccessibleByIndex {
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  int firstIndexOf(@NonNull CqlIdentifier id);
+  int firstIndexOf(@Nonnull CqlIdentifier id);
 
   /**
    * Returns the CQL type of the value for the first occurrence of {@code id}.
@@ -66,6 +66,6 @@ public interface AccessibleById extends AccessibleByIndex {
    *
    * @throws IllegalArgumentException if the id is invalid.
    */
-  @NonNull
-  DataType getType(@NonNull CqlIdentifier id);
+  @Nonnull
+  DataType getType(@Nonnull CqlIdentifier id);
 }

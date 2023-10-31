@@ -27,8 +27,6 @@ import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigValue;
 import com.typesafe.config.ConfigValueFactory;
 import com.typesafe.config.ConfigValueType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.Collections;
@@ -39,6 +37,8 @@ import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -56,135 +56,135 @@ public abstract class TypesafeDriverExecutionProfile implements DriverExecutionP
   protected final ConcurrentMap<String, Object> cache = new ConcurrentHashMap<>();
 
   @Override
-  public boolean isDefined(@NonNull DriverOption option) {
+  public boolean isDefined(@Nonnull DriverOption option) {
     return getEffectiveOptions().hasPath(option.getPath());
   }
 
   @Override
-  public boolean getBoolean(@NonNull DriverOption option) {
+  public boolean getBoolean(@Nonnull DriverOption option) {
     return getCached(option.getPath(), getEffectiveOptions()::getBoolean);
   }
 
   // We override `with*` methods because they can be implemented a bit better with Typesafe config
-  @NonNull
+  @Nonnull
   @Override
-  public DriverExecutionProfile withBoolean(@NonNull DriverOption option, boolean value) {
+  public DriverExecutionProfile withBoolean(@Nonnull DriverOption option, boolean value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Boolean> getBooleanList(@NonNull DriverOption option) {
+  public List<Boolean> getBooleanList(@Nonnull DriverOption option) {
     return getCached(option.getPath(), getEffectiveOptions()::getBooleanList);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverExecutionProfile withBooleanList(
-      @NonNull DriverOption option, @NonNull List<Boolean> value) {
+      @Nonnull DriverOption option, @Nonnull List<Boolean> value) {
     return with(option, value);
   }
 
   @Override
-  public int getInt(@NonNull DriverOption option) {
+  public int getInt(@Nonnull DriverOption option) {
     return getCached(option.getPath(), getEffectiveOptions()::getInt);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DriverExecutionProfile withInt(@NonNull DriverOption option, int value) {
+  public DriverExecutionProfile withInt(@Nonnull DriverOption option, int value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> getIntList(@NonNull DriverOption option) {
+  public List<Integer> getIntList(@Nonnull DriverOption option) {
     return getCached(option.getPath(), getEffectiveOptions()::getIntList);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverExecutionProfile withIntList(
-      @NonNull DriverOption option, @NonNull List<Integer> value) {
+      @Nonnull DriverOption option, @Nonnull List<Integer> value) {
     return with(option, value);
   }
 
   @Override
-  public long getLong(@NonNull DriverOption option) {
+  public long getLong(@Nonnull DriverOption option) {
     return getCached(option.getPath(), getEffectiveOptions()::getLong);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DriverExecutionProfile withLong(@NonNull DriverOption option, long value) {
+  public DriverExecutionProfile withLong(@Nonnull DriverOption option, long value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Long> getLongList(@NonNull DriverOption option) {
+  public List<Long> getLongList(@Nonnull DriverOption option) {
     return getCached(option.getPath(), getEffectiveOptions()::getLongList);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverExecutionProfile withLongList(
-      @NonNull DriverOption option, @NonNull List<Long> value) {
+      @Nonnull DriverOption option, @Nonnull List<Long> value) {
     return with(option, value);
   }
 
   @Override
-  public double getDouble(@NonNull DriverOption option) {
+  public double getDouble(@Nonnull DriverOption option) {
     return getCached(option.getPath(), getEffectiveOptions()::getDouble);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DriverExecutionProfile withDouble(@NonNull DriverOption option, double value) {
+  public DriverExecutionProfile withDouble(@Nonnull DriverOption option, double value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Double> getDoubleList(@NonNull DriverOption option) {
+  public List<Double> getDoubleList(@Nonnull DriverOption option) {
     return getCached(option.getPath(), getEffectiveOptions()::getDoubleList);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverExecutionProfile withDoubleList(
-      @NonNull DriverOption option, @NonNull List<Double> value) {
+      @Nonnull DriverOption option, @Nonnull List<Double> value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public String getString(@NonNull DriverOption option) {
+  public String getString(@Nonnull DriverOption option) {
     return getCached(option.getPath(), getEffectiveOptions()::getString);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DriverExecutionProfile withString(@NonNull DriverOption option, @NonNull String value) {
+  public DriverExecutionProfile withString(@Nonnull DriverOption option, @Nonnull String value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<String> getStringList(@NonNull DriverOption option) {
+  public List<String> getStringList(@Nonnull DriverOption option) {
     return getCached(option.getPath(), getEffectiveOptions()::getStringList);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverExecutionProfile withStringList(
-      @NonNull DriverOption option, @NonNull List<String> value) {
+      @Nonnull DriverOption option, @Nonnull List<String> value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Map<String, String> getStringMap(@NonNull DriverOption option) {
+  public Map<String, String> getStringMap(@Nonnull DriverOption option) {
     Config subConfig = getCached(option.getPath(), getEffectiveOptions()::getConfig);
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     for (Map.Entry<String, ConfigValue> entry : subConfig.entrySet()) {
@@ -195,10 +195,10 @@ public abstract class TypesafeDriverExecutionProfile implements DriverExecutionP
     return builder.build();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverExecutionProfile withStringMap(
-      @NonNull DriverOption option, @NonNull Map<String, String> map) {
+      @Nonnull DriverOption option, @Nonnull Map<String, String> map) {
     Base base = getBaseProfile();
     // Add the new option to any already derived options
     Config newAdded = getAddedOptions();
@@ -213,69 +213,69 @@ public abstract class TypesafeDriverExecutionProfile implements DriverExecutionP
   }
 
   @Override
-  public long getBytes(@NonNull DriverOption option) {
+  public long getBytes(@Nonnull DriverOption option) {
     return getCached(option.getPath(), getEffectiveOptions()::getBytes);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DriverExecutionProfile withBytes(@NonNull DriverOption option, long value) {
+  public DriverExecutionProfile withBytes(@Nonnull DriverOption option, long value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<Long> getBytesList(DriverOption option) {
     return getCached(option.getPath(), getEffectiveOptions()::getBytesList);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverExecutionProfile withBytesList(
-      @NonNull DriverOption option, @NonNull List<Long> value) {
+      @Nonnull DriverOption option, @Nonnull List<Long> value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Duration getDuration(@NonNull DriverOption option) {
+  public Duration getDuration(@Nonnull DriverOption option) {
     return getCached(option.getPath(), getEffectiveOptions()::getDuration);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverExecutionProfile withDuration(
-      @NonNull DriverOption option, @NonNull Duration value) {
+      @Nonnull DriverOption option, @Nonnull Duration value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Duration> getDurationList(@NonNull DriverOption option) {
+  public List<Duration> getDurationList(@Nonnull DriverOption option) {
     return getCached(option.getPath(), getEffectiveOptions()::getDurationList);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverExecutionProfile withDurationList(
-      @NonNull DriverOption option, @NonNull List<Duration> value) {
+      @Nonnull DriverOption option, @Nonnull List<Duration> value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DriverExecutionProfile without(@NonNull DriverOption option) {
+  public DriverExecutionProfile without(@Nonnull DriverOption option) {
     return with(option, null);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Object getComparisonKey(@NonNull DriverOption option) {
+  public Object getComparisonKey(@Nonnull DriverOption option) {
     // This method has a default implementation in the interface, but here we can do it in one line:
     return getEffectiveOptions().getConfig(option.getPath());
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SortedSet<Map.Entry<String, Object>> entrySet() {
     ImmutableSortedSet.Builder<Map.Entry<String, Object>> builder =
@@ -294,7 +294,7 @@ public abstract class TypesafeDriverExecutionProfile implements DriverExecutionP
     return t;
   }
 
-  private DriverExecutionProfile with(@NonNull DriverOption option, @Nullable Object value) {
+  private DriverExecutionProfile with(@Nonnull DriverOption option, @Nullable Object value) {
     Base base = getBaseProfile();
     // Add the new option to any already derived options
     Config newAdded =
@@ -317,7 +317,7 @@ public abstract class TypesafeDriverExecutionProfile implements DriverExecutionP
       this.options = options;
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public String getName() {
       return name;
@@ -389,7 +389,7 @@ public abstract class TypesafeDriverExecutionProfile implements DriverExecutionP
       this.cache.clear();
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public String getName() {
       return baseProfile.getName();

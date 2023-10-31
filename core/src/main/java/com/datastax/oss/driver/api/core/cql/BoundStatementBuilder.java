@@ -25,12 +25,12 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.cql.DefaultBoundStatement;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -42,22 +42,22 @@ import net.jcip.annotations.NotThreadSafe;
 public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilder, BoundStatement>
     implements Bindable<BoundStatementBuilder> {
 
-  @NonNull private final PreparedStatement preparedStatement;
-  @NonNull private final ColumnDefinitions variableDefinitions;
-  @NonNull private final ByteBuffer[] values;
-  @NonNull private final CodecRegistry codecRegistry;
-  @NonNull private final ProtocolVersion protocolVersion;
+  @Nonnull private final PreparedStatement preparedStatement;
+  @Nonnull private final ColumnDefinitions variableDefinitions;
+  @Nonnull private final ByteBuffer[] values;
+  @Nonnull private final CodecRegistry codecRegistry;
+  @Nonnull private final ProtocolVersion protocolVersion;
 
   public BoundStatementBuilder(
-      @NonNull PreparedStatement preparedStatement,
-      @NonNull ColumnDefinitions variableDefinitions,
-      @NonNull ByteBuffer[] values,
+      @Nonnull PreparedStatement preparedStatement,
+      @Nonnull ColumnDefinitions variableDefinitions,
+      @Nonnull ByteBuffer[] values,
       @Nullable String executionProfileName,
       @Nullable DriverExecutionProfile executionProfile,
       @Nullable CqlIdentifier routingKeyspace,
       @Nullable ByteBuffer routingKey,
       @Nullable Token routingToken,
-      @NonNull Map<String, ByteBuffer> customPayload,
+      @Nonnull Map<String, ByteBuffer> customPayload,
       @Nullable Boolean idempotent,
       boolean tracing,
       long timestamp,
@@ -66,8 +66,8 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
       @Nullable ConsistencyLevel consistencyLevel,
       @Nullable ConsistencyLevel serialConsistencyLevel,
       @Nullable Duration timeout,
-      @NonNull CodecRegistry codecRegistry,
-      @NonNull ProtocolVersion protocolVersion) {
+      @Nonnull CodecRegistry codecRegistry,
+      @Nonnull ProtocolVersion protocolVersion) {
     this.preparedStatement = preparedStatement;
     this.variableDefinitions = variableDefinitions;
     this.values = values;
@@ -91,7 +91,7 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
     this.protocolVersion = protocolVersion;
   }
 
-  public BoundStatementBuilder(@NonNull BoundStatement template) {
+  public BoundStatementBuilder(@Nonnull BoundStatement template) {
     super(template);
     this.preparedStatement = template.getPreparedStatement();
     this.variableDefinitions = template.getPreparedStatement().getVariableDefinitions();
@@ -102,14 +102,14 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
   }
 
   /** The prepared statement that was used to create this statement. */
-  @NonNull
+  @Nonnull
   public PreparedStatement getPreparedStatement() {
     return preparedStatement;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull CqlIdentifier id) {
+  public List<Integer> allIndicesOf(@Nonnull CqlIdentifier id) {
     List<Integer> indices = variableDefinitions.allIndicesOf(id);
     if (indices.isEmpty()) {
       throw new IllegalArgumentException(id + " is not a variable in this bound statement");
@@ -118,7 +118,7 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
   }
 
   @Override
-  public int firstIndexOf(@NonNull CqlIdentifier id) {
+  public int firstIndexOf(@Nonnull CqlIdentifier id) {
     int indexOf = variableDefinitions.firstIndexOf(id);
     if (indexOf == -1) {
       throw new IllegalArgumentException(id + " is not a variable in this bound statement");
@@ -126,9 +126,9 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
     return indexOf;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public List<Integer> allIndicesOf(@NonNull String name) {
+  public List<Integer> allIndicesOf(@Nonnull String name) {
     List<Integer> indices = variableDefinitions.allIndicesOf(name);
     if (indices.isEmpty()) {
       throw new IllegalArgumentException(name + " is not a variable in this bound statement");
@@ -137,7 +137,7 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
   }
 
   @Override
-  public int firstIndexOf(@NonNull String name) {
+  public int firstIndexOf(@Nonnull String name) {
     int indexOf = variableDefinitions.firstIndexOf(name);
     if (indexOf == -1) {
       throw new IllegalArgumentException(name + " is not a variable in this bound statement");
@@ -145,7 +145,7 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
     return indexOf;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatementBuilder setBytesUnsafe(int i, ByteBuffer v) {
     values[i] = v;
@@ -162,25 +162,25 @@ public class BoundStatementBuilder extends StatementBuilder<BoundStatementBuilde
     return values.length;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getType(int i) {
     return variableDefinitions.get(i).getType();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CodecRegistry codecRegistry() {
     return codecRegistry;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProtocolVersion protocolVersion() {
     return protocolVersion;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public BoundStatement build() {
     return new DefaultBoundStatement(

@@ -23,7 +23,7 @@ import com.datastax.dse.driver.api.core.cql.reactive.ReactiveRow;
 import com.datastax.dse.driver.internal.core.cql.continuous.reactive.ContinuousCqlRequestReactiveProcessor;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import org.reactivestreams.Publisher;
 
 /**
@@ -40,19 +40,19 @@ public class FailedReactiveResultSet extends FailedPublisher<ReactiveRow>
     super(error);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Publisher<? extends ColumnDefinitions> getColumnDefinitions() {
     return new FailedPublisher<>(error);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Publisher<? extends ExecutionInfo> getExecutionInfos() {
     return new FailedPublisher<>(error);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Publisher<Boolean> wasApplied() {
     return new FailedPublisher<>(error);

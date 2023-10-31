@@ -22,13 +22,13 @@ import static com.datastax.oss.driver.api.core.config.DriverExecutionProfile.DEF
 import static org.mockito.Mockito.reset;
 
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.UUID;
+import javax.annotation.Nonnull;
 
 public class DefaultLoadBalancingPolicyEventsTest extends BasicLoadBalancingPolicyEventsTest {
 
   @Override
-  @NonNull
+  @Nonnull
   protected DefaultLoadBalancingPolicy createAndInitPolicy() {
     DefaultLoadBalancingPolicy policy = new DefaultLoadBalancingPolicy(context, DEFAULT_NAME);
     policy.init(

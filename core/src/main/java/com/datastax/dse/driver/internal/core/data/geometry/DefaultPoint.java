@@ -19,7 +19,7 @@ package com.datastax.dse.driver.internal.core.data.geometry;
 
 import com.datastax.dse.driver.api.core.data.geometry.Point;
 import com.esri.core.geometry.ogc.OGCPoint;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -33,11 +33,11 @@ public class DefaultPoint extends DefaultGeometry implements Point {
             new com.esri.core.geometry.Point(x, y), DefaultGeometry.SPATIAL_REFERENCE_4326));
   }
 
-  public DefaultPoint(@NonNull OGCPoint point) {
+  public DefaultPoint(@Nonnull OGCPoint point) {
     super(point);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public OGCPoint getOgcGeometry() {
     return (OGCPoint) super.getOgcGeometry();

@@ -21,9 +21,9 @@ import com.datastax.dse.driver.internal.core.cql.reactive.CqlRequestReactiveProc
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.session.Session;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import org.reactivestreams.Publisher;
 
 /**
@@ -49,8 +49,8 @@ public interface ReactiveSession extends Session {
    * @return The {@link Publisher} that will publish the returned results.
    * @see SimpleStatement#newInstance(String)
    */
-  @NonNull
-  default ReactiveResultSet executeReactive(@NonNull String query) {
+  @Nonnull
+  default ReactiveResultSet executeReactive(@Nonnull String query) {
     return executeReactive(SimpleStatement.newInstance(query));
   }
 
@@ -67,8 +67,8 @@ public interface ReactiveSession extends Session {
    * @return The {@link Publisher} that will publish the returned results.
    * @see SimpleStatement#newInstance(String,Object...)
    */
-  @NonNull
-  default ReactiveResultSet executeReactive(@NonNull String query, @NonNull Object... values) {
+  @Nonnull
+  default ReactiveResultSet executeReactive(@Nonnull String query, @Nonnull Object... values) {
     return executeReactive(SimpleStatement.newInstance(query, values));
   }
 
@@ -85,9 +85,9 @@ public interface ReactiveSession extends Session {
    * @return The {@link Publisher} that will publish the returned results.
    * @see SimpleStatement#newInstance(String,Map)
    */
-  @NonNull
+  @Nonnull
   default ReactiveResultSet executeReactive(
-      @NonNull String query, @NonNull Map<String, Object> values) {
+      @Nonnull String query, @Nonnull Map<String, Object> values) {
     return executeReactive(SimpleStatement.newInstance(query, values));
   }
 
@@ -98,8 +98,8 @@ public interface ReactiveSession extends Session {
    * @param statement the statement to execute.
    * @return The {@link Publisher} that will publish the returned results.
    */
-  @NonNull
-  default ReactiveResultSet executeReactive(@NonNull Statement<?> statement) {
+  @Nonnull
+  default ReactiveResultSet executeReactive(@Nonnull Statement<?> statement) {
     return Objects.requireNonNull(
         execute(statement, CqlRequestReactiveProcessor.REACTIVE_RESULT_SET));
   }

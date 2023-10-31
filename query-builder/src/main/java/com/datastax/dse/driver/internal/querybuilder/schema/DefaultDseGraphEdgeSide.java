@@ -21,8 +21,8 @@ import com.datastax.dse.driver.api.querybuilder.schema.DseGraphEdgeSide;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 public class DefaultDseGraphEdgeSide implements DseGraphEdgeSide {
 
@@ -43,33 +43,33 @@ public class DefaultDseGraphEdgeSide implements DseGraphEdgeSide {
     this.clusteringColumns = clusteringColumns;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DseGraphEdgeSide withPartitionKey(@NonNull CqlIdentifier columnId) {
+  public DseGraphEdgeSide withPartitionKey(@Nonnull CqlIdentifier columnId) {
     return new DefaultDseGraphEdgeSide(
         tableId, ImmutableCollections.append(partitionKeyColumns, columnId), clusteringColumns);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public DseGraphEdgeSide withClusteringColumn(@NonNull CqlIdentifier columnId) {
+  public DseGraphEdgeSide withClusteringColumn(@Nonnull CqlIdentifier columnId) {
     return new DefaultDseGraphEdgeSide(
         tableId, partitionKeyColumns, ImmutableCollections.append(clusteringColumns, columnId));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getTableId() {
     return tableId;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<CqlIdentifier> getPartitionKeyColumns() {
     return partitionKeyColumns;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<CqlIdentifier> getClusteringColumns() {
     return clusteringColumns;

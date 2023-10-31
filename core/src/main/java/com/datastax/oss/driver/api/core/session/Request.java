@@ -24,11 +24,11 @@ import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A request executed by a {@link Session}.
@@ -142,7 +142,7 @@ public interface Request {
    *
    * @return The custom payload, or an empty map if no payload is present.
    */
-  @NonNull
+  @Nonnull
   Map<String, ByteBuffer> getCustomPayload();
 
   /**

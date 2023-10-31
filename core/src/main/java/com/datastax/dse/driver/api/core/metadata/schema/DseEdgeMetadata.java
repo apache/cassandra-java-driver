@@ -18,45 +18,45 @@
 package com.datastax.dse.driver.api.core.metadata.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 /** Edge metadata, for a table that was created with CREATE TABLE ... WITH EDGE LABEL. */
 public interface DseEdgeMetadata {
 
   /** The label of the edge in graph. */
-  @NonNull
+  @Nonnull
   CqlIdentifier getLabelName();
 
   /** The identifier of the table representing the incoming vertex. */
-  @NonNull
+  @Nonnull
   CqlIdentifier getFromTable();
 
   /** The label of the incoming vertex in graph. */
-  @NonNull
+  @Nonnull
   CqlIdentifier getFromLabel();
 
   /** The columns in this table that match the partition key of the incoming vertex table. */
-  @NonNull
+  @Nonnull
   List<CqlIdentifier> getFromPartitionKeyColumns();
 
   /** The columns in this table that match the clustering columns of the incoming vertex table. */
-  @NonNull
+  @Nonnull
   List<CqlIdentifier> getFromClusteringColumns();
 
   /** The identifier of the table representing the outgoing vertex. */
-  @NonNull
+  @Nonnull
   CqlIdentifier getToTable();
 
   /** The label of the outgoing vertex in graph. */
-  @NonNull
+  @Nonnull
   CqlIdentifier getToLabel();
 
   /** The columns in this table that match the partition key of the outgoing vertex table. */
-  @NonNull
+  @Nonnull
   List<CqlIdentifier> getToPartitionKeyColumns();
 
   /** The columns in this table that match the clustering columns of the outgoing vertex table. */
-  @NonNull
+  @Nonnull
   List<CqlIdentifier> getToClusteringColumns();
 }

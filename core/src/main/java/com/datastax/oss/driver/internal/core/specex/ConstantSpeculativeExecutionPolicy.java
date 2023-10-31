@@ -24,8 +24,8 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -68,9 +68,9 @@ public class ConstantSpeculativeExecutionPolicy implements SpeculativeExecutionP
 
   @Override
   public long nextExecution(
-      @NonNull @SuppressWarnings("unused") Node node,
+      @Nonnull @SuppressWarnings("unused") Node node,
       @Nullable @SuppressWarnings("unused") CqlIdentifier keyspace,
-      @NonNull @SuppressWarnings("unused") Request request,
+      @Nonnull @SuppressWarnings("unused") Request request,
       int runningExecutions) {
     assert runningExecutions >= 1;
     return (runningExecutions < maxExecutions) ? constantDelayMillis : -1;

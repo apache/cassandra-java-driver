@@ -20,8 +20,8 @@ package com.datastax.oss.driver.api.querybuilder.insert;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.core.CqlIdentifiers;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
+import javax.annotation.Nonnull;
 
 public interface OngoingValues {
 
@@ -31,15 +31,15 @@ public interface OngoingValues {
    * <p>If this is called twice for the same column, the previous entry is discarded and the new
    * entry will be added at the end of the list.
    */
-  @NonNull
-  RegularInsert value(@NonNull CqlIdentifier columnId, @NonNull Term value);
+  @Nonnull
+  RegularInsert value(@Nonnull CqlIdentifier columnId, @Nonnull Term value);
 
   /**
    * Shortcut for {@link #value(CqlIdentifier, Term) value(CqlIdentifier.fromCql(columnName),
    * value)}.
    */
-  @NonNull
-  default RegularInsert value(@NonNull String columnName, @NonNull Term value) {
+  @Nonnull
+  default RegularInsert value(@Nonnull String columnName, @Nonnull Term value) {
     return value(CqlIdentifier.fromCql(columnName), value);
   }
 
@@ -54,8 +54,8 @@ public interface OngoingValues {
    * implementation calls {@link #value(CqlIdentifier, Term)} in a loop; it should be overridden if
    * a more efficient alternative exists.
    */
-  @NonNull
-  default RegularInsert valuesByIds(@NonNull Map<CqlIdentifier, Term> newAssignments) {
+  @Nonnull
+  default RegularInsert valuesByIds(@Nonnull Map<CqlIdentifier, Term> newAssignments) {
     if (newAssignments.isEmpty()) {
       throw new IllegalArgumentException("newAssignments can't be empty");
     }
@@ -67,8 +67,8 @@ public interface OngoingValues {
   }
 
   /** Shortcut for {@link #valuesByIds(Map)} when the keys are plain strings. */
-  @NonNull
-  default RegularInsert values(@NonNull Map<String, Term> newAssignments) {
+  @Nonnull
+  default RegularInsert values(@Nonnull Map<String, Term> newAssignments) {
     return valuesByIds(CqlIdentifiers.wrapKeys(newAssignments));
   }
 }

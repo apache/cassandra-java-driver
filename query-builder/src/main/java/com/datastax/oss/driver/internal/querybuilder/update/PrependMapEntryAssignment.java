@@ -19,14 +19,14 @@ package com.datastax.oss.driver.internal.querybuilder.update;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
 public class PrependMapEntryAssignment extends CollectionElementAssignment {
 
   public PrependMapEntryAssignment(
-      @NonNull CqlIdentifier columnId, @NonNull Term key, @NonNull Term value) {
+      @Nonnull CqlIdentifier columnId, @Nonnull Term key, @Nonnull Term value) {
     super(columnId, Operator.PREPEND, key, value, '{', '}');
   }
 }

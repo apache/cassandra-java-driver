@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.api.querybuilder.update;
 
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * The beginning of an UPDATE statement. It needs at least one assignment before the WHERE clause
@@ -32,7 +32,7 @@ public interface UpdateStart extends OngoingAssignment {
    * <p>If this method or {@link #usingTimestamp(BindMarker)} is called multiple times, the last
    * value is used.
    */
-  @NonNull
+  @Nonnull
   UpdateStart usingTimestamp(long timestamp);
 
   /**
@@ -41,8 +41,8 @@ public interface UpdateStart extends OngoingAssignment {
    * <p>If this method or {@link #usingTimestamp(long)} is called multiple times, the last value is
    * used.
    */
-  @NonNull
-  UpdateStart usingTimestamp(@NonNull BindMarker bindMarker);
+  @Nonnull
+  UpdateStart usingTimestamp(@Nonnull BindMarker bindMarker);
 
   /**
    * Adds a {@code USING TTL} clause to this statement with a literal value. Setting a value of
@@ -55,7 +55,7 @@ public interface UpdateStart extends OngoingAssignment {
    *
    * @param ttlInSeconds Time, in seconds, the inserted data should live before expiring.
    */
-  @NonNull
+  @Nonnull
   UpdateStart usingTtl(int ttlInSeconds);
 
   /**
@@ -69,6 +69,6 @@ public interface UpdateStart extends OngoingAssignment {
    *
    * @param bindMarker A bind marker that is understood to be a value in seconds.
    */
-  @NonNull
-  UpdateStart usingTtl(@NonNull BindMarker bindMarker);
+  @Nonnull
+  UpdateStart usingTtl(@Nonnull BindMarker bindMarker);
 }

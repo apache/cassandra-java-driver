@@ -18,8 +18,8 @@
 package com.datastax.oss.driver.api.core.loadbalancing;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A pluggable {@link NodeDistance} evaluator.
@@ -50,5 +50,5 @@ public interface NodeDistanceEvaluator {
    * @return The {@link NodeDistance} to assign to the node, or null to let the policy decide.
    */
   @Nullable
-  NodeDistance evaluateDistance(@NonNull Node node, @Nullable String localDc);
+  NodeDistance evaluateDistance(@Nonnull Node node, @Nullable String localDc);
 }

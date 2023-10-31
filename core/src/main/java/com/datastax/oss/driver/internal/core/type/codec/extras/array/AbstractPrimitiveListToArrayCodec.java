@@ -20,11 +20,11 @@ package com.datastax.oss.driver.internal.core.type.codec.extras.array;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.ListType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Base class for all codecs dealing with Java primitive arrays. This class provides a more
@@ -41,7 +41,7 @@ public abstract class AbstractPrimitiveListToArrayCodec<PrimitiveArrayT>
    * @param javaClass The Java type. Must be an array class.
    */
   protected AbstractPrimitiveListToArrayCodec(
-      @NonNull ListType cqlType, @NonNull GenericType<PrimitiveArrayT> javaClass) {
+      @Nonnull ListType cqlType, @Nonnull GenericType<PrimitiveArrayT> javaClass) {
     super(cqlType, javaClass);
     GenericType<?> componentType = Objects.requireNonNull(javaClass.getComponentType());
     if (!componentType.isPrimitive()) {
@@ -53,7 +53,7 @@ public abstract class AbstractPrimitiveListToArrayCodec<PrimitiveArrayT>
   @Nullable
   @Override
   public ByteBuffer encode(
-      @Nullable PrimitiveArrayT array, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable PrimitiveArrayT array, @Nonnull ProtocolVersion protocolVersion) {
     if (array == null) {
       return null;
     }
@@ -73,7 +73,7 @@ public abstract class AbstractPrimitiveListToArrayCodec<PrimitiveArrayT>
   @Nullable
   @Override
   public PrimitiveArrayT decode(
-      @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return newInstance(0);
     }
@@ -108,10 +108,10 @@ public abstract class AbstractPrimitiveListToArrayCodec<PrimitiveArrayT>
    * @param protocolVersion The protocol version to use.
    */
   protected abstract void serializeElement(
-      @NonNull ByteBuffer output,
-      @NonNull PrimitiveArrayT array,
+      @Nonnull ByteBuffer output,
+      @Nonnull PrimitiveArrayT array,
       int index,
-      @NonNull ProtocolVersion protocolVersion);
+      @Nonnull ProtocolVersion protocolVersion);
 
   /**
    * Read the {@code index}th element of {@code array} from {@code input}.
@@ -122,8 +122,8 @@ public abstract class AbstractPrimitiveListToArrayCodec<PrimitiveArrayT>
    * @param protocolVersion The protocol version to use.
    */
   protected abstract void deserializeElement(
-      @NonNull ByteBuffer input,
-      @NonNull PrimitiveArrayT array,
+      @Nonnull ByteBuffer input,
+      @Nonnull PrimitiveArrayT array,
       int index,
-      @NonNull ProtocolVersion protocolVersion);
+      @Nonnull ProtocolVersion protocolVersion);
 }

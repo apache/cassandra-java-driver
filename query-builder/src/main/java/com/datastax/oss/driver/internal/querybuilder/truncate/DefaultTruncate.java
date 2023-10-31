@@ -22,20 +22,20 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.datastax.oss.driver.api.querybuilder.truncate.Truncate;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class DefaultTruncate implements Truncate {
   private final CqlIdentifier keyspace;
   private final CqlIdentifier table;
 
-  public DefaultTruncate(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
+  public DefaultTruncate(@Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier table) {
     this.keyspace = keyspace;
     this.table = table;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder();
@@ -44,27 +44,27 @@ public class DefaultTruncate implements Truncate {
     return builder.toString();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatementBuilder builder() {
     return SimpleStatement.builder(asCql()).setIdempotence(true);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public SimpleStatement build(@NonNull Object... values) {
+  public SimpleStatement build(@Nonnull Object... values) {
     throw new UnsupportedOperationException(
         "TRUNCATE doesn't take values as parameters. Use build() method instead.");
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public SimpleStatement build(@NonNull Map<String, Object> namedValues) {
+  public SimpleStatement build(@Nonnull Map<String, Object> namedValues) {
     throw new UnsupportedOperationException(
         "TRUNCATE doesn't take namedValues as parameters. Use build() method instead.");
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public SimpleStatement build() {
     return builder().build();

@@ -23,7 +23,6 @@ import com.datastax.oss.protocol.internal.FrameCodec;
 import com.datastax.oss.protocol.internal.PrimitiveCodec;
 import com.datastax.oss.protocol.internal.Segment;
 import com.datastax.oss.protocol.internal.SegmentBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
@@ -31,6 +30,7 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,18 +44,18 @@ public class ByteBufSegmentBuilder extends SegmentBuilder<ByteBuf, ChannelPromis
   private final String logPrefix;
 
   public ByteBufSegmentBuilder(
-      @NonNull ChannelHandlerContext context,
-      @NonNull PrimitiveCodec<ByteBuf> primitiveCodec,
-      @NonNull FrameCodec<ByteBuf> frameCodec,
-      @NonNull String logPrefix) {
+      @Nonnull ChannelHandlerContext context,
+      @Nonnull PrimitiveCodec<ByteBuf> primitiveCodec,
+      @Nonnull FrameCodec<ByteBuf> frameCodec,
+      @Nonnull String logPrefix) {
     super(primitiveCodec, frameCodec);
     this.context = context;
     this.logPrefix = logPrefix;
   }
 
   @Override
-  @NonNull
-  protected ChannelPromise mergeStates(@NonNull List<ChannelPromise> framePromises) {
+  @Nonnull
+  protected ChannelPromise mergeStates(@Nonnull List<ChannelPromise> framePromises) {
     if (framePromises.size() == 1) {
       return framePromises.get(0);
     }
@@ -80,8 +80,8 @@ public class ByteBufSegmentBuilder extends SegmentBuilder<ByteBuf, ChannelPromis
   }
 
   @Override
-  @NonNull
-  protected List<ChannelPromise> splitState(@NonNull ChannelPromise framePromise, int sliceCount) {
+  @Nonnull
+  protected List<ChannelPromise> splitState(@Nonnull ChannelPromise framePromise, int sliceCount) {
     // We split one frame into multiple slices. When all slices are written, the frame is written.
     List<ChannelPromise> slicePromises = new ArrayList<>(sliceCount);
     for (int i = 0; i < sliceCount; i++) {
@@ -97,12 +97,12 @@ public class ByteBufSegmentBuilder extends SegmentBuilder<ByteBuf, ChannelPromis
 
   @Override
   protected void processSegment(
-      @NonNull Segment<ByteBuf> segment, @NonNull ChannelPromise segmentPromise) {
+      @Nonnull Segment<ByteBuf> segment, @Nonnull ChannelPromise segmentPromise) {
     context.write(segment, segmentPromise);
   }
 
   @Override
-  protected void onLargeFrameSplit(@NonNull Frame frame, int frameLength, int sliceCount) {
+  protected void onLargeFrameSplit(@Nonnull Frame frame, int frameLength, int sliceCount) {
     LOG.trace(
         "[{}] Frame {} is too large ({} > {}), splitting into {} segments",
         logPrefix,
@@ -114,7 +114,7 @@ public class ByteBufSegmentBuilder extends SegmentBuilder<ByteBuf, ChannelPromis
 
   @Override
   protected void onSegmentFull(
-      @NonNull Frame frame, int frameLength, int currentPayloadLength, int currentFrameCount) {
+      @Nonnull Frame frame, int frameLength, int currentPayloadLength, int currentFrameCount) {
     LOG.trace(
         "[{}] Current self-contained segment is full ({}/{} bytes, {} frames), processing now",
         logPrefix,
@@ -125,7 +125,7 @@ public class ByteBufSegmentBuilder extends SegmentBuilder<ByteBuf, ChannelPromis
 
   @Override
   protected void onSmallFrameAdded(
-      @NonNull Frame frame, int frameLength, int currentPayloadLength, int currentFrameCount) {
+      @Nonnull Frame frame, int frameLength, int currentPayloadLength, int currentFrameCount) {
     LOG.trace(
         "[{}] Added frame {} to current self-contained segment "
             + "(bringing it to {}/{} bytes, {} frames)",
@@ -156,14 +156,14 @@ public class ByteBufSegmentBuilder extends SegmentBuilder<ByteBuf, ChannelPromis
     // also runs on the same event loop, so we don't need synchronization.
     private int remainingSlices;
 
-    SliceWriteListener(@NonNull ChannelPromise parentPromise, List<ChannelPromise> slicePromises) {
+    SliceWriteListener(@Nonnull ChannelPromise parentPromise, List<ChannelPromise> slicePromises) {
       this.parentPromise = parentPromise;
       this.slicePromises = slicePromises;
       this.remainingSlices = slicePromises.size();
     }
 
     @Override
-    public void operationComplete(@NonNull Future<Void> future) {
+    public void operationComplete(@Nonnull Future<Void> future) {
       if (!parentPromise.isDone()) {
         if (future.isSuccess()) {
           remainingSlices -= 1;

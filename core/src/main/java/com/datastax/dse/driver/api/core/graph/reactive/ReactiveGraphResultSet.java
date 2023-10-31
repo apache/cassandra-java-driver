@@ -19,7 +19,7 @@ package com.datastax.dse.driver.api.core.graph.reactive;
 
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import org.reactivestreams.Publisher;
 
 /**
@@ -61,6 +61,6 @@ public interface ReactiveGraphResultSet extends Publisher<ReactiveGraphNode> {
    *
    * @see ReactiveGraphNode#getExecutionInfo()
    */
-  @NonNull
+  @Nonnull
   Publisher<? extends ExecutionInfo> getExecutionInfos();
 }

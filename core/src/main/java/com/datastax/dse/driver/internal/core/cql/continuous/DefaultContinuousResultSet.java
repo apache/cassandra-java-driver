@@ -25,10 +25,10 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -54,19 +54,19 @@ public class DefaultContinuousResultSet implements ContinuousResultSet {
     iterator.cancel();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ColumnDefinitions getColumnDefinitions() {
     return columnDefinitions;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<ExecutionInfo> getExecutionInfos() {
     return executionInfos;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Iterator<Row> iterator() {
     return iterator;

@@ -45,91 +45,91 @@ import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import com.datastax.oss.protocol.internal.PrimitiveCodec;
 import com.datastax.oss.protocol.internal.SegmentCodec;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.buffer.ByteBuf;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /** Extends the driver context with additional components that are not exposed by our public API. */
 public interface InternalDriverContext extends DriverContext {
 
-  @NonNull
+  @Nonnull
   EventBus getEventBus();
 
-  @NonNull
+  @Nonnull
   Compressor<ByteBuf> getCompressor();
 
-  @NonNull
+  @Nonnull
   PrimitiveCodec<ByteBuf> getPrimitiveCodec();
 
-  @NonNull
+  @Nonnull
   FrameCodec<ByteBuf> getFrameCodec();
 
-  @NonNull
+  @Nonnull
   SegmentCodec<ByteBuf> getSegmentCodec();
 
-  @NonNull
+  @Nonnull
   ProtocolVersionRegistry getProtocolVersionRegistry();
 
-  @NonNull
+  @Nonnull
   ConsistencyLevelRegistry getConsistencyLevelRegistry();
 
-  @NonNull
+  @Nonnull
   WriteTypeRegistry getWriteTypeRegistry();
 
-  @NonNull
+  @Nonnull
   NettyOptions getNettyOptions();
 
-  @NonNull
+  @Nonnull
   WriteCoalescer getWriteCoalescer();
 
-  @NonNull
+  @Nonnull
   Optional<SslHandlerFactory> getSslHandlerFactory();
 
-  @NonNull
+  @Nonnull
   ChannelFactory getChannelFactory();
 
-  @NonNull
+  @Nonnull
   ChannelPoolFactory getChannelPoolFactory();
 
-  @NonNull
+  @Nonnull
   TopologyMonitor getTopologyMonitor();
 
-  @NonNull
+  @Nonnull
   MetadataManager getMetadataManager();
 
-  @NonNull
+  @Nonnull
   LoadBalancingPolicyWrapper getLoadBalancingPolicyWrapper();
 
-  @NonNull
+  @Nonnull
   ControlConnection getControlConnection();
 
-  @NonNull
+  @Nonnull
   RequestProcessorRegistry getRequestProcessorRegistry();
 
-  @NonNull
+  @Nonnull
   SchemaQueriesFactory getSchemaQueriesFactory();
 
-  @NonNull
+  @Nonnull
   SchemaParserFactory getSchemaParserFactory();
 
-  @NonNull
+  @Nonnull
   TokenFactoryRegistry getTokenFactoryRegistry();
 
-  @NonNull
+  @Nonnull
   ReplicationStrategyFactory getReplicationStrategyFactory();
 
-  @NonNull
+  @Nonnull
   PoolManager getPoolManager();
 
-  @NonNull
+  @Nonnull
   MetricsFactory getMetricsFactory();
 
-  @NonNull
+  @Nonnull
   MetricIdGenerator getMetricIdGenerator();
 
   /**
@@ -138,7 +138,7 @@ public interface InternalDriverContext extends DriverContext {
    * return {@code null}.
    */
   @Nullable
-  String getLocalDatacenter(@NonNull String profileName);
+  String getLocalDatacenter(@Nonnull String profileName);
 
   /**
    * This is the filter from {@link SessionBuilder#withNodeFilter(String, Predicate)}. If the filter
@@ -149,7 +149,7 @@ public interface InternalDriverContext extends DriverContext {
    */
   @Nullable
   @Deprecated
-  Predicate<Node> getNodeFilter(@NonNull String profileName);
+  Predicate<Node> getNodeFilter(@Nonnull String profileName);
 
   /**
    * This is the node distance evaluator from {@link
@@ -158,7 +158,7 @@ public interface InternalDriverContext extends DriverContext {
    * null}.
    */
   @Nullable
-  NodeDistanceEvaluator getNodeDistanceEvaluator(@NonNull String profileName);
+  NodeDistanceEvaluator getNodeDistanceEvaluator(@Nonnull String profileName);
 
   /**
    * The {@link ClassLoader} to use to reflectively load class names defined in configuration. If
@@ -173,7 +173,7 @@ public interface InternalDriverContext extends DriverContext {
    * construct a {@link com.datastax.oss.protocol.internal.request.Startup} instance when
    * initializing the native protocol handshake.
    */
-  @NonNull
+  @Nonnull
   Map<String, String> getStartupOptions();
 
   /**
@@ -186,7 +186,7 @@ public interface InternalDriverContext extends DriverContext {
    * <p>Note that the driver assumes that the returned list is constant; there is no way to add
    * listeners dynamically.
    */
-  @NonNull
+  @Nonnull
   default List<LifecycleListener> getLifecycleListeners() {
     return Collections.emptyList();
   }
@@ -197,7 +197,7 @@ public interface InternalDriverContext extends DriverContext {
    * <p>The {@link RequestLogFormatter} instance returned here will use the settings in
    * advanced.request-tracker when formatting requests.
    */
-  @NonNull
+  @Nonnull
   RequestLogFormatter getRequestLogFormatter();
 
   /**

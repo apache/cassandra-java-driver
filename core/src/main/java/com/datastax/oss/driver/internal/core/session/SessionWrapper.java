@@ -24,10 +24,10 @@ import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -48,22 +48,22 @@ public class SessionWrapper implements Session {
 
   private final Session delegate;
 
-  public SessionWrapper(@NonNull Session delegate) {
+  public SessionWrapper(@Nonnull Session delegate) {
     this.delegate = delegate;
   }
 
-  @NonNull
+  @Nonnull
   public Session getDelegate() {
     return delegate;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getName() {
     return delegate.getName();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Metadata getMetadata() {
     return delegate.getMetadata();
@@ -74,37 +74,37 @@ public class SessionWrapper implements Session {
     return delegate.isSchemaMetadataEnabled();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Metadata> setSchemaMetadataEnabled(@Nullable Boolean newValue) {
     return delegate.setSchemaMetadataEnabled(newValue);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Metadata> refreshSchemaAsync() {
     return delegate.refreshSchemaAsync();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Boolean> checkSchemaAgreementAsync() {
     return delegate.checkSchemaAgreementAsync();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverContext getContext() {
     return delegate.getContext();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<CqlIdentifier> getKeyspace() {
     return delegate.getKeyspace();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Optional<Metrics> getMetrics() {
     return delegate.getMetrics();
@@ -113,23 +113,23 @@ public class SessionWrapper implements Session {
   @Nullable
   @Override
   public <RequestT extends Request, ResultT> ResultT execute(
-      @NonNull RequestT request, @NonNull GenericType<ResultT> resultType) {
+      @Nonnull RequestT request, @Nonnull GenericType<ResultT> resultType) {
     return delegate.execute(request, resultType);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Void> closeFuture() {
     return delegate.closeFuture();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Void> closeAsync() {
     return delegate.closeAsync();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Void> forceCloseAsync() {
     return delegate.forceCloseAsync();

@@ -19,14 +19,14 @@ package com.datastax.oss.driver.internal.core.util.collection;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.AbstractQueue;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 /** A query plan that encompasses many child plans, and consumes them one by one. */
@@ -37,7 +37,7 @@ public class CompositeQueryPlan extends AbstractQueue<Node> implements QueryPlan
   private final AtomicInteger currentPlan = new AtomicInteger(0);
 
   @SafeVarargs
-  public CompositeQueryPlan(@NonNull Queue<Node>... plans) {
+  public CompositeQueryPlan(@Nonnull Queue<Node>... plans) {
     if (plans.length == 0) {
       throw new IllegalArgumentException("at least one child plan must be provided");
     }
@@ -67,7 +67,7 @@ public class CompositeQueryPlan extends AbstractQueue<Node> implements QueryPlan
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Iterator<Node> iterator() {
     List<Iterator<Node>> its = new ArrayList<>(plans.length);

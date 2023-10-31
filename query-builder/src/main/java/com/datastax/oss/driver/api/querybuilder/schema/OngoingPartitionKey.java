@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface OngoingPartitionKey {
 
@@ -36,15 +36,15 @@ public interface OngoingPartitionKey {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
-  @NonNull
-  CreateTable withPartitionKey(@NonNull CqlIdentifier columnName, @NonNull DataType dataType);
+  @Nonnull
+  CreateTable withPartitionKey(@Nonnull CqlIdentifier columnName, @Nonnull DataType dataType);
 
   /**
    * Shortcut for {@link #withPartitionKey(CqlIdentifier, DataType)
    * withPartitionKey(CqlIdentifier.asCql(columnName), dataType)}.
    */
-  @NonNull
-  default CreateTable withPartitionKey(@NonNull String columnName, @NonNull DataType dataType) {
+  @Nonnull
+  default CreateTable withPartitionKey(@Nonnull String columnName, @Nonnull DataType dataType) {
     return withPartitionKey(CqlIdentifier.fromCql(columnName), dataType);
   }
 }

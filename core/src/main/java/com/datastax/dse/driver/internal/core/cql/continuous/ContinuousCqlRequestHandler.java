@@ -36,12 +36,12 @@ import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.response.result.Rows;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -52,10 +52,10 @@ public class ContinuousCqlRequestHandler
     extends ContinuousRequestHandlerBase<Statement<?>, ContinuousAsyncResultSet> {
 
   ContinuousCqlRequestHandler(
-      @NonNull Statement<?> statement,
-      @NonNull DefaultSession session,
-      @NonNull InternalDriverContext context,
-      @NonNull String sessionLogPrefix) {
+      @Nonnull Statement<?> statement,
+      @Nonnull DefaultSession session,
+      @Nonnull InternalDriverContext context,
+      @Nonnull String sessionLogPrefix) {
     super(
         statement,
         session,
@@ -71,15 +71,15 @@ public class ContinuousCqlRequestHandler
     throttler.register(this);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   protected Duration getGlobalTimeout() {
     return Duration.ZERO;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected Duration getPageTimeout(@NonNull Statement<?> statement, int pageNumber) {
+  protected Duration getPageTimeout(@Nonnull Statement<?> statement, int pageNumber) {
     DriverExecutionProfile executionProfile =
         Conversions.resolveExecutionProfile(statement, context);
     if (pageNumber == 1) {
@@ -89,60 +89,60 @@ public class ContinuousCqlRequestHandler
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected Duration getReviseRequestTimeout(@NonNull Statement<?> statement) {
+  protected Duration getReviseRequestTimeout(@Nonnull Statement<?> statement) {
     DriverExecutionProfile executionProfile =
         Conversions.resolveExecutionProfile(statement, context);
     return executionProfile.getDuration(DseDriverOption.CONTINUOUS_PAGING_TIMEOUT_OTHER_PAGES);
   }
 
   @Override
-  protected int getMaxEnqueuedPages(@NonNull Statement<?> statement) {
+  protected int getMaxEnqueuedPages(@Nonnull Statement<?> statement) {
     DriverExecutionProfile executionProfile =
         Conversions.resolveExecutionProfile(statement, context);
     return executionProfile.getInt(DseDriverOption.CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES);
   }
 
   @Override
-  protected int getMaxPages(@NonNull Statement<?> statement) {
+  protected int getMaxPages(@Nonnull Statement<?> statement) {
     DriverExecutionProfile executionProfile =
         Conversions.resolveExecutionProfile(statement, context);
     return executionProfile.getInt(DseDriverOption.CONTINUOUS_PAGING_MAX_PAGES);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected Message getMessage(@NonNull Statement<?> statement) {
+  protected Message getMessage(@Nonnull Statement<?> statement) {
     DriverExecutionProfile executionProfile =
         Conversions.resolveExecutionProfile(statement, context);
     return DseConversions.toContinuousPagingMessage(statement, executionProfile, context);
   }
 
   @Override
-  protected boolean isTracingEnabled(@NonNull Statement<?> statement) {
+  protected boolean isTracingEnabled(@Nonnull Statement<?> statement) {
     return false;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected Map<String, ByteBuffer> createPayload(@NonNull Statement<?> statement) {
+  protected Map<String, ByteBuffer> createPayload(@Nonnull Statement<?> statement) {
     return statement.getCustomPayload();
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected ContinuousAsyncResultSet createEmptyResultSet(@NonNull ExecutionInfo executionInfo) {
+  protected ContinuousAsyncResultSet createEmptyResultSet(@Nonnull ExecutionInfo executionInfo) {
     return DefaultContinuousAsyncResultSet.empty(executionInfo);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   protected DefaultContinuousAsyncResultSet createResultSet(
-      @NonNull Statement<?> statement,
-      @NonNull Rows rows,
-      @NonNull ExecutionInfo executionInfo,
-      @NonNull ColumnDefinitions columnDefinitions) {
+      @Nonnull Statement<?> statement,
+      @Nonnull Rows rows,
+      @Nonnull ExecutionInfo executionInfo,
+      @Nonnull ColumnDefinitions columnDefinitions) {
     Queue<List<ByteBuffer>> data = rows.getData();
     CountingIterator<Row> iterator =
         new CountingIterator<Row>(data.size()) {
@@ -165,7 +165,7 @@ public class ContinuousCqlRequestHandler
   }
 
   @Override
-  protected int pageNumber(@NonNull ContinuousAsyncResultSet resultSet) {
+  protected int pageNumber(@Nonnull ContinuousAsyncResultSet resultSet) {
     return resultSet.pageNumber();
   }
 }

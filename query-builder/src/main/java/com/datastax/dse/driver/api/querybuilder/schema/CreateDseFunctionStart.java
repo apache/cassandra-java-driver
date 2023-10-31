@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface CreateDseFunctionStart {
 
@@ -29,14 +29,14 @@ public interface CreateDseFunctionStart {
    * Adds IF NOT EXISTS to the create function specification. This indicates that the function
    * should not be created if it already exists.
    */
-  @NonNull
+  @Nonnull
   CreateDseFunctionStart ifNotExists();
 
   /**
    * Adds OR REPLACE to the create function specification. This indicates that the function should
    * replace an existing function with the same name if it exists.
    */
-  @NonNull
+  @Nonnull
   CreateDseFunctionStart orReplace();
 
   /**
@@ -47,17 +47,17 @@ public interface CreateDseFunctionStart {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link SchemaBuilder#udt(CqlIdentifier, boolean)}.
    */
-  @NonNull
+  @Nonnull
   CreateDseFunctionStart withParameter(
-      @NonNull CqlIdentifier paramName, @NonNull DataType paramType);
+      @Nonnull CqlIdentifier paramName, @Nonnull DataType paramType);
 
   /**
    * Shortcut for {@link #withParameter(CqlIdentifier, DataType)
    * withParameter(CqlIdentifier.asCql(paramName), dataType)}.
    */
-  @NonNull
+  @Nonnull
   default CreateDseFunctionStart withParameter(
-      @NonNull String paramName, @NonNull DataType paramType) {
+      @Nonnull String paramName, @Nonnull DataType paramType) {
     return withParameter(CqlIdentifier.fromCql(paramName), paramType);
   }
 
@@ -65,13 +65,13 @@ public interface CreateDseFunctionStart {
    * Adds RETURNS NULL ON NULL to the create function specification. This indicates that the body of
    * the function should be skipped when null input is provided.
    */
-  @NonNull
+  @Nonnull
   CreateDseFunctionWithNullOption returnsNullOnNull();
 
   /**
    * Adds CALLED ON NULL to the create function specification. This indicates that the body of the
    * function not be skipped when null input is provided.
    */
-  @NonNull
+  @Nonnull
   CreateDseFunctionWithNullOption calledOnNull();
 }

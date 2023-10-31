@@ -19,7 +19,7 @@ package com.datastax.oss.driver.api.core.type;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.detach.Detachable;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * The type of a CQL column, field or function argument.
@@ -44,6 +44,6 @@ public interface DataType extends Detachable {
    * @param pretty whether to pretty-print UDT names (as described in {@link
    *     CqlIdentifier#asCql(boolean)}.
    */
-  @NonNull
+  @Nonnull
   String asCql(boolean includeFrozen, boolean pretty);
 }

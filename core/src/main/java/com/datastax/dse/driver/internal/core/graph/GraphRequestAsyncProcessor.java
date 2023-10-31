@@ -30,8 +30,8 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryReader;
 import org.apache.tinkerpop.gremlin.structure.io.binary.GraphBinaryWriter;
@@ -55,7 +55,7 @@ public class GraphRequestAsyncProcessor
     this.graphSupportChecker = graphSupportChecker;
   }
 
-  @NonNull
+  @Nonnull
   public GraphBinaryModule getGraphBinaryModule() {
     return graphBinaryModule;
   }

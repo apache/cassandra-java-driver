@@ -21,8 +21,8 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
+import javax.annotation.Nonnull;
 
 /**
  * End state for the query builder DSL, which allows the generation of a CQL query.
@@ -38,7 +38,7 @@ public interface BuildableQuery {
    * <p>Use this if you plan to pass the query to {@link CqlSession#execute(String)} or {@link
    * CqlSession#prepare(String)} without any further customization.
    */
-  @NonNull
+  @Nonnull
   String asCql();
 
   /**
@@ -53,7 +53,7 @@ public interface BuildableQuery {
    * In addition, some implementations might try to infer additional statement properties (such as
    * {@link Statement#isIdempotent()}).
    */
-  @NonNull
+  @Nonnull
   default SimpleStatement build() {
     return SimpleStatement.newInstance(asCql());
   }
@@ -71,8 +71,8 @@ public interface BuildableQuery {
    * In addition, some implementations might try to infer additional statement properties (such as
    * {@link Statement#isIdempotent()}).
    */
-  @NonNull
-  default SimpleStatement build(@NonNull Object... values) {
+  @Nonnull
+  default SimpleStatement build(@Nonnull Object... values) {
     return SimpleStatement.newInstance(asCql(), values);
   }
 
@@ -89,8 +89,8 @@ public interface BuildableQuery {
    * In addition, some implementations might try to infer additional statement properties (such as
    * {@link Statement#isIdempotent()}).
    */
-  @NonNull
-  default SimpleStatement build(@NonNull Map<String, Object> namedValues) {
+  @Nonnull
+  default SimpleStatement build(@Nonnull Map<String, Object> namedValues) {
     return SimpleStatement.newInstance(asCql(), namedValues);
   }
 
@@ -114,7 +114,7 @@ public interface BuildableQuery {
    * In addition, some implementations might try to infer additional statement properties (such as
    * {@link Statement#isIdempotent()}).
    */
-  @NonNull
+  @Nonnull
   default SimpleStatementBuilder builder() {
     return SimpleStatement.builder(asCql());
   }

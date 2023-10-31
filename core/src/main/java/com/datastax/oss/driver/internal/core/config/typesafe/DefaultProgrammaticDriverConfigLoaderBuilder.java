@@ -25,14 +25,14 @@ import com.datastax.oss.driver.api.core.config.ProgrammaticDriverConfigLoaderBui
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigValueFactory;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.NotThreadSafe;
 
 @NotThreadSafe
@@ -75,7 +75,7 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
    * located using the provided {@link ClassLoader} instead of {@linkplain
    * Thread#getContextClassLoader() the current thread's context class loader}.
    */
-  public DefaultProgrammaticDriverConfigLoaderBuilder(@NonNull ClassLoader appClassLoader) {
+  public DefaultProgrammaticDriverConfigLoaderBuilder(@Nonnull ClassLoader appClassLoader) {
     this(
         () ->
             ConfigFactory.defaultApplication(appClassLoader)
@@ -94,17 +94,17 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
    *     DefaultDriverConfigLoader#DEFAULT_ROOT_PATH}. Cannot be null but can be empty.
    */
   public DefaultProgrammaticDriverConfigLoaderBuilder(
-      @NonNull Supplier<Config> fallbackSupplier, @NonNull String rootPath) {
+      @Nonnull Supplier<Config> fallbackSupplier, @Nonnull String rootPath) {
     this.fallbackSupplier = fallbackSupplier;
     this.rootPath = rootPath;
   }
 
   private ProgrammaticDriverConfigLoaderBuilder with(
-      @NonNull DriverOption option, @Nullable Object value) {
+      @Nonnull DriverOption option, @Nullable Object value) {
     return with(option.getPath(), value);
   }
 
-  private ProgrammaticDriverConfigLoaderBuilder with(@NonNull String path, @Nullable Object value) {
+  private ProgrammaticDriverConfigLoaderBuilder with(@Nonnull String path, @Nullable Object value) {
     if (!DriverExecutionProfile.DEFAULT_NAME.equals(currentProfileName)) {
       path = "profiles." + currentProfileName + "." + path;
     }
@@ -115,132 +115,132 @@ public class DefaultProgrammaticDriverConfigLoaderBuilder
     return this;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public ProgrammaticDriverConfigLoaderBuilder startProfile(@NonNull String profileName) {
+  public ProgrammaticDriverConfigLoaderBuilder startProfile(@Nonnull String profileName) {
     currentProfileName = Objects.requireNonNull(profileName);
     return this;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProgrammaticDriverConfigLoaderBuilder endProfile() {
     currentProfileName = DriverExecutionProfile.DEFAULT_NAME;
     return this;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProgrammaticDriverConfigLoaderBuilder withBoolean(
-      @NonNull DriverOption option, boolean value) {
+      @Nonnull DriverOption option, boolean value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProgrammaticDriverConfigLoaderBuilder withBooleanList(
-      @NonNull DriverOption option, @NonNull List<Boolean> value) {
+      @Nonnull DriverOption option, @Nonnull List<Boolean> value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public ProgrammaticDriverConfigLoaderBuilder withInt(@NonNull DriverOption option, int value) {
+  public ProgrammaticDriverConfigLoaderBuilder withInt(@Nonnull DriverOption option, int value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProgrammaticDriverConfigLoaderBuilder withIntList(
-      @NonNull DriverOption option, @NonNull List<Integer> value) {
+      @Nonnull DriverOption option, @Nonnull List<Integer> value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public ProgrammaticDriverConfigLoaderBuilder withLong(@NonNull DriverOption option, long value) {
+  public ProgrammaticDriverConfigLoaderBuilder withLong(@Nonnull DriverOption option, long value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProgrammaticDriverConfigLoaderBuilder withLongList(
-      @NonNull DriverOption option, @NonNull List<Long> value) {
+      @Nonnull DriverOption option, @Nonnull List<Long> value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProgrammaticDriverConfigLoaderBuilder withDouble(
-      @NonNull DriverOption option, double value) {
+      @Nonnull DriverOption option, double value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProgrammaticDriverConfigLoaderBuilder withDoubleList(
-      @NonNull DriverOption option, @NonNull List<Double> value) {
+      @Nonnull DriverOption option, @Nonnull List<Double> value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProgrammaticDriverConfigLoaderBuilder withString(
-      @NonNull DriverOption option, @NonNull String value) {
+      @Nonnull DriverOption option, @Nonnull String value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProgrammaticDriverConfigLoaderBuilder withStringList(
-      @NonNull DriverOption option, @NonNull List<String> value) {
+      @Nonnull DriverOption option, @Nonnull List<String> value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProgrammaticDriverConfigLoaderBuilder withStringMap(
-      @NonNull DriverOption option, @NonNull Map<String, String> value) {
+      @Nonnull DriverOption option, @Nonnull Map<String, String> value) {
     for (String key : value.keySet()) {
       this.with(option.getPath() + "." + key, value.get(key));
     }
     return this;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public ProgrammaticDriverConfigLoaderBuilder withBytes(@NonNull DriverOption option, long value) {
+  public ProgrammaticDriverConfigLoaderBuilder withBytes(@Nonnull DriverOption option, long value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProgrammaticDriverConfigLoaderBuilder withBytesList(
-      @NonNull DriverOption option, @NonNull List<Long> value) {
+      @Nonnull DriverOption option, @Nonnull List<Long> value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProgrammaticDriverConfigLoaderBuilder withDuration(
-      @NonNull DriverOption option, @NonNull Duration value) {
+      @Nonnull DriverOption option, @Nonnull Duration value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProgrammaticDriverConfigLoaderBuilder withDurationList(
-      @NonNull DriverOption option, @NonNull List<Duration> value) {
+      @Nonnull DriverOption option, @Nonnull List<Duration> value) {
     return with(option, value);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public ProgrammaticDriverConfigLoaderBuilder without(@NonNull DriverOption option) {
+  public ProgrammaticDriverConfigLoaderBuilder without(@Nonnull DriverOption option) {
     return with(option, null);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverConfigLoader build() {
     return new DefaultDriverConfigLoader(

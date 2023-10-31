@@ -27,7 +27,6 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +34,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Name;
@@ -138,10 +138,10 @@ public class DefaultDaoReturnTypeParser implements DaoReturnTypeParser {
     this.futureOfEntityContainerMatches = futureOfEntityContainerMatches;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DaoReturnType parse(
-      @NonNull TypeMirror returnTypeMirror, @NonNull Map<Name, TypeElement> typeParameters) {
+      @Nonnull TypeMirror returnTypeMirror, @Nonnull Map<Name, TypeElement> typeParameters) {
 
     // void or a primitive?
     DaoReturnType match = typeKindMatches.get(returnTypeMirror.getKind());

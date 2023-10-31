@@ -25,7 +25,7 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -37,7 +37,7 @@ public class ReactiveGraphRequestProcessor
 
   private final GraphRequestAsyncProcessor asyncGraphProcessor;
 
-  public ReactiveGraphRequestProcessor(@NonNull GraphRequestAsyncProcessor asyncGraphProcessor) {
+  public ReactiveGraphRequestProcessor(@Nonnull GraphRequestAsyncProcessor asyncGraphProcessor) {
     this.asyncGraphProcessor = asyncGraphProcessor;
   }
 

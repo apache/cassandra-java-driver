@@ -21,8 +21,8 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -34,8 +34,8 @@ public class FunctionTerm implements Term {
 
   public FunctionTerm(
       @Nullable CqlIdentifier keyspaceId,
-      @NonNull CqlIdentifier functionId,
-      @NonNull Iterable<Term> arguments) {
+      @Nonnull CqlIdentifier functionId,
+      @Nonnull Iterable<Term> arguments) {
     Preconditions.checkNotNull(functionId);
     Preconditions.checkNotNull(arguments);
     this.keyspaceId = keyspaceId;
@@ -44,7 +44,7 @@ public class FunctionTerm implements Term {
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     // The function name appears even without arguments, so don't use prefix/suffix in CqlHelper
     CqlHelper.qualify(keyspaceId, functionId, builder);
     builder.append('(');
@@ -62,12 +62,12 @@ public class FunctionTerm implements Term {
     return keyspaceId;
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getFunctionId() {
     return functionId;
   }
 
-  @NonNull
+  @Nonnull
   public Iterable<Term> getArguments() {
     return arguments;
   }

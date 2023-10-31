@@ -21,9 +21,9 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -33,12 +33,12 @@ public class TypeHintSelector implements Selector {
   private final DataType targetType;
   private final CqlIdentifier alias;
 
-  public TypeHintSelector(@NonNull Selector selector, @NonNull DataType targetType) {
+  public TypeHintSelector(@Nonnull Selector selector, @Nonnull DataType targetType) {
     this(selector, targetType, null);
   }
 
   public TypeHintSelector(
-      @NonNull Selector selector, @NonNull DataType targetType, @Nullable CqlIdentifier alias) {
+      @Nonnull Selector selector, @Nonnull DataType targetType, @Nullable CqlIdentifier alias) {
     Preconditions.checkNotNull(selector);
     Preconditions.checkNotNull(targetType);
     this.selector = selector;
@@ -46,14 +46,14 @@ public class TypeHintSelector implements Selector {
     this.alias = alias;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Selector as(@NonNull CqlIdentifier alias) {
+  public Selector as(@Nonnull CqlIdentifier alias) {
     return new TypeHintSelector(selector, targetType, alias);
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     builder.append('(').append(targetType.asCql(false, true)).append(')');
     selector.appendTo(builder);
     if (alias != null) {
@@ -61,12 +61,12 @@ public class TypeHintSelector implements Selector {
     }
   }
 
-  @NonNull
+  @Nonnull
   public Selector getSelector() {
     return selector;
   }
 
-  @NonNull
+  @Nonnull
   public DataType getTargetType() {
     return targetType;
   }

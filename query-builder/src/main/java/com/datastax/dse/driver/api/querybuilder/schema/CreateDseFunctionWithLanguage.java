@@ -17,7 +17,7 @@
  */
 package com.datastax.dse.driver.api.querybuilder.schema;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface CreateDseFunctionWithLanguage {
 
@@ -29,8 +29,8 @@ public interface CreateDseFunctionWithLanguage {
    * postgres-style string literal, which is surrounded in two dollar signs, i.e. <code>$$ myBody $$
    * </code>.
    */
-  @NonNull
-  CreateDseFunctionEnd as(@NonNull String functionBody);
+  @Nonnull
+  CreateDseFunctionEnd as(@Nonnull String functionBody);
 
   /**
    * Adds AS to the create function specification and quotes the function body. Assumes that if the
@@ -39,8 +39,8 @@ public interface CreateDseFunctionWithLanguage {
    * ' myBody '</code>. If the function body is already quoted {@link #as(String)} should be used
    * instead.
    */
-  @NonNull
-  default CreateDseFunctionEnd asQuoted(@NonNull String functionBody) {
+  @Nonnull
+  default CreateDseFunctionEnd asQuoted(@Nonnull String functionBody) {
     if (functionBody.contains("'")) {
       return as("$$ " + functionBody + " $$");
     } else {

@@ -24,13 +24,13 @@ import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.protocol.internal.util.Bytes;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -44,11 +44,11 @@ public class DefaultTupleValue implements TupleValue, Serializable {
   private final TupleType type;
   private final ByteBuffer[] values;
 
-  public DefaultTupleValue(@NonNull TupleType type) {
+  public DefaultTupleValue(@Nonnull TupleType type) {
     this(type, new ByteBuffer[type.getComponentTypes().size()]);
   }
 
-  public DefaultTupleValue(@NonNull TupleType type, @NonNull Object... values) {
+  public DefaultTupleValue(@Nonnull TupleType type, @Nonnull Object... values) {
     this(
         type,
         ValuesHelper.encodeValues(
@@ -64,7 +64,7 @@ public class DefaultTupleValue implements TupleValue, Serializable {
     this.values = values;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public TupleType getType() {
     return type;
@@ -80,26 +80,26 @@ public class DefaultTupleValue implements TupleValue, Serializable {
     return values[i];
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public TupleValue setBytesUnsafe(int i, @Nullable ByteBuffer v) {
     values[i] = v;
     return this;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getType(int i) {
     return type.getComponentTypes().get(i);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CodecRegistry codecRegistry() {
     return type.getAttachmentPoint().getCodecRegistry();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ProtocolVersion protocolVersion() {
     return type.getAttachmentPoint().getProtocolVersion();

@@ -20,7 +20,7 @@ package com.datastax.dse.driver.api.querybuilder.schema;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface CreateDseAggregateEnd extends BuildableQuery {
 
@@ -28,22 +28,22 @@ public interface CreateDseAggregateEnd extends BuildableQuery {
    * Adds INITCOND to the aggregate query. Defines the initial condition, values, of the first
    * parameter in the SFUNC.
    */
-  @NonNull
-  CreateDseAggregateEnd withInitCond(@NonNull Term term);
+  @Nonnull
+  CreateDseAggregateEnd withInitCond(@Nonnull Term term);
 
   /**
    * Adds FINALFUNC to the create aggregate query. This is used to specify what type is returned
    * from the state function.
    */
-  @NonNull
-  CreateDseAggregateEnd withFinalFunc(@NonNull CqlIdentifier finalFunc);
+  @Nonnull
+  CreateDseAggregateEnd withFinalFunc(@Nonnull CqlIdentifier finalFunc);
 
   /**
    * Shortcut for {@link #withFinalFunc(CqlIdentifier)
    * withFinalFunc(CqlIdentifier.fromCql(finalFuncName))}.
    */
-  @NonNull
-  default CreateDseAggregateEnd withFinalFunc(@NonNull String finalFuncName) {
+  @Nonnull
+  default CreateDseAggregateEnd withFinalFunc(@Nonnull String finalFuncName) {
     return withFinalFunc(CqlIdentifier.fromCql(finalFuncName));
   }
 
@@ -52,6 +52,6 @@ public interface CreateDseAggregateEnd extends BuildableQuery {
    * aggregate always returns the same output for a given input. Requires an initial condition and
    * returns a single value.
    */
-  @NonNull
+  @Nonnull
   CreateDseAggregateEnd deterministic();
 }

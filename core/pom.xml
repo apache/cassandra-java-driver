@@ -121,8 +121,8 @@
       <artifactId>jcip-annotations</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.github.spotbugs</groupId>
-      <artifactId>spotbugs-annotations</artifactId>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
     </dependency>
     <dependency>
       <groupId>org.graalvm.sdk</groupId>
@@ -303,7 +303,7 @@
                   <!--
                   1) Don't include the packages below because they contain annotations only and are
                   not required at runtime.
-                  -->!net.jcip.annotations.*, !edu.umd.cs.findbugs.annotations.*,
+                  -->!net.jcip.annotations.*, !javax.annotation.*,
                   <!--
                   2) Don't include GraalVM.
                   -->!org.graalvm.*, !com.oracle.svm.*,

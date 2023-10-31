@@ -21,8 +21,8 @@ import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryPolicy;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Indicates that the contacted node reported a protocol error.
@@ -36,19 +36,19 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  */
 public class ProtocolError extends CoordinatorException {
 
-  public ProtocolError(@NonNull Node coordinator, @NonNull String message) {
+  public ProtocolError(@Nonnull Node coordinator, @Nonnull String message) {
     this(coordinator, message, null, false);
   }
 
   private ProtocolError(
-      @NonNull Node coordinator,
-      @NonNull String message,
+      @Nonnull Node coordinator,
+      @Nonnull String message,
       @Nullable ExecutionInfo executionInfo,
       boolean writableStackTrace) {
     super(coordinator, message, executionInfo, writableStackTrace);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new ProtocolError(getCoordinator(), getMessage(), getExecutionInfo(), true);

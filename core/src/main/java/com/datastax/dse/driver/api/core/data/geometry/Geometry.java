@@ -17,8 +17,8 @@
  */
 package com.datastax.dse.driver.api.core.data.geometry;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
+import javax.annotation.Nonnull;
 
 /**
  * The driver-side representation for a DSE geospatial type.
@@ -38,7 +38,7 @@ public interface Geometry {
    * Returns a <a href="https://en.wikipedia.org/wiki/Well-known_text">Well-known Text</a> (WKT)
    * representation of this geospatial type.
    */
-  @NonNull
+  @Nonnull
   String asWellKnownText();
 
   /**
@@ -48,11 +48,11 @@ public interface Geometry {
    * <p>Note that, due to DSE implementation details, the resulting byte buffer always uses
    * little-endian order, regardless of the platform's native order.
    */
-  @NonNull
+  @Nonnull
   ByteBuffer asWellKnownBinary();
 
   /** Returns a JSON representation of this geospatial type. */
-  @NonNull
+  @Nonnull
   String asGeoJson();
 
   /**
@@ -61,5 +61,5 @@ public interface Geometry {
    * @param other the other instance.
    * @return whether {@code this} contains {@code other}.
    */
-  boolean contains(@NonNull Geometry other);
+  boolean contains(@Nonnull Geometry other);
 }

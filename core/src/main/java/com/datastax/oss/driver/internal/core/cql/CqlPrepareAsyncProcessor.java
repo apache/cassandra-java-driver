@@ -38,13 +38,13 @@ import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
 import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +61,7 @@ public class CqlPrepareAsyncProcessor
     this(Optional.empty());
   }
 
-  public CqlPrepareAsyncProcessor(@NonNull Optional<? extends DefaultDriverContext> context) {
+  public CqlPrepareAsyncProcessor(@Nonnull Optional<? extends DefaultDriverContext> context) {
     this(CacheBuilder.newBuilder().weakValues().build(), context);
   }
 

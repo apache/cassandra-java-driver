@@ -21,9 +21,9 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.codec.SimpleBlobCodec;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -45,13 +45,13 @@ public class ByteListToArrayCodec extends AbstractPrimitiveListToArrayCodec<byte
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     Objects.requireNonNull(javaClass);
     return byte[].class.equals(javaClass);
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     Objects.requireNonNull(value);
     return value instanceof byte[];
   }
@@ -63,33 +63,33 @@ public class ByteListToArrayCodec extends AbstractPrimitiveListToArrayCodec<byte
 
   @Override
   protected void serializeElement(
-      @NonNull ByteBuffer output,
-      @NonNull byte[] array,
+      @Nonnull ByteBuffer output,
+      @Nonnull byte[] array,
       int index,
-      @NonNull ProtocolVersion protocolVersion) {
+      @Nonnull ProtocolVersion protocolVersion) {
     output.put(array[index]);
   }
 
   @Override
   protected void deserializeElement(
-      @NonNull ByteBuffer input,
-      @NonNull byte[] array,
+      @Nonnull ByteBuffer input,
+      @Nonnull byte[] array,
       int index,
-      @NonNull ProtocolVersion protocolVersion) {
+      @Nonnull ProtocolVersion protocolVersion) {
     array[index] = input.get();
   }
 
   @Override
-  protected void formatElement(@NonNull StringBuilder output, @NonNull byte[] array, int index) {
+  protected void formatElement(@Nonnull StringBuilder output, @Nonnull byte[] array, int index) {
     output.append(array[index]);
   }
 
   @Override
-  protected void parseElement(@NonNull String input, @NonNull byte[] array, int index) {
+  protected void parseElement(@Nonnull String input, @Nonnull byte[] array, int index) {
     array[index] = Byte.parseByte(input);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   protected byte[] newInstance(int size) {
     return new byte[size];

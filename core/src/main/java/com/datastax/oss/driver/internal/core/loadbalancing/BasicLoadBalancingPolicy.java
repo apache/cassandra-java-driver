@@ -45,8 +45,6 @@ import com.datastax.oss.driver.internal.core.util.collection.LazyQueryPlan;
 import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
 import com.datastax.oss.driver.internal.core.util.collection.SimpleQueryPlan;
 import com.datastax.oss.driver.shaded.guava.common.base.Predicates;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Map;
@@ -57,6 +55,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntUnaryOperator;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,9 +102,9 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   protected static final IntUnaryOperator INCREMENT = i -> (i == Integer.MAX_VALUE) ? 0 : i + 1;
   private static final Object[] EMPTY_NODES = new Object[0];
 
-  @NonNull protected final InternalDriverContext context;
-  @NonNull protected final DriverExecutionProfile profile;
-  @NonNull protected final String logPrefix;
+  @Nonnull protected final InternalDriverContext context;
+  @Nonnull protected final DriverExecutionProfile profile;
+  @Nonnull protected final String logPrefix;
 
   protected final AtomicInteger roundRobinAmount = new AtomicInteger();
 
@@ -118,7 +118,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   private volatile String localDc;
   private volatile NodeSet liveNodes;
 
-  public BasicLoadBalancingPolicy(@NonNull DriverContext context, @NonNull String profileName) {
+  public BasicLoadBalancingPolicy(@Nonnull DriverContext context, @Nonnull String profileName) {
     this.context = (InternalDriverContext) context;
     profile = context.getConfig().getProfile(profileName);
     logPrefix = context.getSessionName() + "|" + profileName;
@@ -155,7 +155,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   }
 
   @Override
-  public void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter) {
+  public void init(@Nonnull Map<UUID, Node> nodes, @Nonnull DistanceReporter distanceReporter) {
     this.distanceReporter = distanceReporter;
     localDc = discoverLocalDc(nodes).orElse(null);
     nodeDistanceEvaluator = createNodeDistanceEvaluator(localDc, nodes);
@@ -197,8 +197,8 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
    * @throws IllegalStateException if the local datacenter could not be discovered, and this policy
    *     cannot operate without it.
    */
-  @NonNull
-  protected Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes) {
+  @Nonnull
+  protected Optional<String> discoverLocalDc(@Nonnull Map<UUID, Node> nodes) {
     return new OptionalLocalDcHelper(context, profile, logPrefix).discoverLocalDc(nodes);
   }
 
@@ -215,14 +215,14 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
    *     implementors need to inspect the cluster topology to create the evaluator.
    * @return the distance evaluator to use.
    */
-  @NonNull
+  @Nonnull
   protected NodeDistanceEvaluator createNodeDistanceEvaluator(
-      @Nullable String localDc, @NonNull Map<UUID, Node> nodes) {
+      @Nullable String localDc, @Nonnull Map<UUID, Node> nodes) {
     return new DefaultNodeDistanceEvaluatorHelper(context, profile, logPrefix)
         .createNodeDistanceEvaluator(localDc, nodes);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Queue<Node> newQueryPlan(@Nullable Request request, @Nullable Session session) {
     // Take a snapshot since the set is concurrent:
@@ -259,7 +259,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
     return maybeAddDcFailover(request, plan);
   }
 
-  @NonNull
+  @Nonnull
   protected Set<Node> getReplicas(@Nullable Request request, @Nullable Session session) {
     if (request == null || session == null) {
       return Collections.emptySet();
@@ -305,8 +305,8 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
         : tokenMap.getReplicas(keyspace, key);
   }
 
-  @NonNull
-  protected Queue<Node> maybeAddDcFailover(@Nullable Request request, @NonNull Queue<Node> local) {
+  @Nonnull
+  protected Queue<Node> maybeAddDcFailover(@Nullable Request request, @Nonnull Queue<Node> local) {
     if (maxNodesPerRemoteDc <= 0 || localDc == null) {
       return local;
     }
@@ -349,7 +349,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   }
 
   @Override
-  public void onAdd(@NonNull Node node) {
+  public void onAdd(@Nonnull Node node) {
     NodeDistance distance = computeNodeDistance(node);
     // Setting to a non-ignored distance triggers the session to open a pool, which will in turn
     // set the node UP when the first channel gets opened, then #onUp will be called, and the
@@ -359,7 +359,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   }
 
   @Override
-  public void onUp(@NonNull Node node) {
+  public void onUp(@Nonnull Node node) {
     NodeDistance distance = computeNodeDistance(node);
     if (node.getDistance() != distance) {
       distanceReporter.setDistance(node, distance);
@@ -370,14 +370,14 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   }
 
   @Override
-  public void onDown(@NonNull Node node) {
+  public void onDown(@Nonnull Node node) {
     if (liveNodes.remove(node)) {
       LOG.debug("[{}] {} went DOWN, removed from live set", logPrefix, node);
     }
   }
 
   @Override
-  public void onRemove(@NonNull Node node) {
+  public void onRemove(@Nonnull Node node) {
     if (liveNodes.remove(node)) {
       LOG.debug("[{}] {} was removed, removed from live set", logPrefix, node);
     }
@@ -389,7 +389,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
    * <p>This method is called during {@linkplain #init(Map, DistanceReporter) initialization}, when
    * a node {@linkplain #onAdd(Node) is added}, and when a node {@linkplain #onUp(Node) is back UP}.
    */
-  protected NodeDistance computeNodeDistance(@NonNull Node node) {
+  protected NodeDistance computeNodeDistance(@Nonnull Node node) {
     // We interrogate the custom evaluator every time since it could be dynamic
     // and change its verdict between two invocations of this method.
     NodeDistance distance = nodeDistanceEvaluator.evaluateDistance(node, localDc);

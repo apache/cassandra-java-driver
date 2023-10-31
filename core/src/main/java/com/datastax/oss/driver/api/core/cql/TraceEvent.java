@@ -17,9 +17,9 @@
  */
 package com.datastax.oss.driver.api.core.cql;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import javax.annotation.Nullable;
 
 /** An event in a {@link QueryTrace}. */
 public interface TraceEvent {

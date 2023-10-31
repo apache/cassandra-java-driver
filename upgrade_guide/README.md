@@ -286,12 +286,12 @@ public class NodeFilterToDistanceEvaluatorAdapter implements NodeDistanceEvaluat
 
     private final Predicate<Node> nodeFilter;
 
-    public NodeFilterToDistanceEvaluatorAdapter(@NonNull Predicate<Node> nodeFilter) {
+    public NodeFilterToDistanceEvaluatorAdapter(@Nonnull Predicate<Node> nodeFilter) {
         this.nodeFilter = nodeFilter;
     }
 
     @Nullable @Override
-    public NodeDistance evaluateDistance(@NonNull Node node, @Nullable String localDc) {
+    public NodeDistance evaluateDistance(@Nonnull Node node, @Nullable String localDc) {
         return nodeFilter.test(node) ? null : NodeDistance.IGNORED;
     }
 }

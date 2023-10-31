@@ -23,12 +23,12 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.codec.FloatCodec;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /** A codec that maps CQL vectors to the Java type {@code float[]}. */
 public class FloatVectorToArrayCodec extends AbstractVectorToArrayCodec<float[]> {
@@ -38,18 +38,18 @@ public class FloatVectorToArrayCodec extends AbstractVectorToArrayCodec<float[]>
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     Objects.requireNonNull(javaClass);
     return float[].class.equals(javaClass);
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     Objects.requireNonNull(value);
     return value instanceof float[];
   }
 
-  @NonNull
+  @Nonnull
   @Override
   protected float[] newInstance() {
     return new float[cqlType.getDimensions()];
@@ -62,23 +62,23 @@ public class FloatVectorToArrayCodec extends AbstractVectorToArrayCodec<float[]>
 
   @Override
   protected void serializeElement(
-      @NonNull ByteBuffer output,
-      @NonNull float[] array,
+      @Nonnull ByteBuffer output,
+      @Nonnull float[] array,
       int index,
-      @NonNull ProtocolVersion protocolVersion) {
+      @Nonnull ProtocolVersion protocolVersion) {
     output.putFloat(array[index]);
   }
 
   @Override
   protected void deserializeElement(
-      @NonNull ByteBuffer input,
-      @NonNull float[] array,
+      @Nonnull ByteBuffer input,
+      @Nonnull float[] array,
       int index,
-      @NonNull ProtocolVersion protocolVersion) {
+      @Nonnull ProtocolVersion protocolVersion) {
     array[index] = input.getFloat();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable float[] value) {
     return value == null ? "NULL" : Arrays.toString(value);

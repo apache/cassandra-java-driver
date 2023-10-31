@@ -22,8 +22,8 @@ import com.datastax.oss.driver.api.querybuilder.schema.AlterKeyspace;
 import com.datastax.oss.driver.api.querybuilder.schema.AlterKeyspaceStart;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -32,42 +32,42 @@ public class DefaultAlterKeyspace implements AlterKeyspaceStart, AlterKeyspace {
   private final CqlIdentifier keyspaceName;
   private final ImmutableMap<String, Object> options;
 
-  public DefaultAlterKeyspace(@NonNull CqlIdentifier keyspaceName) {
+  public DefaultAlterKeyspace(@Nonnull CqlIdentifier keyspaceName) {
     this(keyspaceName, ImmutableMap.of());
   }
 
   public DefaultAlterKeyspace(
-      @NonNull CqlIdentifier keyspaceName, @NonNull ImmutableMap<String, Object> options) {
+      @Nonnull CqlIdentifier keyspaceName, @Nonnull ImmutableMap<String, Object> options) {
     this.keyspaceName = keyspaceName;
     this.options = options;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public AlterKeyspace withReplicationOptions(@NonNull Map<String, Object> replicationOptions) {
+  public AlterKeyspace withReplicationOptions(@Nonnull Map<String, Object> replicationOptions) {
     return withOption("replication", replicationOptions);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public AlterKeyspace withOption(@NonNull String name, @NonNull Object value) {
+  public AlterKeyspace withOption(@Nonnull String name, @Nonnull Object value) {
     return new DefaultAlterKeyspace(
         keyspaceName, ImmutableCollections.append(options, name, value));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asCql() {
     return "ALTER KEYSPACE " + keyspaceName.asCql(true) + OptionsUtils.buildOptions(options, true);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, Object> getOptions() {
     return options;
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getKeyspace() {
     return keyspaceName;
   }

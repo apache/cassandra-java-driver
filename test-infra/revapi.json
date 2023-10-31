@@ -47,29 +47,29 @@
         "code": "java.annotation.removed",
         "old": "parameter java.util.Queue<com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::newQueryPlan(===com.datastax.oss.driver.api.core.session.Request===, com.datastax.oss.driver.api.core.session.Session)",
         "new": "parameter java.util.Queue<com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::newQueryPlan(===com.datastax.oss.driver.api.core.session.Request===, com.datastax.oss.driver.api.core.session.Session)",
-        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
-        "justification": "Method arguments were mistakenly annotated with @NonNull"
+        "annotation": "@javax.annotation.Nonnull",
+        "justification": "Method arguments were mistakenly annotated with @Nonnull"
       },
       {
         "code": "java.annotation.added",
         "old": "parameter java.util.Queue<com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::newQueryPlan(===com.datastax.oss.driver.api.core.session.Request===, com.datastax.oss.driver.api.core.session.Session)",
         "new": "parameter java.util.Queue<com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::newQueryPlan(===com.datastax.oss.driver.api.core.session.Request===, com.datastax.oss.driver.api.core.session.Session)",
-        "annotation": "@edu.umd.cs.findbugs.annotations.Nullable",
-        "justification": "Method arguments were mistakenly annotated with @NonNull"
+        "annotation": "@javax.annotation.Nullable",
+        "justification": "Method arguments were mistakenly annotated with @Nonnull"
       },
       {
         "code": "java.annotation.removed",
         "old": "parameter java.util.Queue<com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::newQueryPlan(com.datastax.oss.driver.api.core.session.Request, ===com.datastax.oss.driver.api.core.session.Session===)",
         "new": "parameter java.util.Queue<com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::newQueryPlan(com.datastax.oss.driver.api.core.session.Request, ===com.datastax.oss.driver.api.core.session.Session===)",
-        "annotation": "@edu.umd.cs.findbugs.annotations.NonNull",
-        "justification": "Method arguments were mistakenly annotated with @NonNull"
+        "annotation": "@javax.annotation.Nonnull",
+        "justification": "Method arguments were mistakenly annotated with @Nonnull"
       },
       {
         "code": "java.annotation.added",
         "old": "parameter java.util.Queue<com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::newQueryPlan(com.datastax.oss.driver.api.core.session.Request, ===com.datastax.oss.driver.api.core.session.Session===)",
         "new": "parameter java.util.Queue<com.datastax.oss.driver.api.core.metadata.Node> com.datastax.oss.driver.api.testinfra.loadbalancing.SortingLoadBalancingPolicy::newQueryPlan(com.datastax.oss.driver.api.core.session.Request, ===com.datastax.oss.driver.api.core.session.Session===)",
-        "annotation": "@edu.umd.cs.findbugs.annotations.Nullable",
-        "justification": "Method arguments were mistakenly annotated with @NonNull"
+        "annotation": "@javax.annotation.Nullable",
+        "justification": "Method arguments were mistakenly annotated with @Nonnull"
       },
       {
         "code": "java.method.parameterTypeParameterChanged",

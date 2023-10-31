@@ -56,15 +56,15 @@ import com.datastax.oss.driver.internal.querybuilder.schema.DefaultDropKeyspace;
 import com.datastax.oss.driver.internal.querybuilder.schema.compaction.DefaultLeveledCompactionStrategy;
 import com.datastax.oss.driver.internal.querybuilder.schema.compaction.DefaultSizeTieredCompactionStrategy;
 import com.datastax.oss.driver.internal.querybuilder.schema.compaction.DefaultTimeWindowCompactionStrategy;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /** A Domain-Specific Language to build CQL DDL queries using Java code. */
 public class SchemaBuilder {
 
   /** Starts a CREATE KEYSPACE query. */
-  @NonNull
-  public static CreateKeyspaceStart createKeyspace(@NonNull CqlIdentifier keyspaceName) {
+  @Nonnull
+  public static CreateKeyspaceStart createKeyspace(@Nonnull CqlIdentifier keyspaceName) {
     return new DefaultCreateKeyspace(keyspaceName);
   }
 
@@ -72,14 +72,14 @@ public class SchemaBuilder {
    * Shortcut for {@link #createKeyspace(CqlIdentifier)
    * createKeyspace(CqlIdentifier.fromCql(keyspaceName))}
    */
-  @NonNull
-  public static CreateKeyspaceStart createKeyspace(@NonNull String keyspaceName) {
+  @Nonnull
+  public static CreateKeyspaceStart createKeyspace(@Nonnull String keyspaceName) {
     return createKeyspace(CqlIdentifier.fromCql(keyspaceName));
   }
 
   /** Starts an ALTER KEYSPACE query. */
-  @NonNull
-  public static AlterKeyspaceStart alterKeyspace(@NonNull CqlIdentifier keyspaceName) {
+  @Nonnull
+  public static AlterKeyspaceStart alterKeyspace(@Nonnull CqlIdentifier keyspaceName) {
     return new DefaultAlterKeyspace(keyspaceName);
   }
 
@@ -87,14 +87,14 @@ public class SchemaBuilder {
    * Shortcut for {@link #alterKeyspace(CqlIdentifier)
    * alterKeyspace(CqlIdentifier.fromCql(keyspaceName)}.
    */
-  @NonNull
-  public static AlterKeyspaceStart alterKeyspace(@NonNull String keyspaceName) {
+  @Nonnull
+  public static AlterKeyspaceStart alterKeyspace(@Nonnull String keyspaceName) {
     return alterKeyspace(CqlIdentifier.fromCql(keyspaceName));
   }
 
   /** Starts a DROP KEYSPACE query. */
-  @NonNull
-  public static Drop dropKeyspace(@NonNull CqlIdentifier keyspaceName) {
+  @Nonnull
+  public static Drop dropKeyspace(@Nonnull CqlIdentifier keyspaceName) {
     return new DefaultDropKeyspace(keyspaceName);
   }
 
@@ -102,8 +102,8 @@ public class SchemaBuilder {
    * Shortcut for {@link #dropKeyspace(CqlIdentifier)
    * dropKeyspace(CqlIdentifier.fromCql(keyspaceName)}.
    */
-  @NonNull
-  public static Drop dropKeyspace(@NonNull String keyspaceName) {
+  @Nonnull
+  public static Drop dropKeyspace(@Nonnull String keyspaceName) {
     return dropKeyspace(CqlIdentifier.fromCql(keyspaceName));
   }
 
@@ -111,23 +111,23 @@ public class SchemaBuilder {
    * Starts a CREATE TABLE query with the given table name. This assumes the keyspace name is
    * already qualified for the Session or Statement.
    */
-  @NonNull
-  public static CreateTableStart createTable(@NonNull CqlIdentifier tableName) {
+  @Nonnull
+  public static CreateTableStart createTable(@Nonnull CqlIdentifier tableName) {
     return new DefaultCreateTable(tableName);
   }
 
   /** Starts a CREATE TABLE query with the given table name for the given keyspace name. */
-  @NonNull
+  @Nonnull
   public static CreateTableStart createTable(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier tableName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier tableName) {
     return new DefaultCreateTable(keyspace, tableName);
   }
 
   /**
    * Shortcut for {@link #createTable(CqlIdentifier) createTable(CqlIdentifier.fromCql(tableName)}
    */
-  @NonNull
-  public static CreateTableStart createTable(@NonNull String tableName) {
+  @Nonnull
+  public static CreateTableStart createTable(@Nonnull String tableName) {
     return createTable(CqlIdentifier.fromCql(tableName));
   }
 
@@ -135,8 +135,8 @@ public class SchemaBuilder {
    * Shortcut for {@link #createTable(CqlIdentifier,CqlIdentifier)
    * createTable(CqlIdentifier.fromCql(keyspaceName),CqlIdentifier.fromCql(tableName)}
    */
-  @NonNull
-  public static CreateTableStart createTable(@Nullable String keyspace, @NonNull String tableName) {
+  @Nonnull
+  public static CreateTableStart createTable(@Nullable String keyspace, @Nonnull String tableName) {
     return createTable(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace),
         CqlIdentifier.fromCql(tableName));
@@ -146,21 +146,21 @@ public class SchemaBuilder {
    * Starts an ALTER TABLE query with the given table name. This assumes the keyspace name is
    * already qualified for the Session or Statement.
    */
-  @NonNull
-  public static AlterTableStart alterTable(@NonNull CqlIdentifier tableName) {
+  @Nonnull
+  public static AlterTableStart alterTable(@Nonnull CqlIdentifier tableName) {
     return new DefaultAlterTable(tableName);
   }
 
   /** Starts an ALTER TABLE query with the given table name for the given keyspace name. */
-  @NonNull
+  @Nonnull
   public static AlterTableStart alterTable(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier tableName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier tableName) {
     return new DefaultAlterTable(keyspace, tableName);
   }
 
   /** Shortcut for {@link #alterTable(CqlIdentifier) alterTable(CqlIdentifier.fromCql(tableName)} */
-  @NonNull
-  public static AlterTableStart alterTable(@NonNull String tableName) {
+  @Nonnull
+  public static AlterTableStart alterTable(@Nonnull String tableName) {
     return alterTable(CqlIdentifier.fromCql(tableName));
   }
 
@@ -168,8 +168,8 @@ public class SchemaBuilder {
    * Shortcut for {@link #alterTable(CqlIdentifier,CqlIdentifier)
    * alterTable(CqlIdentifier.fromCql(keyspaceName),CqlIdentifier.fromCql(tableName)}
    */
-  @NonNull
-  public static AlterTableStart alterTable(@Nullable String keyspace, @NonNull String tableName) {
+  @Nonnull
+  public static AlterTableStart alterTable(@Nullable String keyspace, @Nonnull String tableName) {
     return alterTable(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace),
         CqlIdentifier.fromCql(tableName));
@@ -179,20 +179,20 @@ public class SchemaBuilder {
    * Starts a DROP TABLE query. This assumes the keyspace name is already qualified for the Session
    * or Statement.
    */
-  @NonNull
-  public static Drop dropTable(@NonNull CqlIdentifier tableName) {
+  @Nonnull
+  public static Drop dropTable(@Nonnull CqlIdentifier tableName) {
     return new DefaultDrop(tableName, "TABLE");
   }
 
   /** Shortcut for {@link #dropTable(CqlIdentifier) dropTable(CqlIdentifier.fromCql(tableName)}. */
-  @NonNull
-  public static Drop dropTable(@NonNull String tableName) {
+  @Nonnull
+  public static Drop dropTable(@Nonnull String tableName) {
     return dropTable(CqlIdentifier.fromCql(tableName));
   }
 
   /** Starts a DROP TABLE query for the given table name for the given keyspace name. */
-  @NonNull
-  public static Drop dropTable(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier tableName) {
+  @Nonnull
+  public static Drop dropTable(@Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier tableName) {
     return new DefaultDrop(keyspace, tableName, "TABLE");
   }
 
@@ -200,8 +200,8 @@ public class SchemaBuilder {
    * Shortcut for {@link #dropTable(CqlIdentifier,CqlIdentifier)
    * dropTable(CqlIdentifier.fromCql(keyspace),CqlIdentifier.fromCql(tableName)}.
    */
-  @NonNull
-  public static Drop dropTable(@Nullable String keyspace, @NonNull String tableName) {
+  @Nonnull
+  public static Drop dropTable(@Nullable String keyspace, @Nonnull String tableName) {
     return dropTable(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace),
         CqlIdentifier.fromCql(tableName));
@@ -211,18 +211,18 @@ public class SchemaBuilder {
    * Starts a CREATE MATERIALIZED VIEW query with the given view name. This assumes the keyspace
    * name is already qualified for the Session or Statement.
    */
-  @NonNull
+  @Nonnull
   public static CreateMaterializedViewStart createMaterializedView(
-      @NonNull CqlIdentifier viewName) {
+      @Nonnull CqlIdentifier viewName) {
     return new DefaultCreateMaterializedView(viewName);
   }
 
   /**
    * Starts a CREATE MATERIALIZED VIEW query with the given view name for the given keyspace name.
    */
-  @NonNull
+  @Nonnull
   public static CreateMaterializedViewStart createMaterializedView(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier viewName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier viewName) {
     return new DefaultCreateMaterializedView(keyspace, viewName);
   }
 
@@ -230,8 +230,8 @@ public class SchemaBuilder {
    * Shortcut for {@link #createMaterializedView(CqlIdentifier)
    * createMaterializedView(CqlIdentifier.fromCql(viewName)}
    */
-  @NonNull
-  public static CreateMaterializedViewStart createMaterializedView(@NonNull String viewName) {
+  @Nonnull
+  public static CreateMaterializedViewStart createMaterializedView(@Nonnull String viewName) {
     return createMaterializedView(CqlIdentifier.fromCql(viewName));
   }
 
@@ -239,9 +239,9 @@ public class SchemaBuilder {
    * Shortcut for {@link #createMaterializedView(CqlIdentifier,CqlIdentifier)
    * createMaterializedView(CqlIdentifier.fromCql(keyspaceName),CqlIdentifier.fromCql(viewName)}
    */
-  @NonNull
+  @Nonnull
   public static CreateMaterializedViewStart createMaterializedView(
-      @Nullable String keyspace, @NonNull String viewName) {
+      @Nullable String keyspace, @Nonnull String viewName) {
     return createMaterializedView(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(viewName));
   }
@@ -250,17 +250,17 @@ public class SchemaBuilder {
    * Starts an ALTER MATERIALIZED VIEW query with the given view name. This assumes the keyspace
    * name is already qualified for the Session or Statement.
    */
-  @NonNull
-  public static AlterMaterializedViewStart alterMaterializedView(@NonNull CqlIdentifier viewName) {
+  @Nonnull
+  public static AlterMaterializedViewStart alterMaterializedView(@Nonnull CqlIdentifier viewName) {
     return new DefaultAlterMaterializedView(viewName);
   }
 
   /**
    * Starts an ALTER MATERIALIZED VIEW query with the given view name for the given keyspace name.
    */
-  @NonNull
+  @Nonnull
   public static AlterMaterializedViewStart alterMaterializedView(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier viewName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier viewName) {
     return new DefaultAlterMaterializedView(keyspace, viewName);
   }
 
@@ -268,8 +268,8 @@ public class SchemaBuilder {
    * Shortcut for {@link #alterMaterializedView(CqlIdentifier)
    * alterMaterializedView(CqlIdentifier.fromCql(viewName)}
    */
-  @NonNull
-  public static AlterMaterializedViewStart alterMaterializedView(@NonNull String viewName) {
+  @Nonnull
+  public static AlterMaterializedViewStart alterMaterializedView(@Nonnull String viewName) {
     return alterMaterializedView(CqlIdentifier.fromCql(viewName));
   }
 
@@ -277,9 +277,9 @@ public class SchemaBuilder {
    * Shortcut for {@link #alterMaterializedView(CqlIdentifier,CqlIdentifier)
    * alterMaterializedView(CqlIdentifier.fromCql(keyspaceName),CqlIdentifier.fromCql(viewName)}
    */
-  @NonNull
+  @Nonnull
   public static AlterMaterializedViewStart alterMaterializedView(
-      @Nullable String keyspace, @NonNull String viewName) {
+      @Nullable String keyspace, @Nonnull String viewName) {
     return alterMaterializedView(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(viewName));
   }
@@ -288,8 +288,8 @@ public class SchemaBuilder {
    * Starts a DROP MATERIALIZED VIEW query. This assumes the keyspace name is already qualified for
    * the Session or Statement.
    */
-  @NonNull
-  public static Drop dropMaterializedView(@NonNull CqlIdentifier viewName) {
+  @Nonnull
+  public static Drop dropMaterializedView(@Nonnull CqlIdentifier viewName) {
     return new DefaultDrop(viewName, "MATERIALIZED VIEW");
   }
 
@@ -297,15 +297,15 @@ public class SchemaBuilder {
    * Shortcut for {@link #dropMaterializedView(CqlIdentifier)
    * dropMaterializedView(CqlIdentifier.fromCql(viewName)}.
    */
-  @NonNull
-  public static Drop dropMaterializedView(@NonNull String viewName) {
+  @Nonnull
+  public static Drop dropMaterializedView(@Nonnull String viewName) {
     return dropMaterializedView(CqlIdentifier.fromCql(viewName));
   }
 
   /** Starts a DROP MATERIALIZED VIEW query for the given view name for the given keyspace name. */
-  @NonNull
+  @Nonnull
   public static Drop dropMaterializedView(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier viewName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier viewName) {
     return new DefaultDrop(keyspace, viewName, "MATERIALIZED VIEW");
   }
 
@@ -313,8 +313,8 @@ public class SchemaBuilder {
    * Shortcut for {@link #dropMaterializedView(CqlIdentifier,CqlIdentifier)
    * dropMaterializedView(CqlIdentifier.fromCql(keyspace),CqlIdentifier.fromCql(viewName)}.
    */
-  @NonNull
-  public static Drop dropMaterializedView(@Nullable String keyspace, @NonNull String viewName) {
+  @Nonnull
+  public static Drop dropMaterializedView(@Nullable String keyspace, @Nonnull String viewName) {
     return dropMaterializedView(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(viewName));
   }
@@ -323,21 +323,21 @@ public class SchemaBuilder {
    * Starts a CREATE TYPE query with the given type name. This assumes the keyspace name is already
    * qualified for the Session or Statement.
    */
-  @NonNull
-  public static CreateTypeStart createType(@NonNull CqlIdentifier typeName) {
+  @Nonnull
+  public static CreateTypeStart createType(@Nonnull CqlIdentifier typeName) {
     return new DefaultCreateType(typeName);
   }
 
   /** Starts a CREATE TYPE query with the given type name for the given keyspace name. */
-  @NonNull
+  @Nonnull
   public static CreateTypeStart createType(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier typeName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier typeName) {
     return new DefaultCreateType(keyspace, typeName);
   }
 
   /** Shortcut for {@link #createType(CqlIdentifier) createType(CqlIdentifier.fromCql(typeName)}. */
-  @NonNull
-  public static CreateTypeStart createType(@NonNull String typeName) {
+  @Nonnull
+  public static CreateTypeStart createType(@Nonnull String typeName) {
     return createType(CqlIdentifier.fromCql(typeName));
   }
 
@@ -345,8 +345,8 @@ public class SchemaBuilder {
    * Shortcut for {@link #createType(CqlIdentifier,CqlIdentifier)
    * createType(CqlIdentifier.fromCql(keyspace),CqlIdentifier.fromCql(typeName)}.
    */
-  @NonNull
-  public static CreateTypeStart createType(@Nullable String keyspace, @NonNull String typeName) {
+  @Nonnull
+  public static CreateTypeStart createType(@Nullable String keyspace, @Nonnull String typeName) {
     return createType(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(typeName));
   }
@@ -355,21 +355,21 @@ public class SchemaBuilder {
    * Starts an ALTER TYPE query with the given type name. This assumes the keyspace name is already
    * qualified for the Session or Statement.
    */
-  @NonNull
-  public static AlterTypeStart alterType(@NonNull CqlIdentifier typeName) {
+  @Nonnull
+  public static AlterTypeStart alterType(@Nonnull CqlIdentifier typeName) {
     return new DefaultAlterType(typeName);
   }
 
   /** Starts an ALTER TYPE query with the given type name for the given keyspace name. */
-  @NonNull
+  @Nonnull
   public static AlterTypeStart alterType(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier typeName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier typeName) {
     return new DefaultAlterType(keyspace, typeName);
   }
 
   /** Shortcut for {@link #alterType(CqlIdentifier) alterType(CqlIdentifier.fromCql(typeName)} */
-  @NonNull
-  public static AlterTypeStart alterType(@NonNull String typeName) {
+  @Nonnull
+  public static AlterTypeStart alterType(@Nonnull String typeName) {
     return alterType(CqlIdentifier.fromCql(typeName));
   }
 
@@ -377,8 +377,8 @@ public class SchemaBuilder {
    * Shortcut for {@link #alterType(CqlIdentifier,CqlIdentifier)
    * alterType(CqlIdentifier.fromCql(keyspaceName),CqlIdentifier.fromCql(typeName)}
    */
-  @NonNull
-  public static AlterTypeStart alterType(@Nullable String keyspace, @NonNull String typeName) {
+  @Nonnull
+  public static AlterTypeStart alterType(@Nullable String keyspace, @Nonnull String typeName) {
     return alterType(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(typeName));
   }
@@ -387,20 +387,20 @@ public class SchemaBuilder {
    * Starts a DROP TYPE query. This assumes the keyspace name is already qualified for the Session
    * or Statement.
    */
-  @NonNull
-  public static Drop dropType(@NonNull CqlIdentifier typeName) {
+  @Nonnull
+  public static Drop dropType(@Nonnull CqlIdentifier typeName) {
     return new DefaultDrop(typeName, "TYPE");
   }
 
   /** Shortcut for {@link #dropType(CqlIdentifier) dropType(CqlIdentifier.fromCql(typeName)}. */
-  @NonNull
-  public static Drop dropType(@NonNull String typeName) {
+  @Nonnull
+  public static Drop dropType(@Nonnull String typeName) {
     return dropType(CqlIdentifier.fromCql(typeName));
   }
 
   /** Starts a DROP TYPE query for the given view name for the given type name. */
-  @NonNull
-  public static Drop dropType(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier typeName) {
+  @Nonnull
+  public static Drop dropType(@Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier typeName) {
     return new DefaultDrop(keyspace, typeName, "TYPE");
   }
 
@@ -408,8 +408,8 @@ public class SchemaBuilder {
    * Shortcut for {@link #dropType(CqlIdentifier,CqlIdentifier)
    * dropType(CqlIdentifier.fromCql(keyspace),CqlIdentifier.fromCql(typeName)}.
    */
-  @NonNull
-  public static Drop dropType(@Nullable String keyspace, @NonNull String typeName) {
+  @Nonnull
+  public static Drop dropType(@Nullable String keyspace, @Nonnull String typeName) {
     return dropType(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(typeName));
   }
@@ -418,13 +418,13 @@ public class SchemaBuilder {
    * Starts a CREATE INDEX query with no name. When this is used a name will be generated on the
    * server side, usually with a format of <code>tableName_idx_columnName</code>.
    */
-  @NonNull
+  @Nonnull
   public static CreateIndexStart createIndex() {
     return new DefaultCreateIndex();
   }
 
   /** Starts a CREATE INDEX query with the given name. */
-  @NonNull
+  @Nonnull
   public static CreateIndexStart createIndex(@Nullable CqlIdentifier indexName) {
     return new DefaultCreateIndex(indexName);
   }
@@ -432,7 +432,7 @@ public class SchemaBuilder {
   /**
    * Shortcut for {@link #createIndex(CqlIdentifier) createIndex(CqlIdentifier.fromCql(indexName)}.
    */
-  @NonNull
+  @Nonnull
   public static CreateIndexStart createIndex(@Nullable String indexName) {
     return createIndex(indexName == null ? null : CqlIdentifier.fromCql(indexName));
   }
@@ -441,20 +441,20 @@ public class SchemaBuilder {
    * Starts a DROP INDEX query. This assumes the keyspace name is already qualified for the Session
    * or Statement.
    */
-  @NonNull
-  public static Drop dropIndex(@NonNull CqlIdentifier indexName) {
+  @Nonnull
+  public static Drop dropIndex(@Nonnull CqlIdentifier indexName) {
     return new DefaultDrop(indexName, "INDEX");
   }
 
   /** Shortcut for {@link #dropIndex(CqlIdentifier) dropIndex(CqlIdentifier.fromCql(indexName)}. */
-  @NonNull
-  public static Drop dropIndex(@NonNull String indexName) {
+  @Nonnull
+  public static Drop dropIndex(@Nonnull String indexName) {
     return dropIndex(CqlIdentifier.fromCql(indexName));
   }
 
   /** Starts a DROP INDEX query for the given index for the given keyspace name. */
-  @NonNull
-  public static Drop dropIndex(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier indexName) {
+  @Nonnull
+  public static Drop dropIndex(@Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier indexName) {
     return new DefaultDrop(keyspace, indexName, "INDEX");
   }
 
@@ -462,8 +462,8 @@ public class SchemaBuilder {
    * Shortcut for {@link #dropIndex(CqlIdentifier, CqlIdentifier)}
    * dropIndex(CqlIdentifier.fromCql(keyspace),CqlIdentifier.fromCql(indexName)}.
    */
-  @NonNull
-  public static Drop dropIndex(@Nullable String keyspace, @NonNull String indexName) {
+  @Nonnull
+  public static Drop dropIndex(@Nullable String keyspace, @Nonnull String indexName) {
     return dropIndex(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace),
         CqlIdentifier.fromCql(indexName));
@@ -473,32 +473,32 @@ public class SchemaBuilder {
    * Starts a CREATE FUNCTION query with the given function name. This assumes the keyspace name is
    * already qualified for the Session or Statement.
    */
-  @NonNull
-  public static CreateFunctionStart createFunction(@NonNull CqlIdentifier functionName) {
+  @Nonnull
+  public static CreateFunctionStart createFunction(@Nonnull CqlIdentifier functionName) {
     return new DefaultCreateFunction(functionName);
   }
 
   /** Starts a CREATE FUNCTION query with the given function name for the given keyspace name. */
-  @NonNull
+  @Nonnull
   public static CreateFunctionStart createFunction(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier functionName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier functionName) {
     return new DefaultCreateFunction(keyspace, functionName);
   }
   /**
    * Shortcut for {@link #createFunction(CqlIdentifier)
    * createFunction(CqlIdentifier.fromCql(keyspaceName),CqlIdentifier.fromCql(functionName)}
    */
-  @NonNull
-  public static CreateFunctionStart createFunction(@NonNull String functionName) {
+  @Nonnull
+  public static CreateFunctionStart createFunction(@Nonnull String functionName) {
     return new DefaultCreateFunction(CqlIdentifier.fromCql(functionName));
   }
   /**
    * Shortcut for {@link #createFunction(CqlIdentifier, CqlIdentifier)
    * createFunction(CqlIdentifier.fromCql(keyspace, functionName)}
    */
-  @NonNull
+  @Nonnull
   public static CreateFunctionStart createFunction(
-      @Nullable String keyspace, @NonNull String functionName) {
+      @Nullable String keyspace, @Nonnull String functionName) {
     return new DefaultCreateFunction(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace),
         CqlIdentifier.fromCql(functionName));
@@ -508,15 +508,15 @@ public class SchemaBuilder {
    * Starts a DROP FUNCTION query. This assumes the keyspace name is already qualified for the
    * Session or Statement.
    */
-  @NonNull
-  public static Drop dropFunction(@NonNull CqlIdentifier functionName) {
+  @Nonnull
+  public static Drop dropFunction(@Nonnull CqlIdentifier functionName) {
     return new DefaultDrop(functionName, "FUNCTION");
   }
 
   /** Starts a DROP FUNCTION query for the given function name for the given keyspace name. */
-  @NonNull
+  @Nonnull
   public static Drop dropFunction(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier functionName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier functionName) {
     return new DefaultDrop(keyspace, functionName, "FUNCTION");
   }
 
@@ -524,8 +524,8 @@ public class SchemaBuilder {
    * Shortcut for {@link #dropFunction(CqlIdentifier)
    * dropFunction(CqlIdentifier.fromCql(functionName)}.
    */
-  @NonNull
-  public static Drop dropFunction(@NonNull String functionName) {
+  @Nonnull
+  public static Drop dropFunction(@Nonnull String functionName) {
     return new DefaultDrop(CqlIdentifier.fromCql(functionName), "FUNCTION");
   }
 
@@ -533,8 +533,8 @@ public class SchemaBuilder {
    * Shortcut for {@link #dropFunction(CqlIdentifier, CqlIdentifier)
    * dropFunction(CqlIdentifier.fromCql(keyspace),CqlIdentifier.fromCql(functionName)}.
    */
-  @NonNull
-  public static Drop dropFunction(@Nullable String keyspace, @NonNull String functionName) {
+  @Nonnull
+  public static Drop dropFunction(@Nullable String keyspace, @Nonnull String functionName) {
     return new DefaultDrop(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace),
         CqlIdentifier.fromCql(functionName),
@@ -545,15 +545,15 @@ public class SchemaBuilder {
    * Starts a CREATE AGGREGATE query with the given aggregate name. This assumes the keyspace name
    * is already qualified for the Session or Statement.
    */
-  @NonNull
-  public static CreateAggregateStart createAggregate(@NonNull CqlIdentifier aggregateName) {
+  @Nonnull
+  public static CreateAggregateStart createAggregate(@Nonnull CqlIdentifier aggregateName) {
     return new DefaultCreateAggregate(aggregateName);
   }
 
   /** Starts a CREATE AGGREGATE query with the given aggregate name for the given keyspace name. */
-  @NonNull
+  @Nonnull
   public static CreateAggregateStart createAggregate(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier aggregateName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier aggregateName) {
     return new DefaultCreateAggregate(keyspace, aggregateName);
   }
 
@@ -561,8 +561,8 @@ public class SchemaBuilder {
    * Shortcut for {@link #createAggregate(CqlIdentifier)
    * CreateAggregateStart(CqlIdentifier.fromCql(keyspaceName),CqlIdentifier.fromCql(aggregateName)}
    */
-  @NonNull
-  public static CreateAggregateStart createAggregate(@NonNull String aggregateName) {
+  @Nonnull
+  public static CreateAggregateStart createAggregate(@Nonnull String aggregateName) {
     return new DefaultCreateAggregate(CqlIdentifier.fromCql(aggregateName));
   }
 
@@ -570,9 +570,9 @@ public class SchemaBuilder {
    * Shortcut for {@link #createAggregate(CqlIdentifier, CqlIdentifier)
    * CreateAggregateStart(CqlIdentifier.fromCql(keyspace, aggregateName)}
    */
-  @NonNull
+  @Nonnull
   public static CreateAggregateStart createAggregate(
-      @Nullable String keyspace, @NonNull String aggregateName) {
+      @Nullable String keyspace, @Nonnull String aggregateName) {
     return new DefaultCreateAggregate(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace),
         CqlIdentifier.fromCql(aggregateName));
@@ -582,15 +582,15 @@ public class SchemaBuilder {
    * Starts an DROP AGGREGATE query. This assumes the keyspace name is already qualified for the
    * Session or Statement.
    */
-  @NonNull
-  public static Drop dropAggregate(@NonNull CqlIdentifier aggregateName) {
+  @Nonnull
+  public static Drop dropAggregate(@Nonnull CqlIdentifier aggregateName) {
     return new DefaultDrop(aggregateName, "AGGREGATE");
   }
 
   /** Starts an DROP AGGREGATE query for the given aggregate name for the given keyspace name. */
-  @NonNull
+  @Nonnull
   public static Drop dropAggregate(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier aggregateName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier aggregateName) {
     return new DefaultDrop(keyspace, aggregateName, "AGGREGATE");
   }
 
@@ -598,8 +598,8 @@ public class SchemaBuilder {
    * Shortcut for {@link #dropAggregate(CqlIdentifier)
    * dropAggregate(CqlIdentifier.fromCql(aggregateName)}.
    */
-  @NonNull
-  public static Drop dropAggregate(@NonNull String aggregateName) {
+  @Nonnull
+  public static Drop dropAggregate(@Nonnull String aggregateName) {
     return new DefaultDrop(CqlIdentifier.fromCql(aggregateName), "AGGREGATE");
   }
 
@@ -607,8 +607,8 @@ public class SchemaBuilder {
    * Shortcut for {@link #dropAggregate(CqlIdentifier, CqlIdentifier)
    * dropAggregate(CqlIdentifier.fromCql(keyspace),CqlIdentifier.fromCql(aggregateName)}.
    */
-  @NonNull
-  public static Drop dropAggregate(@Nullable String keyspace, @NonNull String aggregateName) {
+  @Nonnull
+  public static Drop dropAggregate(@Nullable String keyspace, @Nonnull String aggregateName) {
     return new DefaultDrop(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace),
         CqlIdentifier.fromCql(aggregateName),
@@ -620,7 +620,7 @@ public class SchemaBuilder {
    *
    * @see CreateTableWithOptions#withCompaction(CompactionStrategy)
    */
-  @NonNull
+  @Nonnull
   public static SizeTieredCompactionStrategy sizeTieredCompactionStrategy() {
     return new DefaultSizeTieredCompactionStrategy();
   }
@@ -630,7 +630,7 @@ public class SchemaBuilder {
    *
    * @see CreateTableWithOptions#withCompaction(CompactionStrategy)
    */
-  @NonNull
+  @Nonnull
   public static LeveledCompactionStrategy leveledCompactionStrategy() {
     return new DefaultLeveledCompactionStrategy();
   }
@@ -640,7 +640,7 @@ public class SchemaBuilder {
    *
    * @see CreateTableWithOptions#withCompaction(CompactionStrategy)
    */
-  @NonNull
+  @Nonnull
   public static TimeWindowCompactionStrategy timeWindowCompactionStrategy() {
     return new DefaultTimeWindowCompactionStrategy();
   }
@@ -649,14 +649,14 @@ public class SchemaBuilder {
    * Shortcut for creating a user-defined {@link DataType} for use in UDT and Table builder
    * definitions, such as {@link CreateTable#withColumn(CqlIdentifier, DataType)}.
    */
-  @NonNull
-  public static UserDefinedType udt(@NonNull CqlIdentifier name, boolean frozen) {
+  @Nonnull
+  public static UserDefinedType udt(@Nonnull CqlIdentifier name, boolean frozen) {
     return new ShallowUserDefinedType(null, name, frozen);
   }
 
   /** Shortcut for {@link #udt(CqlIdentifier,boolean) udt(CqlIdentifier.fromCql(name),frozen)}. */
-  @NonNull
-  public static UserDefinedType udt(@NonNull String name, boolean frozen) {
+  @Nonnull
+  public static UserDefinedType udt(@Nonnull String name, boolean frozen) {
     return udt(CqlIdentifier.fromCql(name), frozen);
   }
 
@@ -673,16 +673,16 @@ public class SchemaBuilder {
       this.value = value;
     }
 
-    @NonNull public static RowsPerPartition ALL = new RowsPerPartition("ALL");
+    @Nonnull public static RowsPerPartition ALL = new RowsPerPartition("ALL");
 
-    @NonNull public static RowsPerPartition NONE = new RowsPerPartition("NONE");
+    @Nonnull public static RowsPerPartition NONE = new RowsPerPartition("NONE");
 
-    @NonNull
+    @Nonnull
     public static RowsPerPartition rows(int rowNumber) {
       return new RowsPerPartition(Integer.toString(rowNumber));
     }
 
-    @NonNull
+    @Nonnull
     public String getValue() {
       return value;
     }

@@ -18,7 +18,7 @@
 package com.datastax.dse.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface CreateDseTableWithOptions
     extends BuildableQuery,
@@ -26,6 +26,6 @@ public interface CreateDseTableWithOptions
         DseTableGraphOptions<CreateDseTableWithOptions> {
 
   /** Enables COMPACT STORAGE in the CREATE TABLE statement. */
-  @NonNull
+  @Nonnull
   CreateDseTableWithOptions withCompactStorage();
 }

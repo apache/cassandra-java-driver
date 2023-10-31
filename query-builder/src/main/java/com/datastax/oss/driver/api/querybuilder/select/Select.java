@@ -25,10 +25,10 @@ import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.relation.OngoingWhereClause;
 import com.datastax.oss.driver.internal.core.CqlIdentifiers;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A complete SELECT query.
@@ -44,12 +44,12 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    * <p>As of version 4.0, Apache Cassandra only allows grouping by columns, therefore you can use
    * the shortcuts {@link #groupByColumns(Iterable)} or {@link #groupByColumnIds(Iterable)}.
    */
-  @NonNull
-  Select groupBy(@NonNull Iterable<Selector> selectors);
+  @Nonnull
+  Select groupBy(@Nonnull Iterable<Selector> selectors);
 
   /** Var-arg equivalent of {@link #groupBy(Iterable)}. */
-  @NonNull
-  default Select groupBy(@NonNull Selector... selectors) {
+  @Nonnull
+  default Select groupBy(@Nonnull Selector... selectors) {
     return groupBy(Arrays.asList(selectors));
   }
 
@@ -57,14 +57,14 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    * Shortcut for {@link #groupBy(Iterable)} where all the clauses are simple columns. The arguments
    * are wrapped with {@link Selector#column(CqlIdentifier)}.
    */
-  @NonNull
-  default Select groupByColumnIds(@NonNull Iterable<CqlIdentifier> columnIds) {
+  @Nonnull
+  default Select groupByColumnIds(@Nonnull Iterable<CqlIdentifier> columnIds) {
     return groupBy(Iterables.transform(columnIds, Selector::column));
   }
 
   /** Var-arg equivalent of {@link #groupByColumnIds(Iterable)}. */
-  @NonNull
-  default Select groupByColumnIds(@NonNull CqlIdentifier... columnIds) {
+  @Nonnull
+  default Select groupByColumnIds(@Nonnull CqlIdentifier... columnIds) {
     return groupByColumnIds(Arrays.asList(columnIds));
   }
 
@@ -72,14 +72,14 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    * Shortcut for {@link #groupBy(Iterable)} where all the clauses are simple columns. The arguments
    * are wrapped with {@link Selector#column(String)}.
    */
-  @NonNull
-  default Select groupByColumns(@NonNull Iterable<String> columnNames) {
+  @Nonnull
+  default Select groupByColumns(@Nonnull Iterable<String> columnNames) {
     return groupBy(Iterables.transform(columnNames, Selector::column));
   }
 
   /** Var-arg equivalent of {@link #groupByColumns(Iterable)}. */
-  @NonNull
-  default Select groupByColumns(@NonNull String... columnNames) {
+  @Nonnull
+  default Select groupByColumns(@Nonnull String... columnNames) {
     return groupByColumns(Arrays.asList(columnNames));
   }
 
@@ -89,18 +89,18 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    * <p>As of version 4.0, Apache Cassandra only allows grouping by columns, therefore you can use
    * the shortcuts {@link #groupBy(String)} or {@link #groupBy(CqlIdentifier)}.
    */
-  @NonNull
-  Select groupBy(@NonNull Selector selector);
+  @Nonnull
+  Select groupBy(@Nonnull Selector selector);
 
   /** Shortcut for {@link #groupBy(Selector) groupBy(Selector.column(columnId))}. */
-  @NonNull
-  default Select groupBy(@NonNull CqlIdentifier columnId) {
+  @Nonnull
+  default Select groupBy(@Nonnull CqlIdentifier columnId) {
     return groupBy(Selector.column(columnId));
   }
 
   /** Shortcut for {@link #groupBy(Selector) groupBy(Selector.column(columnName))}. */
-  @NonNull
-  default Select groupBy(@NonNull String columnName) {
+  @Nonnull
+  default Select groupBy(@Nonnull String columnName) {
     return groupBy(Selector.column(columnName));
   }
 
@@ -111,8 +111,8 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    * defined for a given identifier, it will be removed and the new ordering will appear in its
    * position in the provided map.
    */
-  @NonNull
-  Select orderByIds(@NonNull Map<CqlIdentifier, ClusteringOrder> orderings);
+  @Nonnull
+  Select orderByIds(@Nonnull Map<CqlIdentifier, ClusteringOrder> orderings);
 
   /**
    * Shortcut for {@link #orderByIds(Map)} with the columns specified as case-insensitive names.
@@ -123,8 +123,8 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    *
    * @throws IllegalArgumentException if two names resolve to the same identifier.
    */
-  @NonNull
-  default Select orderBy(@NonNull Map<String, ClusteringOrder> orderings) {
+  @Nonnull
+  default Select orderBy(@Nonnull Map<String, ClusteringOrder> orderings) {
     return orderByIds(CqlIdentifiers.wrapKeys(orderings));
   }
 
@@ -134,15 +134,15 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    * <p>If an ordering was already defined for this identifier, it will be removed and the new
    * clause will be appended at the end of the current list for this query.
    */
-  @NonNull
-  Select orderBy(@NonNull CqlIdentifier columnId, @NonNull ClusteringOrder order);
+  @Nonnull
+  Select orderBy(@Nonnull CqlIdentifier columnId, @Nonnull ClusteringOrder order);
 
   /**
    * Shortcut for {@link #orderBy(CqlIdentifier, ClusteringOrder)
    * orderBy(CqlIdentifier.fromCql(columnName), order)}.
    */
-  @NonNull
-  default Select orderBy(@NonNull String columnName, @NonNull ClusteringOrder order) {
+  @Nonnull
+  default Select orderBy(@Nonnull String columnName, @Nonnull ClusteringOrder order) {
     return orderBy(CqlIdentifier.fromCql(columnName), order);
   }
 
@@ -152,7 +152,7 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    * <p>If this method or {@link #limit(BindMarker)} is called multiple times, the last value is
    * used.
    */
-  @NonNull
+  @Nonnull
   Select limit(int limit);
 
   /**
@@ -164,7 +164,7 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    * <p>If this method or {@link #limit(int)} is called multiple times, the last value is used.
    * {@code null} can be passed to cancel a previous limit.
    */
-  @NonNull
+  @Nonnull
   Select limit(@Nullable BindMarker bindMarker);
 
   /**
@@ -173,7 +173,7 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    * <p>If this method or {@link #perPartitionLimit(BindMarker)} is called multiple times, the last
    * value is used.
    */
-  @NonNull
+  @Nonnull
   Select perPartitionLimit(int limit);
 
   /**
@@ -185,7 +185,7 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    * <p>If this method or {@link #perPartitionLimit(int)} is called multiple times, the last value
    * is used. {@code null} can be passed to cancel a previous limit.
    */
-  @NonNull
+  @Nonnull
   Select perPartitionLimit(@Nullable BindMarker bindMarker);
 
   /**
@@ -193,6 +193,6 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    *
    * <p>This method is idempotent, calling it multiple times will only add a single clause.
    */
-  @NonNull
+  @Nonnull
   Select allowFiltering();
 }

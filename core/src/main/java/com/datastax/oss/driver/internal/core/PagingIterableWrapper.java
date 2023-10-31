@@ -22,11 +22,11 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.internal.core.cql.PagingIterableSpliterator;
 import com.datastax.oss.driver.shaded.guava.common.collect.AbstractIterator;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.function.Function;
+import javax.annotation.Nonnull;
 
 public class PagingIterableWrapper<SourceT, TargetT> implements PagingIterable<TargetT> {
 
@@ -42,8 +42,8 @@ public class PagingIterableWrapper<SourceT, TargetT> implements PagingIterable<T
    * @param elementMapper The element mapper.
    */
   public PagingIterableWrapper(
-      @NonNull PagingIterable<SourceT> source,
-      @NonNull Function<? super SourceT, ? extends TargetT> elementMapper) {
+      @Nonnull PagingIterable<SourceT> source,
+      @Nonnull Function<? super SourceT, ? extends TargetT> elementMapper) {
     this(source, elementMapper, false);
   }
 
@@ -57,8 +57,8 @@ public class PagingIterableWrapper<SourceT, TargetT> implements PagingIterable<T
    * @param sized Whether this iterable has a known size or not.
    */
   public PagingIterableWrapper(
-      @NonNull PagingIterable<SourceT> source,
-      @NonNull Function<? super SourceT, ? extends TargetT> elementMapper,
+      @Nonnull PagingIterable<SourceT> source,
+      @Nonnull Function<? super SourceT, ? extends TargetT> elementMapper,
       boolean sized) {
     this.source = source;
     this.sized = sized;
@@ -74,13 +74,13 @@ public class PagingIterableWrapper<SourceT, TargetT> implements PagingIterable<T
         };
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ColumnDefinitions getColumnDefinitions() {
     return source.getColumnDefinitions();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<ExecutionInfo> getExecutionInfos() {
     return source.getExecutionInfos();
@@ -101,13 +101,13 @@ public class PagingIterableWrapper<SourceT, TargetT> implements PagingIterable<T
     return source.wasApplied();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Iterator<TargetT> iterator() {
     return iterator;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Spliterator<TargetT> spliterator() {
     PagingIterableSpliterator.Builder<TargetT> builder = PagingIterableSpliterator.builder(this);
@@ -117,7 +117,7 @@ public class PagingIterableWrapper<SourceT, TargetT> implements PagingIterable<T
     return builder.build();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public <NewTargetT> PagingIterable<NewTargetT> map(
       Function<? super TargetT, ? extends NewTargetT> elementMapper) {

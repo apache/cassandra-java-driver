@@ -44,11 +44,11 @@ import com.datastax.oss.driver.internal.core.type.codec.registry.CachingCodecReg
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Period;
 import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -581,29 +581,29 @@ public class CachingCodecRegistryTest {
   }
 
   public static class TextToPeriodCodec implements TypeCodec<Period> {
-    @NonNull
+    @Nonnull
     @Override
     public GenericType<Period> getJavaType() {
       return GenericType.of(Period.class);
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public DataType getCqlType() {
       return DataTypes.TEXT;
     }
 
     @Override
-    public ByteBuffer encode(Period value, @NonNull ProtocolVersion protocolVersion) {
+    public ByteBuffer encode(Period value, @Nonnull ProtocolVersion protocolVersion) {
       throw new UnsupportedOperationException("not implemented for this test");
     }
 
     @Override
-    public Period decode(ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+    public Period decode(ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
       throw new UnsupportedOperationException("not implemented for this test");
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public String format(Period value) {
       throw new UnsupportedOperationException("not implemented for this test");
@@ -621,29 +621,29 @@ public class CachingCodecRegistryTest {
 
   private static class ACodec implements TypeCodec<A> {
 
-    @NonNull
+    @Nonnull
     @Override
     public GenericType<A> getJavaType() {
       return GenericType.of(A.class);
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public DataType getCqlType() {
       return DataTypes.INT;
     }
 
     @Override
-    public ByteBuffer encode(A value, @NonNull ProtocolVersion protocolVersion) {
+    public ByteBuffer encode(A value, @Nonnull ProtocolVersion protocolVersion) {
       throw new UnsupportedOperationException("irrelevant");
     }
 
     @Override
-    public A decode(ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+    public A decode(ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
       throw new UnsupportedOperationException("irrelevant");
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public String format(A value) {
       throw new UnsupportedOperationException("irrelevant");

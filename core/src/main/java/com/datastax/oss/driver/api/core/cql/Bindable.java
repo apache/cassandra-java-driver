@@ -24,8 +24,8 @@ import com.datastax.oss.driver.api.core.data.GettableByName;
 import com.datastax.oss.driver.api.core.data.SettableById;
 import com.datastax.oss.driver.api.core.data.SettableByName;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
-import edu.umd.cs.findbugs.annotations.CheckReturnValue;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.CheckReturnValue;
+import javax.annotation.Nonnull;
 
 /** A data container with the ability to unset values. */
 public interface Bindable<SelfT extends Bindable<SelfT>>
@@ -49,7 +49,7 @@ public interface Bindable<SelfT extends Bindable<SelfT>>
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
   @SuppressWarnings("ReferenceEquality")
-  default boolean isSet(@NonNull CqlIdentifier id) {
+  default boolean isSet(@Nonnull CqlIdentifier id) {
     return getBytesUnsafe(id) != ProtocolConstants.UNSET_VALUE;
   }
 
@@ -62,7 +62,7 @@ public interface Bindable<SelfT extends Bindable<SelfT>>
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
   @SuppressWarnings("ReferenceEquality")
-  default boolean isSet(@NonNull String name) {
+  default boolean isSet(@Nonnull String name) {
     return getBytesUnsafe(name) != ProtocolConstants.UNSET_VALUE;
   }
 
@@ -72,7 +72,7 @@ public interface Bindable<SelfT extends Bindable<SelfT>>
    *
    * @throws IndexOutOfBoundsException if the index is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
   default SelfT unset(int i) {
     return setBytesUnsafe(i, ProtocolConstants.UNSET_VALUE);
@@ -84,9 +84,9 @@ public interface Bindable<SelfT extends Bindable<SelfT>>
    *
    * @throws IndexOutOfBoundsException if the id is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT unset(@NonNull CqlIdentifier id) {
+  default SelfT unset(@Nonnull CqlIdentifier id) {
     return setBytesUnsafe(id, ProtocolConstants.UNSET_VALUE);
   }
 
@@ -96,9 +96,9 @@ public interface Bindable<SelfT extends Bindable<SelfT>>
    *
    * @throws IndexOutOfBoundsException if the name is invalid.
    */
-  @NonNull
+  @Nonnull
   @CheckReturnValue
-  default SelfT unset(@NonNull String name) {
+  default SelfT unset(@Nonnull String name) {
     return setBytesUnsafe(name, ProtocolConstants.UNSET_VALUE);
   }
 }

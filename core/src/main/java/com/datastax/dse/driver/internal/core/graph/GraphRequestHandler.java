@@ -67,7 +67,6 @@ import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.Result;
 import com.datastax.oss.protocol.internal.response.result.Rows;
 import com.datastax.oss.protocol.internal.response.result.Void;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
@@ -86,6 +85,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -134,12 +134,12 @@ public class GraphRequestHandler implements Throttled {
   private volatile List<Map.Entry<Node, Throwable>> errors;
 
   GraphRequestHandler(
-      @NonNull GraphStatement<?> statement,
-      @NonNull DefaultSession dseSession,
-      @NonNull InternalDriverContext context,
-      @NonNull String sessionLogPrefix,
-      @NonNull GraphBinaryModule graphBinaryModule,
-      @NonNull GraphSupportChecker graphSupportChecker) {
+      @Nonnull GraphStatement<?> statement,
+      @Nonnull DefaultSession dseSession,
+      @Nonnull InternalDriverContext context,
+      @Nonnull String sessionLogPrefix,
+      @Nonnull GraphBinaryModule graphBinaryModule,
+      @Nonnull GraphSupportChecker graphSupportChecker) {
     this.startTimeNanos = System.nanoTime();
     this.logPrefix = sessionLogPrefix + "|" + this.hashCode();
     LOG.trace("[{}] Creating new Graph request handler for request {}", logPrefix, statement);
@@ -434,7 +434,7 @@ public class GraphRequestHandler implements Throttled {
   }
 
   @Override
-  public void onThrottleFailure(@NonNull RequestThrottlingException error) {
+  public void onThrottleFailure(@Nonnull RequestThrottlingException error) {
     DriverExecutionProfile executionProfile =
         Conversions.resolveExecutionProfile(initialStatement, context);
     sessionMetricUpdater.incrementCounter(

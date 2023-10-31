@@ -19,8 +19,8 @@ package com.datastax.oss.driver.api.core.auth;
 
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Indicates an error during the authentication phase while connecting to a node.
@@ -34,18 +34,18 @@ public class AuthenticationException extends RuntimeException {
 
   private final EndPoint endPoint;
 
-  public AuthenticationException(@NonNull EndPoint endPoint, @NonNull String message) {
+  public AuthenticationException(@Nonnull EndPoint endPoint, @Nonnull String message) {
     this(endPoint, message, null);
   }
 
   public AuthenticationException(
-      @NonNull EndPoint endPoint, @NonNull String message, @Nullable Throwable cause) {
+      @Nonnull EndPoint endPoint, @Nonnull String message, @Nullable Throwable cause) {
     super(String.format("Authentication error on node %s: %s", endPoint, message), cause);
     this.endPoint = endPoint;
   }
 
   /** The address of the node that encountered the error. */
-  @NonNull
+  @Nonnull
   public EndPoint getEndPoint() {
     return endPoint;
   }

@@ -21,17 +21,17 @@ import com.datastax.dse.driver.api.core.metadata.schema.DseColumnMetadata;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultColumnMetadata;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
 public class DefaultDseColumnMetadata extends DefaultColumnMetadata implements DseColumnMetadata {
 
   public DefaultDseColumnMetadata(
-      @NonNull CqlIdentifier keyspace,
-      @NonNull CqlIdentifier parent,
-      @NonNull CqlIdentifier name,
-      @NonNull DataType dataType,
+      @Nonnull CqlIdentifier keyspace,
+      @Nonnull CqlIdentifier parent,
+      @Nonnull CqlIdentifier name,
+      @Nonnull DataType dataType,
       boolean isStatic) {
     super(keyspace, parent, name, dataType, isStatic);
   }

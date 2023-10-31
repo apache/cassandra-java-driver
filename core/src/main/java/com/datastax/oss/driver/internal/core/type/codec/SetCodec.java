@@ -24,11 +24,11 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -45,20 +45,20 @@ public class SetCodec<ElementT> implements TypeCodec<Set<ElementT>> {
     Preconditions.checkArgument(cqlType instanceof SetType);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<Set<ElementT>> getJavaType() {
     return javaType;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return cqlType;
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     if (Set.class.isAssignableFrom(value.getClass())) {
       // runtime type ok, now check element type
       Set<?> set = (Set<?>) value;
@@ -71,7 +71,7 @@ public class SetCodec<ElementT> implements TypeCodec<Set<ElementT>> {
   @Nullable
   @Override
   public ByteBuffer encode(
-      @Nullable Set<ElementT> value, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable Set<ElementT> value, @Nonnull ProtocolVersion protocolVersion) {
     // An int indicating the number of elements in the set, followed by the elements. Each element
     // is a byte array representing the serialized value, preceded by an int indicating its size.
     if (value == null) {
@@ -110,7 +110,7 @@ public class SetCodec<ElementT> implements TypeCodec<Set<ElementT>> {
   @Nullable
   @Override
   public Set<ElementT> decode(
-      @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return new LinkedHashSet<>(0);
     } else {
@@ -136,7 +136,7 @@ public class SetCodec<ElementT> implements TypeCodec<Set<ElementT>> {
     }
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable Set<ElementT> value) {
     if (value == null) {

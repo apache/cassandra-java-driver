@@ -22,10 +22,10 @@ import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.loadbalancing.helper.InferringLocalDcHelper;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -71,13 +71,13 @@ import net.jcip.annotations.ThreadSafe;
 public class DcInferringLoadBalancingPolicy extends DefaultLoadBalancingPolicy {
 
   public DcInferringLoadBalancingPolicy(
-      @NonNull DriverContext context, @NonNull String profileName) {
+      @Nonnull DriverContext context, @Nonnull String profileName) {
     super(context, profileName);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  protected Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes) {
+  protected Optional<String> discoverLocalDc(@Nonnull Map<UUID, Node> nodes) {
     return new InferringLocalDcHelper(context, profile, logPrefix).discoverLocalDc(nodes);
   }
 }

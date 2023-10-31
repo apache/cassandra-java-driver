@@ -19,10 +19,10 @@ package com.datastax.dse.driver.api.core.graph;
 
 import com.datastax.dse.driver.internal.core.graph.GraphExecutionInfoConverter;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Iterator;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * The result of an asynchronous graph query.
@@ -38,7 +38,7 @@ import java.util.concurrent.CompletionStage;
 public interface AsyncGraphResultSet {
 
   /** The execution information for this page of results. */
-  @NonNull
+  @Nonnull
   default ExecutionInfo getRequestExecutionInfo() {
     return GraphExecutionInfoConverter.convert(getExecutionInfo());
   }
@@ -49,7 +49,7 @@ public interface AsyncGraphResultSet {
    * @deprecated Use {@link #getRequestExecutionInfo()} instead.
    */
   @Deprecated
-  @NonNull
+  @Nonnull
   com.datastax.dse.driver.api.core.graph.GraphExecutionInfo getExecutionInfo();
 
   /** How many rows are left before the current page is exhausted. */
@@ -62,7 +62,7 @@ public interface AsyncGraphResultSet {
    * <p>Note that this method always returns the same object, and that that object can only be
    * iterated once: nodes are "consumed" as they are read.
    */
-  @NonNull
+  @Nonnull
   Iterable<GraphNode> currentPage();
 
   /**
@@ -88,7 +88,7 @@ public interface AsyncGraphResultSet {
    * @throws IllegalStateException if there are no more pages. Use {@link #hasMorePages()} to check
    *     if you can call this method.
    */
-  @NonNull
+  @Nonnull
   CompletionStage<AsyncGraphResultSet> fetchNextPage() throws IllegalStateException;
 
   /**

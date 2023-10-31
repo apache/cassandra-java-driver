@@ -20,11 +20,11 @@ package com.datastax.oss.driver.internal.core.protocol;
 import com.datastax.oss.driver.api.core.connection.CrcMismatchException;
 import com.datastax.oss.protocol.internal.Segment;
 import com.datastax.oss.protocol.internal.SegmentCodec;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import java.nio.ByteOrder;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.NotThreadSafe;
 
 /**
@@ -41,7 +41,7 @@ public class BytesToSegmentDecoder extends LengthFieldBasedFrameDecoder {
   private final SegmentCodec<ByteBuf> segmentCodec;
   private SegmentCodec.Header header;
 
-  public BytesToSegmentDecoder(@NonNull SegmentCodec<ByteBuf> segmentCodec) {
+  public BytesToSegmentDecoder(@Nonnull SegmentCodec<ByteBuf> segmentCodec) {
     super(
         // max length (Netty wants this to be the overall length including everything):
         segmentCodec.headerLength()

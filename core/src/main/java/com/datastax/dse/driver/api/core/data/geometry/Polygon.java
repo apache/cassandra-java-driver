@@ -20,9 +20,9 @@ package com.datastax.dse.driver.api.core.data.geometry;
 import com.datastax.dse.driver.internal.core.data.geometry.DefaultGeometry;
 import com.datastax.dse.driver.internal.core.data.geometry.DefaultPolygon;
 import com.esri.core.geometry.ogc.OGCPolygon;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 /**
  * The driver-side representation of DSE's {@code Polygon}.
@@ -42,8 +42,8 @@ public interface Polygon extends Geometry {
    * @throws IllegalArgumentException if the string does not contain a valid Well-known Text
    *     representation.
    */
-  @NonNull
-  static Polygon fromWellKnownText(@NonNull String source) {
+  @Nonnull
+  static Polygon fromWellKnownText(@Nonnull String source) {
     return new DefaultPolygon(DefaultGeometry.fromOgcWellKnownText(source, OGCPolygon.class));
   }
 
@@ -57,8 +57,8 @@ public interface Polygon extends Geometry {
    * @throws IllegalArgumentException if the provided {@link ByteBuffer} does not contain a valid
    *     Well-known Binary representation.
    */
-  @NonNull
-  static Polygon fromWellKnownBinary(@NonNull ByteBuffer source) {
+  @Nonnull
+  static Polygon fromWellKnownBinary(@Nonnull ByteBuffer source) {
     return new DefaultPolygon(DefaultGeometry.fromOgcWellKnownBinary(source, OGCPolygon.class));
   }
 
@@ -73,15 +73,15 @@ public interface Polygon extends Geometry {
    * @throws IllegalArgumentException if the string does not contain a valid <a
    *     href="https://tools.ietf.org/html/rfc7946#appendix-A">GeoJSON Polygon</a> representation.
    */
-  @NonNull
-  static Polygon fromGeoJson(@NonNull String source) {
+  @Nonnull
+  static Polygon fromGeoJson(@Nonnull String source) {
     return new DefaultPolygon(DefaultGeometry.fromOgcGeoJson(source, OGCPolygon.class));
   }
 
   /** Creates a polygon from a series of 3 or more points. */
-  @NonNull
+  @Nonnull
   static Polygon fromPoints(
-      @NonNull Point p1, @NonNull Point p2, @NonNull Point p3, @NonNull Point... pn) {
+      @Nonnull Point p1, @Nonnull Point p2, @Nonnull Point p3, @Nonnull Point... pn) {
     return new DefaultPolygon(p1, p2, p3, pn);
   }
 
@@ -91,20 +91,20 @@ public interface Polygon extends Geometry {
    * <p>This is intended for complex polygons with multiple rings (i.e. holes inside the polygon).
    * For simple cases, consider {@link #fromPoints(Point, Point, Point, Point...)} instead.
    */
-  @NonNull
+  @Nonnull
   static Builder builder() {
     return new DefaultPolygon.Builder();
   }
 
   /** Returns the external ring of the polygon. */
-  @NonNull
+  @Nonnull
   List<Point> getExteriorRing();
 
   /**
    * Returns the internal rings of the polygon, i.e. any holes inside of it (or islands inside of
    * the holes).
    */
-  @NonNull
+  @Nonnull
   List<List<Point>> getInteriorRings();
 
   /** Provides a simple DSL to build a polygon. */
@@ -118,10 +118,10 @@ public interface Polygon extends Geometry {
      *
      * <p>There must be one "main" outer ring that contains all the others.
      */
-    @NonNull
-    Builder addRing(@NonNull Point p1, @NonNull Point p2, @NonNull Point p3, @NonNull Point... pn);
+    @Nonnull
+    Builder addRing(@Nonnull Point p1, @Nonnull Point p2, @Nonnull Point p3, @Nonnull Point... pn);
 
-    @NonNull
+    @Nonnull
     Polygon build();
   }
 }

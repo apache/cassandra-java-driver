@@ -34,9 +34,9 @@ import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 /** Holds common components that are shared throughout a driver instance. */
 public interface DriverContext extends AttachmentPoint {
@@ -45,15 +45,15 @@ public interface DriverContext extends AttachmentPoint {
    * This is the same as {@link Session#getName()}, it's exposed here for components that only have
    * a reference to the context.
    */
-  @NonNull
+  @Nonnull
   String getSessionName();
 
   /** @return The driver's configuration; never {@code null}. */
-  @NonNull
+  @Nonnull
   DriverConfig getConfig();
 
   /** @return The driver's configuration loader; never {@code null}. */
-  @NonNull
+  @Nonnull
   DriverConfigLoader getConfigLoader();
 
   /**
@@ -61,15 +61,15 @@ public interface DriverContext extends AttachmentPoint {
    *     guaranteed to never be {@code null} and to always contain an entry for the {@value
    *     DriverExecutionProfile#DEFAULT_NAME} profile.
    */
-  @NonNull
+  @Nonnull
   Map<String, LoadBalancingPolicy> getLoadBalancingPolicies();
 
   /**
    * @param profileName the profile name; never {@code null}.
    * @return The driver's load balancing policy for the given profile; never {@code null}.
    */
-  @NonNull
-  default LoadBalancingPolicy getLoadBalancingPolicy(@NonNull String profileName) {
+  @Nonnull
+  default LoadBalancingPolicy getLoadBalancingPolicy(@Nonnull String profileName) {
     LoadBalancingPolicy policy = getLoadBalancingPolicies().get(profileName);
     // Protect against a non-existent name
     return (policy != null)
@@ -82,15 +82,15 @@ public interface DriverContext extends AttachmentPoint {
    *     never be {@code null} and to always contain an entry for the {@value
    *     DriverExecutionProfile#DEFAULT_NAME} profile.
    */
-  @NonNull
+  @Nonnull
   Map<String, RetryPolicy> getRetryPolicies();
 
   /**
    * @param profileName the profile name; never {@code null}.
    * @return The driver's retry policy for the given profile; never {@code null}.
    */
-  @NonNull
-  default RetryPolicy getRetryPolicy(@NonNull String profileName) {
+  @Nonnull
+  default RetryPolicy getRetryPolicy(@Nonnull String profileName) {
     RetryPolicy policy = getRetryPolicies().get(profileName);
     return (policy != null) ? policy : getRetryPolicies().get(DriverExecutionProfile.DEFAULT_NAME);
   }
@@ -100,15 +100,15 @@ public interface DriverContext extends AttachmentPoint {
    *     guaranteed to never be {@code null} and to always contain an entry for the {@value
    *     DriverExecutionProfile#DEFAULT_NAME} profile.
    */
-  @NonNull
+  @Nonnull
   Map<String, SpeculativeExecutionPolicy> getSpeculativeExecutionPolicies();
 
   /**
    * @param profileName the profile name; never {@code null}.
    * @return The driver's speculative execution policy for the given profile; never {@code null}.
    */
-  @NonNull
-  default SpeculativeExecutionPolicy getSpeculativeExecutionPolicy(@NonNull String profileName) {
+  @Nonnull
+  default SpeculativeExecutionPolicy getSpeculativeExecutionPolicy(@Nonnull String profileName) {
     SpeculativeExecutionPolicy policy = getSpeculativeExecutionPolicies().get(profileName);
     return (policy != null)
         ? policy
@@ -116,38 +116,38 @@ public interface DriverContext extends AttachmentPoint {
   }
 
   /** @return The driver's timestamp generator; never {@code null}. */
-  @NonNull
+  @Nonnull
   TimestampGenerator getTimestampGenerator();
 
   /** @return The driver's reconnection policy; never {@code null}. */
-  @NonNull
+  @Nonnull
   ReconnectionPolicy getReconnectionPolicy();
 
   /** @return The driver's address translator; never {@code null}. */
-  @NonNull
+  @Nonnull
   AddressTranslator getAddressTranslator();
 
   /** @return The authentication provider, if authentication was configured. */
-  @NonNull
+  @Nonnull
   Optional<AuthProvider> getAuthProvider();
 
   /** @return The SSL engine factory, if SSL was configured. */
-  @NonNull
+  @Nonnull
   Optional<SslEngineFactory> getSslEngineFactory();
 
   /** @return The driver's request tracker; never {@code null}. */
-  @NonNull
+  @Nonnull
   RequestTracker getRequestTracker();
 
   /** @return The driver's request throttler; never {@code null}. */
-  @NonNull
+  @Nonnull
   RequestThrottler getRequestThrottler();
 
   /** @return The driver's node state listener; never {@code null}. */
-  @NonNull
+  @Nonnull
   NodeStateListener getNodeStateListener();
 
   /** @return The driver's schema change listener; never {@code null}. */
-  @NonNull
+  @Nonnull
   SchemaChangeListener getSchemaChangeListener();
 }

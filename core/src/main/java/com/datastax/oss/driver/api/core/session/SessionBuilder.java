@@ -49,8 +49,6 @@ import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
@@ -67,6 +65,8 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Predicate;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
@@ -123,19 +123,19 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * @see <a href="https://github.com/typesafehub/config#standard-behavior">Typesafe config's
    *     standard loading behavior</a>
    */
-  @NonNull
+  @Nonnull
   public SelfT withConfigLoader(@Nullable DriverConfigLoader configLoader) {
     this.configLoader = configLoader;
     return self;
   }
 
-  @NonNull
+  @Nonnull
   @Deprecated
   protected DriverConfigLoader defaultConfigLoader() {
     return new DefaultDriverConfigLoader();
   }
 
-  @NonNull
+  @Nonnull
   protected DriverConfigLoader defaultConfigLoader(@Nullable ClassLoader classLoader) {
     if (classLoader == null) {
       return new DefaultDriverConfigLoader();
@@ -162,8 +162,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * sure you pass unresolved instances here (see {@code advanced.resolve-contact-points} in the
    * configuration for more explanations).
    */
-  @NonNull
-  public SelfT addContactPoints(@NonNull Collection<InetSocketAddress> contactPoints) {
+  @Nonnull
+  public SelfT addContactPoints(@Nonnull Collection<InetSocketAddress> contactPoints) {
     for (InetSocketAddress contactPoint : contactPoints) {
       addContactPoint(contactPoint);
     }
@@ -175,8 +175,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *
    * @see #addContactPoints(Collection)
    */
-  @NonNull
-  public SelfT addContactPoint(@NonNull InetSocketAddress contactPoint) {
+  @Nonnull
+  public SelfT addContactPoint(@Nonnull InetSocketAddress contactPoint) {
     this.programmaticContactPoints.add(new DefaultEndPoint(contactPoint));
     return self;
   }
@@ -187,8 +187,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * <p>You only need this method if you use a custom {@link EndPoint} implementation. Otherwise,
    * use {@link #addContactPoints(Collection)}.
    */
-  @NonNull
-  public SelfT addContactEndPoints(@NonNull Collection<EndPoint> contactPoints) {
+  @Nonnull
+  public SelfT addContactEndPoints(@Nonnull Collection<EndPoint> contactPoints) {
     for (EndPoint contactPoint : contactPoints) {
       addContactEndPoint(contactPoint);
     }
@@ -201,8 +201,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * <p>You only need this method if you use a custom {@link EndPoint} implementation. Otherwise,
    * use {@link #addContactPoint(InetSocketAddress)}.
    */
-  @NonNull
-  public SelfT addContactEndPoint(@NonNull EndPoint contactPoint) {
+  @Nonnull
+  public SelfT addContactEndPoint(@Nonnull EndPoint contactPoint) {
     this.programmaticContactPoints.add(contactPoint);
     return self;
   }
@@ -213,8 +213,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * @param typeCodecs neither the individual codecs, nor the vararg array itself, can be {@code
    *     null}.
    */
-  @NonNull
-  public SelfT addTypeCodecs(@NonNull TypeCodec<?>... typeCodecs) {
+  @Nonnull
+  public SelfT addTypeCodecs(@Nonnull TypeCodec<?>... typeCodecs) {
     this.programmaticArgumentsBuilder.addTypeCodecs(typeCodecs);
     return self;
   }
@@ -228,7 +228,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * <p>This method unregisters any previously-registered listener. If you intend to register more
    * than one listener, use {@link #addNodeStateListener(NodeStateListener)} instead.
    */
-  @NonNull
+  @Nonnull
   public SelfT withNodeStateListener(@Nullable NodeStateListener nodeStateListener) {
     this.programmaticArgumentsBuilder.withNodeStateListener(nodeStateListener);
     return self;
@@ -246,8 +246,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * listeners. When multiple listeners are registered, they are notified in sequence every time a
    * new listener event is triggered.
    */
-  @NonNull
-  public SelfT addNodeStateListener(@NonNull NodeStateListener nodeStateListener) {
+  @Nonnull
+  public SelfT addNodeStateListener(@Nonnull NodeStateListener nodeStateListener) {
     programmaticArgumentsBuilder.addNodeStateListener(nodeStateListener);
     return self;
   }
@@ -261,7 +261,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * <p>This method unregisters any previously-registered listener. If you intend to register more
    * than one listener, use {@link #addSchemaChangeListener(SchemaChangeListener)} instead.
    */
-  @NonNull
+  @Nonnull
   public SelfT withSchemaChangeListener(@Nullable SchemaChangeListener schemaChangeListener) {
     this.programmaticArgumentsBuilder.withSchemaChangeListener(schemaChangeListener);
     return self;
@@ -279,8 +279,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * multiple listeners. When multiple listeners are registered, they are notified in sequence every
    * time a new listener event is triggered.
    */
-  @NonNull
-  public SelfT addSchemaChangeListener(@NonNull SchemaChangeListener schemaChangeListener) {
+  @Nonnull
+  public SelfT addSchemaChangeListener(@Nonnull SchemaChangeListener schemaChangeListener) {
     programmaticArgumentsBuilder.addSchemaChangeListener(schemaChangeListener);
     return self;
   }
@@ -294,7 +294,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * <p>This method unregisters any previously-registered tracker. If you intend to register more
    * than one tracker, use {@link #addRequestTracker(RequestTracker)} instead.
    */
-  @NonNull
+  @Nonnull
   public SelfT withRequestTracker(@Nullable RequestTracker requestTracker) {
     this.programmaticArgumentsBuilder.withRequestTracker(requestTracker);
     return self;
@@ -312,8 +312,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * When multiple trackers are registered, they are notified in sequence every time a new tracker
    * event is triggered.
    */
-  @NonNull
-  public SelfT addRequestTracker(@NonNull RequestTracker requestTracker) {
+  @Nonnull
+  public SelfT addRequestTracker(@Nonnull RequestTracker requestTracker) {
     programmaticArgumentsBuilder.addRequestTracker(requestTracker);
     return self;
   }
@@ -324,7 +324,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * <p>If the provider is specified programmatically with this method, it overrides the
    * configuration (that is, the {@code advanced.auth-provider.class} option will be ignored).
    */
-  @NonNull
+  @Nonnull
   public SelfT withAuthProvider(@Nullable AuthProvider authProvider) {
     this.programmaticArgumentsBuilder.withAuthProvider(authProvider);
     return self;
@@ -344,8 +344,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * #withAuthProvider(AuthProvider)} or via the configuration ({@code
    * advanced.auth-provider.class}).
    */
-  @NonNull
-  public SelfT withAuthCredentials(@NonNull String username, @NonNull String password) {
+  @Nonnull
+  public SelfT withAuthCredentials(@Nonnull String username, @Nonnull String password) {
     return withAuthProvider(new ProgrammaticPlainTextAuthProvider(username, password));
   }
 
@@ -368,9 +368,9 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * #withAuthProvider(AuthProvider)} or via the configuration ({@code
    * advanced.auth-provider.class}).
    */
-  @NonNull
+  @Nonnull
   public SelfT withAuthCredentials(
-      @NonNull String username, @NonNull String password, @NonNull String authorizationId) {
+      @Nonnull String username, @Nonnull String password, @Nonnull String authorizationId) {
     return withAuthProvider(
         new ProgrammaticPlainTextAuthProvider(username, password, authorizationId));
   }
@@ -380,8 +380,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *     {@link #withAuthCredentials(String, String)}.
    */
   @Deprecated
-  @NonNull
-  public SelfT withCredentials(@NonNull String username, @NonNull String password) {
+  @Nonnull
+  public SelfT withCredentials(@Nonnull String username, @Nonnull String password) {
     return withAuthCredentials(username, password);
   }
 
@@ -390,9 +390,9 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *     {@link #withAuthCredentials(String, String,String)}.
    */
   @Deprecated
-  @NonNull
+  @Nonnull
   public SelfT withCredentials(
-      @NonNull String username, @NonNull String password, @NonNull String authorizationId) {
+      @Nonnull String username, @Nonnull String password, @Nonnull String authorizationId) {
     return withAuthCredentials(username, password, authorizationId);
   }
 
@@ -404,7 +404,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *
    * @see ProgrammaticSslEngineFactory
    */
-  @NonNull
+  @Nonnull
   public SelfT withSslEngineFactory(@Nullable SslEngineFactory sslEngineFactory) {
     this.programmaticSslFactory = true;
     this.programmaticArgumentsBuilder.withSslEngineFactory(sslEngineFactory);
@@ -426,7 +426,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * <p>Also, note that SSL engines will be created with advisory peer information ({@link
    * SSLContext#createSSLEngine(String, int)}) whenever possible.
    */
-  @NonNull
+  @Nonnull
   public SelfT withSslContext(@Nullable SSLContext sslContext) {
     return withSslEngineFactory(
         sslContext == null ? null : new ProgrammaticSslEngineFactory(sslContext));
@@ -443,14 +443,14 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * implementation in use. The driver's built-in {@code DefaultLoadBalancingPolicy} relies on it;
    * if you use a third-party implementation, refer to their documentation.
    */
-  public SelfT withLocalDatacenter(@NonNull String profileName, @NonNull String localDatacenter) {
+  public SelfT withLocalDatacenter(@Nonnull String profileName, @Nonnull String localDatacenter) {
     this.programmaticLocalDatacenter = true;
     this.programmaticArgumentsBuilder.withLocalDatacenter(profileName, localDatacenter);
     return self;
   }
 
   /** Alias to {@link #withLocalDatacenter(String, String)} for the default profile. */
-  public SelfT withLocalDatacenter(@NonNull String localDatacenter) {
+  public SelfT withLocalDatacenter(@Nonnull String localDatacenter) {
     return withLocalDatacenter(DriverExecutionProfile.DEFAULT_NAME, localDatacenter);
   }
 
@@ -468,9 +468,9 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *
    * @see #withNodeDistanceEvaluator(NodeDistanceEvaluator)
    */
-  @NonNull
+  @Nonnull
   public SelfT withNodeDistanceEvaluator(
-      @NonNull String profileName, @NonNull NodeDistanceEvaluator nodeDistanceEvaluator) {
+      @Nonnull String profileName, @Nonnull NodeDistanceEvaluator nodeDistanceEvaluator) {
     this.programmaticArgumentsBuilder.withNodeDistanceEvaluator(profileName, nodeDistanceEvaluator);
     return self;
   }
@@ -479,8 +479,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * Alias to {@link #withNodeDistanceEvaluator(String, NodeDistanceEvaluator)} for the default
    * profile.
    */
-  @NonNull
-  public SelfT withNodeDistanceEvaluator(@NonNull NodeDistanceEvaluator nodeDistanceEvaluator) {
+  @Nonnull
+  public SelfT withNodeDistanceEvaluator(@Nonnull NodeDistanceEvaluator nodeDistanceEvaluator) {
     return withNodeDistanceEvaluator(DriverExecutionProfile.DEFAULT_NAME, nodeDistanceEvaluator);
   }
 
@@ -531,8 +531,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * @deprecated Use {@link #withNodeDistanceEvaluator(String, NodeDistanceEvaluator)} instead.
    */
   @Deprecated
-  @NonNull
-  public SelfT withNodeFilter(@NonNull String profileName, @NonNull Predicate<Node> nodeFilter) {
+  @Nonnull
+  public SelfT withNodeFilter(@Nonnull String profileName, @Nonnull Predicate<Node> nodeFilter) {
     this.programmaticArgumentsBuilder.withNodeFilter(profileName, nodeFilter);
     return self;
   }
@@ -547,8 +547,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * @deprecated Use {@link #withNodeDistanceEvaluator(NodeDistanceEvaluator)} instead.
    */
   @Deprecated
-  @NonNull
-  public SelfT withNodeFilter(@NonNull Predicate<Node> nodeFilter) {
+  @Nonnull
+  public SelfT withNodeFilter(@Nonnull Predicate<Node> nodeFilter) {
     return withNodeFilter(DriverExecutionProfile.DEFAULT_NAME, nodeFilter);
   }
 
@@ -558,7 +558,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * <p>Note that this can also be provided by the configuration; if both are defined, this method
    * takes precedence.
    */
-  @NonNull
+  @Nonnull
   public SelfT withKeyspace(@Nullable CqlIdentifier keyspace) {
     this.keyspace = keyspace;
     return self;
@@ -568,7 +568,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * Shortcut for {@link #withKeyspace(CqlIdentifier)
    * setKeyspace(CqlIdentifier.fromCql(keyspaceName))}
    */
-  @NonNull
+  @Nonnull
   public SelfT withKeyspace(@Nullable String keyspaceName) {
     return withKeyspace(keyspaceName == null ? null : CqlIdentifier.fromCql(keyspaceName));
   }
@@ -620,7 +620,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * href="https://docs.datastax.com/en/developer/java-driver/latest/manual/osgi/#using-a-custom-class-loader">Using
    * a custom ClassLoader</a> in our OSGi online docs for more information.
    */
-  @NonNull
+  @Nonnull
   public SelfT withClassLoader(@Nullable ClassLoader classLoader) {
     this.programmaticArgumentsBuilder.withClassLoader(classLoader);
     return self;
@@ -640,8 +640,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * @see #withCloudSecureConnectBundle(URL)
    * @see #withCloudSecureConnectBundle(InputStream)
    */
-  @NonNull
-  public SelfT withCloudSecureConnectBundle(@NonNull Path cloudConfigPath) {
+  @Nonnull
+  public SelfT withCloudSecureConnectBundle(@Nonnull Path cloudConfigPath) {
     try {
       URL cloudConfigUrl = cloudConfigPath.toAbsolutePath().normalize().toUri().toURL();
       this.cloudConfigInputStream = cloudConfigUrl::openStream;
@@ -657,7 +657,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * <p>When both this and {@link #addTypeCodecs(TypeCodec[])} are called, the added type codecs
    * will be registered on the provided CodecRegistry.
    */
-  @NonNull
+  @Nonnull
   public SelfT withCodecRegistry(@Nullable MutableCodecRegistry codecRegistry) {
     this.programmaticArgumentsBuilder.withCodecRegistry(codecRegistry);
     return self;
@@ -677,8 +677,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * @see #withCloudSecureConnectBundle(Path)
    * @see #withCloudSecureConnectBundle(InputStream)
    */
-  @NonNull
-  public SelfT withCloudSecureConnectBundle(@NonNull URL cloudConfigUrl) {
+  @Nonnull
+  public SelfT withCloudSecureConnectBundle(@Nonnull URL cloudConfigUrl) {
     this.cloudConfigInputStream = cloudConfigUrl::openStream;
     return self;
   }
@@ -701,8 +701,8 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * @see #withCloudSecureConnectBundle(Path)
    * @see #withCloudSecureConnectBundle(URL)
    */
-  @NonNull
-  public SelfT withCloudSecureConnectBundle(@NonNull InputStream cloudConfigInputStream) {
+  @Nonnull
+  public SelfT withCloudSecureConnectBundle(@Nonnull InputStream cloudConfigInputStream) {
     this.cloudConfigInputStream = () -> cloudConfigInputStream;
     return self;
   }
@@ -723,7 +723,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * @param cloudProxyAddress The address of the Cloud proxy to use.
    * @see <a href="https://en.wikipedia.org/wiki/Server_Name_Indication">Server Name Indication</a>
    */
-  @NonNull
+  @Nonnull
   public SelfT withCloudProxyAddress(@Nullable InetSocketAddress cloudProxyAddress) {
     this.programmaticArgumentsBuilder.withCloudProxyAddress(cloudProxyAddress);
     return self;
@@ -740,7 +740,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * <p>If you don't call this method, the driver will generate an identifier with {@link
    * Uuids#random()}.
    */
-  @NonNull
+  @Nonnull
   public SelfT withClientId(@Nullable UUID clientId) {
     this.programmaticArgumentsBuilder.withStartupClientId(clientId);
     return self;
@@ -759,7 +759,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * configuration option will be ignored. If neither is specified, the entry is not included in the
    * message.
    */
-  @NonNull
+  @Nonnull
   public SelfT withApplicationName(@Nullable String applicationName) {
     this.programmaticArgumentsBuilder.withStartupApplicationName(applicationName);
     return self;
@@ -778,7 +778,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * configuration option will be ignored. If neither is specified, the entry is not included in the
    * message.
    */
-  @NonNull
+  @Nonnull
   public SelfT withApplicationVersion(@Nullable String applicationVersion) {
     this.programmaticArgumentsBuilder.withStartupApplicationVersion(applicationVersion);
     return self;
@@ -801,7 +801,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    * used. For Dropwizard, if no Registry object is provided, an instance of {@code MetricRegistry}
    * will be created and used.
    */
-  @NonNull
+  @Nonnull
   public SelfT withMetricRegistry(@Nullable Object metricRegistry) {
     this.programmaticArgumentsBuilder.withMetricRegistry(metricRegistry);
     return self;
@@ -814,7 +814,7 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *
    * @return a completion stage that completes with the session when it is fully initialized.
    */
-  @NonNull
+  @Nonnull
   public CompletionStage<SessionT> buildAsync() {
     CompletionStage<CqlSession> buildStage = buildDefaultSessionAsync();
     CompletionStage<SessionT> wrapStage = buildStage.thenApply(this::wrap);
@@ -831,15 +831,15 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    *
    * <p>This must not be called on a driver thread.
    */
-  @NonNull
+  @Nonnull
   public SessionT build() {
     BlockingOperation.checkNotDriverThread();
     return CompletableFutures.getUninterruptibly(buildAsync());
   }
 
-  protected abstract SessionT wrap(@NonNull CqlSession defaultSession);
+  protected abstract SessionT wrap(@Nonnull CqlSession defaultSession);
 
-  @NonNull
+  @Nonnull
   protected final CompletionStage<CqlSession> buildDefaultSessionAsync() {
     try {
 

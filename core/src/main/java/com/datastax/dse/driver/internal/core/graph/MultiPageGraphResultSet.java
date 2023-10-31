@@ -25,10 +25,10 @@ import com.datastax.oss.driver.internal.core.util.CountingIterator;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 public class MultiPageGraphResultSet implements GraphResultSet {
   private final RowIterator iterator;
@@ -44,13 +44,13 @@ public class MultiPageGraphResultSet implements GraphResultSet {
     iterator.cancel();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public ExecutionInfo getRequestExecutionInfo() {
     return executionInfos.get(executionInfos.size() - 1);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   @Deprecated
   public com.datastax.dse.driver.api.core.graph.GraphExecutionInfo getExecutionInfo() {
@@ -64,19 +64,19 @@ public class MultiPageGraphResultSet implements GraphResultSet {
    * <p>This will have multiple elements if the query is paged, since the driver performs blocking
    * background queries to fetch additional pages transparently as the result set is being iterated.
    */
-  @NonNull
+  @Nonnull
   public List<ExecutionInfo> getRequestExecutionInfos() {
     return executionInfos;
   }
 
   /** @deprecated use {@link #getRequestExecutionInfos()} instead. */
-  @NonNull
+  @Nonnull
   @Deprecated
   public List<com.datastax.dse.driver.api.core.graph.GraphExecutionInfo> getExecutionInfos() {
     return Lists.transform(executionInfos, GraphExecutionInfoConverter::convert);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Iterator<GraphNode> iterator() {
     return iterator;

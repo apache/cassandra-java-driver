@@ -20,21 +20,21 @@ package com.datastax.oss.driver.internal.core.loadbalancing.helper;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.function.Predicate;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class NodeFilterToDistanceEvaluatorAdapter implements NodeDistanceEvaluator {
 
   private final Predicate<Node> nodeFilter;
 
-  public NodeFilterToDistanceEvaluatorAdapter(@NonNull Predicate<Node> nodeFilter) {
+  public NodeFilterToDistanceEvaluatorAdapter(@Nonnull Predicate<Node> nodeFilter) {
     this.nodeFilter = nodeFilter;
   }
 
   @Nullable
   @Override
-  public NodeDistance evaluateDistance(@NonNull Node node, @Nullable String localDc) {
+  public NodeDistance evaluateDistance(@Nonnull Node node, @Nullable String localDc) {
     return nodeFilter.test(node) ? null : NodeDistance.IGNORED;
   }
 }

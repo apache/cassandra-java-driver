@@ -34,7 +34,7 @@ import com.datastax.oss.driver.api.core.servererrors.TruncateException;
 import com.datastax.oss.driver.api.core.servererrors.WriteFailureException;
 import com.datastax.oss.driver.api.core.servererrors.WriteType;
 import com.datastax.oss.driver.api.core.session.Request;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * Defines the behavior to adopt when a request fails.
@@ -71,8 +71,8 @@ public interface RetryPolicy extends AutoCloseable {
    */
   @Deprecated
   RetryDecision onReadTimeout(
-      @NonNull Request request,
-      @NonNull ConsistencyLevel cl,
+      @Nonnull Request request,
+      @Nonnull ConsistencyLevel cl,
       int blockFor,
       int received,
       boolean dataPresent,
@@ -95,8 +95,8 @@ public interface RetryPolicy extends AutoCloseable {
    *     (not counting the current invocation).
    */
   default RetryVerdict onReadTimeoutVerdict(
-      @NonNull Request request,
-      @NonNull ConsistencyLevel cl,
+      @Nonnull Request request,
+      @Nonnull ConsistencyLevel cl,
       int blockFor,
       int received,
       boolean dataPresent,
@@ -130,9 +130,9 @@ public interface RetryPolicy extends AutoCloseable {
    */
   @Deprecated
   RetryDecision onWriteTimeout(
-      @NonNull Request request,
-      @NonNull ConsistencyLevel cl,
-      @NonNull WriteType writeType,
+      @Nonnull Request request,
+      @Nonnull ConsistencyLevel cl,
+      @Nonnull WriteType writeType,
       int blockFor,
       int received,
       int retryCount);
@@ -158,9 +158,9 @@ public interface RetryPolicy extends AutoCloseable {
    *     (not counting the current invocation).
    */
   default RetryVerdict onWriteTimeoutVerdict(
-      @NonNull Request request,
-      @NonNull ConsistencyLevel cl,
-      @NonNull WriteType writeType,
+      @Nonnull Request request,
+      @Nonnull ConsistencyLevel cl,
+      @Nonnull WriteType writeType,
       int blockFor,
       int received,
       int retryCount) {
@@ -186,8 +186,8 @@ public interface RetryPolicy extends AutoCloseable {
    */
   @Deprecated
   RetryDecision onUnavailable(
-      @NonNull Request request,
-      @NonNull ConsistencyLevel cl,
+      @Nonnull Request request,
+      @Nonnull ConsistencyLevel cl,
       int required,
       int alive,
       int retryCount);
@@ -207,8 +207,8 @@ public interface RetryPolicy extends AutoCloseable {
    *     (not counting the current invocation).
    */
   default RetryVerdict onUnavailableVerdict(
-      @NonNull Request request,
-      @NonNull ConsistencyLevel cl,
+      @Nonnull Request request,
+      @Nonnull ConsistencyLevel cl,
       int required,
       int alive,
       int retryCount) {
@@ -238,7 +238,7 @@ public interface RetryPolicy extends AutoCloseable {
    */
   @Deprecated
   RetryDecision onRequestAborted(
-      @NonNull Request request, @NonNull Throwable error, int retryCount);
+      @Nonnull Request request, @Nonnull Throwable error, int retryCount);
 
   /**
    * Whether to retry when a request was aborted before we could get a response from the server.
@@ -259,7 +259,7 @@ public interface RetryPolicy extends AutoCloseable {
    *     (not counting the current invocation).
    */
   default RetryVerdict onRequestAbortedVerdict(
-      @NonNull Request request, @NonNull Throwable error, int retryCount) {
+      @Nonnull Request request, @Nonnull Throwable error, int retryCount) {
     RetryDecision decision = onRequestAborted(request, error, retryCount);
     return () -> decision;
   }
@@ -294,7 +294,7 @@ public interface RetryPolicy extends AutoCloseable {
    */
   @Deprecated
   RetryDecision onErrorResponse(
-      @NonNull Request request, @NonNull CoordinatorException error, int retryCount);
+      @Nonnull Request request, @Nonnull CoordinatorException error, int retryCount);
 
   /**
    * Whether to retry when the server replied with a recoverable error (other than {@code
@@ -323,7 +323,7 @@ public interface RetryPolicy extends AutoCloseable {
    *     (not counting the current invocation).
    */
   default RetryVerdict onErrorResponseVerdict(
-      @NonNull Request request, @NonNull CoordinatorException error, int retryCount) {
+      @Nonnull Request request, @Nonnull CoordinatorException error, int retryCount) {
     RetryDecision decision = onErrorResponse(request, error, retryCount);
     return () -> decision;
   }

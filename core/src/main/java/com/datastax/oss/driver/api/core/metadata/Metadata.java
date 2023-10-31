@@ -21,11 +21,11 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.session.Session;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import javax.annotation.Nonnull;
 
 /**
  * The metadata of the Cassandra cluster that this driver instance is connected to.
@@ -43,7 +43,7 @@ public interface Metadata {
    * system.local}/{@code system.peers}). This might include nodes that are currently viewed as
    * down, or ignored by the load balancing policy.
    */
-  @NonNull
+  @Nonnull
   Map<UUID, Node> getNodes();
 
   /**
@@ -52,8 +52,8 @@ public interface Metadata {
    *
    * <p>Note that this method performs a linear search of {@link #getNodes()}.
    */
-  @NonNull
-  default Optional<Node> findNode(@NonNull EndPoint endPoint) {
+  @Nonnull
+  default Optional<Node> findNode(@Nonnull EndPoint endPoint) {
     for (Node node : getNodes().values()) {
       if (node.getEndPoint().equals(endPoint)) {
         return Optional.of(node);
@@ -68,8 +68,8 @@ public interface Metadata {
    *
    * <p>Note that this method performs a linear search of {@link #getNodes()}.
    */
-  @NonNull
-  default Optional<Node> findNode(@NonNull InetSocketAddress broadcastRpcAddress) {
+  @Nonnull
+  default Optional<Node> findNode(@Nonnull InetSocketAddress broadcastRpcAddress) {
     for (Node node : getNodes().values()) {
       Optional<InetSocketAddress> o = node.getBroadcastRpcAddress();
       if (o.isPresent() && o.get().equals(broadcastRpcAddress)) {
@@ -89,11 +89,11 @@ public interface Metadata {
    * @see Session#setSchemaMetadataEnabled(Boolean)
    * @see DefaultDriverOption#METADATA_SCHEMA_REFRESHED_KEYSPACES
    */
-  @NonNull
+  @Nonnull
   Map<CqlIdentifier, KeyspaceMetadata> getKeyspaces();
 
-  @NonNull
-  default Optional<KeyspaceMetadata> getKeyspace(@NonNull CqlIdentifier keyspaceId) {
+  @Nonnull
+  default Optional<KeyspaceMetadata> getKeyspace(@Nonnull CqlIdentifier keyspaceId) {
     return Optional.ofNullable(getKeyspaces().get(keyspaceId));
   }
 
@@ -101,8 +101,8 @@ public interface Metadata {
    * Shortcut for {@link #getKeyspace(CqlIdentifier)
    * getKeyspace(CqlIdentifier.fromCql(keyspaceName))}.
    */
-  @NonNull
-  default Optional<KeyspaceMetadata> getKeyspace(@NonNull String keyspaceName) {
+  @Nonnull
+  default Optional<KeyspaceMetadata> getKeyspace(@Nonnull String keyspaceName) {
     return getKeyspace(CqlIdentifier.fromCql(keyspaceName));
   }
 
@@ -114,7 +114,7 @@ public interface Metadata {
    *
    * @see DefaultDriverOption#METADATA_TOKEN_MAP_ENABLED
    */
-  @NonNull
+  @Nonnull
   Optional<TokenMap> getTokenMap();
 
   /**
@@ -124,7 +124,7 @@ public interface Metadata {
    * <p>Note that this method has a default implementation for backwards compatibility. It is
    * expected that any implementing classes override this method.
    */
-  @NonNull
+  @Nonnull
   default Optional<String> getClusterName() {
     return Optional.empty();
   }

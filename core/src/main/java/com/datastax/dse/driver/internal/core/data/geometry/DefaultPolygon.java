@@ -24,9 +24,9 @@ import com.esri.core.geometry.Operator;
 import com.esri.core.geometry.OperatorFactoryLocal;
 import com.esri.core.geometry.OperatorSimplifyOGC;
 import com.esri.core.geometry.ogc.OGCPolygon;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -38,13 +38,13 @@ public class DefaultPolygon extends DefaultGeometry implements Polygon {
   private final List<List<Point>> interiorRings;
 
   public DefaultPolygon(
-      @NonNull Point p1, @NonNull Point p2, @NonNull Point p3, @NonNull Point... pn) {
+      @Nonnull Point p1, @Nonnull Point p2, @Nonnull Point p3, @Nonnull Point... pn) {
     super(fromPoints(p1, p2, p3, pn));
     this.exteriorRing = ImmutableList.<Point>builder().add(p1).add(p2).add(p3).add(pn).build();
     this.interiorRings = Collections.emptyList();
   }
 
-  public DefaultPolygon(@NonNull OGCPolygon polygon) {
+  public DefaultPolygon(@Nonnull OGCPolygon polygon) {
     super(polygon);
     if (polygon.isEmpty()) {
       this.exteriorRing = ImmutableList.of();
@@ -59,13 +59,13 @@ public class DefaultPolygon extends DefaultGeometry implements Polygon {
     this.interiorRings = builder.build();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<Point> getExteriorRing() {
     return exteriorRing;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<List<Point>> getInteriorRings() {
     return interiorRings;
@@ -108,10 +108,10 @@ public class DefaultPolygon extends DefaultGeometry implements Polygon {
   public static class Builder implements Polygon.Builder {
     private final com.esri.core.geometry.Polygon polygon = new com.esri.core.geometry.Polygon();
 
-    @NonNull
+    @Nonnull
     @Override
     public Builder addRing(
-        @NonNull Point p1, @NonNull Point p2, @NonNull Point p3, @NonNull Point... pn) {
+        @Nonnull Point p1, @Nonnull Point p2, @Nonnull Point p3, @Nonnull Point... pn) {
       addPath(polygon, p1, p2, p3, pn);
       return this;
     }
@@ -121,7 +121,7 @@ public class DefaultPolygon extends DefaultGeometry implements Polygon {
      *
      * @return the polygon.
      */
-    @NonNull
+    @Nonnull
     @Override
     public Polygon build() {
       return new DefaultPolygon(

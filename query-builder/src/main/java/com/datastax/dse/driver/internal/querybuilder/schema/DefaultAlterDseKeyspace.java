@@ -23,8 +23,8 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.internal.querybuilder.schema.OptionsUtils;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -33,35 +33,35 @@ public class DefaultAlterDseKeyspace implements AlterDseKeyspaceStart, AlterDseK
   private final CqlIdentifier keyspaceName;
   private final ImmutableMap<String, Object> options;
 
-  public DefaultAlterDseKeyspace(@NonNull CqlIdentifier keyspaceName) {
+  public DefaultAlterDseKeyspace(@Nonnull CqlIdentifier keyspaceName) {
     this(keyspaceName, ImmutableMap.of());
   }
 
   public DefaultAlterDseKeyspace(
-      @NonNull CqlIdentifier keyspaceName, @NonNull ImmutableMap<String, Object> options) {
+      @Nonnull CqlIdentifier keyspaceName, @Nonnull ImmutableMap<String, Object> options) {
     this.keyspaceName = keyspaceName;
     this.options = options;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public AlterDseKeyspace withDurableWrites(boolean durableWrites) {
     return withOption("durable_writes", durableWrites);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public AlterDseKeyspace withGraphEngine(String graphEngine) {
     return this.withOption("graph_engine", graphEngine);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public AlterDseKeyspace withReplicationOptions(@NonNull Map<String, Object> replicationOptions) {
+  public AlterDseKeyspace withReplicationOptions(@Nonnull Map<String, Object> replicationOptions) {
     return withOption("replication", replicationOptions);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public AlterDseKeyspace withSimpleStrategy(int replicationFactor) {
     ImmutableMap<String, Object> replication =
@@ -73,9 +73,9 @@ public class DefaultAlterDseKeyspace implements AlterDseKeyspaceStart, AlterDseK
     return withReplicationOptions(replication);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public AlterDseKeyspace withNetworkTopologyStrategy(@NonNull Map<String, Integer> replications) {
+  public AlterDseKeyspace withNetworkTopologyStrategy(@Nonnull Map<String, Integer> replications) {
     ImmutableMap.Builder<String, Object> replicationBuilder =
         ImmutableMap.<String, Object>builder().put("class", "NetworkTopologyStrategy");
 
@@ -86,26 +86,26 @@ public class DefaultAlterDseKeyspace implements AlterDseKeyspaceStart, AlterDseK
     return withReplicationOptions(replicationBuilder.build());
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public AlterDseKeyspace withOption(@NonNull String name, @NonNull Object value) {
+  public AlterDseKeyspace withOption(@Nonnull String name, @Nonnull Object value) {
     return new DefaultAlterDseKeyspace(
         keyspaceName, ImmutableCollections.append(options, name, value));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asCql() {
     return "ALTER KEYSPACE " + keyspaceName.asCql(true) + OptionsUtils.buildOptions(options, true);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, Object> getOptions() {
     return options;
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getKeyspace() {
     return keyspaceName;
   }

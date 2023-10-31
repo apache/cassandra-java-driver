@@ -33,9 +33,9 @@ import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -63,12 +63,12 @@ public class DefaultCreateMaterializedView
 
   private final ImmutableMap<String, Object> options;
 
-  public DefaultCreateMaterializedView(@NonNull CqlIdentifier viewName) {
+  public DefaultCreateMaterializedView(@Nonnull CqlIdentifier viewName) {
     this(null, viewName);
   }
 
   public DefaultCreateMaterializedView(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier viewName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier viewName) {
     this(
         keyspace,
         viewName,
@@ -85,16 +85,16 @@ public class DefaultCreateMaterializedView
 
   public DefaultCreateMaterializedView(
       @Nullable CqlIdentifier keyspace,
-      @NonNull CqlIdentifier viewName,
+      @Nonnull CqlIdentifier viewName,
       boolean ifNotExists,
       @Nullable CqlIdentifier baseTableKeyspace,
       @Nullable CqlIdentifier baseTable,
-      @NonNull ImmutableList<Selector> selectors,
-      @NonNull ImmutableList<Relation> whereRelations,
-      @NonNull ImmutableSet<CqlIdentifier> partitionKeyColumns,
-      @NonNull ImmutableSet<CqlIdentifier> clusteringKeyColumns,
-      @NonNull ImmutableMap<CqlIdentifier, ClusteringOrder> orderings,
-      @NonNull ImmutableMap<String, Object> options) {
+      @Nonnull ImmutableList<Selector> selectors,
+      @Nonnull ImmutableList<Relation> whereRelations,
+      @Nonnull ImmutableSet<CqlIdentifier> partitionKeyColumns,
+      @Nonnull ImmutableSet<CqlIdentifier> clusteringKeyColumns,
+      @Nonnull ImmutableMap<CqlIdentifier, ClusteringOrder> orderings,
+      @Nonnull ImmutableMap<String, Object> options) {
     this.keyspace = keyspace;
     this.viewName = viewName;
     this.ifNotExists = ifNotExists;
@@ -108,7 +108,7 @@ public class DefaultCreateMaterializedView
     this.options = options;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateMaterializedViewWhereStart all() {
     return new DefaultCreateMaterializedView(
@@ -125,9 +125,9 @@ public class DefaultCreateMaterializedView
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateMaterializedViewSelectionWithColumns column(@NonNull CqlIdentifier columnName) {
+  public CreateMaterializedViewSelectionWithColumns column(@Nonnull CqlIdentifier columnName) {
     return new DefaultCreateMaterializedView(
         keyspace,
         viewName,
@@ -142,10 +142,10 @@ public class DefaultCreateMaterializedView
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateMaterializedViewSelectionWithColumns columnsIds(
-      @NonNull Iterable<CqlIdentifier> columnIds) {
+      @Nonnull Iterable<CqlIdentifier> columnIds) {
     ImmutableList.Builder<Selector> columnSelectors = ImmutableList.builder();
     for (CqlIdentifier column : columnIds) {
       columnSelectors.add(Selector.column(column));
@@ -164,9 +164,9 @@ public class DefaultCreateMaterializedView
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateMaterializedViewWhere where(@NonNull Relation relation) {
+  public CreateMaterializedViewWhere where(@Nonnull Relation relation) {
     return new DefaultCreateMaterializedView(
         keyspace,
         viewName,
@@ -181,9 +181,9 @@ public class DefaultCreateMaterializedView
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateMaterializedViewWhere where(@NonNull Iterable<Relation> additionalRelations) {
+  public CreateMaterializedViewWhere where(@Nonnull Iterable<Relation> additionalRelations) {
     return new DefaultCreateMaterializedView(
         keyspace,
         viewName,
@@ -198,9 +198,9 @@ public class DefaultCreateMaterializedView
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateMaterializedViewPrimaryKey withPartitionKey(@NonNull CqlIdentifier columnName) {
+  public CreateMaterializedViewPrimaryKey withPartitionKey(@Nonnull CqlIdentifier columnName) {
     return new DefaultCreateMaterializedView(
         keyspace,
         viewName,
@@ -215,9 +215,9 @@ public class DefaultCreateMaterializedView
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateMaterializedViewPrimaryKey withClusteringColumn(@NonNull CqlIdentifier columnName) {
+  public CreateMaterializedViewPrimaryKey withClusteringColumn(@Nonnull CqlIdentifier columnName) {
     return new DefaultCreateMaterializedView(
         keyspace,
         viewName,
@@ -232,7 +232,7 @@ public class DefaultCreateMaterializedView
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateMaterializedViewStart ifNotExists() {
     return new DefaultCreateMaterializedView(
@@ -249,16 +249,16 @@ public class DefaultCreateMaterializedView
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateMaterializedViewSelection asSelectFrom(@NonNull CqlIdentifier table) {
+  public CreateMaterializedViewSelection asSelectFrom(@Nonnull CqlIdentifier table) {
     return asSelectFrom(null, table);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateMaterializedViewSelection asSelectFrom(
-      CqlIdentifier baseTableKeyspace, @NonNull CqlIdentifier baseTable) {
+      CqlIdentifier baseTableKeyspace, @Nonnull CqlIdentifier baseTable) {
     return new DefaultCreateMaterializedView(
         keyspace,
         viewName,
@@ -273,23 +273,23 @@ public class DefaultCreateMaterializedView
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateMaterializedView withClusteringOrderByIds(
-      @NonNull Map<CqlIdentifier, ClusteringOrder> orderings) {
+      @Nonnull Map<CqlIdentifier, ClusteringOrder> orderings) {
     return withClusteringOrders(ImmutableCollections.concat(this.orderings, orderings));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateMaterializedView withClusteringOrder(
-      @NonNull CqlIdentifier columnName, @NonNull ClusteringOrder order) {
+      @Nonnull CqlIdentifier columnName, @Nonnull ClusteringOrder order) {
     return withClusteringOrders(ImmutableCollections.append(orderings, columnName, order));
   }
 
-  @NonNull
+  @Nonnull
   public CreateMaterializedView withClusteringOrders(
-      @NonNull ImmutableMap<CqlIdentifier, ClusteringOrder> orderings) {
+      @Nonnull ImmutableMap<CqlIdentifier, ClusteringOrder> orderings) {
     return new DefaultCreateMaterializedView(
         keyspace,
         viewName,
@@ -304,9 +304,9 @@ public class DefaultCreateMaterializedView
         options);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateMaterializedView withOption(@NonNull String name, @NonNull Object value) {
+  public CreateMaterializedView withOption(@Nonnull String name, @Nonnull Object value) {
     return new DefaultCreateMaterializedView(
         keyspace,
         viewName,
@@ -321,7 +321,7 @@ public class DefaultCreateMaterializedView
         ImmutableCollections.append(options, name, value));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder("CREATE MATERIALIZED VIEW ");
@@ -388,7 +388,7 @@ public class DefaultCreateMaterializedView
     return asCql();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, Object> getOptions() {
     return options;
@@ -399,7 +399,7 @@ public class DefaultCreateMaterializedView
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getMaterializedView() {
     return viewName;
   }
@@ -418,27 +418,27 @@ public class DefaultCreateMaterializedView
     return baseTable;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableList<Selector> getSelectors() {
     return selectors;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableList<Relation> getWhereRelations() {
     return whereRelations;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableSet<CqlIdentifier> getPartitionKeyColumns() {
     return partitionKeyColumns;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableSet<CqlIdentifier> getClusteringKeyColumns() {
     return clusteringKeyColumns;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableMap<CqlIdentifier, ClusteringOrder> getOrderings() {
     return orderings;
   }

@@ -17,8 +17,8 @@
  */
 package com.datastax.oss.driver.internal.core.metrics;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Note about profiles names: they are included to keep the possibility to break up metrics per

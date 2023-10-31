@@ -26,13 +26,13 @@ import com.datastax.oss.driver.api.core.metadata.schema.ViewMetadata;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.core.util.Loggers;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,111 +74,111 @@ public class MultiplexingSchemaChangeListener implements SchemaChangeListener {
     }
   }
 
-  public void register(@NonNull SchemaChangeListener listener) {
+  public void register(@Nonnull SchemaChangeListener listener) {
     addListener(listener);
   }
 
   @Override
-  public void onKeyspaceCreated(@NonNull KeyspaceMetadata keyspace) {
+  public void onKeyspaceCreated(@Nonnull KeyspaceMetadata keyspace) {
     invokeListeners(listener -> listener.onKeyspaceCreated(keyspace), "onKeyspaceCreated");
   }
 
   @Override
-  public void onKeyspaceDropped(@NonNull KeyspaceMetadata keyspace) {
+  public void onKeyspaceDropped(@Nonnull KeyspaceMetadata keyspace) {
     invokeListeners(listener -> listener.onKeyspaceDropped(keyspace), "onKeyspaceDropped");
   }
 
   @Override
   public void onKeyspaceUpdated(
-      @NonNull KeyspaceMetadata current, @NonNull KeyspaceMetadata previous) {
+      @Nonnull KeyspaceMetadata current, @Nonnull KeyspaceMetadata previous) {
     invokeListeners(listener -> listener.onKeyspaceUpdated(current, previous), "onKeyspaceUpdated");
   }
 
   @Override
-  public void onTableCreated(@NonNull TableMetadata table) {
+  public void onTableCreated(@Nonnull TableMetadata table) {
     invokeListeners(listener -> listener.onTableCreated(table), "onTableCreated");
   }
 
   @Override
-  public void onTableDropped(@NonNull TableMetadata table) {
+  public void onTableDropped(@Nonnull TableMetadata table) {
     invokeListeners(listener -> listener.onTableDropped(table), "onTableDropped");
   }
 
   @Override
-  public void onTableUpdated(@NonNull TableMetadata current, @NonNull TableMetadata previous) {
+  public void onTableUpdated(@Nonnull TableMetadata current, @Nonnull TableMetadata previous) {
     invokeListeners(listener -> listener.onTableUpdated(current, previous), "onTableUpdated");
   }
 
   @Override
-  public void onUserDefinedTypeCreated(@NonNull UserDefinedType type) {
+  public void onUserDefinedTypeCreated(@Nonnull UserDefinedType type) {
     invokeListeners(
         listener -> listener.onUserDefinedTypeCreated(type), "onUserDefinedTypeCreated");
   }
 
   @Override
-  public void onUserDefinedTypeDropped(@NonNull UserDefinedType type) {
+  public void onUserDefinedTypeDropped(@Nonnull UserDefinedType type) {
     invokeListeners(
         listener -> listener.onUserDefinedTypeDropped(type), "onUserDefinedTypeDropped");
   }
 
   @Override
   public void onUserDefinedTypeUpdated(
-      @NonNull UserDefinedType current, @NonNull UserDefinedType previous) {
+      @Nonnull UserDefinedType current, @Nonnull UserDefinedType previous) {
     invokeListeners(
         listener -> listener.onUserDefinedTypeUpdated(current, previous),
         "onUserDefinedTypeUpdated");
   }
 
   @Override
-  public void onFunctionCreated(@NonNull FunctionMetadata function) {
+  public void onFunctionCreated(@Nonnull FunctionMetadata function) {
     invokeListeners(listener -> listener.onFunctionCreated(function), "onFunctionCreated");
   }
 
   @Override
-  public void onFunctionDropped(@NonNull FunctionMetadata function) {
+  public void onFunctionDropped(@Nonnull FunctionMetadata function) {
     invokeListeners(listener -> listener.onFunctionDropped(function), "onFunctionDropped");
   }
 
   @Override
   public void onFunctionUpdated(
-      @NonNull FunctionMetadata current, @NonNull FunctionMetadata previous) {
+      @Nonnull FunctionMetadata current, @Nonnull FunctionMetadata previous) {
     invokeListeners(listener -> listener.onFunctionUpdated(current, previous), "onFunctionUpdated");
   }
 
   @Override
-  public void onAggregateCreated(@NonNull AggregateMetadata aggregate) {
+  public void onAggregateCreated(@Nonnull AggregateMetadata aggregate) {
     invokeListeners(listener -> listener.onAggregateCreated(aggregate), "onAggregateCreated");
   }
 
   @Override
-  public void onAggregateDropped(@NonNull AggregateMetadata aggregate) {
+  public void onAggregateDropped(@Nonnull AggregateMetadata aggregate) {
     invokeListeners(listener -> listener.onAggregateDropped(aggregate), "onAggregateDropped");
   }
 
   @Override
   public void onAggregateUpdated(
-      @NonNull AggregateMetadata current, @NonNull AggregateMetadata previous) {
+      @Nonnull AggregateMetadata current, @Nonnull AggregateMetadata previous) {
     invokeListeners(
         listener -> listener.onAggregateUpdated(current, previous), "onAggregateUpdated");
   }
 
   @Override
-  public void onViewCreated(@NonNull ViewMetadata view) {
+  public void onViewCreated(@Nonnull ViewMetadata view) {
     invokeListeners(listener -> listener.onViewCreated(view), "onViewCreated");
   }
 
   @Override
-  public void onViewDropped(@NonNull ViewMetadata view) {
+  public void onViewDropped(@Nonnull ViewMetadata view) {
     invokeListeners(listener -> listener.onViewDropped(view), "onViewDropped");
   }
 
   @Override
-  public void onViewUpdated(@NonNull ViewMetadata current, @NonNull ViewMetadata previous) {
+  public void onViewUpdated(@Nonnull ViewMetadata current, @Nonnull ViewMetadata previous) {
     invokeListeners(listener -> listener.onViewUpdated(current, previous), "onViewUpdated");
   }
 
   @Override
-  public void onSessionReady(@NonNull Session session) {
+  public void onSessionReady(@Nonnull Session session) {
     invokeListeners(listener -> listener.onSessionReady(session), "onSessionReady");
   }
 
@@ -194,7 +194,7 @@ public class MultiplexingSchemaChangeListener implements SchemaChangeListener {
     }
   }
 
-  private void invokeListeners(@NonNull Consumer<SchemaChangeListener> action, String event) {
+  private void invokeListeners(@Nonnull Consumer<SchemaChangeListener> action, String event) {
     for (SchemaChangeListener listener : listeners) {
       try {
         action.accept(listener);

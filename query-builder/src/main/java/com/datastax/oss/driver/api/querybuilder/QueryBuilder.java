@@ -52,17 +52,17 @@ import com.datastax.oss.driver.internal.querybuilder.term.TupleTerm;
 import com.datastax.oss.driver.internal.querybuilder.term.TypeHintTerm;
 import com.datastax.oss.driver.internal.querybuilder.truncate.DefaultTruncate;
 import com.datastax.oss.driver.internal.querybuilder.update.DefaultUpdate;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /** A Domain-Specific Language to build CQL queries using Java code. */
 public class QueryBuilder {
 
   /** Starts a SELECT query for a qualified table. */
-  @NonNull
+  @Nonnull
   public static SelectFrom selectFrom(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier table) {
     return new DefaultSelect(keyspace, table);
   }
 
@@ -70,28 +70,28 @@ public class QueryBuilder {
    * Shortcut for {@link #selectFrom(CqlIdentifier, CqlIdentifier)
    * selectFrom(CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(table))}
    */
-  @NonNull
-  public static SelectFrom selectFrom(@Nullable String keyspace, @NonNull String table) {
+  @Nonnull
+  public static SelectFrom selectFrom(@Nullable String keyspace, @Nonnull String table) {
     return selectFrom(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(table));
   }
 
   /** Starts a SELECT query for an unqualified table. */
-  @NonNull
-  public static SelectFrom selectFrom(@NonNull CqlIdentifier table) {
+  @Nonnull
+  public static SelectFrom selectFrom(@Nonnull CqlIdentifier table) {
     return selectFrom(null, table);
   }
 
   /** Shortcut for {@link #selectFrom(CqlIdentifier) selectFrom(CqlIdentifier.fromCql(table))} */
-  @NonNull
-  public static SelectFrom selectFrom(@NonNull String table) {
+  @Nonnull
+  public static SelectFrom selectFrom(@Nonnull String table) {
     return selectFrom(CqlIdentifier.fromCql(table));
   }
 
   /** Starts an INSERT query for a qualified table. */
-  @NonNull
+  @Nonnull
   public static InsertInto insertInto(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier table) {
     return new DefaultInsert(keyspace, table);
   }
 
@@ -99,27 +99,27 @@ public class QueryBuilder {
    * Shortcut for {@link #insertInto(CqlIdentifier, CqlIdentifier)
    * insertInto(CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(table))}.
    */
-  @NonNull
-  public static InsertInto insertInto(@Nullable String keyspace, @NonNull String table) {
+  @Nonnull
+  public static InsertInto insertInto(@Nullable String keyspace, @Nonnull String table) {
     return insertInto(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(table));
   }
 
   /** Starts an INSERT query for an unqualified table. */
-  @NonNull
-  public static InsertInto insertInto(@NonNull CqlIdentifier table) {
+  @Nonnull
+  public static InsertInto insertInto(@Nonnull CqlIdentifier table) {
     return insertInto(null, table);
   }
 
   /** Shortcut for {@link #insertInto(CqlIdentifier) insertInto(CqlIdentifier.fromCql(table))}. */
-  @NonNull
-  public static InsertInto insertInto(@NonNull String table) {
+  @Nonnull
+  public static InsertInto insertInto(@Nonnull String table) {
     return insertInto(CqlIdentifier.fromCql(table));
   }
 
   /** Starts an UPDATE query for a qualified table. */
-  @NonNull
-  public static UpdateStart update(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
+  @Nonnull
+  public static UpdateStart update(@Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier table) {
     return new DefaultUpdate(keyspace, table);
   }
 
@@ -127,28 +127,28 @@ public class QueryBuilder {
    * Shortcut for {@link #update(CqlIdentifier, CqlIdentifier)
    * update(CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(table))}
    */
-  @NonNull
-  public static UpdateStart update(@Nullable String keyspace, @NonNull String table) {
+  @Nonnull
+  public static UpdateStart update(@Nullable String keyspace, @Nonnull String table) {
     return update(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(table));
   }
 
   /** Starts an UPDATE query for an unqualified table. */
-  @NonNull
-  public static UpdateStart update(@NonNull CqlIdentifier table) {
+  @Nonnull
+  public static UpdateStart update(@Nonnull CqlIdentifier table) {
     return update(null, table);
   }
 
   /** Shortcut for {@link #update(CqlIdentifier) update(CqlIdentifier.fromCql(table))} */
-  @NonNull
-  public static UpdateStart update(@NonNull String table) {
+  @Nonnull
+  public static UpdateStart update(@Nonnull String table) {
     return update(CqlIdentifier.fromCql(table));
   }
 
   /** Starts a DELETE query for a qualified table. */
-  @NonNull
+  @Nonnull
   public static DeleteSelection deleteFrom(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier table) {
     return new DefaultDelete(keyspace, table);
   }
 
@@ -156,21 +156,21 @@ public class QueryBuilder {
    * Shortcut for {@link #deleteFrom(CqlIdentifier, CqlIdentifier)
    * deleteFrom(CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(table))}
    */
-  @NonNull
-  public static DeleteSelection deleteFrom(@Nullable String keyspace, @NonNull String table) {
+  @Nonnull
+  public static DeleteSelection deleteFrom(@Nullable String keyspace, @Nonnull String table) {
     return deleteFrom(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(table));
   }
 
   /** Starts a DELETE query for an unqualified table. */
-  @NonNull
-  public static DeleteSelection deleteFrom(@NonNull CqlIdentifier table) {
+  @Nonnull
+  public static DeleteSelection deleteFrom(@Nonnull CqlIdentifier table) {
     return deleteFrom(null, table);
   }
 
   /** Shortcut for {@link #deleteFrom(CqlIdentifier) deleteFrom(CqlIdentifier.fromCql(table))} */
-  @NonNull
-  public static DeleteSelection deleteFrom(@NonNull String table) {
+  @Nonnull
+  public static DeleteSelection deleteFrom(@Nonnull String table) {
     return deleteFrom(CqlIdentifier.fromCql(table));
   }
 
@@ -180,63 +180,63 @@ public class QueryBuilder {
    *
    * <p>For example, this can be used as the right operand of {@link Relation#columns(String...)}.
    */
-  @NonNull
-  public static Term tuple(@NonNull Iterable<? extends Term> components) {
+  @Nonnull
+  public static Term tuple(@Nonnull Iterable<? extends Term> components) {
     return new TupleTerm(components);
   }
 
   /** Var-arg equivalent of {@link #tuple(Iterable)}. */
-  @NonNull
-  public static Term tuple(@NonNull Term... components) {
+  @Nonnull
+  public static Term tuple(@Nonnull Term... components) {
     return tuple(Arrays.asList(components));
   }
 
   /** The sum of two terms, as in {@code WHERE k = left + right}. */
-  @NonNull
-  public static Term add(@NonNull Term left, @NonNull Term right) {
+  @Nonnull
+  public static Term add(@Nonnull Term left, @Nonnull Term right) {
     return new BinaryArithmeticTerm(ArithmeticOperator.SUM, left, right);
   }
 
   /** The difference of two terms, as in {@code WHERE k = left - right}. */
-  @NonNull
-  public static Term subtract(@NonNull Term left, @NonNull Term right) {
+  @Nonnull
+  public static Term subtract(@Nonnull Term left, @Nonnull Term right) {
     return new BinaryArithmeticTerm(ArithmeticOperator.DIFFERENCE, left, right);
   }
 
   /** The product of two terms, as in {@code WHERE k = left * right}. */
-  @NonNull
-  public static Term multiply(@NonNull Term left, @NonNull Term right) {
+  @Nonnull
+  public static Term multiply(@Nonnull Term left, @Nonnull Term right) {
     return new BinaryArithmeticTerm(ArithmeticOperator.PRODUCT, left, right);
   }
 
   /** The quotient of two terms, as in {@code WHERE k = left / right}. */
-  @NonNull
-  public static Term divide(@NonNull Term left, @NonNull Term right) {
+  @Nonnull
+  public static Term divide(@Nonnull Term left, @Nonnull Term right) {
     return new BinaryArithmeticTerm(ArithmeticOperator.QUOTIENT, left, right);
   }
 
   /** The remainder of two terms, as in {@code WHERE k = left % right}. */
-  @NonNull
-  public static Term remainder(@NonNull Term left, @NonNull Term right) {
+  @Nonnull
+  public static Term remainder(@Nonnull Term left, @Nonnull Term right) {
     return new BinaryArithmeticTerm(ArithmeticOperator.REMAINDER, left, right);
   }
 
   /** The opposite of a term, as in {@code WHERE k = -argument}. */
-  @NonNull
-  public static Term negate(@NonNull Term argument) {
+  @Nonnull
+  public static Term negate(@Nonnull Term argument) {
     return new OppositeTerm(argument);
   }
 
   /** A function call as a term, as in {@code WHERE k = f(arguments)}. */
-  @NonNull
+  @Nonnull
   public static Term function(
-      @NonNull CqlIdentifier functionId, @NonNull Iterable<Term> arguments) {
+      @Nonnull CqlIdentifier functionId, @Nonnull Iterable<Term> arguments) {
     return function(null, functionId, arguments);
   }
 
   /** Var-arg equivalent of {@link #function(CqlIdentifier, Iterable)}. */
-  @NonNull
-  public static Term function(@NonNull CqlIdentifier functionId, @NonNull Term... arguments) {
+  @Nonnull
+  public static Term function(@Nonnull CqlIdentifier functionId, @Nonnull Term... arguments) {
     return function(functionId, Arrays.asList(arguments));
   }
 
@@ -244,8 +244,8 @@ public class QueryBuilder {
    * Shortcut for {@link #function(CqlIdentifier, Iterable)
    * function(CqlIdentifier.fromCql(functionName), arguments)}.
    */
-  @NonNull
-  public static Term function(@NonNull String functionName, @NonNull Iterable<Term> arguments) {
+  @Nonnull
+  public static Term function(@Nonnull String functionName, @Nonnull Iterable<Term> arguments) {
     return function(CqlIdentifier.fromCql(functionName), arguments);
   }
 
@@ -253,26 +253,26 @@ public class QueryBuilder {
    * Shortcut for {@link #function(CqlIdentifier, Term...)
    * function(CqlIdentifier.fromCql(functionName), arguments)}.
    */
-  @NonNull
-  public static Term function(@NonNull String functionName, @NonNull Term... arguments) {
+  @Nonnull
+  public static Term function(@Nonnull String functionName, @Nonnull Term... arguments) {
     return function(CqlIdentifier.fromCql(functionName), arguments);
   }
 
   /** A function call as a term, as in {@code WHERE k = ks.f(arguments)}. */
-  @NonNull
+  @Nonnull
   public static Term function(
       @Nullable CqlIdentifier keyspaceId,
-      @NonNull CqlIdentifier functionId,
-      @NonNull Iterable<Term> arguments) {
+      @Nonnull CqlIdentifier functionId,
+      @Nonnull Iterable<Term> arguments) {
     return new FunctionTerm(keyspaceId, functionId, arguments);
   }
 
   /** Var-arg equivalent of {@link #function(CqlIdentifier, CqlIdentifier, Iterable)}. */
-  @NonNull
+  @Nonnull
   public static Term function(
       @Nullable CqlIdentifier keyspaceId,
-      @NonNull CqlIdentifier functionId,
-      @NonNull Term... arguments) {
+      @Nonnull CqlIdentifier functionId,
+      @Nonnull Term... arguments) {
     return function(keyspaceId, functionId, Arrays.asList(arguments));
   }
 
@@ -280,11 +280,11 @@ public class QueryBuilder {
    * Shortcut for {@link #function(CqlIdentifier, CqlIdentifier, Iterable)
    * function(CqlIdentifier.fromCql(keyspaceName), CqlIdentifier.fromCql(functionName), arguments)}.
    */
-  @NonNull
+  @Nonnull
   public static Term function(
       @Nullable String keyspaceName,
-      @NonNull String functionName,
-      @NonNull Iterable<Term> arguments) {
+      @Nonnull String functionName,
+      @Nonnull Iterable<Term> arguments) {
     return function(
         keyspaceName == null ? null : CqlIdentifier.fromCql(keyspaceName),
         CqlIdentifier.fromCql(functionName),
@@ -295,9 +295,9 @@ public class QueryBuilder {
    * Shortcut for {@link #function(CqlIdentifier, CqlIdentifier, Term...)
    * function(CqlIdentifier.fromCql(keyspaceName), CqlIdentifier.fromCql(functionName), arguments)}.
    */
-  @NonNull
+  @Nonnull
   public static Term function(
-      @Nullable String keyspaceName, @NonNull String functionName, @NonNull Term... arguments) {
+      @Nullable String keyspaceName, @Nonnull String functionName, @Nonnull Term... arguments) {
     return function(
         keyspaceName == null ? null : CqlIdentifier.fromCql(keyspaceName),
         CqlIdentifier.fromCql(functionName),
@@ -310,68 +310,68 @@ public class QueryBuilder {
    * <p>To create the data type, use the constants and static methods in {@link DataTypes}, or
    * {@link #udt(CqlIdentifier)}.
    */
-  @NonNull
-  public static Term typeHint(@NonNull Term term, @NonNull DataType targetType) {
+  @Nonnull
+  public static Term typeHint(@Nonnull Term term, @Nonnull DataType targetType) {
     return new TypeHintTerm(term, targetType);
   }
 
   /** A call to the built-in {@code now} function as a term. */
-  @NonNull
+  @Nonnull
   public static Term now() {
     return function("now");
   }
 
   /** A call to the built-in {@code currentTimestamp} function as a term. */
-  @NonNull
+  @Nonnull
   public static Term currentTimestamp() {
     return function("currenttimestamp");
   }
 
   /** A call to the built-in {@code currentDate} function as a term. */
-  @NonNull
+  @Nonnull
   public static Term currentDate() {
     return function("currentdate");
   }
 
   /** A call to the built-in {@code currentTime} function as a term. */
-  @NonNull
+  @Nonnull
   public static Term currentTime() {
     return function("currenttime");
   }
 
   /** A call to the built-in {@code currentTimeUuid} function as a term. */
-  @NonNull
+  @Nonnull
   public static Term currentTimeUuid() {
     return function("currenttimeuuid");
   }
 
   /** A call to the built-in {@code minTimeUuid} function as a term. */
-  @NonNull
-  public static Term minTimeUuid(@NonNull Term argument) {
+  @Nonnull
+  public static Term minTimeUuid(@Nonnull Term argument) {
     return function("mintimeuuid", argument);
   }
 
   /** A call to the built-in {@code maxTimeUuid} function as a term. */
-  @NonNull
-  public static Term maxTimeUuid(@NonNull Term argument) {
+  @Nonnull
+  public static Term maxTimeUuid(@Nonnull Term argument) {
     return function("maxtimeuuid", argument);
   }
 
   /** A call to the built-in {@code toDate} function as a term. */
-  @NonNull
-  public static Term toDate(@NonNull Term argument) {
+  @Nonnull
+  public static Term toDate(@Nonnull Term argument) {
     return function("todate", argument);
   }
 
   /** A call to the built-in {@code toTimestamp} function as a term. */
-  @NonNull
-  public static Term toTimestamp(@NonNull Term argument) {
+  @Nonnull
+  public static Term toTimestamp(@Nonnull Term argument) {
     return function("totimestamp", argument);
   }
 
   /** A call to the built-in {@code toUnixTimestamp} function as a term. */
-  @NonNull
-  public static Term toUnixTimestamp(@NonNull Term argument) {
+  @Nonnull
+  public static Term toUnixTimestamp(@Nonnull Term argument) {
     return function("tounixtimestamp", argument);
   }
 
@@ -390,7 +390,7 @@ public class QueryBuilder {
    * @throws CodecNotFoundException if there is no default CQL mapping for the Java type of {@code
    *     value}.
    */
-  @NonNull
+  @Nonnull
   public static Literal literal(@Nullable Object value) {
     return literal(value, CodecRegistry.DEFAULT);
   }
@@ -406,8 +406,8 @@ public class QueryBuilder {
    * @throws CodecNotFoundException if {@code codecRegistry} does not contain any codec that can
    *     handle {@code value}.
    */
-  @NonNull
-  public static Literal literal(@Nullable Object value, @NonNull CodecRegistry codecRegistry) {
+  @Nonnull
+  public static Literal literal(@Nullable Object value, @Nonnull CodecRegistry codecRegistry) {
     if (value instanceof Murmur3Token) {
       value = ((Murmur3Token) value).getValue();
     } else if (value instanceof ByteOrderedToken) {
@@ -437,7 +437,7 @@ public class QueryBuilder {
    * <p>This is an alternative to {@link #literal(Object)} for custom type mappings. The value will
    * be turned into a string with {@link TypeCodec#format(Object)}, and inlined in the query.
    */
-  @NonNull
+  @Nonnull
   public static <T> Literal literal(@Nullable T value, @Nullable TypeCodec<T> codec) {
     // Don't handle Token here, if the user calls this directly we assume they passed a codec that
     // can handle the value
@@ -452,25 +452,25 @@ public class QueryBuilder {
    * fail at execution time; on the other hand, it can be used as a workaround to handle new CQL
    * features that are not yet covered by the query builder.
    */
-  @NonNull
-  public static Raw raw(@NonNull String raw) {
+  @Nonnull
+  public static Raw raw(@Nonnull String raw) {
     return new DefaultRaw(raw);
   }
 
   /** Creates an anonymous bind marker, which appears as {@code ?} in the generated CQL. */
-  @NonNull
+  @Nonnull
   public static BindMarker bindMarker() {
     return bindMarker((CqlIdentifier) null);
   }
 
   /** Creates a named bind marker, which appears as {@code :id} in the generated CQL. */
-  @NonNull
+  @Nonnull
   public static BindMarker bindMarker(@Nullable CqlIdentifier id) {
     return new DefaultBindMarker(id);
   }
 
   /** Shortcut for {@link #bindMarker(CqlIdentifier) bindMarker(CqlIdentifier.fromCql(name))} */
-  @NonNull
+  @Nonnull
   public static BindMarker bindMarker(@Nullable String name) {
     return bindMarker(name == null ? null : CqlIdentifier.fromCql(name));
   }
@@ -479,14 +479,14 @@ public class QueryBuilder {
    * Shortcut to reference a UDT in methods that use a {@link DataType}, such as {@link
    * #typeHint(Term, DataType)} and {@link Selector#cast(Selector, DataType)}.
    */
-  @NonNull
-  public static UserDefinedType udt(@NonNull CqlIdentifier name) {
+  @Nonnull
+  public static UserDefinedType udt(@Nonnull CqlIdentifier name) {
     return new ShallowUserDefinedType(null, name, false);
   }
 
   /** Shortcut for {@link #udt(CqlIdentifier) udt(CqlIdentifier.fromCql(name))}. */
-  @NonNull
-  public static UserDefinedType udt(@NonNull String name) {
+  @Nonnull
+  public static UserDefinedType udt(@Nonnull String name) {
     return udt(CqlIdentifier.fromCql(name));
   }
 
@@ -496,7 +496,7 @@ public class QueryBuilder {
    * @param table the name of the table to truncate.
    * @return the truncation query.
    */
-  public static Truncate truncate(@NonNull CqlIdentifier table) {
+  public static Truncate truncate(@Nonnull CqlIdentifier table) {
     return truncate(null, table);
   }
 
@@ -509,7 +509,7 @@ public class QueryBuilder {
    * @param table the name of the table to truncate.
    * @return the truncation query.
    */
-  public static Truncate truncate(@NonNull String table) {
+  public static Truncate truncate(@Nonnull String table) {
     return truncate(null, CqlIdentifier.fromCql(table));
   }
 
@@ -520,7 +520,7 @@ public class QueryBuilder {
    * @param table the name of the table to truncate.
    * @return the truncation query.
    */
-  public static Truncate truncate(@Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier table) {
+  public static Truncate truncate(@Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier table) {
     return new DefaultTruncate(keyspace, table);
   }
 
@@ -534,7 +534,7 @@ public class QueryBuilder {
    * @param table the name of the table to truncate.
    * @return the truncation query.
    */
-  public static Truncate truncate(@Nullable String keyspace, @NonNull String table) {
+  public static Truncate truncate(@Nullable String keyspace, @Nonnull String table) {
     return truncate(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(table));
   }

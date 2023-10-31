@@ -22,14 +22,14 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Thrown when a query failed on all the coordinators it was tried on. This exception may wrap
@@ -39,7 +39,7 @@ import java.util.Map.Entry;
 public class AllNodesFailedException extends DriverException {
 
   /** @deprecated Use {@link #fromErrors(List)} instead. */
-  @NonNull
+  @Nonnull
   @Deprecated
   public static AllNodesFailedException fromErrors(@Nullable Map<Node, Throwable> errors) {
     if (errors == null || errors.isEmpty()) {
@@ -49,7 +49,7 @@ public class AllNodesFailedException extends DriverException {
     }
   }
 
-  @NonNull
+  @Nonnull
   public static AllNodesFailedException fromErrors(@Nullable List<Entry<Node, Throwable>> errors) {
     if (errors == null || errors.isEmpty()) {
       return new NoNodeAvailableException();
@@ -63,18 +63,18 @@ public class AllNodesFailedException extends DriverException {
   /** @deprecated Use {@link #AllNodesFailedException(String, ExecutionInfo, Iterable)} instead. */
   @Deprecated
   protected AllNodesFailedException(
-      @NonNull String message,
+      @Nonnull String message,
       @Nullable ExecutionInfo executionInfo,
-      @NonNull Map<Node, Throwable> errors) {
+      @Nonnull Map<Node, Throwable> errors) {
     super(message, executionInfo, null, true);
     this.errors = toDeepImmutableMap(groupByNode(errors));
     addSuppressedErrors();
   }
 
   protected AllNodesFailedException(
-      @NonNull String message,
+      @Nonnull String message,
       @Nullable ExecutionInfo executionInfo,
-      @NonNull Iterable<Entry<Node, List<Throwable>>> errors) {
+      @Nonnull Iterable<Entry<Node, List<Throwable>>> errors) {
     super(message, executionInfo, null, true);
     this.errors = toDeepImmutableMap(errors);
     addSuppressedErrors();
@@ -118,7 +118,7 @@ public class AllNodesFailedException extends DriverException {
    *
    * @deprecated Use {@link #getAllErrors()} instead.
    */
-  @NonNull
+  @Nonnull
   @Deprecated
   public Map<Node, Throwable> getErrors() {
     ImmutableMap.Builder<Node, Throwable> builder = ImmutableMap.builder();
@@ -132,18 +132,18 @@ public class AllNodesFailedException extends DriverException {
   }
 
   /** An immutable map containing all errors on each tried node. */
-  @NonNull
+  @Nonnull
   public Map<Node, List<Throwable>> getAllErrors() {
     return errors;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new AllNodesFailedException(getMessage(), getExecutionInfo(), errors.entrySet());
   }
 
-  @NonNull
+  @Nonnull
   public AllNodesFailedException reword(String newMessage) {
     return new AllNodesFailedException(
         buildMessage(newMessage, errors), getExecutionInfo(), errors.entrySet());

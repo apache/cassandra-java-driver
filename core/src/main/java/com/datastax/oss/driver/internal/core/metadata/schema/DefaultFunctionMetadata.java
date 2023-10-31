@@ -22,10 +22,10 @@ import com.datastax.oss.driver.api.core.metadata.schema.FunctionMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.FunctionSignature;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -33,22 +33,22 @@ public class DefaultFunctionMetadata implements FunctionMetadata, Serializable {
 
   private static final long serialVersionUID = 1;
 
-  @NonNull private final CqlIdentifier keyspace;
-  @NonNull private final FunctionSignature signature;
-  @NonNull private final List<CqlIdentifier> parameterNames;
-  @NonNull private final String body;
+  @Nonnull private final CqlIdentifier keyspace;
+  @Nonnull private final FunctionSignature signature;
+  @Nonnull private final List<CqlIdentifier> parameterNames;
+  @Nonnull private final String body;
   private final boolean calledOnNullInput;
-  @NonNull private final String language;
-  @NonNull private final DataType returnType;
+  @Nonnull private final String language;
+  @Nonnull private final DataType returnType;
 
   public DefaultFunctionMetadata(
-      @NonNull CqlIdentifier keyspace,
-      @NonNull FunctionSignature signature,
-      @NonNull List<CqlIdentifier> parameterNames,
-      @NonNull String body,
+      @Nonnull CqlIdentifier keyspace,
+      @Nonnull FunctionSignature signature,
+      @Nonnull List<CqlIdentifier> parameterNames,
+      @Nonnull String body,
       boolean calledOnNullInput,
-      @NonNull String language,
-      @NonNull DataType returnType) {
+      @Nonnull String language,
+      @Nonnull DataType returnType) {
     Preconditions.checkArgument(
         signature.getParameterTypes().size() == parameterNames.size(),
         "Number of parameter names should match number of types in the signature (got %s and %s)",
@@ -63,25 +63,25 @@ public class DefaultFunctionMetadata implements FunctionMetadata, Serializable {
     this.returnType = returnType;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CqlIdentifier getKeyspace() {
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public FunctionSignature getSignature() {
     return signature;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public List<CqlIdentifier> getParameterNames() {
     return parameterNames;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getBody() {
     return body;
@@ -92,13 +92,13 @@ public class DefaultFunctionMetadata implements FunctionMetadata, Serializable {
     return calledOnNullInput;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getLanguage() {
     return language;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getReturnType() {
     return returnType;

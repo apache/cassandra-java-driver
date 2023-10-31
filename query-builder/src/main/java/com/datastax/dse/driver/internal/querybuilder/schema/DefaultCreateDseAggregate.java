@@ -26,8 +26,8 @@ import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -51,21 +51,21 @@ public class DefaultCreateDseAggregate
   private final Term term;
   private final boolean deterministic;
 
-  public DefaultCreateDseAggregate(@NonNull CqlIdentifier functionName) {
+  public DefaultCreateDseAggregate(@Nonnull CqlIdentifier functionName) {
     this(null, functionName);
   }
 
   public DefaultCreateDseAggregate(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier functionName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier functionName) {
     this(keyspace, functionName, false, false, ImmutableList.of(), null, null, null, null, false);
   }
 
   public DefaultCreateDseAggregate(
       @Nullable CqlIdentifier keyspace,
-      @NonNull CqlIdentifier functionName,
+      @Nonnull CqlIdentifier functionName,
       boolean orReplace,
       boolean ifNotExists,
-      @NonNull ImmutableList<DataType> parameters,
+      @Nonnull ImmutableList<DataType> parameters,
       @Nullable CqlIdentifier sFunc,
       @Nullable DataType sType,
       @Nullable CqlIdentifier finalFunc,
@@ -83,7 +83,7 @@ public class DefaultCreateDseAggregate
     this.deterministic = deterministic;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder();
@@ -133,9 +133,9 @@ public class DefaultCreateDseAggregate
     return builder.toString();
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateDseAggregateEnd withInitCond(@NonNull Term term) {
+  public CreateDseAggregateEnd withInitCond(@Nonnull Term term) {
     return new DefaultCreateDseAggregate(
         keyspace,
         functionName,
@@ -149,7 +149,7 @@ public class DefaultCreateDseAggregate
         deterministic);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseAggregateStart ifNotExists() {
     return new DefaultCreateDseAggregate(
@@ -165,7 +165,7 @@ public class DefaultCreateDseAggregate
         deterministic);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseAggregateStart orReplace() {
     return new DefaultCreateDseAggregate(
@@ -181,9 +181,9 @@ public class DefaultCreateDseAggregate
         deterministic);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateDseAggregateStart withParameter(@NonNull DataType paramType) {
+  public CreateDseAggregateStart withParameter(@Nonnull DataType paramType) {
     return new DefaultCreateDseAggregate(
         keyspace,
         functionName,
@@ -197,9 +197,9 @@ public class DefaultCreateDseAggregate
         deterministic);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateDseAggregateStateFunc withSFunc(@NonNull CqlIdentifier sFunc) {
+  public CreateDseAggregateStateFunc withSFunc(@Nonnull CqlIdentifier sFunc) {
     return new DefaultCreateDseAggregate(
         keyspace,
         functionName,
@@ -213,9 +213,9 @@ public class DefaultCreateDseAggregate
         deterministic);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateDseAggregateEnd withSType(@NonNull DataType sType) {
+  public CreateDseAggregateEnd withSType(@Nonnull DataType sType) {
     return new DefaultCreateDseAggregate(
         keyspace,
         functionName,
@@ -229,9 +229,9 @@ public class DefaultCreateDseAggregate
         deterministic);
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public CreateDseAggregateEnd withFinalFunc(@NonNull CqlIdentifier finalFunc) {
+  public CreateDseAggregateEnd withFinalFunc(@Nonnull CqlIdentifier finalFunc) {
     return new DefaultCreateDseAggregate(
         keyspace,
         functionName,
@@ -245,7 +245,7 @@ public class DefaultCreateDseAggregate
         deterministic);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CreateDseAggregateEnd deterministic() {
     return new DefaultCreateDseAggregate(
@@ -271,7 +271,7 @@ public class DefaultCreateDseAggregate
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getFunctionName() {
     return functionName;
   }
@@ -284,7 +284,7 @@ public class DefaultCreateDseAggregate
     return ifNotExists;
   }
 
-  @NonNull
+  @Nonnull
   public ImmutableList<DataType> getParameters() {
     return parameters;
   }

@@ -20,8 +20,8 @@ package com.datastax.oss.driver.api.core.servererrors;
 import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /** A server-side error thrown by the coordinator node in response to a driver request. */
 public abstract class CoordinatorException extends DriverException {
@@ -32,15 +32,15 @@ public abstract class CoordinatorException extends DriverException {
   private final Node coordinator;
 
   protected CoordinatorException(
-      @NonNull Node coordinator,
-      @NonNull String message,
+      @Nonnull Node coordinator,
+      @Nonnull String message,
       @Nullable ExecutionInfo executionInfo,
       boolean writableStackTrace) {
     super(message, executionInfo, null, writableStackTrace);
     this.coordinator = coordinator;
   }
 
-  @NonNull
+  @Nonnull
   public Node getCoordinator() {
     return coordinator;
   }

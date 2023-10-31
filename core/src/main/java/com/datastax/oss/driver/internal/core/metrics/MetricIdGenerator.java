@@ -20,7 +20,7 @@ package com.datastax.oss.driver.internal.core.metrics;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * A {@link MetricIdGenerator} is used to generate the unique identifiers by which a metric should
@@ -40,10 +40,10 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public interface MetricIdGenerator {
 
   /** Generates a {@link MetricId} for the given {@link SessionMetric}. */
-  @NonNull
-  MetricId sessionMetricId(@NonNull SessionMetric metric);
+  @Nonnull
+  MetricId sessionMetricId(@Nonnull SessionMetric metric);
 
   /** Generates a {@link MetricId} for the given {@link Node} and {@link NodeMetric}. */
-  @NonNull
-  MetricId nodeMetricId(@NonNull Node node, @NonNull NodeMetric metric);
+  @Nonnull
+  MetricId nodeMetricId(@Nonnull Node node, @Nonnull NodeMetric metric);
 }

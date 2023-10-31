@@ -21,10 +21,10 @@ import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
 
 public class CompositeDriverConfigLoader implements DriverConfigLoader {
 
@@ -32,13 +32,13 @@ public class CompositeDriverConfigLoader implements DriverConfigLoader {
   private final DriverConfigLoader fallbackConfigLoader;
 
   public CompositeDriverConfigLoader(
-      @NonNull DriverConfigLoader primaryConfigLoader,
-      @NonNull DriverConfigLoader fallbackConfigLoader) {
+      @Nonnull DriverConfigLoader primaryConfigLoader,
+      @Nonnull DriverConfigLoader fallbackConfigLoader) {
     this.primaryConfigLoader = Objects.requireNonNull(primaryConfigLoader);
     this.fallbackConfigLoader = Objects.requireNonNull(fallbackConfigLoader);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverConfig getInitialConfig() {
     DriverConfig primaryConfig = primaryConfigLoader.getInitialConfig();
@@ -47,12 +47,12 @@ public class CompositeDriverConfigLoader implements DriverConfigLoader {
   }
 
   @Override
-  public void onDriverInit(@NonNull DriverContext context) {
+  public void onDriverInit(@Nonnull DriverContext context) {
     fallbackConfigLoader.onDriverInit(context);
     primaryConfigLoader.onDriverInit(context);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Boolean> reload() {
     if (!primaryConfigLoader.supportsReloading() && !fallbackConfigLoader.supportsReloading()) {

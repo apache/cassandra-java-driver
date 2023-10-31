@@ -21,9 +21,9 @@ import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.internal.querybuilder.ArithmeticOperator;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -32,25 +32,25 @@ public class OppositeSelector extends ArithmeticSelector {
   private final Selector argument;
   private final CqlIdentifier alias;
 
-  public OppositeSelector(@NonNull Selector argument) {
+  public OppositeSelector(@Nonnull Selector argument) {
     this(argument, null);
   }
 
-  public OppositeSelector(@NonNull Selector argument, @Nullable CqlIdentifier alias) {
+  public OppositeSelector(@Nonnull Selector argument, @Nullable CqlIdentifier alias) {
     super(ArithmeticOperator.OPPOSITE);
     Preconditions.checkNotNull(argument);
     this.argument = argument;
     this.alias = alias;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public Selector as(@NonNull CqlIdentifier alias) {
+  public Selector as(@Nonnull CqlIdentifier alias) {
     return new OppositeSelector(argument, alias);
   }
 
   @Override
-  public void appendTo(@NonNull StringBuilder builder) {
+  public void appendTo(@Nonnull StringBuilder builder) {
     builder.append('-');
     appendAndMaybeParenthesize(operator.getPrecedenceLeft(), argument, builder);
     if (alias != null) {
@@ -58,7 +58,7 @@ public class OppositeSelector extends ArithmeticSelector {
     }
   }
 
-  @NonNull
+  @Nonnull
   public Selector getArgument() {
     return argument;
   }

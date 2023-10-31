@@ -26,14 +26,14 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.Strings;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class DateRangeCodec implements TypeCodec<DateRange> {
 
@@ -53,27 +53,27 @@ public class DateRangeCodec implements TypeCodec<DateRange> {
   // *
   private static final byte DATE_RANGE_TYPE_SINGLE_DATE_OPEN = 0x05;
 
-  @NonNull
+  @Nonnull
   @Override
   public GenericType<DateRange> getJavaType() {
     return JAVA_TYPE;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DataType getCqlType() {
     return CQL_TYPE;
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     return javaClass == DateRange.class;
   }
 
   @Nullable
   @Override
   public ByteBuffer encode(
-      @Nullable DateRange dateRange, @NonNull ProtocolVersion protocolVersion) {
+      @Nullable DateRange dateRange, @Nonnull ProtocolVersion protocolVersion) {
     if (dateRange == null) {
       return null;
     }
@@ -128,7 +128,7 @@ public class DateRangeCodec implements TypeCodec<DateRange> {
 
   @Nullable
   @Override
-  public DateRange decode(@Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion) {
+  public DateRange decode(@Nullable ByteBuffer bytes, @Nonnull ProtocolVersion protocolVersion) {
     if (bytes == null || bytes.remaining() == 0) {
       return null;
     }
@@ -167,7 +167,7 @@ public class DateRangeCodec implements TypeCodec<DateRange> {
     return DateRangeBound.upperBound(timestamp, precision);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String format(@Nullable DateRange dateRange) {
     return (dateRange == null) ? "NULL" : Strings.quote(dateRange.toString());

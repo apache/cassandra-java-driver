@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * The beginning of an INSERT statement; at this point only the table is known, it might become a
@@ -31,12 +31,12 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public interface InsertInto extends OngoingValues {
 
   /** Makes this statement an INSERT JSON with the provided JSON string. */
-  @NonNull
-  JsonInsert json(@NonNull String json);
+  @Nonnull
+  JsonInsert json(@Nonnull String json);
 
   /** Makes this statement an INSERT JSON with a bind marker, as in {@code INSERT JSON ?}. */
-  @NonNull
-  JsonInsert json(@NonNull BindMarker bindMarker);
+  @Nonnull
+  JsonInsert json(@Nonnull BindMarker bindMarker);
 
   /**
    * Makes this statement an INSERT JSON with a custom type mapping. The provided {@code Object
@@ -50,8 +50,8 @@ public interface InsertInto extends OngoingValues {
    *     handle {@code value}.
    * @see DriverContext#getCodecRegistry()
    */
-  @NonNull
-  default JsonInsert json(@NonNull Object value, @NonNull CodecRegistry codecRegistry) {
+  @Nonnull
+  default JsonInsert json(@Nonnull Object value, @Nonnull CodecRegistry codecRegistry) {
     try {
       return json(value, codecRegistry.codecFor(value));
     } catch (CodecNotFoundException e) {
@@ -71,6 +71,6 @@ public interface InsertInto extends OngoingValues {
    * value} will be mapped to a JSON string. The value will be turned into a string with {@link
    * TypeCodec#format(Object)}, and inlined in the query.
    */
-  @NonNull
-  <T> JsonInsert json(@NonNull T value, @NonNull TypeCodec<T> codec);
+  @Nonnull
+  <T> JsonInsert json(@Nonnull T value, @Nonnull TypeCodec<T> codec);
 }

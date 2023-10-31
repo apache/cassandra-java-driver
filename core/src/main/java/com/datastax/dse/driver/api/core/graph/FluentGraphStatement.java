@@ -19,8 +19,8 @@ package com.datastax.dse.driver.api.core.graph;
 
 import com.datastax.dse.driver.internal.core.graph.DefaultFluentGraphStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
+import javax.annotation.Nonnull;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 
 /**
@@ -46,8 +46,8 @@ public interface FluentGraphStatement extends GraphStatement<FluentGraphStatemen
    * <p>Use {@link #builder(GraphTraversal)} if you want to set more options before building the
    * final statement instance.
    */
-  @NonNull
-  static FluentGraphStatement newInstance(@NonNull GraphTraversal<?, ?> traversal) {
+  @Nonnull
+  static FluentGraphStatement newInstance(@Nonnull GraphTraversal<?, ?> traversal) {
     return new DefaultFluentGraphStatement(
         traversal,
         null,
@@ -70,8 +70,8 @@ public interface FluentGraphStatement extends GraphStatement<FluentGraphStatemen
    *
    * <p>Note that this builder is mutable and not thread-safe.
    */
-  @NonNull
-  static FluentGraphStatementBuilder builder(@NonNull GraphTraversal<?, ?> traversal) {
+  @Nonnull
+  static FluentGraphStatementBuilder builder(@Nonnull GraphTraversal<?, ?> traversal) {
     return new FluentGraphStatementBuilder(traversal);
   }
 
@@ -82,12 +82,12 @@ public interface FluentGraphStatement extends GraphStatement<FluentGraphStatemen
    *
    * <p>Note that this builder is mutable and not thread-safe.
    */
-  @NonNull
-  static FluentGraphStatementBuilder builder(@NonNull FluentGraphStatement template) {
+  @Nonnull
+  static FluentGraphStatementBuilder builder(@Nonnull FluentGraphStatement template) {
     return new FluentGraphStatementBuilder(template);
   }
 
   /** The underlying TinkerPop object representing the traversal executed by this statement. */
-  @NonNull
+  @Nonnull
   GraphTraversal<?, ?> getTraversal();
 }

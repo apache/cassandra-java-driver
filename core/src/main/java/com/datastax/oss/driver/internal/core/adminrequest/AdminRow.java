@@ -23,13 +23,13 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable

@@ -23,9 +23,9 @@ import com.datastax.oss.driver.api.querybuilder.schema.AlterMaterializedViewStar
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -37,32 +37,32 @@ public class DefaultAlterMaterializedView
 
   private final ImmutableMap<String, Object> options;
 
-  public DefaultAlterMaterializedView(@NonNull CqlIdentifier viewName) {
+  public DefaultAlterMaterializedView(@Nonnull CqlIdentifier viewName) {
     this(null, viewName);
   }
 
   public DefaultAlterMaterializedView(
-      @Nullable CqlIdentifier keyspace, @NonNull CqlIdentifier viewName) {
+      @Nullable CqlIdentifier keyspace, @Nonnull CqlIdentifier viewName) {
     this(keyspace, viewName, ImmutableMap.of());
   }
 
   public DefaultAlterMaterializedView(
       @Nullable CqlIdentifier keyspace,
-      @NonNull CqlIdentifier viewName,
-      @NonNull ImmutableMap<String, Object> options) {
+      @Nonnull CqlIdentifier viewName,
+      @Nonnull ImmutableMap<String, Object> options) {
     this.keyspace = keyspace;
     this.viewName = viewName;
     this.options = options;
   }
 
-  @NonNull
+  @Nonnull
   @Override
-  public AlterMaterializedView withOption(@NonNull String name, @NonNull Object value) {
+  public AlterMaterializedView withOption(@Nonnull String name, @Nonnull Object value) {
     return new DefaultAlterMaterializedView(
         keyspace, viewName, ImmutableCollections.append(options, name, value));
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String asCql() {
     StringBuilder builder = new StringBuilder("ALTER MATERIALIZED VIEW ");
@@ -76,7 +76,7 @@ public class DefaultAlterMaterializedView
     return asCql();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, Object> getOptions() {
     return options;
@@ -87,7 +87,7 @@ public class DefaultAlterMaterializedView
     return keyspace;
   }
 
-  @NonNull
+  @Nonnull
   public CqlIdentifier getMaterializedView() {
     return viewName;
   }

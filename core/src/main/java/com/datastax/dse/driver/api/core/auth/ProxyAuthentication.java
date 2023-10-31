@@ -21,9 +21,9 @@ import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import javax.annotation.Nonnull;
 
 public class ProxyAuthentication {
   private static final String PROXY_EXECUTE = "ProxyExecute";
@@ -45,9 +45,9 @@ public class ProxyAuthentication {
    *     href="https://docs.datastax.com/en/dse/6.0/dse-admin/datastax_enterprise/security/secProxy.html">Setting
    *     up roles for applications (DSE 6.0 admin guide)</a>
    */
-  @NonNull
+  @Nonnull
   public static <StatementT extends Statement<StatementT>> StatementT executeAs(
-      @NonNull String userOrRole, @NonNull StatementT statement) {
+      @Nonnull String userOrRole, @Nonnull StatementT statement) {
     return statement.setCustomPayload(
         addProxyExecuteEntry(statement.getCustomPayload(), userOrRole));
   }
@@ -57,15 +57,15 @@ public class ProxyAuthentication {
    *
    * @see #executeAs(String, Statement)
    */
-  @NonNull
+  @Nonnull
   public static <StatementT extends GraphStatement<StatementT>> StatementT executeAs(
-      @NonNull String userOrRole, @NonNull StatementT statement) {
+      @Nonnull String userOrRole, @Nonnull StatementT statement) {
     return statement.setCustomPayload(
         addProxyExecuteEntry(statement.getCustomPayload(), userOrRole));
   }
 
   private static Map<String, ByteBuffer> addProxyExecuteEntry(
-      Map<String, ByteBuffer> currentPayload, @NonNull String userOrRole) {
+      Map<String, ByteBuffer> currentPayload, @Nonnull String userOrRole) {
     NullAllowingImmutableMap.Builder<String, ByteBuffer> builder =
         NullAllowingImmutableMap.builder();
     builder.put(PROXY_EXECUTE, ByteBuffer.wrap(userOrRole.getBytes(Charsets.UTF_8)));

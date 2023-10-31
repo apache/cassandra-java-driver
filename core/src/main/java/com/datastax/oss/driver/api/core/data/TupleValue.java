@@ -19,7 +19,7 @@ package com.datastax.oss.driver.api.core.data;
 
 import com.datastax.oss.driver.api.core.detach.Detachable;
 import com.datastax.oss.driver.api.core.type.TupleType;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * Driver-side representation of a CQL {@code tuple} value.
@@ -34,7 +34,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  */
 public interface TupleValue extends GettableByIndex, SettableByIndex<TupleValue> {
 
-  @NonNull
+  @Nonnull
   TupleType getType();
 
   /**
@@ -56,7 +56,7 @@ public interface TupleValue extends GettableByIndex, SettableByIndex<TupleValue>
    *       might be undesirable to leak data in application logs.
    * </ul>
    */
-  @NonNull
+  @Nonnull
   default String getFormattedContents() {
     return codecRegistry().codecFor(getType(), TupleValue.class).format(this);
   }

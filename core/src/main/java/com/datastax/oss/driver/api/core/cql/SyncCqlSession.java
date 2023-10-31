@@ -24,9 +24,9 @@ import com.datastax.oss.driver.api.core.servererrors.SyntaxError;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.cql.DefaultPrepareRequest;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 
 /**
  * A session that offers user-friendly methods to execute CQL requests synchronously.
@@ -50,8 +50,8 @@ public interface SyncCqlSession extends Session {
    * @throws QueryValidationException if the query is invalid (syntax error, unauthorized or any
    *     other validation problem).
    */
-  @NonNull
-  default ResultSet execute(@NonNull Statement<?> statement) {
+  @Nonnull
+  default ResultSet execute(@Nonnull Statement<?> statement) {
     return Objects.requireNonNull(
         execute(statement, Statement.SYNC), "The CQL processor should never return a null result");
   }
@@ -75,8 +75,8 @@ public interface SyncCqlSession extends Session {
    *     other validation problem).
    * @see SimpleStatement#newInstance(String)
    */
-  @NonNull
-  default ResultSet execute(@NonNull String query) {
+  @Nonnull
+  default ResultSet execute(@Nonnull String query) {
     return execute(SimpleStatement.newInstance(query));
   }
 
@@ -101,8 +101,8 @@ public interface SyncCqlSession extends Session {
    *     other validation problem).
    * @see SimpleStatement#newInstance(String, Object...)
    */
-  @NonNull
-  default ResultSet execute(@NonNull String query, @NonNull Object... values) {
+  @Nonnull
+  default ResultSet execute(@Nonnull String query, @Nonnull Object... values) {
     return execute(SimpleStatement.newInstance(query, values));
   }
 
@@ -127,8 +127,8 @@ public interface SyncCqlSession extends Session {
    *     other validation problem).
    * @see SimpleStatement#newInstance(String, Map)
    */
-  @NonNull
-  default ResultSet execute(@NonNull String query, @NonNull Map<String, Object> values) {
+  @Nonnull
+  default ResultSet execute(@Nonnull String query, @Nonnull Map<String, Object> values) {
     return execute(SimpleStatement.newInstance(query, values));
   }
 
@@ -202,8 +202,8 @@ public interface SyncCqlSession extends Session {
    * @return the prepared statement corresponding to {@code statement}.
    * @throws SyntaxError if the syntax of the query to prepare is not correct.
    */
-  @NonNull
-  default PreparedStatement prepare(@NonNull SimpleStatement statement) {
+  @Nonnull
+  default PreparedStatement prepare(@Nonnull SimpleStatement statement) {
     return Objects.requireNonNull(
         execute(new DefaultPrepareRequest(statement), PrepareRequest.SYNC),
         "The CQL prepare processor should never return a null result");
@@ -220,8 +220,8 @@ public interface SyncCqlSession extends Session {
    * @return the prepared statement corresponding to {@code query}.
    * @throws SyntaxError if the syntax of the query to prepare is not correct.
    */
-  @NonNull
-  default PreparedStatement prepare(@NonNull String query) {
+  @Nonnull
+  default PreparedStatement prepare(@Nonnull String query) {
     return Objects.requireNonNull(
         execute(new DefaultPrepareRequest(query), PrepareRequest.SYNC),
         "The CQL prepare processor should never return a null result");
@@ -243,8 +243,8 @@ public interface SyncCqlSession extends Session {
    * @return the prepared statement corresponding to {@code request}.
    * @throws SyntaxError if the syntax of the query to prepare is not correct.
    */
-  @NonNull
-  default PreparedStatement prepare(@NonNull PrepareRequest request) {
+  @Nonnull
+  default PreparedStatement prepare(@Nonnull PrepareRequest request) {
     return Objects.requireNonNull(
         execute(request, PrepareRequest.SYNC),
         "The CQL prepare processor should never return a null result");

@@ -25,11 +25,11 @@ import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -62,7 +62,7 @@ public class DefaultPrepareRequest implements PrepareRequest {
     this.statement = SimpleStatement.newInstance(query);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public String getQuery() {
     return statement.getQuery();
@@ -105,7 +105,7 @@ public class DefaultPrepareRequest implements PrepareRequest {
     return null;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, ByteBuffer> getCustomPayload() {
     return statement.getCustomPayload();
@@ -149,7 +149,7 @@ public class DefaultPrepareRequest implements PrepareRequest {
     return statement.getRoutingToken();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Map<String, ByteBuffer> getCustomPayloadForBoundStatements() {
     return statement.getCustomPayload();

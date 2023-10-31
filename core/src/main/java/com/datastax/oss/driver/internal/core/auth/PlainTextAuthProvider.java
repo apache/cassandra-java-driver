@@ -24,7 +24,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.ThreadSafe;
 
 /**
@@ -64,10 +64,10 @@ public class PlainTextAuthProvider extends PlainTextAuthProviderBase {
     this.config = context.getConfig().getDefaultProfile();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   protected Credentials getCredentials(
-      @NonNull EndPoint endPoint, @NonNull String serverAuthenticator) {
+      @Nonnull EndPoint endPoint, @Nonnull String serverAuthenticator) {
     // It's not valid to use the PlainTextAuthProvider without a username or password, error out
     // early here
     AuthUtils.validateConfigPresent(

@@ -36,8 +36,6 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.Error;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -53,6 +51,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -230,20 +230,20 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     return new SchemaAgreementChecker(channel, context, logPrefix).run();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Void> closeFuture() {
     return closeFuture;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Void> closeAsync() {
     closeFuture.complete(null);
     return closeFuture;
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public CompletionStage<Void> forceCloseAsync() {
     return closeAsync();
@@ -300,11 +300,11 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
    *     connection may have changed its channel since. So this parameter must be provided by the
    *     caller.
    */
-  @NonNull
+  @Nonnull
   protected DefaultNodeInfo.Builder nodeInfoBuilder(
-      @NonNull AdminRow row,
+      @Nonnull AdminRow row,
       @Nullable InetSocketAddress broadcastRpcAddress,
-      @NonNull EndPoint localEndPoint) {
+      @Nonnull EndPoint localEndPoint) {
 
     EndPoint endPoint = buildNodeEndPoint(row, broadcastRpcAddress, localEndPoint);
 
@@ -411,11 +411,11 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
    *     connection may have changed its channel since. So this parameter must be provided by the
    *     caller.
    */
-  @NonNull
+  @Nonnull
   protected EndPoint buildNodeEndPoint(
-      @NonNull AdminRow row,
+      @Nonnull AdminRow row,
       @Nullable InetSocketAddress broadcastRpcAddress,
-      @NonNull EndPoint localEndPoint) {
+      @Nonnull EndPoint localEndPoint) {
     boolean peer = row.contains("peer");
     if (peer) {
       // If this node is a peer, its broadcast RPC address must be present.
@@ -493,7 +493,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
    */
   @Nullable
   protected InetSocketAddress getBroadcastRpcAddress(
-      @NonNull AdminRow row, @NonNull EndPoint localEndPoint) {
+      @Nonnull AdminRow row, @Nonnull EndPoint localEndPoint) {
     // in system.peers or system.local
     InetAddress broadcastRpcInetAddress = row.getInetAddress("rpc_address");
     if (broadcastRpcInetAddress == null) {

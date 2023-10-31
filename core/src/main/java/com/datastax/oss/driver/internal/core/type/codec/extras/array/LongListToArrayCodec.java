@@ -20,9 +20,9 @@ package com.datastax.oss.driver.internal.core.type.codec.extras.array;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -41,13 +41,13 @@ public class LongListToArrayCodec extends AbstractPrimitiveListToArrayCodec<long
   }
 
   @Override
-  public boolean accepts(@NonNull Class<?> javaClass) {
+  public boolean accepts(@Nonnull Class<?> javaClass) {
     Objects.requireNonNull(javaClass);
     return long[].class.equals(javaClass);
   }
 
   @Override
-  public boolean accepts(@NonNull Object value) {
+  public boolean accepts(@Nonnull Object value) {
     Objects.requireNonNull(value);
     return value instanceof long[];
   }
@@ -59,33 +59,33 @@ public class LongListToArrayCodec extends AbstractPrimitiveListToArrayCodec<long
 
   @Override
   protected void serializeElement(
-      @NonNull ByteBuffer output,
-      @NonNull long[] array,
+      @Nonnull ByteBuffer output,
+      @Nonnull long[] array,
       int index,
-      @NonNull ProtocolVersion protocolVersion) {
+      @Nonnull ProtocolVersion protocolVersion) {
     output.putLong(array[index]);
   }
 
   @Override
   protected void deserializeElement(
-      @NonNull ByteBuffer input,
-      @NonNull long[] array,
+      @Nonnull ByteBuffer input,
+      @Nonnull long[] array,
       int index,
-      @NonNull ProtocolVersion protocolVersion) {
+      @Nonnull ProtocolVersion protocolVersion) {
     array[index] = input.getLong();
   }
 
   @Override
-  protected void formatElement(@NonNull StringBuilder output, @NonNull long[] array, int index) {
+  protected void formatElement(@Nonnull StringBuilder output, @Nonnull long[] array, int index) {
     output.append(array[index]);
   }
 
   @Override
-  protected void parseElement(@NonNull String input, @NonNull long[] array, int index) {
+  protected void parseElement(@Nonnull String input, @Nonnull long[] array, int index) {
     array[index] = Long.parseLong(input);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   protected long[] newInstance(int size) {
     return new long[size];

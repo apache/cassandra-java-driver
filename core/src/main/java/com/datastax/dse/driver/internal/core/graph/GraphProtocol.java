@@ -17,11 +17,11 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public enum GraphProtocol {
   GRAPHSON_1_0("graphson-1.0"),
@@ -45,12 +45,12 @@ public enum GraphProtocol {
     this.stringRepresentation = stringRepresentation;
   }
 
-  @NonNull
+  @Nonnull
   public String toInternalCode() {
     return stringRepresentation;
   }
 
-  @NonNull
+  @Nonnull
   public static GraphProtocol fromString(@Nullable String stringRepresentation) {
     if (stringRepresentation == null || !BY_CODE.containsKey(stringRepresentation)) {
       StringBuilder sb =

@@ -30,12 +30,12 @@ import com.datastax.oss.driver.internal.core.session.RequestProcessor;
 import com.datastax.oss.driver.internal.core.session.throttling.ConcurrencyLimitingRequestThrottler;
 import com.datastax.oss.driver.internal.core.session.throttling.RateLimitingRequestThrottler;
 import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.util.Timeout;
 import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

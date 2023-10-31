@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.api.core.connection;
 
 import com.datastax.oss.driver.api.core.DriverException;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * Thrown when the checksums in a server response don't match (protocol v5 or above).
@@ -29,11 +29,11 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  */
 public class CrcMismatchException extends DriverException {
 
-  public CrcMismatchException(@NonNull String message) {
+  public CrcMismatchException(@Nonnull String message) {
     super(message, null, null, true);
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public DriverException copy() {
     return new CrcMismatchException(getMessage());

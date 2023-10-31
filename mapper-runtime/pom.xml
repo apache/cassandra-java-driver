@@ -53,8 +53,8 @@
       <artifactId>jcip-annotations</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.github.spotbugs</groupId>
-      <artifactId>spotbugs-annotations</artifactId>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -172,7 +172,7 @@
                   <!--
                   1) Don't include the packages below because they contain annotations only and are
                   not required at runtime.
-                  -->!net.jcip.annotations.*, !edu.umd.cs.findbugs.annotations.*,
+                  -->!net.jcip.annotations.*, !javax.annotation.*,
                   <!--
                   2) Use resolution:=optional for optional dependencies in order to make it possible
                   to use the driver without such dependencies in an OSGi environment, as long as

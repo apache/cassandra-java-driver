@@ -17,21 +17,21 @@
  */
 package com.datastax.oss.driver.api.querybuilder.schema;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public interface CreateFunctionWithType {
   /**
    * Adds LANGUAGE to the create function specification. This is used to specify what language is
    * used in the function body.
    */
-  @NonNull
-  CreateFunctionWithLanguage withLanguage(@NonNull String language);
+  @Nonnull
+  CreateFunctionWithLanguage withLanguage(@Nonnull String language);
 
   /**
    * Adds "LANGUAGE java" to create function specification. Shortcut for {@link
    * #withLanguage(String) withLanguage("java")}.
    */
-  @NonNull
+  @Nonnull
   default CreateFunctionWithLanguage withJavaLanguage() {
     return withLanguage("java");
   }
@@ -40,7 +40,7 @@ public interface CreateFunctionWithType {
    * Adds "LANGUAGE javascript" to create function specification. Shortcut for {@link
    * #withLanguage(String) withLanguage("javascript")}.
    */
-  @NonNull
+  @Nonnull
   default CreateFunctionWithLanguage withJavaScriptLanguage() {
     return withLanguage("javascript");
   }

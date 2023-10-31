@@ -19,7 +19,7 @@ package com.datastax.dse.driver.api.core;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.MavenCoordinates;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * @deprecated All DSE functionality is now available directly on {@link CqlSession}. This type is
@@ -33,14 +33,14 @@ public interface DseSession extends CqlSession {
    *     preserved for backward compatibility, but it returns the same value as {@link
    *     CqlSession#OSS_DRIVER_COORDINATES}.
    */
-  @Deprecated @NonNull MavenCoordinates DSE_DRIVER_COORDINATES = CqlSession.OSS_DRIVER_COORDINATES;
+  @Deprecated @Nonnull MavenCoordinates DSE_DRIVER_COORDINATES = CqlSession.OSS_DRIVER_COORDINATES;
 
   /**
    * Returns a builder to create a new instance.
    *
    * <p>Note that this builder is mutable and not thread-safe.
    */
-  @NonNull
+  @Nonnull
   static DseSessionBuilder builder() {
     return new DseSessionBuilder();
   }

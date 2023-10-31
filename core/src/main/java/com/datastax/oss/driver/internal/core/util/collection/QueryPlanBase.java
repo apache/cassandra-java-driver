@@ -19,13 +19,13 @@ package com.datastax.oss.driver.internal.core.util.collection;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.AbstractQueue;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -56,7 +56,7 @@ public abstract class QueryPlanBase extends AbstractQueue<Node> implements Query
     return (i >= nodes.length) ? null : (Node) nodes[i];
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public Iterator<Node> iterator() {
     int i = nextIndex.get();

@@ -20,12 +20,12 @@ package com.datastax.dse.driver.internal.core.cql.reactive;
 import static org.assertj.core.api.Fail.fail;
 
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
@@ -75,7 +75,7 @@ public class TestSubscriber<T> implements Subscriber<T> {
     return error;
   }
 
-  @NonNull
+  @Nonnull
   public List<T> getElements() {
     return elements;
   }

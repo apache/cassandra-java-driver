@@ -18,7 +18,7 @@
 package com.datastax.dse.driver.api.core.graph;
 
 import com.datastax.dse.driver.internal.core.graph.DefaultFluentGraphStatement;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 import net.jcip.annotations.NotThreadSafe;
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal;
 
@@ -33,16 +33,16 @@ public class FluentGraphStatementBuilder
 
   private GraphTraversal<?, ?> traversal;
 
-  public FluentGraphStatementBuilder(@NonNull GraphTraversal<?, ?> traversal) {
+  public FluentGraphStatementBuilder(@Nonnull GraphTraversal<?, ?> traversal) {
     this.traversal = traversal;
   }
 
-  public FluentGraphStatementBuilder(@NonNull FluentGraphStatement template) {
+  public FluentGraphStatementBuilder(@Nonnull FluentGraphStatement template) {
     super(template);
     this.traversal = template.getTraversal();
   }
 
-  @NonNull
+  @Nonnull
   @Override
   public FluentGraphStatement build() {
     return new DefaultFluentGraphStatement(

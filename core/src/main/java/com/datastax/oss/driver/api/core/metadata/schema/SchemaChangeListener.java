@@ -20,7 +20,7 @@ package com.datastax.oss.driver.api.core.metadata.schema;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * Tracks schema changes.
@@ -39,42 +39,42 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  */
 public interface SchemaChangeListener extends AutoCloseable {
 
-  void onKeyspaceCreated(@NonNull KeyspaceMetadata keyspace);
+  void onKeyspaceCreated(@Nonnull KeyspaceMetadata keyspace);
 
-  void onKeyspaceDropped(@NonNull KeyspaceMetadata keyspace);
+  void onKeyspaceDropped(@Nonnull KeyspaceMetadata keyspace);
 
-  void onKeyspaceUpdated(@NonNull KeyspaceMetadata current, @NonNull KeyspaceMetadata previous);
+  void onKeyspaceUpdated(@Nonnull KeyspaceMetadata current, @Nonnull KeyspaceMetadata previous);
 
-  void onTableCreated(@NonNull TableMetadata table);
+  void onTableCreated(@Nonnull TableMetadata table);
 
-  void onTableDropped(@NonNull TableMetadata table);
+  void onTableDropped(@Nonnull TableMetadata table);
 
-  void onTableUpdated(@NonNull TableMetadata current, @NonNull TableMetadata previous);
+  void onTableUpdated(@Nonnull TableMetadata current, @Nonnull TableMetadata previous);
 
-  void onUserDefinedTypeCreated(@NonNull UserDefinedType type);
+  void onUserDefinedTypeCreated(@Nonnull UserDefinedType type);
 
-  void onUserDefinedTypeDropped(@NonNull UserDefinedType type);
+  void onUserDefinedTypeDropped(@Nonnull UserDefinedType type);
 
   void onUserDefinedTypeUpdated(
-      @NonNull UserDefinedType current, @NonNull UserDefinedType previous);
+      @Nonnull UserDefinedType current, @Nonnull UserDefinedType previous);
 
-  void onFunctionCreated(@NonNull FunctionMetadata function);
+  void onFunctionCreated(@Nonnull FunctionMetadata function);
 
-  void onFunctionDropped(@NonNull FunctionMetadata function);
+  void onFunctionDropped(@Nonnull FunctionMetadata function);
 
-  void onFunctionUpdated(@NonNull FunctionMetadata current, @NonNull FunctionMetadata previous);
+  void onFunctionUpdated(@Nonnull FunctionMetadata current, @Nonnull FunctionMetadata previous);
 
-  void onAggregateCreated(@NonNull AggregateMetadata aggregate);
+  void onAggregateCreated(@Nonnull AggregateMetadata aggregate);
 
-  void onAggregateDropped(@NonNull AggregateMetadata aggregate);
+  void onAggregateDropped(@Nonnull AggregateMetadata aggregate);
 
-  void onAggregateUpdated(@NonNull AggregateMetadata current, @NonNull AggregateMetadata previous);
+  void onAggregateUpdated(@Nonnull AggregateMetadata current, @Nonnull AggregateMetadata previous);
 
-  void onViewCreated(@NonNull ViewMetadata view);
+  void onViewCreated(@Nonnull ViewMetadata view);
 
-  void onViewDropped(@NonNull ViewMetadata view);
+  void onViewDropped(@Nonnull ViewMetadata view);
 
-  void onViewUpdated(@NonNull ViewMetadata current, @NonNull ViewMetadata previous);
+  void onViewUpdated(@Nonnull ViewMetadata current, @Nonnull ViewMetadata previous);
 
   /**
    * Invoked when the session is ready to process user requests.
@@ -90,5 +90,5 @@ public interface SchemaChangeListener extends AutoCloseable {
    *
    * <p>The default implementation is empty.
    */
-  default void onSessionReady(@NonNull Session session) {}
+  default void onSessionReady(@Nonnull Session session) {}
 }

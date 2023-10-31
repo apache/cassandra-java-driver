@@ -17,7 +17,7 @@
  */
 package com.datastax.oss.driver.api.core.config;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 /**
  * A builder that allows the creation of a config loader where options are overridden
@@ -34,8 +34,8 @@ public interface ProgrammaticDriverConfigLoaderBuilder
    * <p>All options set after this call, and before the next call to this method or {@link
    * #endProfile()}, will apply to the given profile.
    */
-  @NonNull
-  ProgrammaticDriverConfigLoaderBuilder startProfile(@NonNull String profileName);
+  @Nonnull
+  ProgrammaticDriverConfigLoaderBuilder startProfile(@Nonnull String profileName);
 
   /**
    * Ends the definition of a profile.
@@ -43,9 +43,9 @@ public interface ProgrammaticDriverConfigLoaderBuilder
    * <p>All options set after this call, and before the next call to {@link #startProfile(String)},
    * will apply to the default profile.
    */
-  @NonNull
+  @Nonnull
   ProgrammaticDriverConfigLoaderBuilder endProfile();
 
-  @NonNull
+  @Nonnull
   DriverConfigLoader build();
 }

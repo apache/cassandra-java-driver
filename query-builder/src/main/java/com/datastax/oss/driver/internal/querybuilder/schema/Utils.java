@@ -18,19 +18,19 @@
 package com.datastax.oss.driver.internal.querybuilder.schema;
 
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import javax.annotation.Nonnull;
 
 public class Utils {
   /** Convenience method for creating a new {@link ImmutableSet} with an appended value. */
-  @NonNull
-  public static <E> ImmutableSet<E> appendSet(@NonNull ImmutableSet<E> set, @NonNull E newValue) {
+  @Nonnull
+  public static <E> ImmutableSet<E> appendSet(@Nonnull ImmutableSet<E> set, @Nonnull E newValue) {
     return ImmutableSet.<E>builder().addAll(set).add(newValue).build();
   }
 
   /** Convenience method for creating a new {@link ImmutableSet} with concatenated iterable. */
-  @NonNull
+  @Nonnull
   public static <E> ImmutableSet<E> concatSet(
-      @NonNull ImmutableSet<E> set, @NonNull Iterable<E> toConcat) {
+      @Nonnull ImmutableSet<E> set, @Nonnull Iterable<E> toConcat) {
     return ImmutableSet.<E>builder().addAll(set).addAll(toConcat).build();
   }
 }

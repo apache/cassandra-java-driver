@@ -556,11 +556,11 @@ All  you have to do is create a `MappingCodec` subclass that piggybacks on an ex
 ```java
 public class CoordinatesCodec extends MappingCodec<UdtValue, Coordinates> {
 
-  public CoordinatesCodec(@NonNull TypeCodec<UdtValue> innerCodec) {
+  public CoordinatesCodec(@Nonnull TypeCodec<UdtValue> innerCodec) {
     super(innerCodec, GenericType.of(Coordinates.class));
   }
 
-  @NonNull @Override public UserDefinedType getCqlType() {
+  @Nonnull @Override public UserDefinedType getCqlType() {
     return (UserDefinedType) super.getCqlType();
   }
 

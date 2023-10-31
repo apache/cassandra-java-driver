@@ -36,8 +36,8 @@ import com.datastax.oss.driver.api.querybuilder.delete.Delete;
 import com.datastax.oss.driver.api.querybuilder.insert.RegularInsert;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.datastax.oss.driver.api.querybuilder.update.Update;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A set of utility methods related to a particular mapped entity.
@@ -53,12 +53,12 @@ public interface EntityHelper<EntityT> {
    *
    * @deprecated Use {@link #set(Object, SettableByName, NullSavingStrategy, boolean)} instead.
    */
-  @NonNull
+  @Nonnull
   @Deprecated
   <SettableT extends SettableByName<SettableT>> SettableT set(
-      @NonNull EntityT entity,
-      @NonNull SettableT target,
-      @NonNull NullSavingStrategy nullSavingStrategy);
+      @Nonnull EntityT entity,
+      @Nonnull SettableT target,
+      @Nonnull NullSavingStrategy nullSavingStrategy);
 
   /**
    * Sets the properties of an entity instance into a target data structure.
@@ -95,11 +95,11 @@ public interface EntityHelper<EntityT> {
    * @throws IllegalArgumentException if lenient is false and the target does not contain matching
    *     columns for every entity property.
    */
-  @NonNull
+  @Nonnull
   default <SettableT extends SettableByName<SettableT>> SettableT set(
-      @NonNull EntityT entity,
-      @NonNull SettableT target,
-      @NonNull NullSavingStrategy nullSavingStrategy,
+      @Nonnull EntityT entity,
+      @Nonnull SettableT target,
+      @Nonnull NullSavingStrategy nullSavingStrategy,
       boolean lenient) {
     return set(entity, target, nullSavingStrategy);
   }
@@ -109,9 +109,9 @@ public interface EntityHelper<EntityT> {
    *
    * @deprecated Use {@link #get(GettableByName, boolean)} instead.
    */
-  @NonNull
+  @Nonnull
   @Deprecated
-  EntityT get(@NonNull GettableByName source);
+  EntityT get(@Nonnull GettableByName source);
 
   /**
    * Gets values from a data structure to fill an entity instance.
@@ -147,8 +147,8 @@ public interface EntityHelper<EntityT> {
    * @throws IllegalArgumentException if lenient is false and the source does not contain matching
    *     columns for every entity property.
    */
-  @NonNull
-  default EntityT get(@NonNull GettableByName source, boolean lenient) {
+  @Nonnull
+  default EntityT get(@Nonnull GettableByName source, boolean lenient) {
     return get(source);
   }
 
@@ -173,7 +173,7 @@ public interface EntityHelper<EntityT> {
    * if the DAO was built without a specific keyspace and table, the query doesn't specify a
    * keyspace, and the table name is inferred from the naming strategy.
    */
-  @NonNull
+  @Nonnull
   RegularInsert insert();
 
   /**
@@ -183,7 +183,7 @@ public interface EntityHelper<EntityT> {
    * This would typically not be executed as-is, but instead completed with a custom {@code WHERE}
    * clause (either added with the query builder DSL, or concatenated to the built query).
    */
-  @NonNull
+  @Nonnull
   Update updateStart();
 
   /**
@@ -212,7 +212,7 @@ public interface EntityHelper<EntityT> {
    * if the DAO was built without a specific keyspace and table, the query doesn't specify a
    * keyspace, and the table name is inferred from the naming strategy.
    */
-  @NonNull
+  @Nonnull
   Update updateByPrimaryKey();
 
   /**
@@ -240,7 +240,7 @@ public interface EntityHelper<EntityT> {
    * if the DAO was built without a specific keyspace and table, the query doesn't specify a
    * keyspace, and the table name is inferred from the naming strategy.
    */
-  @NonNull
+  @Nonnull
   Select selectByPrimaryKey();
 
   /**
@@ -250,7 +250,7 @@ public interface EntityHelper<EntityT> {
    * This would typically not be executed as-is, but instead completed with a custom {@code WHERE}
    * clause (either added with the query builder DSL, or concatenated to the built query).
    */
-  @NonNull
+  @Nonnull
   Select selectStart();
 
   /**
@@ -273,7 +273,7 @@ public interface EntityHelper<EntityT> {
    * * if the DAO was built without a specific keyspace and table, the query doesn't specify a
    * keyspace, and the table name is inferred from the naming strategy.
    */
-  @NonNull
+  @Nonnull
   Delete deleteByPrimaryKey();
 
   /**
@@ -303,10 +303,10 @@ public interface EntityHelper<EntityT> {
    *   <li>Otherwise, use the name of the entity class, transformed by its {@link NamingStrategy}.
    * </ul>
    */
-  @NonNull
+  @Nonnull
   CqlIdentifier getTableId();
 
   /** The class of the mapped entity. */
-  @NonNull
+  @Nonnull
   Class<EntityT> getEntityClass();
 }
