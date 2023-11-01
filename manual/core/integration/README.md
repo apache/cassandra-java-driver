@@ -445,25 +445,22 @@ The driver team uses annotations to document certain aspects of the code:
 * nullability with [SpotBugs](https://spotbugs.github.io/) annotations `@Nullable` and `@NonNull`.
 
 This is mostly used during development; while these annotations are retained in class files, they
-serve no purpose at runtime. If you want to minimize the number of JARs in your classpath, you can
-exclude them:
+serve no purpose at runtime. This class is an optional dependency of the driver. If you wish to
+make use of these annotations in your own code you have to explicitly depend on these jars:
 
 ```xml
-<dependency>
-  <groupId>com.datastax.oss</groupId>
-  <artifactId>java-driver-core</artifactId>
-  <version>${driver.version}</version>
-  <exclusions>
-    <exclusion>
-      <groupId>com.github.stephenc.jcip</groupId>
-      <artifactId>jcip-annotations</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>com.github.spotbugs</groupId>
-      <artifactId>spotbugs-annotations</artifactId>
-    </exclusion>
-  </exclusions>
-</dependency>
+<dependencies>
+  <dependency>
+    <groupId>com.github.stephenc.jcip</groupId>
+    <artifactId>jcip-annotations</artifactId>
+    <version>1.0-1</version>
+  </dependency>
+  <dependency>
+    <groupId>com.github.spotbugs</groupId>
+    <artifactId>spotbugs-annotations</artifactId>
+    <version>3.1.12</version>
+  </dependency>
+</dependencies>
 ```
 
 However, there is one case when excluding those dependencies won't work: if you use [annotation
