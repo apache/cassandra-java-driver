@@ -25,9 +25,8 @@
     <artifactId>java-driver-parent</artifactId>
     <version>4.6.2-SNAPSHOT</version>
   </parent>
-  <artifactId>java-driver-test-infra</artifactId>
-  <packaging>bundle</packaging>
-  <name>Apache Cassandra Java Driver - test infrastructure tools</name>
+  <artifactId>java-driver-distribution-tests</artifactId>
+  <name>Apache Cassandra Java Driver - distribution tests</name>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -42,57 +41,68 @@
   <dependencies>
     <dependency>
       <groupId>com.datastax.oss</groupId>
-      <artifactId>java-driver-core</artifactId>
-      <version>${project.parent.version}</version>
+      <artifactId>java-driver-test-infra</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.spotbugs</groupId>
-      <artifactId>spotbugs-annotations</artifactId>
-      <scope>provided</scope>
+      <groupId>com.datastax.oss</groupId>
+      <artifactId>java-driver-query-builder</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datastax.oss</groupId>
+      <artifactId>java-driver-mapper-processor</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datastax.oss</groupId>
+      <artifactId>java-driver-mapper-runtime</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.datastax.oss</groupId>
+      <artifactId>java-driver-core</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.datastax.oss.simulacron</groupId>
-      <artifactId>simulacron-native-server</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-exec</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.awaitility</groupId>
-      <artifactId>awaitility</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <build>
     <plugins>
       <plugin>
-        <artifactId>maven-jar-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <archive>
-            <manifestEntries>
-              <Automatic-Module-Name>com.datastax.oss.driver.tests.infrastructure</Automatic-Module-Name>
-            </manifestEntries>
-          </archive>
+          <threadCount>1</threadCount>
         </configuration>
       </plugin>
       <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
+        <groupId>org.revapi</groupId>
+        <artifactId>revapi-maven-plugin</artifactId>
         <configuration>
-          <instructions>
-            <Bundle-SymbolicName>com.datastax.oss.driver.testinfra</Bundle-SymbolicName>
-            <!-- allow SessionUtils to instantiate sessions by reflection -->
-            <DynamicImport-Package>*</DynamicImport-Package>
-            <Export-Package>com.datastax.oss.driver.*.testinfra.*, com.datastax.oss.driver.assertions, com.datastax.oss.driver.categories</Export-Package>
-          </instructions>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-install-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <configuration>
+          <skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
         </configuration>
       </plugin>
     </plugins>
