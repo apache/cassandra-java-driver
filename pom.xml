@@ -36,6 +36,7 @@
     <module>test-infra</module>
     <module>integration-tests</module>
     <module>distribution</module>
+    <module>distribution-tests</module>
     <module>examples</module>
     <module>bom</module>
   </modules>
