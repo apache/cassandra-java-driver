@@ -31,13 +31,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -105,7 +99,7 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
     // Just an alias to make the rest of the code more readable
     this.policies = reporters.keySet();
 
-    this.distances = new HashMap<>();
+    this.distances = new WeakHashMap<>();
 
     this.logPrefix = context.getSessionName();
     context.getEventBus().register(NodeStateEvent.class, this::onNodeStateEvent);
