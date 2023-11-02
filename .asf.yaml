@@ -1,0 +1,19 @@
+notifications:
+  commits:      commits@cassandra.apache.org
+  issues:       commits@cassandra.apache.org
+  pullrequests: pr@cassandra.apache.org
+
+github:
+  description: "Java Driver for Apache Cassandra®"
+  homepage: https://cassandra.apache.org/
+  enabled_merge_buttons:
+    squash:  false
+    merge:   false
+    rebase:  true
+  features:
+    wiki: false
+    issues: false
+    projects: false
+
+notifications:
+  jira_options: link worklog
