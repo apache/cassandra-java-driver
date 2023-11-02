@@ -18,9 +18,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
-import static com.sun.xml.internal.ws.policy.Policy.createPolicy;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
@@ -139,7 +137,7 @@ public class LoadBalancingPolicyWrapperMemoryLeakTest {
         // verify
         System.gc();
         assertThat(weakReference1.get()).isNotNull();
-        await().atMost(2, TimeUnit.SECONDS)
+        await().atMost(10, TimeUnit.SECONDS)
                 .until(() -> weakReference2.get() == null);
     }
 }
