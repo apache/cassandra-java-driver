@@ -84,7 +84,7 @@ public class CqlVector<T extends Number> implements Iterable<T>, Serializable {
    * </code> call on some CqlVector should return a CqlVector that is equal to the origin instance.
    *
    * @param str a String representation of a CqlVector
-   * @param subtypeCodec the TypeCodec to parse the String representation
+   * @param subtypeCodec
    * @return a new CqlVector built from the String representation
    */
   public static <V extends Number> CqlVector<V> from(
