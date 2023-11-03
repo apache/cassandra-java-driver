@@ -22,4 +22,3 @@ see core/src/main/java/com/datastax/oss/driver/internal/core/util/CountingIterat
 (C) 2018 Christian Stein
 This product includes software developed by Christian Stein
 see ci/install-jdk.sh 
-
