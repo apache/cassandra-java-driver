@@ -159,7 +159,9 @@ public class CqlPrepareAsyncProcessor
                   });
         }
       }
-      return result;
+      // Return a defensive copy. So if a client cancels its request, the cache won't be impacted
+      // nor a potential concurrent request.
+      return result.thenApply(x -> x); // copy() is available only since Java 9
     } catch (ExecutionException e) {
       return CompletableFutures.failedFuture(e.getCause());
     }
