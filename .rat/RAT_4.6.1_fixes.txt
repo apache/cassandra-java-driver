@@ -1,13 +1,11 @@
 Files with unapproved licenses:
   /home/claude/apache/cassandra-java-driver/.gitignore
-  /home/claude/apache/cassandra-java-driver/Jenkinsfile
   /home/claude/apache/cassandra-java-driver/core/src/test/resources/insights/duplicate-dependencies.txt
   /home/claude/apache/cassandra-java-driver/core/src/test/resources/insights/netty-dependency-optional.txt
   /home/claude/apache/cassandra-java-driver/core/src/test/resources/insights/netty-dependency.txt
   /home/claude/apache/cassandra-java-driver/core/src/test/resources/insights/ordered-dependencies.txt
   /home/claude/apache/cassandra-java-driver/core/src/test/resources/insights/test-dependencies.txt
   /home/claude/apache/cassandra-java-driver/manual/.nav
-  /home/claude/apache/cassandra-java-driver/manual/core/configuration/reference/README.rst
   /home/claude/apache/cassandra-java-driver/manual/core/dse/.nav
   /home/claude/apache/cassandra-java-driver/manual/core/dse/graph/.nav
   /home/claude/apache/cassandra-java-driver/manual/core/dse/graph/fluent/.nav
