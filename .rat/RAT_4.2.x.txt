@@ -1,7 +1,6 @@
 Files with unapproved licenses:
   /home/claude/apache/cassandra-java-driver/.gitignore
   /home/claude/apache/cassandra-java-driver/manual/.nav
-  /home/claude/apache/cassandra-java-driver/manual/core/configuration/reference/README.rst
   /home/claude/apache/cassandra-java-driver/manual/core/statements/.nav
   /home/claude/apache/cassandra-java-driver/manual/mapper/.nav
   /home/claude/apache/cassandra-java-driver/manual/mapper/daos/.nav
