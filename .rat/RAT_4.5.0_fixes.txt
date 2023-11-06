@@ -6,7 +6,6 @@ Files with unapproved licenses:
   /home/claude/apache/cassandra-java-driver/core/src/test/resources/insights/ordered-dependencies.txt
   /home/claude/apache/cassandra-java-driver/core/src/test/resources/insights/test-dependencies.txt
   /home/claude/apache/cassandra-java-driver/manual/.nav
-  /home/claude/apache/cassandra-java-driver/manual/core/configuration/reference/README.rst
   /home/claude/apache/cassandra-java-driver/manual/core/dse/.nav
   /home/claude/apache/cassandra-java-driver/manual/core/dse/graph/.nav
   /home/claude/apache/cassandra-java-driver/manual/core/dse/graph/fluent/.nav
