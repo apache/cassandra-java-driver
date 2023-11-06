@@ -4,11 +4,6 @@ Copyright 2012- The Apache Software Foundation
 This product includes software developed by The Apache Software
 Foundation (http://www.apache.org/).
 
-JNR project
-Copyright (C) 2008-2010 Wayne Meissner
-This product includes software developed as part of the JNR project ( https://github.com/jnr/jnr-ffi )s.
-see core/src/main/java/com/datastax/oss/driver/internal/core/os/CpuInfo.java
-
 Protocol Buffers
 Copyright 2008 Google Inc.
 This product includes software developed as part of the Protocol Buffers project ( https://developers.google.com/protocol-buffers/ ).
