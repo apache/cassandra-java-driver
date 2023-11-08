@@ -103,7 +103,7 @@ If you are having issues connecting to the cluster (seeing `NoHostAvailableConne
 [connection requirements](https://github.com/datastax/java-driver/wiki/Connection-requirements).
 
 ## License
-Copyright 2012-2015, DataStax
+&copy; The Apache Software Foundation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
