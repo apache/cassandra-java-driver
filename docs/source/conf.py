@@ -15,7 +15,19 @@ from redirects_cli import cli as redirects_cli
 
 # Build documentation for the following tags and branches
 TAGS = []
-BRANCHES = ['scylla-3.7.2.x', 'scylla-3.10.2.x', 'scylla-3.11.0.x', 'scylla-3.11.2.x', 'scylla-4.7.2.x', 'scylla-4.10.0.x', 'scylla-4.11.1.x', 'scylla-4.12.0.x', 'scylla-4.13.0.x', 'scylla-4.14.1.x', 'scylla-4.15.0.x']
+BRANCHES = [
+    'scylla-3.7.2.x',
+    'scylla-3.10.2.x',
+    'scylla-3.11.0.x',
+    'scylla-3.11.2.x',
+    'scylla-4.7.2.x',
+    'scylla-4.10.0.x',
+    'scylla-4.11.1.x',
+    'scylla-4.12.0.x',
+    'scylla-4.13.0.x',
+    'scylla-4.14.1.x',
+    'scylla-4.15.0.x'
+]
 # Set the latest version.
 LATEST_VERSION = 'scylla-4.15.0.x'
 # Set which versions are not released yet.
