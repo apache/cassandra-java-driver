@@ -1,0 +1,25 @@
+Files with unapproved licenses:
+  /Users/henry.hughes/repos/java-driver/.gitignore
+  /Users/henry.hughes/repos/java-driver/.snyk
+  /Users/henry.hughes/repos/java-driver/.snyk.ignore.example
+  /Users/henry.hughes/repos/java-driver/core/src/main/resources/META-INF/services/reactor.blockhound.integration.BlockHoundIntegration
+  /Users/henry.hughes/repos/java-driver/core/src/test/resources/insights/duplicate-dependencies.txt
+  /Users/henry.hughes/repos/java-driver/core/src/test/resources/insights/netty-dependency-optional.txt
+  /Users/henry.hughes/repos/java-driver/core/src/test/resources/insights/netty-dependency.txt
+  /Users/henry.hughes/repos/java-driver/core/src/test/resources/insights/ordered-dependencies.txt
+  /Users/henry.hughes/repos/java-driver/core/src/test/resources/insights/test-dependencies.txt
+  /Users/henry.hughes/repos/java-driver/integration-tests/src/test/resources/META-INF/services/com.datastax.oss.driver.api.mapper.result.MapperResultProducerService
+  /Users/henry.hughes/repos/java-driver/manual/.nav
+  /Users/henry.hughes/repos/java-driver/manual/core/dse/.nav
+  /Users/henry.hughes/repos/java-driver/manual/core/dse/graph/.nav
+  /Users/henry.hughes/repos/java-driver/manual/core/dse/graph/fluent/.nav
+  /Users/henry.hughes/repos/java-driver/manual/core/statements/.nav
+  /Users/henry.hughes/repos/java-driver/manual/developer/.nav
+  /Users/henry.hughes/repos/java-driver/manual/developer/common/.nav
+  /Users/henry.hughes/repos/java-driver/manual/mapper/.nav
+  /Users/henry.hughes/repos/java-driver/manual/mapper/daos/.nav
+  /Users/henry.hughes/repos/java-driver/manual/query_builder/.nav
+  /Users/henry.hughes/repos/java-driver/manual/query_builder/schema/.nav
+  /Users/henry.hughes/repos/java-driver/mapper-processor/src/main/resources/META-INF/services/javax.annotation.processing.Processor
+  /Users/henry.hughes/repos/java-driver/test-infra/src/main/resources/client.crt
+  /Users/henry.hughes/repos/java-driver/test-infra/src/main/resources/client.key
