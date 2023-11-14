@@ -131,7 +131,8 @@ If you are upgrading to _DataStax Enterprise_, use the [DataStax Enterprise Java
 features and better compatibility.
 
 ## License
-&copy; DataStax, Inc.
+
+&copy; The Apache Software Foundation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -144,5 +145,11 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+----
+
+Apache Cassandra, Apache, Tomcat, Lucene, Solr, Hadoop, Spark, TinkerPop, and Cassandra are 
+trademarks of the [Apache Software Foundation](http://www.apache.org/) or its subsidiaries in
+Canada, the United States and/or other countries. 
 
 [dse-driver]: http://docs.datastax.com/en/developer/java-driver-dse/latest/
