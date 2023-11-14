@@ -631,7 +631,7 @@ public class NodeStateIT {
         // another session instance, and nodes are compared by reference.
         assertThat(actual.oldState).isEqualTo(expected.oldState);
         assertThat(actual.newState).isEqualTo(expected.newState);
-        assertThat(actual.node.getHostId()).isEqualTo(expected.node.getHostId());
+        assertThat(actual.node.get().getHostId()).isEqualTo(expected.node.get().getHostId());
       } catch (InterruptedException e) {
         fail("Interrupted while waiting for event");
       }

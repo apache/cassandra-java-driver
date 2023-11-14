@@ -34,6 +34,7 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.LifecycleListener;
+import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager.RefreshSchemaResult;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
@@ -525,14 +526,18 @@ public class DefaultSession implements CqlSession {
 
     private void onNodeStateChanged(NodeStateEvent event) {
       assert adminExecutor.inEventLoop();
-      if (event.newState == null) {
-        context.getNodeStateListener().onRemove(event.node);
+      DefaultNode node = event.node.get();
+      if (node == null) {
+        LOG.info(
+            "[{}] Node for this event was removed, ignoring state change: {}", logPrefix, event);
+      } else if (event.newState == null) {
+        context.getNodeStateListener().onRemove(node);
       } else if (event.oldState == null && event.newState == NodeState.UNKNOWN) {
-        context.getNodeStateListener().onAdd(event.node);
+        context.getNodeStateListener().onAdd(node);
       } else if (event.newState == NodeState.UP) {
-        context.getNodeStateListener().onUp(event.node);
+        context.getNodeStateListener().onUp(node);
       } else if (event.newState == NodeState.DOWN || event.newState == NodeState.FORCED_DOWN) {
-        context.getNodeStateListener().onDown(event.node);
+        context.getNodeStateListener().onDown(node);
       }
     }
 

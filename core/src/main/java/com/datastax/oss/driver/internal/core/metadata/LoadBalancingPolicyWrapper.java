@@ -181,14 +181,17 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
         return; // ignore
       case RUNNING:
         for (LoadBalancingPolicy policy : policies) {
-          if (event.newState == NodeState.UP) {
-            policy.onUp(event.node);
+          DefaultNode node = event.node.get();
+          if (node == null) {
+            LOG.info("[{}] Node for this event was removed, ignoring: {}", logPrefix, event);
+          } else if (event.newState == NodeState.UP) {
+            policy.onUp(node);
           } else if (event.newState == NodeState.DOWN || event.newState == NodeState.FORCED_DOWN) {
-            policy.onDown(event.node);
+            policy.onDown(node);
           } else if (event.newState == NodeState.UNKNOWN) {
-            policy.onAdd(event.node);
+            policy.onAdd(node);
           } else if (event.newState == null) {
-            policy.onRemove(event.node);
+            policy.onRemove(node);
           } else {
             LOG.warn("[{}] Unsupported event: {}", logPrefix, event);
           }

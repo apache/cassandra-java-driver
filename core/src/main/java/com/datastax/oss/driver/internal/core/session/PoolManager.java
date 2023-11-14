@@ -322,7 +322,8 @@ public class PoolManager implements AsyncAutoCloseable {
     private void processStateEvent(NodeStateEvent event) {
       assert adminExecutor.inEventLoop();
       // no need to check closeWasCalled, because we stop listening for events once closed
-      DefaultNode node = event.node;
+      DefaultNode node = event.node.get();
+      if (node == null) return;
       NodeState oldState = event.oldState;
       NodeState newState = event.newState;
       if (pending.containsKey(node)) {
