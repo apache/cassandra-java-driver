@@ -68,7 +68,7 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     policy.onNodeSuccess(request, 0, profile, node1, logPrefix);
 
     // Then
-    assertThat(policy.responseTimes)
+    assertThat(policy.responseTimes.asMap())
         .hasEntrySatisfying(node1, value -> assertThat(value.get(0)).isEqualTo(123L))
         .doesNotContainKeys(node2, node3);
     assertThat(policy.isResponseRateInsufficient(node1, nextNanoTime)).isTrue();
@@ -86,7 +86,7 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     policy.onNodeSuccess(request, 0, profile, node1, logPrefix);
 
     // Then
-    assertThat(policy.responseTimes)
+    assertThat(policy.responseTimes.asMap())
         .hasEntrySatisfying(
             node1,
             value -> {
@@ -111,7 +111,7 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     policy.onNodeSuccess(request, 0, profile, node2, logPrefix);
 
     // Then
-    assertThat(policy.responseTimes)
+    assertThat(policy.responseTimes.asMap())
         .hasEntrySatisfying(
             node1,
             value -> {
@@ -136,7 +136,7 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     policy.onNodeError(request, iae, 0, profile, node1, logPrefix);
 
     // Then
-    assertThat(policy.responseTimes)
+    assertThat(policy.responseTimes.asMap())
         .hasEntrySatisfying(node1, value -> assertThat(value.get(0)).isEqualTo(123L))
         .doesNotContainKeys(node2, node3);
     assertThat(policy.isResponseRateInsufficient(node1, nextNanoTime)).isTrue();
@@ -155,7 +155,7 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     policy.onNodeError(request, iae, 0, profile, node1, logPrefix);
 
     // Then
-    assertThat(policy.responseTimes)
+    assertThat(policy.responseTimes.asMap())
         .hasEntrySatisfying(
             node1,
             value -> {
@@ -181,7 +181,7 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     policy.onNodeError(request, iae, 0, profile, node2, logPrefix);
 
     // Then
-    assertThat(policy.responseTimes)
+    assertThat(policy.responseTimes.asMap())
         .hasEntrySatisfying(
             node1,
             value -> {
