@@ -534,15 +534,16 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
     private void onDistanceEvent(DistanceEvent event) {
       assert adminExecutor.inEventLoop();
-      this.lastDistanceEvents.put(event.node, event);
+      this.lastDistanceEvents.put(event.node.get(), event);
       if (event.distance == NodeDistance.IGNORED
           && channel != null
           && !channel.closeFuture().isDone()
-          && event.node.getEndPoint().equals(channel.getEndPoint())) {
+          && event.node.get() != null
+          && event.node.get().getEndPoint().equals(channel.getEndPoint())) {
         LOG.debug(
             "[{}] Control node {} became IGNORED, reconnecting to a different node",
             logPrefix,
-            event.node);
+            event.node.get());
         reconnectNow();
       }
     }

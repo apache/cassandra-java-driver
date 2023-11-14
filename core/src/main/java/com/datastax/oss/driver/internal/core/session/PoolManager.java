@@ -276,7 +276,11 @@ public class PoolManager implements AsyncAutoCloseable {
     private void processDistanceEvent(DistanceEvent event) {
       assert adminExecutor.inEventLoop();
       // no need to check closeWasCalled, because we stop listening for events one closed
-      DefaultNode node = event.node;
+      DefaultNode node = event.node.get();
+      if(node == null){
+        LOG.debug("[{}] Node for event {} was removed, ignoring", logPrefix, event);
+        return;
+      }
       NodeDistance newDistance = event.distance;
       if (pending.containsKey(node)) {
         pendingDistanceEvents.put(node, event);
