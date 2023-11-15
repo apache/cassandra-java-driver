@@ -45,7 +45,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLongArray;
 import net.jcip.annotations.ThreadSafe;
@@ -115,24 +114,16 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
             // The array stores at most two timestamps, since we don't need more;
             // the first one is always the least recent one, and hence the one to inspect.
             long now = nanoTime();
-            AtomicLongArray array =
-                responseTimes.asMap().containsKey(key) ? responseTimes.get(key) : null;
+            AtomicLongArray array = responseTimes.getIfPresent(key);
             if (array == null) {
-              array = new AtomicLongArray(1);
-              array.set(0, now);
-            } else if (array.length() == 1) {
-              long previous = array.get(0);
-              array = new AtomicLongArray(2);
-              array.set(0, previous);
-              array.set(1, now);
+              array = new AtomicLongArray(new long[] {-1, now});
             } else {
-              array.set(0, array.get(1));
-              array.set(1, now);
+              array = new AtomicLongArray(new long[] {array.get(1), now});
             }
             return array;
           }
         };
-    this.responseTimes = CacheBuilder.newBuilder().weakValues().build(cacheLoader);
+    this.responseTimes = CacheBuilder.newBuilder().weakKeys().build(cacheLoader);
   }
 
   @NonNull
@@ -305,18 +296,11 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
   protected boolean isResponseRateInsufficient(@NonNull Node node, long now) {
     // response rate is considered insufficient when less than 2 responses were obtained in
     // the past interval delimited by RESPONSE_COUNT_RESET_INTERVAL_NANOS.
-    AtomicLongArray array;
-    try {
-      array = responseTimes.asMap().containsKey(node) ? responseTimes.get(node) : null;
-    } catch (ExecutionException e) {
-      throw new RuntimeException(e);
-    }
-    if (array == null) return true;
-    else if (array.length() == 2) {
-      long threshold = now - RESPONSE_COUNT_RESET_INTERVAL_NANOS;
-      long leastRecent = array.get(0);
-      return leastRecent - threshold < 0;
-    } else return true;
+    AtomicLongArray array = responseTimes.getIfPresent(node);
+    if (array == null || array.get(0) == -1) return true;
+    long threshold = now - RESPONSE_COUNT_RESET_INTERVAL_NANOS;
+    long leastRecent = array.get(0);
+    return leastRecent - threshold < 0;
   }
 
   protected void updateResponseTimes(@NonNull Node node) {
