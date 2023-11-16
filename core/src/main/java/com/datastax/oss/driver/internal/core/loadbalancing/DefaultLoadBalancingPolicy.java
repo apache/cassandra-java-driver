@@ -116,9 +116,16 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
             long now = nanoTime();
             AtomicLongArray array = responseTimes.getIfPresent(key);
             if (array == null) {
-              array = new AtomicLongArray(new long[] {-1, now});
+              array = new AtomicLongArray(1);
+              array.set(0, now);
+            } else if (array.length() == 1) {
+              long previous = array.get(0);
+              array = new AtomicLongArray(2);
+              array.set(0, previous);
+              array.set(1, now);
             } else {
-              array = new AtomicLongArray(new long[] {array.get(1), now});
+              array.set(0, array.get(1));
+              array.set(1, now);
             }
             return array;
           }
@@ -297,10 +304,12 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
     // response rate is considered insufficient when less than 2 responses were obtained in
     // the past interval delimited by RESPONSE_COUNT_RESET_INTERVAL_NANOS.
     AtomicLongArray array = responseTimes.getIfPresent(node);
-    if (array == null || array.get(0) == -1) return true;
-    long threshold = now - RESPONSE_COUNT_RESET_INTERVAL_NANOS;
-    long leastRecent = array.get(0);
-    return leastRecent - threshold < 0;
+    if (array == null) return true;
+    else if (array.length() == 2) {
+      long threshold = now - RESPONSE_COUNT_RESET_INTERVAL_NANOS;
+      long leastRecent = array.get(0);
+      return leastRecent - threshold < 0;
+    } else return true;
   }
 
   protected void updateResponseTimes(@NonNull Node node) {
