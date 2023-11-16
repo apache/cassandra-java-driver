@@ -200,6 +200,7 @@ function determine_url() {
        10-BCL) url="${ORACLE}/10.0.2+13/19aef61b38124481863b1413dce1855f/jdk-10.0.2_${os}_bin.tar.gz"; return;;
        11-GPL) url="${DOWNLOAD}/GA/jdk11/13/GPL/openjdk-11.0.1_${os}_bin.tar.gz"; return;;
        11-BCL) url="${ORACLE}/11.0.1+13/90cf5d8f270a4347a95050320eef3fb7/jdk-11.0.1_${os}_bin.tar.gz"; return;;
+       17-GPL) url="${DOWNLOAD}/GA/jdk17.0.2/dfd4a8d0985749f896bed50d7138ee7f/8/GPL/openjdk-17.0.2_${os}_bin.tar.gz"; return;;
     esac
 
     # EA or RC build?

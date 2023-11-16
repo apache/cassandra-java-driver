@@ -37,35 +37,12 @@ def initializeEnvironment() {
   env.MAVEN_HOME = "${env.HOME}/.mvn/apache-maven-3.3.9"
   env.PATH = "${env.MAVEN_HOME}/bin:${env.PATH}"
 
-  /*
-  * As of JAVA-3042 JAVA_HOME is always set to JDK8 and this is currently necessary for mvn compile and DSE Search/Graph.
-  * To facilitate testing with JDK11/17 we feed the appropriate JAVA_HOME into the maven build via commandline.
-  *
-  * Maven command-line flags:
-  * - -DtestJavaHome=/path/to/java/home: overrides JAVA_HOME for surefire/failsafe tests, defaults to environment JAVA_HOME.
-  * - -Ptest-jdk-N: enables profile for running tests with a specific JDK version (substitute N for 8/11/17).
-  *
-  * Note test-jdk-N is also automatically loaded based off JAVA_HOME SDK version so testing with an older SDK is not supported.
-  *
-  * Environment variables:
-  * - JAVA_HOME: Path to JDK used for mvn (all steps except surefire/failsafe), Cassandra, DSE.
-  * - JAVA8_HOME: Path to JDK8 used for Cassandra/DSE if ccm determines JAVA_HOME is not compatible with the chosen backend.
-  * - TEST_JAVA_HOME: PATH to JDK used for surefire/failsafe testing.
-  * - TEST_JAVA_VERSION: TEST_JAVA_HOME SDK version number [8/11/17], used to configure test-jdk-N profile in maven (see above)
-  */
-
   env.JAVA_HOME = sh(label: 'Get JAVA_HOME',script: '''#!/bin/bash -le
     . ${JABBA_SHELL}
     jabba which ${JABBA_VERSION}''', returnStdout: true).trim()
   env.JAVA8_HOME = sh(label: 'Get JAVA8_HOME',script: '''#!/bin/bash -le
     . ${JABBA_SHELL}
     jabba which 1.8''', returnStdout: true).trim()
-
-  env.TEST_JAVA_HOME = sh(label: 'Get TEST_JAVA_HOME',script: '''#!/bin/bash -le
-    . ${JABBA_SHELL}
-    jabba which ${JABBA_VERSION}''', returnStdout: true).trim()
-  env.TEST_JAVA_VERSION = sh(label: 'Get TEST_JAVA_VERSION',script: '''#!/bin/bash -le
-    echo "${JABBA_VERSION##*.}"''', returnStdout: true).trim()
 
   sh label: 'Download Apache CassandraⓇ or DataStax Enterprise',script: '''#!/bin/bash -le
     . ${JABBA_SHELL}
@@ -95,7 +72,7 @@ ENVIRONMENT_EOF
     set +o allexport
 
     . ${JABBA_SHELL}
-    jabba use 1.8
+    jabba use ${JABBA_VERSION}
 
     java -version
     mvn -v
@@ -103,15 +80,13 @@ ENVIRONMENT_EOF
   '''
 }
 
-def buildDriver(jabbaVersion) {
-  withEnv(["BUILD_JABBA_VERSION=${jabbaVersion}"]) {
-    sh label: 'Build driver', script: '''#!/bin/bash -le
-      . ${JABBA_SHELL}
-      jabba use ${BUILD_JABBA_VERSION}
+def buildDriver() {
+  sh label: 'Build driver', script: '''#!/bin/bash -le
+    . ${JABBA_SHELL}
+    jabba use ${JABBA_VERSION}
 
-      mvn -B -V install -DskipTests -Dmaven.javadoc.skip=true
-    '''
-  }
+    mvn -B -V install -DskipTests -Dmaven.javadoc.skip=true
+  '''
 }
 
 def executeTests() {
@@ -122,13 +97,7 @@ def executeTests() {
     set +o allexport
 
     . ${JABBA_SHELL}
-    jabba use 1.8
-
-    if [ "${JABBA_VERSION}" != "1.8" ]; then
-      SKIP_JAVADOCS=true
-    else
-      SKIP_JAVADOCS=false
-    fi
+    jabba use ${JABBA_VERSION}
 
     INTEGRATION_TESTS_FILTER_ARGUMENT=""
     if [ ! -z "${INTEGRATION_TESTS_FILTER}" ]; then
@@ -137,11 +106,8 @@ def executeTests() {
     printenv | sort
 
     mvn -B -V ${INTEGRATION_TESTS_FILTER_ARGUMENT} -T 1 verify \
-      -Ptest-jdk-${TEST_JAVA_VERSION} \
-      -DtestJavaHome=${TEST_JAVA_HOME} \
       -DfailIfNoTests=false \
       -Dmaven.test.failure.ignore=true \
-      -Dmaven.javadoc.skip=${SKIP_JAVADOCS} \
       -Dccm.version=${CCM_CASSANDRA_VERSION} \
       -Dccm.dse=${CCM_IS_DSE} \
       -Dproxy.path=${HOME}/proxy \
@@ -477,7 +443,7 @@ pipeline {
           }
           stage('Build-Driver') {
             steps {
-              buildDriver('default')
+              buildDriver()
             }
           }
           stage('Execute-Tests') {
@@ -591,8 +557,7 @@ pipeline {
           }
           stage('Build-Driver') {
             steps {
-              // Jabba default should be a JDK8 for now
-              buildDriver('default')
+              buildDriver()
             }
           }
           stage('Execute-Tests') {

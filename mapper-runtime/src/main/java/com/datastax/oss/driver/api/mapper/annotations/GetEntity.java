@@ -55,7 +55,7 @@ import java.lang.annotation.Target;
  * <p>It does not perform a query. Instead, those methods are intended for cases where you already
  * have a query result, and just need the conversion logic.
  *
- * <h3>Parameters</h3>
+ * <h2>Parameters</h2>
  *
  * The method must have a single parameter. The following types are allowed:
  *
@@ -69,7 +69,7 @@ import java.lang.annotation.Target;
  * The data must match the target entity: the generated code will try to extract every mapped
  * property, and fail if one is missing.
  *
- * <h3>Return type</h3>
+ * <h2>Return type</h2>
  *
  * The method can return:
  *

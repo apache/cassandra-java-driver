@@ -24,14 +24,20 @@ matrix:
     # 8
     - env: JDK='OpenJDK 8'
       jdk: openjdk8
+      before_install:
+        # Require JDK8 for compiling
+        - jdk_switcher use openjdk8
+        - ./install-snapshots.sh
     # 11
     - env: JDK='OpenJDK 11'
-      # switch to JDK 11 before running tests
-      before_script: . $TRAVIS_BUILD_DIR/ci/install-jdk.sh -F 11 -L GPL
-before_install:
-  # Require JDK8 for compiling
-  - jdk_switcher use openjdk8
-  - ./install-snapshots.sh
+      before_install:
+        - . $TRAVIS_BUILD_DIR/ci/install-jdk.sh -F 11 -L GPL
+        - ./install-snapshots.sh
+    # 17
+    - env: JDK='OpenJDK 17'
+      before_install:
+        - . $TRAVIS_BUILD_DIR/ci/install-jdk.sh -F 17 -L GPL
+        - ./install-snapshots.sh
 install: mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
 script: mvn test -Djacoco.skip=true -Dmaven.test.failure.ignore=true -Dmaven.javadoc.skip=true -B -V
 cache:

@@ -48,7 +48,7 @@ import java.util.function.UnaryOperator;
  * }
  * </pre>
  *
- * <h3>Parameters</h3>
+ * <h2>Parameters</h2>
  *
  * If {@link #customWhereClause()} is empty, the mapper defaults to a selection by primary key
  * (partition key + clustering columns). The method's parameters must match the types of the primary
@@ -87,7 +87,7 @@ import java.util.function.UnaryOperator;
  * parameter. It will be applied to the statement before execution. This allows you to customize
  * certain aspects of the request (page size, timeout, etc) at runtime.
  *
- * <h3>Return type</h3>
+ * <h2>Return type</h2>
  *
  * <p>In all cases, the method can return:
  *
@@ -132,7 +132,7 @@ import java.util.function.UnaryOperator;
  *   <li>a {@linkplain MapperResultProducer custom type}.
  * </ul>
  *
- * <h3>Target keyspace and table</h3>
+ * <h2>Target keyspace and table</h2>
  *
  * If a keyspace was specified when creating the DAO (see {@link DaoFactory}), then the generated
  * query targets that keyspace. Otherwise, it doesn't specify a keyspace, and will only work if the

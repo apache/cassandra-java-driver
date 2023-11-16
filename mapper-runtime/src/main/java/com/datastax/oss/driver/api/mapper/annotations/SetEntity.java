@@ -51,7 +51,7 @@ import java.lang.annotation.Target;
  * It does not perform a query. Instead, those methods are intended for cases where you will execute
  * the query yourself, and just need the conversion logic.
  *
- * <h3>Parameters</h3>
+ * <h2>Parameters</h2>
  *
  * The method must have two parameters: one is the entity instance, the other must be a subtype of
  * {@link SettableByName} (the most likely candidates are {@link BoundStatement}, {@link
@@ -60,7 +60,7 @@ import java.lang.annotation.Target;
  *
  * <p>The order of the parameters does not matter.
  *
- * <h3>Return type</h3>
+ * <h2>Return type</h2>
  *
  * The method can either be void, or return the exact same type as its settable parameter.
  *
