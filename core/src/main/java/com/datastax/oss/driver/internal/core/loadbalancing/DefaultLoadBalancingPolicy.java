@@ -312,6 +312,13 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
     } else return true;
   }
 
+  /**
+   * Synchronously updates the response times for the given node. It is synchronous because the
+   * {@link #DefaultLoadBalancingPolicy(com.datastax.oss.driver.api.core.context.DriverContext,
+   * java.lang.String) CacheLoader.load} assigned is synchronous.
+   *
+   * @param node The node to update.
+   */
   protected void updateResponseTimes(@NonNull Node node) {
     responseTimes.refresh(node);
   }
