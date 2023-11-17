@@ -113,6 +113,14 @@
         <directory>src/main/resources</directory>
         <filtering>true</filtering>
       </resource>
+      <resource>
+        <directory>${project.basedir}/..</directory>
+        <includes>
+          <include>LICENSE</include>
+          <include>NOTICE_binary.txt</include>
+        </includes>
+        <targetPath>META-INF</targetPath>
+      </resource>
     </resources>
   </build>
 
@@ -170,6 +178,14 @@
                       <shadedPattern>com.datastax.shaded.netty</shadedPattern>
                     </relocation>
                   </relocations>
+                  <transformers>
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
+                      <resources>
+                        <resource>META-INF/LICENSE.txt</resource>
+                        <resource>META-INF/NOTICE.txt</resource>
+                      </resources>
+                    </transformer>
+                  </transformers>
                 </configuration>
               </execution>
             </executions>
