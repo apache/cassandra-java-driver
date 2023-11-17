@@ -58,5 +58,13 @@
       </includes>
       <outputDirectory>/</outputDirectory>
     </fileSet>
+    <fileSet>
+      <directory>..</directory>
+      <includes>
+        <include>LICENSE*</include>
+        <include>NOTICE*</include>
+      </includes>
+      <outputDirectory>/</outputDirectory>
+    </fileSet>
   </fileSets>
 </assembly>
