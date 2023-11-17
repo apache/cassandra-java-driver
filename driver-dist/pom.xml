@@ -71,7 +71,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.4</version>
+        <version>2.5</version>
         <executions>
           <execution>
             <id>assemble-binary-tarball</id>
@@ -87,6 +87,17 @@
             <descriptor>src/assembly/binary-tarball.xml</descriptor>
           </descriptors>
         </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.0.2</version>
+        <!-- http://stackoverflow.com/questions/13218313/unable-to-disable-generation-of-empty-jar-maven-jar-plugin -->
+        <executions>
+          <execution>
+            <id>default-jar</id>
+            <phase>none</phase>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

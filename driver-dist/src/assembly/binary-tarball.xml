@@ -29,7 +29,6 @@
       <includes>
         <include>com.datastax.cassandra:cassandra-driver-core</include>
         <include>com.datastax.cassandra:cassandra-driver-dse</include>
-        <include>com.datastax.cassandra:cassandra-driver-mapping</include>
       </includes>
       <binaries>
         <outputDirectory>/</outputDirectory>
@@ -55,6 +54,14 @@
       <includes>
         <include>CHANGELOG.rst</include>
         <include>Upgrade_guide*.rst</include>
+      </includes>
+      <outputDirectory>/</outputDirectory>
+    </fileSet>
+    <fileSet>
+      <directory>..</directory>
+      <includes>
+        <include>LICENSE*</include>
+        <include>NOTICE*</include>
       </includes>
       <outputDirectory>/</outputDirectory>
     </fileSet>
