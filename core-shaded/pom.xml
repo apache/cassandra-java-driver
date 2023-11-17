@@ -133,6 +133,19 @@
   4) assembly plugin re-creates the shaded jar by packing target/classes + manifest + shaded pom
   -->
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>${project.basedir}/..</directory>
+        <includes>
+          <include>LICENSE</include>
+          <include>NOTICE_binary.txt</include>
+        </includes>
+        <targetPath>META-INF</targetPath>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
@@ -187,9 +200,10 @@
                 <!-- Exclude everything under META-INF -->
                 <filter>
                   <artifact>com.datastax.oss:*</artifact>
-                  <excludes>
-                    <exclude>META-INF/**</exclude>
-                  </excludes>
+                  <includes>
+                    <include>META-INF/LICENSE</include>
+                    <include>META-INF/NOTICE.txt</include>
+                  </includes>
                 </filter>
                 <filter>
                   <artifact>io.netty:*</artifact>
