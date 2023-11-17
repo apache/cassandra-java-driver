@@ -20,7 +20,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-
+    <parent>
+        <groupId>org.apache</groupId>
+        <artifactId>apache</artifactId>
+        <version>23</version>
+    </parent>
     <groupId>com.datastax.cassandra</groupId>
     <artifactId>cassandra-driver-parent</artifactId>
     <version>3.11.6-SNAPSHOT</version>
@@ -499,6 +503,14 @@
                             <goals>
                                 <goal>jar-no-fork</goal>
                             </goals>
+                            <configuration>
+                                <includes>
+                                    <include>NOTICE.txt</include>
+                                </includes>
+                                <excludes>
+                                    <exclude>NOTICE_binary.txt</exclude>
+                                </excludes>
+                            </configuration>
                         </execution>
                     </executions>
                 </plugin>
@@ -905,6 +917,14 @@ limitations under the License.
                         </lifecycleMappingMetadata>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-remote-resources-plugin</artifactId>
+                    <version>1.7.0</version>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
+                </plugin>
 
             </plugins>
 
@@ -1023,6 +1043,14 @@ limitations under the License.
                                 <goals>
                                     <goal>jar-no-fork</goal>
                                 </goals>
+                                <configuration>
+                                    <includes>
+                                        <include>NOTICE.txt</include>
+                                    </includes>
+                                    <excludes>
+                                        <exclude>NOTICE_binary.txt</exclude>
+                                    </excludes>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
