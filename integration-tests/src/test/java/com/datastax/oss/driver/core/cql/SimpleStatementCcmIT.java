@@ -367,4 +367,31 @@ public class SimpleStatementCcmIT {
     // Should have only fetched 10 (page size) rows.
     assertThat(result.remaining()).isEqualTo(10);
   }
+
+  @Test
+  public void should_not_fail_on_empty_pages() {
+    SESSION_RULE
+        .session()
+        .execute(
+            "CREATE KEYSPACE IF NOT EXISTS ks WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1}");
+
+    SESSION_RULE
+        .session()
+        .execute("CREATE TABLE IF NOT EXISTS ks.t (pk int, ck int, v int, PRIMARY KEY(pk, ck))");
+
+    for (int i = 0; i < 50; i++) {
+      SESSION_RULE.session().execute("INSERT INTO ks.t(pk, ck, v) VALUES (?, ?, ?)", i, i, 15);
+      SESSION_RULE.session().execute("INSERT INTO ks.t(pk, ck, v) VALUES (?, ?, ?)", i, i, 32);
+    }
+
+    SESSION_RULE.session().execute("INSERT INTO ks.t(pk, ck, v) VALUES (?, ?, ?)", 8, 8, 14);
+    SESSION_RULE.session().execute("INSERT INTO ks.t(pk, ck, v) VALUES (?, ?, ?)", 11, 11, 14);
+    SESSION_RULE.session().execute("INSERT INTO ks.t(pk, ck, v) VALUES (?, ?, ?)", 14, 14, 14);
+
+    SimpleStatement st =
+        SimpleStatement.newInstance("SELECT * FROM ks.t WHERE v = 14 ALLOW FILTERING");
+    st = st.setPageSize(1);
+    List<Row> allRows = SESSION_RULE.session().execute(st).all();
+    assertThat(allRows.size()).isEqualTo(3);
+  }
 }
