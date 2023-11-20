@@ -173,6 +173,11 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
 
   // once it has gone through the filter
   private void processNodeStateEvent(NodeStateEvent event) {
+    DefaultNode node = event.getNode();
+    if (node == null) {
+      LOG.debug("[{}] Node for this event was removed, ignoring: {}", logPrefix, event);
+      return;
+    }
     switch (stateRef.get()) {
       case BEFORE_INIT:
       case DURING_INIT:
@@ -181,10 +186,7 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
         return; // ignore
       case RUNNING:
         for (LoadBalancingPolicy policy : policies) {
-          DefaultNode node = event.node.get();
-          if (node == null) {
-            LOG.info("[{}] Node for this event was removed, ignoring: {}", logPrefix, event);
-          } else if (event.newState == NodeState.UP) {
+          if (event.newState == NodeState.UP) {
             policy.onUp(node);
           } else if (event.newState == NodeState.DOWN || event.newState == NodeState.FORCED_DOWN) {
             policy.onDown(node);

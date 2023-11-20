@@ -526,9 +526,9 @@ public class DefaultSession implements CqlSession {
 
     private void onNodeStateChanged(NodeStateEvent event) {
       assert adminExecutor.inEventLoop();
-      DefaultNode node = event.node.get();
+      DefaultNode node = event.getNode();
       if (node == null) {
-        LOG.info(
+        LOG.debug(
             "[{}] Node for this event was removed, ignoring state change: {}", logPrefix, event);
       } else if (event.newState == null) {
         context.getNodeStateListener().onRemove(node);

@@ -120,9 +120,9 @@ public class MicrometerMetricsFactory implements MetricsFactory {
   }
 
   protected void processNodeStateEvent(NodeStateEvent event) {
-    DefaultNode node = event.node.get();
+    DefaultNode node = event.getNode();
     if (node == null) {
-      LOG.info(
+      LOG.debug(
           "[{}] NodeStateEvent received for removed node, ignoring: {}",
           context.getSessionName(),
           event);

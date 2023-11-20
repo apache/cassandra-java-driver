@@ -304,8 +304,7 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
     // response rate is considered insufficient when less than 2 responses were obtained in
     // the past interval delimited by RESPONSE_COUNT_RESET_INTERVAL_NANOS.
     AtomicLongArray array = responseTimes.getIfPresent(node);
-    if (array == null) return true;
-    else if (array.length() == 2) {
+    if (array != null && array.length() == 2) {
       long threshold = now - RESPONSE_COUNT_RESET_INTERVAL_NANOS;
       long leastRecent = array.get(0);
       return leastRecent - threshold < 0;

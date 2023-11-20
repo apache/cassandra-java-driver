@@ -535,7 +535,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
     private void onDistanceEvent(DistanceEvent event) {
       assert adminExecutor.inEventLoop();
-      DefaultNode node = event.node.get();
+      DefaultNode node = event.getNode();
       if (node == null) return;
       this.lastDistanceEvents.put(node, event);
       if (event.distance == NodeDistance.IGNORED
@@ -552,7 +552,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
     private void onStateEvent(NodeStateEvent event) {
       assert adminExecutor.inEventLoop();
-      DefaultNode node = event.node.get();
+      DefaultNode node = event.getNode();
       if (node == null) return;
       this.lastStateEvents.put(node, event);
       if ((event.newState == null /*(removed)*/ || event.newState == NodeState.FORCED_DOWN)

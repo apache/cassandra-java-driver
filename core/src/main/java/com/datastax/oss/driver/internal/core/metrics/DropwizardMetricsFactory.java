@@ -119,7 +119,7 @@ public class DropwizardMetricsFactory implements MetricsFactory {
   }
 
   protected void processNodeStateEvent(NodeStateEvent event) {
-    DefaultNode node = event.node.get();
+    DefaultNode node = event.getNode();
     if (node == null) return;
     if (event.newState == NodeState.DOWN
         || event.newState == NodeState.FORCED_DOWN

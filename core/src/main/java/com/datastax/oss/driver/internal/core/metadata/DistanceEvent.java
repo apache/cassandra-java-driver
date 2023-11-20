@@ -20,6 +20,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -30,11 +31,16 @@ import net.jcip.annotations.Immutable;
 @Immutable
 public class DistanceEvent {
   public final NodeDistance distance;
-  public final WeakReference<DefaultNode> node;
+  private final WeakReference<DefaultNode> node;
 
   public DistanceEvent(NodeDistance distance, DefaultNode node) {
     this.distance = distance;
     this.node = new WeakReference<>(node);
+  }
+
+  @Nullable
+  public DefaultNode getNode() {
+    return node.get();
   }
 
   @Override
@@ -43,7 +49,7 @@ public class DistanceEvent {
       return true;
     } else if (other instanceof DistanceEvent) {
       DistanceEvent that = (DistanceEvent) other;
-      return this.distance == that.distance && Objects.equals(this.node.get(), that.node.get());
+      return this.distance == that.distance && Objects.equals(this.getNode(), that.getNode());
     } else {
       return false;
     }
@@ -51,11 +57,11 @@ public class DistanceEvent {
 
   @Override
   public int hashCode() {
-    return Objects.hash(this.distance, this.node.get());
+    return Objects.hash(this.distance, this.getNode());
   }
 
   @Override
   public String toString() {
-    return "DistanceEvent(" + distance + ", " + node.get() + ")";
+    return "DistanceEvent(" + distance + ", " + this.getNode() + ")";
   }
 }
