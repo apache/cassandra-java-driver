@@ -381,6 +381,8 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.LOAD_BALANCING_DC_FAILOVER_MAX_NODES_PER_REMOTE_DC, 0);
     map.put(TypedDriverOption.LOAD_BALANCING_DC_FAILOVER_ALLOW_FOR_LOCAL_CONSISTENCY_LEVELS, false);
     map.put(TypedDriverOption.METRICS_GENERATE_AGGREGABLE_HISTOGRAMS, true);
+    map.put(
+        TypedDriverOption.LOAD_BALANCING_DC_FAILOVER_PREFERRED_REMOTE_DCS, ImmutableList.of(""));
   }
 
   @Immutable
