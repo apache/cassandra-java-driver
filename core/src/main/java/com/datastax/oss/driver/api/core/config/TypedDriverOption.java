@@ -892,6 +892,16 @@ public class TypedDriverOption<ValueT> {
               DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_ALLOW_FOR_LOCAL_CONSISTENCY_LEVELS,
               GenericType.BOOLEAN);
 
+  /**
+   * Ordered preference list of remote dcs optionally supplied for automatic failover and included
+   * in query plan. This feature is enabled only when max-nodes-per-remote-dc is greater than 0.
+   */
+  public static final TypedDriverOption<List<String>>
+      LOAD_BALANCING_DC_FAILOVER_PREFERRED_REMOTE_DCS =
+          new TypedDriverOption<>(
+              DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_PREFERRED_REMOTE_DCS,
+              GenericType.listOf(String.class));
+
   private static Iterable<TypedDriverOption<?>> introspectBuiltInValues() {
     try {
       ImmutableList.Builder<TypedDriverOption<?>> result = ImmutableList.builder();
