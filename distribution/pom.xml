@@ -21,7 +21,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>com.datastax.oss</groupId>
+    <groupId>org.apache.cassandra</groupId>
     <artifactId>java-driver-parent</artifactId>
     <version>4.17.1-SNAPSHOT</version>
   </parent>
@@ -67,7 +67,7 @@
     </dependency>
   </dependencies>
   <build>
-    <finalName>datastax-java-driver-${project.version}</finalName>
+    <finalName>apache-cassandra-java-driver-${project.version}</finalName>
     <plugins>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
@@ -152,6 +152,26 @@
                       <artifactId>tinkergraph-gremlin</artifactId>
                       <version>${tinkerpop.version}</version>
                     </additionalDependency>
+                    <additionalDependency>
+                      <groupId>com.esri.geometry</groupId>
+                      <artifactId>esri-geometry-api</artifactId>
+                      <version>${esri.version}</version>
+                    </additionalDependency>
+                    <additionalDependency>
+                      <groupId>org.javatuples</groupId>
+                      <artifactId>javatuples</artifactId>
+                      <version>1.2</version>
+                    </additionalDependency>
+                    <additionalDependency>
+                      <groupId>com.github.spotbugs</groupId>
+                      <artifactId>spotbugs-annotations</artifactId>
+                      <version>3.1.12</version>
+                    </additionalDependency>
+                    <additionalDependency>
+                      <groupId>com.github.stephenc.jcip</groupId>
+                      <artifactId>jcip-annotations</artifactId>
+                      <version>1.0-1</version>
+                    </additionalDependency>
                   </additionalDependencies>
                 </configuration>
               </execution>
@@ -174,6 +194,25 @@
                 <descriptor>src/assembly/binary-tarball.xml</descriptor>
               </descriptors>
               <tarLongFileMode>posix</tarLongFileMode>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>net.nicoulaj.maven.plugins</groupId>
+            <artifactId>checksum-maven-plugin</artifactId>
+            <version>1.7</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>artifacts</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <attachChecksums>true</attachChecksums>
+              <algorithms>
+                <algorithm>sha256</algorithm>
+                <algorithm>sha512</algorithm>
+              </algorithms>
             </configuration>
           </plugin>
         </plugins>

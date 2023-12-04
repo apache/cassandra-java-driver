@@ -149,7 +149,7 @@ dependencies, and tell Maven that we're going to use Java 8:
 
   <dependencies>
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>org.apache.cassandra</groupId>
       <artifactId>java-driver-core</artifactId>
       <version>${driver.version}</version>
     </dependency>
@@ -374,7 +374,7 @@ In that case, you can exclude the dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -402,7 +402,7 @@ are not available on your platform, you can exclude the following dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -433,7 +433,7 @@ your application, then you can remove the dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -456,7 +456,7 @@ dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -481,7 +481,7 @@ don't use any of the above features, you can safely exclude the dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -504,7 +504,7 @@ anywhere in your application you can exclude the dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -544,7 +544,7 @@ you can exclude the TinkerPop dependencies:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -608,7 +608,7 @@ without it. If you never call any of the `executeReactive` methods, you can excl
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>

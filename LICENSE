@@ -221,3 +221,27 @@ see core/src/main/java/com/datastax/oss/driver/internal/core/util/CountingIterat
 Copyright (C) 2018 Christian Stein
 This product includes software developed by Christian Stein
 see ci/install-jdk.sh
+
+This product bundles Java Native Runtime - POSIX,
+which is available under the Eclipse Public License version 2.0.
+see licenses/jnr-posix.txt
+
+This product bundles ASM: a very small and fast Java bytecode manipulation framework,
+which is available under the 3-Clause BSD License.
+see licenses/asm.txt
+
+This product bundles HdrHistogram: A High Dynamic Range (HDR) Histogram,
+which is available under the 2-Clause BSD License.
+see licenses/HdrHistogram.txt
+
+This product bundles jnr-x86asm,
+which is available under the MIT License.
+see licenses/jnr-x86asm.txt
+
+This product bundles The Simple Logging Facade for Java (SLF4J) API,
+which is available under the MIT License.
+see licenses/slf4j-api.txt
+
+This product bundles Reactive Streams,
+which is available under the MIT License.
+see licenses/reactive-streams.txt

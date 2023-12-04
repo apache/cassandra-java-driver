@@ -25,7 +25,7 @@
     <artifactId>apache</artifactId>
     <version>23</version>
   </parent>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-parent</artifactId>
   <version>4.17.1-SNAPSHOT</version>
   <packaging>pom</packaging>
@@ -44,6 +44,7 @@
     <module>integration-tests</module>
     <module>osgi-tests</module>
     <module>distribution</module>
+    <module>distribution-source</module>
     <module>distribution-tests</module>
     <module>examples</module>
     <module>bom</module>
@@ -95,7 +96,7 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.datastax.oss</groupId>
+        <groupId>org.apache.cassandra</groupId>
         <artifactId>java-driver-core</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
@@ -567,6 +568,10 @@
                 </item>
               </revapi.ignore>
             </analysisConfiguration>
+            <oldArtifacts>
+              <!-- The previous release used DataStax groupId, remove this after the next release -->
+              <artifact>com.datastax.oss:${project.artifactId}:RELEASE</artifact>
+            </oldArtifacts>
           </configuration>
           <dependencies>
             <dependency>
@@ -759,9 +764,6 @@ limitations under the License.]]></inlineHeader>
               <goal>jar-no-fork</goal>
             </goals>
             <configuration>
-              <includes>
-                <include>NOTICE.txt</include>
-              </includes>
               <excludes>
                 <exclude>NOTICE_binary.txt</exclude>
               </excludes>

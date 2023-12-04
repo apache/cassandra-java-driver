@@ -376,7 +376,7 @@ using Maven, this can be achieved as follows:
 ```xml
 <dependencies>
     <dependency>
-        <groupId>com.datastax.oss</groupId>
+        <groupId>org.apache.cassandra</groupId>
         <artifactId>java-driver-core</artifactId>
         <version>...</version>
         <exclusions>
