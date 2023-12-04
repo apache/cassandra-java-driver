@@ -21,7 +21,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>com.datastax.oss</groupId>
+    <groupId>org.apache.cassandra</groupId>
     <artifactId>java-driver-parent</artifactId>
     <version>4.6.1</version>
   </parent>
@@ -44,7 +44,7 @@
     this dependency will be removed from the final pom by the shade plugin.
     -->
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>org.apache.cassandra</groupId>
       <artifactId>java-driver-core</artifactId>
     </dependency>
     <!--
@@ -138,6 +138,7 @@
         <includes>
           <include>LICENSE</include>
           <include>NOTICE_binary.txt</include>
+          <include>NOTICE.txt</include>
         </includes>
         <targetPath>META-INF</targetPath>
       </resource>
@@ -162,7 +163,7 @@
                   - The core driver itself; it is not relocated but needs to be included.
                   - All the dependencies we want to shade & relocate.
                   -->
-                  <include>com.datastax.oss:java-driver-core</include>
+                  <include>org.apache.cassandra:java-driver-core</include>
                   <include>io.netty:*</include>
                   <include>com.esri.geometry:*</include>
                   <include>org.json:*</include>
@@ -195,11 +196,12 @@
               <filters>
                 <!-- Exclude everything under META-INF -->
                 <filter>
-                  <artifact>com.datastax.oss:*</artifact>
-                  <includes>
-                    <include>META-INF/LICENSE</include>
-                    <include>META-INF/NOTICE.txt</include>
-                  </includes>
+                  <artifact>org.apache.cassandra:*</artifact>
+                  <excludes>
+                    <!-- Don't exclude META-INF/services and META-INF/native-image -->
+                    <exclude>META-INF/MANIFEST.MF</exclude>
+                    <exclude>META-INF/maven/**</exclude>
+                  </excludes>
                 </filter>
                 <filter>
                   <artifact>io.netty:*</artifact>
@@ -248,7 +250,7 @@
             <configuration>
               <artifactItems>
                 <artifactItem>
-                  <groupId>com.datastax.oss</groupId>
+                  <groupId>org.apache.cassandra</groupId>
                   <artifactId>java-driver-core-shaded</artifactId>
                   <type>jar</type>
                   <outputDirectory>${project.build.outputDirectory}</outputDirectory>
@@ -266,40 +268,13 @@
             <configuration>
               <artifactItems>
                 <artifactItem>
-                  <groupId>com.datastax.oss</groupId>
+                  <groupId>org.apache.cassandra</groupId>
                   <artifactId>java-driver-core-shaded</artifactId>
                   <type>jar</type>
                   <classifier>sources</classifier>
                   <outputDirectory>${project.build.directory}/shaded-sources</outputDirectory>
                 </artifactItem>
               </artifactItems>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>attach-javadocs</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-            <configuration>
-              <sourcepath>${project.build.directory}/shaded-sources</sourcepath>
-              <excludePackageNames>com.datastax.*.driver.internal*,com.datastax.oss.driver.shaded*</excludePackageNames>
-              <!--
-                javadoc processes the shaded Netty sources (even though they're not included in the
-                report), and will complain if it doesn't find JCTools classes.
-                Add the dependency just to avoid warnings:
-              -->
-              <additionalDependencies>
-                <additionalDependency>
-                  <groupId>org.jctools</groupId>
-                  <artifactId>jctools-core</artifactId>
-                  <version>2.1.2</version>
-                </additionalDependency>
-              </additionalDependencies>
             </configuration>
           </execution>
         </executions>
