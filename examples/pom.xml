@@ -22,7 +22,7 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>java-driver-parent</artifactId>
-    <groupId>com.datastax.oss</groupId>
+    <groupId>org.apache.cassandra</groupId>
     <version>4.7.3-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-examples</artifactId>
@@ -152,7 +152,7 @@
           <target>1.8</target>
           <annotationProcessorPaths>
             <path>
-              <groupId>com.datastax.oss</groupId>
+              <groupId>org.apache.cassandra</groupId>
               <artifactId>java-driver-mapper-processor</artifactId>
               <version>${project.version}</version>
             </path>
