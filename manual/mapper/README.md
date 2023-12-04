@@ -22,8 +22,8 @@ under the License.
 The mapper generates the boilerplate to execute queries and convert the results into
 application-level objects.
 
-It is published as two artifacts: `com.datastax.oss:java-driver-mapper-processor` and
-`com.datastax.oss:java-driver-mapper-runtime`. See [Integration](config/) for detailed instructions
+It is published as two artifacts: `org.apache.cassandra:java-driver-mapper-processor` and
+`org.apache.cassandra:java-driver-mapper-runtime`. See [Integration](config/) for detailed instructions
 for different build tools.
 
 ### Quick start

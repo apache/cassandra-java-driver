@@ -23,51 +23,13 @@
   <parent>
     <groupId>org.apache.cassandra</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.12.2-SNAPSHOT</version>
+    <version>4.17.1-SNAPSHOT</version>
   </parent>
-  <artifactId>java-driver-distribution</artifactId>
-  <!-- Should be pom but Javadoc generation requires a "classpath-capable" package -->
-  <packaging>jar</packaging>
-  <name>Apache Cassandra Java Driver - binary distribution</name>
-  <!--
-    These dependencies are only here to ensure proper build order and proper inclusion of binaries
-    in the final tarball
-  -->
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>java-driver-bom</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-  <dependencies>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>java-driver-core</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>java-driver-query-builder</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>java-driver-mapper-runtime</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>java-driver-mapper-processor</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-  </dependencies>
+  <artifactId>java-driver-distribution-source</artifactId>
+  <packaging>pom</packaging>
+  <name>Apache Cassandra Java Driver - source distribution</name>
   <build>
-    <finalName>apache-cassandra-java-driver-${project.version}</finalName>
+    <finalName>apache-cassandra-java-driver-${project.version}-source</finalName>
     <plugins>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
@@ -122,7 +84,7 @@
             <artifactId>maven-assembly-plugin</artifactId>
             <executions>
               <execution>
-                <id>assemble-binary-tarball</id>
+                <id>assemble-source-tarball</id>
                 <phase>package</phase>
                 <goals>
                   <goal>single</goal>
@@ -132,7 +94,7 @@
             <configuration>
               <appendAssemblyId>false</appendAssemblyId>
               <descriptors>
-                <descriptor>src/assembly/binary-tarball.xml</descriptor>
+                <descriptor>src/assembly/source-tarball.xml</descriptor>
               </descriptors>
               <tarLongFileMode>posix</tarLongFileMode>
             </configuration>
