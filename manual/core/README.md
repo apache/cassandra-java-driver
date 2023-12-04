@@ -24,7 +24,7 @@ following coordinates:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
 </dependency>

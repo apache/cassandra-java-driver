@@ -22,7 +22,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.datastax.oss</groupId>
+    <groupId>org.apache.cassandra</groupId>
     <artifactId>java-driver-parent</artifactId>
     <version>4.3.2-SNAPSHOT</version>
   </parent>
@@ -35,7 +35,7 @@
     this dependency will be removed from the final pom by the shade plugin.
     -->
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>org.apache.cassandra</groupId>
       <artifactId>java-driver-core</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -116,6 +116,7 @@
         <includes>
           <include>LICENSE</include>
           <include>NOTICE_binary.txt</include>
+          <include>NOTICE.txt</include>
         </includes>
         <targetPath>META-INF</targetPath>
       </resource>
@@ -141,7 +142,7 @@
                   - All the dependencies we want to shade & relocate: currently
                     - all the Netty artifacts.
                   -->
-                  <include>com.datastax.oss:java-driver-core</include>
+                  <include>org.apache.cassandra:java-driver-core</include>
                   <include>io.netty:*</include>
                   <include>com.fasterxml.jackson.core:*</include>
                 </includes>
@@ -158,7 +159,7 @@
               </relocations>
               <filters>
                 <!-- Note: most exclusions are done later on with the dependency plugin, but
-                 these one must be done here because its pattern is too wide -->
+                 this one must be done here because its pattern is too wide -->
                 <filter>
                   <artifact>com.fasterxml.jackson.core:*</artifact>
                   <excludes>
@@ -182,7 +183,7 @@
             <configuration>
               <artifactItems>
                 <artifactItem>
-                  <groupId>com.datastax.oss</groupId>
+                  <groupId>org.apache.cassandra</groupId>
                   <artifactId>java-driver-core-shaded</artifactId>
                   <version>${project.version}</version>
                   <type>jar</type>
@@ -209,7 +210,7 @@
             <configuration>
               <artifactItems>
                 <artifactItem>
-                  <groupId>com.datastax.oss</groupId>
+                  <groupId>org.apache.cassandra</groupId>
                   <artifactId>java-driver-core-shaded</artifactId>
                   <version>${project.version}</version>
                   <type>jar</type>
@@ -217,35 +218,6 @@
                   <outputDirectory>${project.build.directory}/shaded-sources</outputDirectory>
                 </artifactItem>
               </artifactItems>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>attach-shaded-javadocs</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-            <configuration>
-              <sourcepath>${project.build.directory}/shaded-sources</sourcepath>
-              <excludePackageNames>
-                com.datastax.oss.driver.internal:com.datastax.oss.driver.shaded
-              </excludePackageNames>
-              <!--
-                javadoc processes the shaded Netty sources (even though they're not included in the
-                report), and will complain if it doesn't find JCTools classes.
-                Add the dependency just to avoid warnings:
-              -->
-              <additionalDependencies>
-                <additionalDependency>
-                  <groupId>org.jctools</groupId>
-                  <artifactId>jctools-core</artifactId>
-                  <version>2.1.2</version>
-                </additionalDependency>
-              </additionalDependencies>
             </configuration>
           </execution>
         </executions>
