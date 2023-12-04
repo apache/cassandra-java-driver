@@ -370,9 +370,28 @@ CqlSession session = CqlSession.builder().withConfigLoader(loader).build();
 
 If Typesafe Config doesn't work for you, it is possible to get rid of it entirely.
 
-You will need to provide your own implementations of [DriverConfig] and [DriverExecutionProfile].
-Then write a [DriverConfigLoader] and pass it to the session at initialization, as shown in the
-previous sections. Study the built-in implementation (package
+Start by excluding Typesafe Config from the list of dependencies required by the driver; if you are 
+using Maven, this can be achieved as follows:
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.apache.cassandra</groupId>
+        <artifactId>java-driver-core</artifactId>
+        <version>...</version>
+        <exclusions>
+            <exclusion>
+                <groupId>com.typesafe</groupId>
+                <artifactId>config</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+</dependencies>
+
+```
+Next, you will need to provide your own implementations of [DriverConfig] and 
+[DriverExecutionProfile]. Then write a [DriverConfigLoader] and pass it to the session at 
+initialization, as shown in the previous sections. Study the built-in implementation (package
 `com.datastax.oss.driver.internal.core.config.typesafe`) for reference.
 
 Reloading is not mandatory: you can choose not to implement it, and the driver will simply keep
