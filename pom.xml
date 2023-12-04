@@ -25,7 +25,7 @@
     <artifactId>apache</artifactId>
     <version>23</version>
   </parent>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-parent</artifactId>
   <version>4.9.0-SNAPSHOT</version>
   <packaging>pom</packaging>
@@ -43,6 +43,7 @@
     <module>metrics/microprofile</module>
     <module>integration-tests</module>
     <module>osgi-tests</module>
+    <module>distribution-source</module>
     <module>distribution</module>
     <module>distribution-tests</module>
     <module>examples</module>
@@ -53,12 +54,15 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <config.version>1.3.4</config.version>
+    <!-- when changing version also update version in LICENSE_binary  -->
     <hdrhistogram.version>2.1.11</hdrhistogram.version>
     <metrics.version>4.0.5</metrics.version>
     <netty.version>4.1.51.Final</netty.version>
     <esri.version>1.2.1</esri.version>
     <tinkerpop.version>3.4.5</tinkerpop.version>
+    <!-- when changing version also update version in LICENSE_binary  -->
     <slf4j.version>1.7.26</slf4j.version>
+    <!-- when changing version also update version in LICENSE_binary  -->
     <reactive-streams.version>1.0.2</reactive-streams.version>
     <json.version>20190722</json.version>
     <jackson.version>2.11.0</jackson.version>
@@ -92,7 +96,7 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.datastax.oss</groupId>
+        <groupId>org.apache.cassandra</groupId>
         <artifactId>java-driver-core</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
@@ -136,6 +140,7 @@
       <dependency>
         <groupId>com.github.jnr</groupId>
         <artifactId>jnr-posix</artifactId>
+        <!-- when changing version also update jnr-* and asm versions in LICENSE_binary  -->
         <version>3.0.50</version>
       </dependency>
       <dependency>
@@ -535,6 +540,10 @@
                 </item>
               </revapi.ignore>
             </analysisConfiguration>
+            <oldArtifacts>
+              <!-- The previous release used DataStax groupId, remove this after the next release -->
+              <artifact>com.datastax.oss:${project.artifactId}:RELEASE</artifact>
+            </oldArtifacts>
           </configuration>
           <dependencies>
             <dependency>
@@ -725,10 +734,8 @@ limitations under the License.]]></inlineHeader>
               <goal>jar-no-fork</goal>
             </goals>
             <configuration>
-              <includes>
-                <include>NOTICE.txt</include>
-              </includes>
               <excludes>
+                <exclude>LICENSE_binary</exclude>
                 <exclude>NOTICE_binary.txt</exclude>
               </excludes>
             </configuration>
@@ -759,28 +766,6 @@ limitations under the License.]]></inlineHeader>
           </tags>
         </configuration>
         <executions>
-          <execution>
-            <id>attach-javadocs</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-            <configuration>
-              <header><![CDATA[<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-TWSQ28');</script>
-<!-- End Google Tag Manager -->
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TWSQ28"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->]]></header>
-              <additionalOptions>
-                <additionalOption>--allow-script-in-comments</additionalOption>
-              </additionalOptions>
-            </configuration>
-          </execution>
           <execution>
             <!-- Check that our "official" API (api.* packages) does not leak unwanted types -->
             <id>check-api-leaks</id>
