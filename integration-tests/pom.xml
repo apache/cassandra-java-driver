@@ -21,7 +21,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.datastax.oss</groupId>
+    <groupId>org.apache.cassandra</groupId>
     <artifactId>java-driver-parent</artifactId>
     <version>4.2.3-SNAPSHOT</version>
   </parent>
@@ -38,26 +38,26 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>org.apache.cassandra</groupId>
       <artifactId>java-driver-test-infra</artifactId>
       <version>${project.parent.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>org.apache.cassandra</groupId>
       <artifactId>java-driver-query-builder</artifactId>
       <version>${project.parent.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>org.apache.cassandra</groupId>
       <artifactId>java-driver-mapper-processor</artifactId>
       <version>${project.parent.version}</version>
       <scope>test</scope>
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>org.apache.cassandra</groupId>
       <artifactId>java-driver-mapper-runtime</artifactId>
       <version>${project.parent.version}</version>
       <scope>test</scope>

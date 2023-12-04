@@ -56,7 +56,7 @@ dependencies, and tell Maven that we're going to use Java 8:
 
   <dependencies>
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>org.apache.cassandra</groupId>
       <artifactId>java-driver-core</artifactId>
       <version>${driver.version}</version>
     </dependency>
@@ -277,7 +277,7 @@ In that case, you can exclude the dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -305,7 +305,7 @@ are not available on your platform, you can exclude the following dependencies:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -339,7 +339,7 @@ and never call [Session.getMetrics] anywhere in your application, you can remove
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -360,7 +360,7 @@ If all of these metrics are disabled, you can remove the dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
