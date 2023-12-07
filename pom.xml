@@ -27,7 +27,7 @@
   </parent>
   <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-parent</artifactId>
-  <version>4.17.1-SNAPSHOT</version>
+  <version>4.18.0</version>
   <packaging>pom</packaging>
   <name>Apache Cassandra Java Driver</name>
   <url>https://github.com/datastax/java-driver</url>
@@ -1022,7 +1022,7 @@ limitations under the License.]]></inlineHeader>
     <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
     <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
     <url>https://github.com/datastax/java-driver</url>
-    <tag>HEAD</tag>
+    <tag>4.18.0</tag>
   </scm>
   <developers>
     <developer>
