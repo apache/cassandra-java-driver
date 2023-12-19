@@ -1,6 +1,6 @@
 # You can set these variables from the command line.
 POETRY        = poetry
-SPHINXOPTS    =
+SPHINXOPTS    = -j auto
 SPHINXBUILD   = $(POETRY) run sphinx-build
 PAPER         =
 BUILDDIR      = _build
@@ -12,12 +12,6 @@ PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) $(SOURCEDIR)
 TESTSPHINXOPTS  = $(ALLSPHINXOPTS) -W --keep-going
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) $(SOURCEDIR)
-
-# Windows variables
-ifeq ($(OS),Windows_NT)
-    POETRY = $(APPDATA)\Python\Scripts\poetry
-endif
-
 
 .PHONY: all
 all: dirhtml
