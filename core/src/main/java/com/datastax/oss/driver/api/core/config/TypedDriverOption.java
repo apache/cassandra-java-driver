@@ -894,7 +894,7 @@ public class TypedDriverOption<ValueT> {
 
   /**
    * Ordered preference list of remote dc's optionally supplied for automatic failover and included
-   * in query plan. This feature is enabled only when max-nodes-per-remote-dc is greater than 0
+   * in query plan. This feature is enabled only when max-nodes-per-remote-dc is greater than 0.
    */
   public static final TypedDriverOption<List<String>>
       LOAD_BALANCING_DC_FAILOVER_PREFERRED_REMOTE_DCS =

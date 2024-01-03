@@ -49,9 +49,10 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -120,7 +121,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   private volatile NodeDistanceEvaluator nodeDistanceEvaluator;
   private volatile String localDc;
   private volatile NodeSet liveNodes;
-  private volatile Set<String> preferredRemoteLocalDcs = new LinkedHashSet<>();
+  private final String[] preferredRemoteDcs;
 
   public BasicLoadBalancingPolicy(@NonNull DriverContext context, @NonNull String profileName) {
     this.context = (InternalDriverContext) context;
@@ -136,14 +137,13 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
             .getConsistencyLevelRegistry()
             .nameToLevel(profile.getString(DefaultDriverOption.REQUEST_CONSISTENCY));
 
-    final List<String> remoteDcs =
-        profile.getStringList(
-            DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_PREFERRED_REMOTE_DCS, new ArrayList<>());
-    if (!remoteDcs.isEmpty()) {
-      for (final String preferredDc : remoteDcs) {
-        preferredRemoteLocalDcs.add(preferredDc);
-      }
-    }
+    Set<String> remoteDcs =
+        new LinkedHashSet<>(
+            Objects.requireNonNull(
+                profile.getStringList(
+                    DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_PREFERRED_REMOTE_DCS,
+                    new ArrayList<>())));
+    preferredRemoteDcs = remoteDcs.toArray(new String[0]);
   }
 
   /**
@@ -338,61 +338,31 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
 
           @Override
           protected Object[] computeNodes() {
-            if (!preferredRemoteLocalDcs.isEmpty()) {
-              final List<Object> nodes = new ArrayList<>();
+            Object[] remoteNodes =
+                liveNodes.dcs().stream()
+                    .filter(Predicates.not(Predicates.equalTo(localDc)))
+                    .sorted(
+                        Comparator.comparingInt(
+                            dc -> {
+                              int i = Arrays.binarySearch(preferredRemoteDcs, dc);
+                              return i < 0 ? Integer.MAX_VALUE : i;
+                            }))
+                    .flatMap(dc -> liveNodes.dc(dc).stream().limit(maxNodesPerRemoteDc))
+                    .toArray();
 
-              preferredRemoteLocalDcs.forEach(dc -> addRemoteNodes(nodes, dc));
-
-              liveNodes
-                  .dcs()
-                  .forEach(
-                      dc -> {
-                        if (!preferredRemoteLocalDcs.contains(dc) && !dc.equals(localDc)) {
-                          addRemoteNodes(nodes, dc);
-                        }
-                      });
-
-              if (!nodes.isEmpty()) {
-                return nodes.toArray();
-              } else {
-                return EMPTY_NODES;
-              }
-            } else {
-              Object[] remoteNodes =
-                  liveNodes.dcs().stream()
-                      .filter(Predicates.not(Predicates.equalTo(localDc)))
-                      .flatMap(dc -> liveNodes.dc(dc).stream().limit(maxNodesPerRemoteDc))
-                      .toArray();
-
-              int remoteNodesLength = remoteNodes.length;
-              if (remoteNodesLength == 0) {
-                return EMPTY_NODES;
-              }
-              shuffleHead(remoteNodes, remoteNodesLength);
-              return remoteNodes;
+            if (remoteNodes.length == 0) {
+              return EMPTY_NODES;
             }
-          }
 
-          private void addRemoteNodes(final List<Object> nodes, final String dc) {
-            final Object[] remoteNodesPerDc =
-                liveNodes.dc(dc).stream().limit(maxNodesPerRemoteDc).toArray();
-            int remoteNodesLength = remoteNodesPerDc.length;
-            if (remoteNodesLength > 0) {
-              shuffleHeadRemote(remoteNodesPerDc, remoteNodesLength);
-
-              for (int i = 0; i < remoteNodesLength; i++) {
-                nodes.add(remoteNodesPerDc[i]);
-              }
+            if (preferredRemoteDcs.length == 0) {
+              shuffleHead(remoteNodes, remoteNodes.length);
             }
+
+            return remoteNodes;
           }
         };
 
     return new CompositeQueryPlan(local, remote);
-  }
-
-  /** Exposed as a protected method so that it can be accessed by tests */
-  protected void shuffleHeadRemote(Object[] currentNodes, int headLength) {
-    ArrayUtils.shuffleHead(currentNodes, headLength);
   }
 
   /** Exposed as a protected method so that it can be accessed by tests */

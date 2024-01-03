@@ -33,22 +33,18 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.Test;
 import org.mockito.Mock;
 
-public class BasicLoadBalancingPolicyRemoteDcTest extends BasicLoadBalancingPolicyQueryPlanTest {
-
-  @Mock protected DefaultNode node6;
-  @Mock protected DefaultNode node7;
-  @Mock protected DefaultNode node8;
-  @Mock protected DefaultNode node9;
+public class BasicLoadBalancingPolicyPreferredRemoteDcsTest
+    extends BasicLoadBalancingPolicyDcFailoverTest {
   @Mock protected DefaultNode node10;
   @Mock protected DefaultNode node11;
   @Mock protected DefaultNode node12;
@@ -142,12 +138,9 @@ public class BasicLoadBalancingPolicyRemoteDcTest extends BasicLoadBalancingPoli
             DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_ALLOW_FOR_LOCAL_CONSISTENCY_LEVELS))
         .thenReturn(false);
 
-    final List<String> preferredDcs = new ArrayList<>();
-    preferredDcs.add("dc3");
-    preferredDcs.add("dc2");
     when(defaultProfile.getStringList(
             DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_PREFERRED_REMOTE_DCS, new ArrayList<>()))
-        .thenReturn(preferredDcs);
+        .thenReturn(ImmutableList.of("dc3", "dc2"));
 
     // Use a subclass to disable shuffling, we just spy to make sure that the shuffling method was
     // called (makes tests easier)
@@ -156,11 +149,6 @@ public class BasicLoadBalancingPolicyRemoteDcTest extends BasicLoadBalancingPoli
             new BasicLoadBalancingPolicy(context, DriverExecutionProfile.DEFAULT_NAME) {
               @Override
               protected void shuffleHead(Object[] currentNodes, int headLength) {
-                // nothing (keep in same order)
-              }
-
-              @Override
-              protected void shuffleHeadRemote(Object[] currentNodes, int headLength) {
                 // nothing (keep in same order)
               }
             });
