@@ -350,12 +350,14 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
                     .flatMap(dc -> liveNodes.dc(dc).stream().limit(maxNodesPerRemoteDc))
                     .toArray();
 
-            if (remoteNodes.length == 0) {
+            int remoteNodesLength = remoteNodes.length;
+
+            if (remoteNodesLength == 0) {
               return EMPTY_NODES;
             }
 
             if (preferredRemoteDcs.length == 0) {
-              shuffleHead(remoteNodes, remoteNodes.length);
+              shuffleHead(remoteNodes, remoteNodesLength);
             }
 
             return remoteNodes;
