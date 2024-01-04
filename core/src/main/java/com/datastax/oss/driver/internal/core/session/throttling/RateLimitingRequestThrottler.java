@@ -117,35 +117,37 @@ public class RateLimitingRequestThrottler implements RequestThrottler {
   }
 
   @Override
-  public void register(@NonNull Throttled request) {
-    long now = clock.nanoTime();
-    lock.lock();
-    try {
-      if (closed) {
-        LOG.trace("[{}] Rejecting request after shutdown", logPrefix);
-        fail(request, "The session is shutting down");
-      } else if (queue.isEmpty() && acquire(now, 1) == 1) {
-        LOG.trace("[{}] Starting newly registered request", logPrefix);
-        request.onThrottleReady(false);
-      } else if (queue.size() < maxQueueSize) {
-        LOG.trace("[{}] Enqueuing request", logPrefix);
-        if (queue.isEmpty()) {
-          scheduler.schedule(this::drain, drainIntervalNanos, TimeUnit.NANOSECONDS);
+    public void register(@NonNull Throttled request) {
+        long now = clock.nanoTime();
+        lock.lock();
+        try {
+            if (closed) {
+                LOG.trace("[{}] Rejecting request after shutdown", logPrefix);
+                fail(request, "The session is shutting down");
+            } else if (queue.isEmpty() && acquire(now, 1) == 1) {
+                LOG.trace("[{}] Starting newly registered request", logPrefix);
+                request.onThrottleReady(false);
+            } else if (queue.size() < maxQueueSize) {
+                LOG.trace("[{}] Enqueuing request", logPrefix);
+                if (queue.isEmpty()) {
+                    scheduler.schedule(this::drain, drainIntervalNanos, TimeUnit.NANOSECONDS);
+                }
+                queue.add(request);
+            } else {
+                LOG.trace("[{}] Rejecting request because of full queue", logPrefix);
+                fail(
+                        request,
+                        String.format(
+                                "The session has reached its maximum capacity "
+                                        + "(requests/s: %d, queue size: %d)",
+                                maxRequestsPerSecond, maxQueueSize));
+            }
+        } catch (Exception e) {
+            fail(request, "Error in registering throttler");
+        } finally {
+            lock.unlock();
         }
-        queue.add(request);
-      } else {
-        LOG.trace("[{}] Rejecting request because of full queue", logPrefix);
-        fail(
-            request,
-            String.format(
-                "The session has reached its maximum capacity "
-                    + "(requests/s: %d, queue size: %d)",
-                maxRequestsPerSecond, maxQueueSize));
-      }
-    } finally {
-      lock.unlock();
     }
-  }
 
   // Runs periodically when the queue is not empty. It tries to dequeue as much as possible while
   // staying under the target rate. If it does not completely drain the queue, it reschedules
