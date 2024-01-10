@@ -49,10 +49,10 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -61,6 +61,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntUnaryOperator;
+import java.util.stream.Stream;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,7 +122,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   private volatile NodeDistanceEvaluator nodeDistanceEvaluator;
   private volatile String localDc;
   private volatile NodeSet liveNodes;
-  private final String[] preferredRemoteDcs;
+  private final List<String> preferredRemoteDcs;
 
   public BasicLoadBalancingPolicy(@NonNull DriverContext context, @NonNull String profileName) {
     this.context = (InternalDriverContext) context;
@@ -143,7 +144,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
                 profile.getStringList(
                     DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_PREFERRED_REMOTE_DCS,
                     new ArrayList<>())));
-    preferredRemoteDcs = remoteDcs.toArray(new String[0]);
+    preferredRemoteDcs = new ArrayList<>(remoteDcs);
   }
 
   /**
@@ -335,7 +336,6 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
     }
     QueryPlan remote =
         new LazyQueryPlan() {
-
           @Override
           protected Object[] computeNodes() {
             Object[] remoteNodes =
@@ -344,10 +344,22 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
                     .sorted(
                         Comparator.comparingInt(
                             dc -> {
-                              int i = Arrays.binarySearch(preferredRemoteDcs, dc);
+                              int i = preferredRemoteDcs.indexOf(dc);
                               return i < 0 ? Integer.MAX_VALUE : i;
                             }))
-                    .flatMap(dc -> liveNodes.dc(dc).stream().limit(maxNodesPerRemoteDc))
+                    .flatMap(
+                        dc -> {
+                          if (preferredRemoteDcs.isEmpty()) {
+                            return liveNodes.dc(dc).stream().limit(maxNodesPerRemoteDc);
+                          } else {
+                            final Object[] nodesPerDc =
+                                liveNodes.dc(dc).stream().limit(maxNodesPerRemoteDc).toArray();
+                            if (nodesPerDc.length > 0) {
+                              shuffleHead(nodesPerDc, nodesPerDc.length);
+                            }
+                            return Stream.of(nodesPerDc);
+                          }
+                        })
                     .toArray();
 
             int remoteNodesLength = remoteNodes.length;
@@ -356,7 +368,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
               return EMPTY_NODES;
             }
 
-            if (preferredRemoteDcs.length == 0) {
+            if (preferredRemoteDcs.isEmpty()) {
               shuffleHead(remoteNodes, remoteNodesLength);
             }
 
