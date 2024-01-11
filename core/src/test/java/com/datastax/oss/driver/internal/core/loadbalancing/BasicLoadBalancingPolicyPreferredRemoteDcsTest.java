@@ -68,19 +68,21 @@ public class BasicLoadBalancingPolicyPreferredRemoteDcsTest
   public void should_prioritize_and_shuffle_replicas() {
     when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
     when(request.getRoutingKey()).thenReturn(ROUTING_KEY);
-    when(tokenMap.getReplicas(KEYSPACE, ROUTING_KEY)).thenReturn(ImmutableSet.of(node3, node5));
+    when(tokenMap.getReplicas(KEYSPACE, ROUTING_KEY))
+        .thenReturn(ImmutableSet.of(node1, node2, node3, node6, node9));
 
+    // node 6 and 9 being in a remote DC, they don't get a boost for being a replica
     assertThat(policy.newQueryPlan(request, session))
         .containsExactly(
-            node3, node5, node1, node2, node4, node9, node10, node6, node7, node12, node13);
+            node1, node2, node3, node4, node5, node9, node10, node6, node7, node12, node13);
     assertThat(policy.newQueryPlan(request, session))
         .containsExactly(
-            node3, node5, node2, node4, node1, node9, node10, node6, node7, node12, node13);
-    assertThat(policy.newQueryPlan(request, session))
-        .containsExactly(
-            node3, node5, node4, node1, node2, node9, node10, node6, node7, node12, node13);
+            node1, node2, node3, node5, node4, node9, node10, node6, node7, node12, node13);
 
-    verify(policy, times(12)).shuffleHead(any(), eq(2));
+    // should shuffle replicas
+    verify(policy, times(2)).shuffleHead(any(), eq(3));
+    // should shuffle remote nodes
+    verify(policy, times(6)).shuffleHead(any(), eq(2));
     // No power of two choices with only two replicas
     verify(session, never()).getPools();
   }
