@@ -20,7 +20,6 @@ package com.datastax.oss.driver.internal.core.loadbalancing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -36,7 +35,6 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.Test;
@@ -49,43 +47,6 @@ public class BasicLoadBalancingPolicyPreferredRemoteDcsTest
   @Mock protected DefaultNode node12;
   @Mock protected DefaultNode node13;
   @Mock protected DefaultNode node14;
-
-  @Override
-  @Test
-  public void
-      should_use_round_robin_when_token_map_returns_no_replicas_using_request_keyspace_and_routing_key() {
-    when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
-    when(request.getRoutingKey()).thenReturn(ROUTING_KEY);
-    when(tokenMap.getReplicas(KEYSPACE, ROUTING_KEY)).thenReturn(Collections.emptySet());
-
-    assertRoundRobinQueryPlans();
-
-    then(tokenMap).should(atLeast(1)).getReplicas(KEYSPACE, ROUTING_KEY);
-  }
-
-  @Override
-  @Test
-  public void should_prioritize_and_shuffle_replicas() {
-    when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
-    when(request.getRoutingKey()).thenReturn(ROUTING_KEY);
-    when(tokenMap.getReplicas(KEYSPACE, ROUTING_KEY))
-        .thenReturn(ImmutableSet.of(node1, node2, node3, node6, node9));
-
-    // node 6 and 9 being in a remote DC, they don't get a boost for being a replica
-    assertThat(policy.newQueryPlan(request, session))
-        .containsExactly(
-            node1, node2, node3, node4, node5, node9, node10, node6, node7, node12, node13);
-    assertThat(policy.newQueryPlan(request, session))
-        .containsExactly(
-            node1, node2, node3, node5, node4, node9, node10, node6, node7, node12, node13);
-
-    // should shuffle replicas
-    verify(policy, times(2)).shuffleHead(any(), eq(3));
-    // should shuffle remote nodes
-    verify(policy, times(6)).shuffleHead(any(), eq(2));
-    // No power of two choices with only two replicas
-    verify(session, never()).getPools();
-  }
 
   @Override
   @Test
@@ -112,6 +73,30 @@ public class BasicLoadBalancingPolicyPreferredRemoteDcsTest
     verify(policy, never()).shuffleHead(any(), eq(1));
     // But should shuffle remote nodes
     verify(policy, times(12)).shuffleHead(any(), eq(2));
+  }
+
+  @Override
+  @Test
+  public void should_prioritize_and_shuffle_replicas() {
+    when(request.getRoutingKeyspace()).thenReturn(KEYSPACE);
+    when(request.getRoutingKey()).thenReturn(ROUTING_KEY);
+    when(tokenMap.getReplicas(KEYSPACE, ROUTING_KEY))
+        .thenReturn(ImmutableSet.of(node1, node2, node3, node6, node9));
+
+    // node 6 and 9 being in a remote DC, they don't get a boost for being a replica
+    assertThat(policy.newQueryPlan(request, session))
+        .containsExactly(
+            node1, node2, node3, node4, node5, node9, node10, node6, node7, node12, node13);
+    assertThat(policy.newQueryPlan(request, session))
+        .containsExactly(
+            node1, node2, node3, node5, node4, node9, node10, node6, node7, node12, node13);
+
+    // should shuffle replicas
+    verify(policy, times(2)).shuffleHead(any(), eq(3));
+    // should shuffle remote nodes
+    verify(policy, times(6)).shuffleHead(any(), eq(2));
+    // No power of two choices with only two replicas
+    verify(session, never()).getPools();
   }
 
   @Override

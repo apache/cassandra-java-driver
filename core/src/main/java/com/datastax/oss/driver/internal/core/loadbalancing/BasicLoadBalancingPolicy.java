@@ -352,18 +352,17 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
                           if (preferredRemoteDcs.isEmpty()) {
                             return liveNodes.dc(dc).stream().limit(maxNodesPerRemoteDc);
                           } else {
-                            final Object[] nodesPerDc =
+                            final Object[] nodesPerRemoteDc =
                                 liveNodes.dc(dc).stream().limit(maxNodesPerRemoteDc).toArray();
-                            if (nodesPerDc.length > 0) {
-                              shuffleHead(nodesPerDc, nodesPerDc.length);
+                            if (nodesPerRemoteDc.length > 0) {
+                              shuffleHead(nodesPerRemoteDc, nodesPerRemoteDc.length);
                             }
-                            return Stream.of(nodesPerDc);
+                            return Stream.of(nodesPerRemoteDc);
                           }
                         })
                     .toArray();
 
             int remoteNodesLength = remoteNodes.length;
-
             if (remoteNodesLength == 0) {
               return EMPTY_NODES;
             }
