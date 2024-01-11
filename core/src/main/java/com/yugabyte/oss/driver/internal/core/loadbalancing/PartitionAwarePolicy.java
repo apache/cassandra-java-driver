@@ -25,10 +25,7 @@ import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
-import com.datastax.oss.driver.api.core.type.DataType;
-import com.datastax.oss.driver.api.core.type.MapType;
-import com.datastax.oss.driver.api.core.type.SetType;
-import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.api.core.type.*;
 import com.datastax.oss.driver.internal.core.util.collection.SimpleQueryPlan;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.yugabyte.oss.driver.api.core.DefaultPartitionMetadata;
@@ -385,7 +382,20 @@ public class PartitionAwarePolicy extends YugabyteDefaultLoadBalancingPolicy
           channel.write(value);
           break;
         }
-      case ProtocolConstants.DataType.LIST:
+      case ProtocolConstants.DataType.LIST:{
+        ListType listType = (ListType) type;
+        DataType dataTypeOfListValue = listType.getElementType();
+        int length = value.getInt();
+        for (int j = 0; j < length; j++) {
+          // Appending each element.
+          int size = value.getInt();
+          ByteBuffer buf = value.slice();
+          buf.limit(size);
+          AppendValueToChannel(dataTypeOfListValue, buf, channel);
+          value.position(value.position() + size);
+        }
+        break;
+      }
       case ProtocolConstants.DataType.SET:
         {
           SetType setType = (SetType) type;
