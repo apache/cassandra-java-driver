@@ -98,7 +98,7 @@ jobs:
       - name: Setup Python 3
         uses: actions/setup-python@v2
         with:
-          python-version: '3.x'
+          python-version: '3.11'
 
       - name: Fetch Scylla and Cassandra versions
         id: fetch-versions
@@ -134,11 +134,11 @@ jobs:
       - name: Setup Python 3
         uses: actions/setup-python@v2
         with:
-          python-version: '3.x'
+          python-version: '3.11'
 
       - name: Setup environment
         run: |
-          pip3 install https://github.com/scylladb/scylla-ccm/archive/master.zip
+          pip3 install https://github.com/scylladb/scylla-ccm/archive/a93125bc6ad7dd5c9694331e89dc1fb212431ffe.zip
       - name: Run integration tests on Cassandra (${{ matrix.cassandra-version }})
         run: mvn -B -e verify -Dccm.version=${{ matrix.cassandra-version }} -Dfmt.skip=true -Dclirr.skip=true -Danimal.sniffer.skip=true
 
@@ -186,11 +186,11 @@ jobs:
       - name: Setup Python 3
         uses: actions/setup-python@v2
         with:
-          python-version: '3.x'
+          python-version: '3.11'
 
       - name: Setup environment
         run: |
-          pip3 install https://github.com/scylladb/scylla-ccm/archive/master.zip
+          pip3 install https://github.com/scylladb/scylla-ccm/archive/a93125bc6ad7dd5c9694331e89dc1fb212431ffe.zip
           sudo sh -c "echo 2097152 > /proc/sys/fs/aio-max-nr"
       - name: Run integration tests on Scylla (${{ matrix.scylla-version }})
         run: mvn -B verify -Dccm.version=${{ matrix.scylla-version }} -Dccm.scylla=true -Dfmt.skip=true -Dclirr.skip=true -Danimal.sniffer.skip=true
