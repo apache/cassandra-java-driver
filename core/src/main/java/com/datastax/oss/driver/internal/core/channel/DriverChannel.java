@@ -49,9 +49,9 @@ import net.jcip.annotations.ThreadSafe;
 @ThreadSafe
 public class DriverChannel {
 
-  static final AttributeKey<String> CLUSTER_NAME_KEY = AttributeKey.newInstance("cluster_name");
+  static final AttributeKey<String> CLUSTER_NAME_KEY = AttributeKey.valueOf("cluster_name");
   static final AttributeKey<Map<String, List<String>>> OPTIONS_KEY =
-      AttributeKey.newInstance("options");
+      AttributeKey.valueOf("options");
 
   @SuppressWarnings("RedundantStringConstructorCall")
   static final Object GRACEFUL_CLOSE_MESSAGE = new String("GRACEFUL_CLOSE_MESSAGE");
