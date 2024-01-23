@@ -150,8 +150,8 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
     }
   }
 
-  private ReloadingKeyManagerFactory buildReloadingKeyManagerFactory(
-      DriverExecutionProfile config) {
+  private ReloadingKeyManagerFactory buildReloadingKeyManagerFactory(DriverExecutionProfile config)
+      throws Exception {
     Path keystorePath = Paths.get(config.getString(DefaultDriverOption.SSL_KEYSTORE_PATH));
     String password =
         config.isDefined(DefaultDriverOption.SSL_KEYSTORE_PASSWORD)

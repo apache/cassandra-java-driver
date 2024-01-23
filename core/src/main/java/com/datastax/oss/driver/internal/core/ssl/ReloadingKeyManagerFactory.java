@@ -73,26 +73,17 @@ public class ReloadingKeyManagerFactory extends KeyManagerFactory implements Aut
    * @return
    */
   public static ReloadingKeyManagerFactory create(
-      Path keystorePath, String keystorePassword, Duration reloadInterval) {
-    KeyManagerFactory kmf;
-    try {
-      kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-    } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException(e);
-    }
+      Path keystorePath, String keystorePassword, Duration reloadInterval)
+      throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException,
+          CertificateException, IOException {
+    KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 
     KeyStore ks;
     try (InputStream ksf = Files.newInputStream(keystorePath)) {
       ks = KeyStore.getInstance(KEYSTORE_TYPE);
       ks.load(ksf, keystorePassword.toCharArray());
-    } catch (IOException | CertificateException | KeyStoreException | NoSuchAlgorithmException e) {
-      throw new RuntimeException(e);
     }
-    try {
-      kmf.init(ks, keystorePassword.toCharArray());
-    } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
-      throw new RuntimeException(e);
-    }
+    kmf.init(ks, keystorePassword.toCharArray());
 
     ReloadingKeyManagerFactory reloadingKeyManagerFactory = new ReloadingKeyManagerFactory(kmf);
     reloadingKeyManagerFactory.start(keystorePath, keystorePassword, reloadInterval);
@@ -115,24 +106,26 @@ public class ReloadingKeyManagerFactory extends KeyManagerFactory implements Aut
   private void start(Path keystorePath, String keystorePassword, Duration reloadInterval) {
     this.keystorePath = keystorePath;
     this.keystorePassword = keystorePassword;
-    this.executor =
-        Executors.newScheduledThreadPool(
-            1,
-            runnable -> {
-              Thread t = Executors.defaultThreadFactory().newThread(runnable);
-              t.setDaemon(true);
-              return t;
-            });
 
     // Ensure that reload is called once synchronously, to make sure the file exists etc.
     reload();
 
-    if (!reloadInterval.isZero())
+    if (!reloadInterval.isZero()) {
+      this.executor =
+          Executors.newScheduledThreadPool(
+              1,
+              runnable -> {
+                Thread t = Executors.defaultThreadFactory().newThread(runnable);
+                t.setName(String.format("%s-%%d", this.getClass().getSimpleName()));
+                t.setDaemon(true);
+                return t;
+              });
       this.executor.scheduleWithFixedDelay(
           this::reload,
           reloadInterval.toMillis(),
           reloadInterval.toMillis(),
           TimeUnit.MILLISECONDS);
+    }
   }
 
   @VisibleForTesting
@@ -140,7 +133,10 @@ public class ReloadingKeyManagerFactory extends KeyManagerFactory implements Aut
     try {
       reload0();
     } catch (Exception e) {
-      logger.warn("Failed to reload", e);
+      String msg =
+          "Failed to reload KeyStore. If this continues to happen, your client may use stale identity"
+              + "certificates and fail to re-establish connections to Cassandra hosts.";
+      logger.warn(msg, e);
     }
   }
 
