@@ -111,7 +111,8 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   private final ConsistencyLevel defaultConsistencyLevel;
 
   // private because they should be set in init() and never be modified after
-  private volatile DistanceReporter distanceReporter;
+  // Yugabyte specific: protected because distanceReporter is to be used in YugabyteDefaultLoadBalancingPolicy class
+  protected volatile DistanceReporter distanceReporter;
   protected volatile NodeDistanceEvaluator nodeDistanceEvaluator;
   protected volatile String localDc;
   protected volatile NodeSet liveNodes;
