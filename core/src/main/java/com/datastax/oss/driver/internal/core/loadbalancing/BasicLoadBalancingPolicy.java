@@ -113,7 +113,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   // private because they should be set in init() and never be modified after
   private volatile DistanceReporter distanceReporter;
   protected volatile NodeDistanceEvaluator nodeDistanceEvaluator;
-  private volatile String localDc;
+  protected volatile String localDc;
   protected volatile NodeSet liveNodes;
 
   public BasicLoadBalancingPolicy(@NonNull DriverContext context, @NonNull String profileName) {

@@ -45,7 +45,6 @@ public class YugabyteDefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy
       LoggerFactory.getLogger(YugabyteDefaultLoadBalancingPolicy.class);
 
   private volatile DistanceReporter distanceReporter;
-  private volatile String localDc;
 
   protected final CopyOnWriteArraySet<Node> liveNodesInLocalDc = new CopyOnWriteArraySet<>();
   protected final CopyOnWriteArraySet<Node> liveNodesInAllDC = new CopyOnWriteArraySet<>();
