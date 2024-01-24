@@ -382,20 +382,21 @@ public class PartitionAwarePolicy extends YugabyteDefaultLoadBalancingPolicy
           channel.write(value);
           break;
         }
-      case ProtocolConstants.DataType.LIST:{
-        ListType listType = (ListType) type;
-        DataType dataTypeOfListValue = listType.getElementType();
-        int length = value.getInt();
-        for (int j = 0; j < length; j++) {
-          // Appending each element.
-          int size = value.getInt();
-          ByteBuffer buf = value.slice();
-          buf.limit(size);
-          AppendValueToChannel(dataTypeOfListValue, buf, channel);
-          value.position(value.position() + size);
+      case ProtocolConstants.DataType.LIST:
+        {
+          ListType listType = (ListType) type;
+          DataType dataTypeOfListValue = listType.getElementType();
+          int length = value.getInt();
+          for (int j = 0; j < length; j++) {
+            // Appending each element.
+            int size = value.getInt();
+            ByteBuffer buf = value.slice();
+            buf.limit(size);
+            AppendValueToChannel(dataTypeOfListValue, buf, channel);
+            value.position(value.position() + size);
+          }
+          break;
         }
-        break;
-      }
       case ProtocolConstants.DataType.SET:
         {
           SetType setType = (SetType) type;
