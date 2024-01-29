@@ -127,16 +127,18 @@ public class VectorCodec<SubtypeT extends Number> implements TypeCodec<CqlVector
               cqlType.getDimensions(), bytes.remaining()));
     }
 
+    ByteBuffer slice = bytes.slice();
     List<SubtypeT> rv = new ArrayList<SubtypeT>(cqlType.getDimensions());
     for (int i = 0; i < cqlType.getDimensions(); ++i) {
-      ByteBuffer slice = bytes.slice();
-      slice.limit(elementSize);
+      // Set the limit for the current element
+      int originalPosition = slice.position();
+      slice.limit(originalPosition + elementSize);
       rv.add(this.subtypeCodec.decode(slice, protocolVersion));
-      bytes.position(bytes.position() + elementSize);
+      // Move to the start of the next element
+      slice.position(originalPosition + elementSize);
+      // Reset the limit to the end of the buffer
+      slice.limit(slice.capacity());
     }
-
-    /* Restore the input ByteBuffer to its original state */
-    bytes.rewind();
 
     return CqlVector.newInstance(rv);
   }
