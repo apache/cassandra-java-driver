@@ -506,16 +506,32 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
     }
     // system.local for Cassandra >= 4.0
     Integer broadcastRpcPort = row.getInteger("rpc_port");
+    Integer broadcastRpcPortSsl;
     if (broadcastRpcPort == null || broadcastRpcPort == 0) {
       // system.peers_v2
       broadcastRpcPort = row.getInteger("native_port");
+      broadcastRpcPortSsl = row.getInteger("native_port_ssl");
+
       if (broadcastRpcPort == null || broadcastRpcPort == 0) {
-        // use the default port if no port information was found in the row;
-        // note that in rare situations, the default port might not be known, in which case we
-        // report zero, as advertised in the javadocs of Node and NodeInfo.
-        broadcastRpcPort = port == -1 ? 0 : port;
+        if (broadcastRpcPortSsl == null || broadcastRpcPortSsl == 0) {
+          broadcastRpcPort = port == -1 ? 0 : port;
+        } else {
+          broadcastRpcPort = broadcastRpcPortSsl;
+        }
+      } else {
+        if (broadcastRpcPortSsl != null && broadcastRpcPortSsl != 0) {
+          if (!broadcastRpcPortSsl.equals(broadcastRpcPort)) {
+            broadcastRpcPort = broadcastRpcPortSsl;
+          }
+        }
+      }
+    } else {
+      InetSocketAddress address = (InetSocketAddress) localEndPoint.resolve();
+      if (broadcastRpcPort != address.getPort()) {
+        broadcastRpcPort = address.getPort();
       }
     }
+
     InetSocketAddress broadcastRpcAddress =
         new InetSocketAddress(broadcastRpcInetAddress, broadcastRpcPort);
     if (row.contains("peer") && broadcastRpcAddress.equals(localEndPoint.resolve())) {
