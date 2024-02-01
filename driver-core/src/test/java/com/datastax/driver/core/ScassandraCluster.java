@@ -642,6 +642,7 @@ public class ScassandraCluster {
     column("peer_port", INT),
     column("native_address", INET),
     column("native_port", INT),
+    column("native_port_ssl", INT),
     column("data_center", TEXT),
     column("rack", TEXT),
     column("release_version", TEXT),

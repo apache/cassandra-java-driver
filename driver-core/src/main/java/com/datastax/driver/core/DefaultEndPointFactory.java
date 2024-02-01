@@ -48,18 +48,23 @@ public class DefaultEndPointFactory implements EndPointFactory {
     if (peersRow.getColumnDefinitions().contains("native_address")) {
       InetAddress nativeAddress = peersRow.getInet("native_address");
       int nativePort = peersRow.getInt("native_port");
+      if (cluster.getConfiguration().getProtocolOptions().getSSLOptions() != null
+          && !peersRow.isNull("native_port_ssl")) {
+        nativePort = peersRow.getInt("native_port_ssl");
+      }
       InetSocketAddress translateAddress =
           cluster.manager.translateAddress(new InetSocketAddress(nativeAddress, nativePort));
       return new TranslatedAddressEndPoint(translateAddress);
     } else if (peersRow.getColumnDefinitions().contains("native_transport_address")) {
-      InetAddress nativeAddress = peersRow.getInet("native_transport_address");
-      int nativePort = peersRow.getInt("native_transport_port");
+      InetAddress nativeTransportAddress = peersRow.getInet("native_transport_address");
+      int nativeTransportPort = peersRow.getInt("native_transport_port");
       if (cluster.getConfiguration().getProtocolOptions().getSSLOptions() != null
           && !peersRow.isNull("native_transport_port_ssl")) {
-        nativePort = peersRow.getInt("native_transport_port_ssl");
+        nativeTransportPort = peersRow.getInt("native_transport_port_ssl");
       }
       InetSocketAddress translateAddress =
-          cluster.manager.translateAddress(new InetSocketAddress(nativeAddress, nativePort));
+          cluster.manager.translateAddress(
+              new InetSocketAddress(nativeTransportAddress, nativeTransportPort));
       return new TranslatedAddressEndPoint(translateAddress);
     } else {
       InetAddress broadcastAddress = peersRow.getInet("peer");

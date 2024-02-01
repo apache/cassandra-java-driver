@@ -623,7 +623,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
    */
   @Test(groups = "short", enabled = false /* Requires SSL support in scassandra */)
   @CCMConfig(createCcm = false)
-  public void should_extract_hosts_using_native_transport_address_port_ssl_from_peers()
+  public void should_extract_hosts_using_native_transport_address_port_ssl_from_peers_dse()
       throws UnknownHostException {
 
     InetAddress expectedAddress = InetAddress.getByName("4.3.2.1");
@@ -633,6 +633,28 @@ public class ControlConnectionTest extends CCMTestsSupport {
             .peers("native_transport_address", expectedAddress)
             .peers("native_transport_port", expectedPort - 100)
             .peers("native_transport_port_ssl", expectedPort)
+            .expectedAddress(expectedAddress)
+            .expectedPort(expectedPort)
+            .build();
+    runPeerTest(state);
+  }
+
+  /**
+   * As of CASSANDRA-16999 the relevant column names for OSS Cassandra are slightly different so
+   * test those as well.
+   */
+  @Test(groups = "short", enabled = false /* Requires SSL support in scassandra */)
+  @CCMConfig(createCcm = false)
+  public void should_extract_hosts_using_native_transport_address_port_ssl_from_peers_cassandra()
+      throws UnknownHostException {
+
+    InetAddress expectedAddress = InetAddress.getByName("4.3.2.1");
+    int expectedPort = 2409;
+    PeerRowState state =
+        PeerRowState.builder()
+            .peers("native_address", expectedAddress)
+            .peers("native_port", expectedPort - 100)
+            .peers("native_port_ssl", expectedPort)
             .expectedAddress(expectedAddress)
             .expectedPort(expectedPort)
             .build();
