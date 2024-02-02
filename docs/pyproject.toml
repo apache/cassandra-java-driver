@@ -8,7 +8,6 @@ authors = ["Java Driver Contributors"]
 python = "^3.9"
 pyyaml = "6.0.1"
 pygments = "2.15.1"
-recommonmark = "0.7.1"
 redirects_cli ="~0.1.3"
 sphinx-scylladb-theme = "~1.6.1"
 sphinx-sitemap = "2.5.1"
@@ -17,6 +16,7 @@ Sphinx = "7.2.6"
 sphinx-multiversion-scylla = "~0.3.1"
 setuptools = "^65.6.3"
 wheel = "^0.38.4"
+sphinx-scylladb-markdown = "^0.1.2"
 
 [build-system]
 requires = ["poetry>=0.12"]

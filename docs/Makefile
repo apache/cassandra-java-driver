@@ -25,7 +25,8 @@ setupenv:
 setup:
 	$(POETRY) install
 	$(POETRY) update
-	cp -TLr source $(SOURCEDIR)
+	@if [ ! -d "$(SOURCEDIR)" ]; then mkdir -p "$(SOURCEDIR)"; fi
+	cp -RL source/* $(SOURCEDIR)
 	cd $(SOURCEDIR) && find . -name README.md -execdir mv '{}' index.md ';'
 
 # Clean commands

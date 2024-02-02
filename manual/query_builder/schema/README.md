@@ -65,7 +65,7 @@ element type:
 
 [SchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html
 
-```eval_rst
+```{eval-rst}
 .. toctree::
    :hidden:
    :glob:

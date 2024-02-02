@@ -27,7 +27,7 @@ This covers utilities or concept that are shared throughout the codebase:
 * the [event bus](event_bus/) is used to decouple some of the internal components through
   asynchronous messaging.
   
-```eval_rst
+```{eval-rst}
 .. toctree::
    :hidden:
    :glob:

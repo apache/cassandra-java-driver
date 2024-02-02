@@ -173,7 +173,7 @@ To control how the hierarchy is scanned, annotate interfaces with [@HierarchySca
 [@HierarchyScanStrategy]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/mapper/annotations/HierarchyScanStrategy.html
 [Entity Inheritance]: ../entities/#inheritance
 
-```eval_rst
+```{eval-rst}
 .. toctree::
    :hidden:
    :glob:

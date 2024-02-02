@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import os
-import sys
-from datetime import date
-import yaml
 import re
-from docutils import nodes
-from recommonmark.transform import AutoStructify
-from recommonmark.parser import CommonMarkParser, splitext, urlparse
+from datetime import date
+from pathlib import Path
 from sphinx_scylladb_theme.utils import multiversion_regex_builder
 from redirects_cli import cli as redirects_cli
 
@@ -47,6 +43,7 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'sphinx_scylladb_theme',
     'sphinx_multiversion',
+    'sphinx_scylladb_markdown'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -87,6 +84,23 @@ notfound_template =  '404.html'
 
 # Prefix added to all the URLs generated in the 404 page.
 notfound_urls_prefix = ''
+
+# -- Options for markdown extension
+scylladb_markdown_enable = True
+scylladb_markdown_recommonmark_versions = [
+    'scylla-3.7.2.x',
+    'scylla-3.10.2.x',
+    'scylla-3.11.0.x',
+    'scylla-3.11.2.x',
+    'scylla-4.7.2.x',
+    'scylla-4.10.0.x',
+    'scylla-4.11.1.x',
+    'scylla-4.12.0.x',
+    'scylla-4.13.0.x',
+    'scylla-4.14.1.x',
+    'scylla-4.15.0.x',
+]
+suppress_warnings = ["ref.any", "myst.header","myst.xref_missing"]
 
 # -- Options for multiversion extension
 
@@ -151,57 +165,20 @@ html_baseurl = 'https://java-driver.docs.scylladb.com'
 
 # Dictionary of values to pass into the template engine’s context for all pages
 html_context = {'html_baseurl': html_baseurl}
-
-# -- Initialize Sphinx
-
-class CustomCommonMarkParser(CommonMarkParser):
-    
-    def visit_document(self, node):
-        pass
-    
-    def visit_link(self, mdnode):
-        # Override MarkDownParser to avoid checking if relative links exists
-        ref_node = nodes.reference()
-        destination = mdnode.destination
-        _, ext = splitext(destination)
-
-        url_check = urlparse(destination)
-        scheme_known = bool(url_check.scheme)
-
-        if not scheme_known and ext.replace('.', '') in self.supported:
-            destination = destination.replace(ext, '')
-        ref_node['refuri'] = destination
-        ref_node.line = self._get_line(mdnode)
-        if mdnode.title:
-            ref_node['title'] = mdnode.title
-        next_node = ref_node
-
-        self.current_node.append(next_node)
-        self.current_node = ref_node
-
 def replace_relative_links(app, docname, source):
     result = source[0]
     for key in app.config.replacements:
         result = re.sub(key, app.config.replacements[key], result)
     source[0] = result
 
-
-def build_finished(app, exception):
+def redirect_api_page_to_javadoc(app, exception):
     version_name = os.getenv("SPHINX_MULTIVERSION_NAME", "")
     version_name = "/" + version_name if version_name else ""
     redirect_to = version_name +'/api/index.html'
-    out_file = app.outdir +'/api.html'
-    redirects_cli.create(redirect_to=redirect_to,out_file=out_file)
+    out_file = Path(app.outdir) / 'api.html'
+    redirects_cli.create(redirect_to=redirect_to, out_file=str(out_file))
 
 def setup(app):
-    # Setup Markdown parser
-    app.add_source_parser(CustomCommonMarkParser)
-    app.add_config_value('recommonmark_config', {
-        'enable_eval_rst': True,
-        'enable_auto_toc_tree': False,
-    }, True)
-    app.add_transform(AutoStructify)
-
     # Replace DataStax links
     current_slug = os.getenv("SPHINX_MULTIVERSION_NAME", "stable")
     replacements = {
@@ -210,7 +187,4 @@ def setup(app):
     }
     app.add_config_value('replacements', replacements, True)
     app.connect('source-read', replace_relative_links)
-
-    # Create redirect to JavaDoc API
-    app.connect('build-finished', build_finished)
-    
+    app.connect('build-finished', redirect_api_page_to_javadoc)

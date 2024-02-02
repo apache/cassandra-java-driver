@@ -172,7 +172,7 @@ You can decide which logs to enable using the standard SLF4J mechanisms (categor
 addition, if you want no logs at all, it's possible to entirely remove them from the generated code
 with the Java compiler option `-Acom.datastax.oss.driver.mapper.logs.enabled=false`.
 
-```eval_rst
+```{eval-rst}
 .. toctree::
    :hidden:
    :glob:

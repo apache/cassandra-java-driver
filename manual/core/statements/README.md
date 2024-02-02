@@ -83,7 +83,7 @@ can create execution profiles to capture common combinations of those options).
 [execute]:          https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/Session.html#execute-com.datastax.oss.driver.api.core.cql.Statement-
 [executeAsync]:     https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/Session.html#executeAsync-com.datastax.oss.driver.api.core.cql.Statement-
 
-```eval_rst
+```{eval-rst}
 .. toctree::
    :hidden:
    :glob:

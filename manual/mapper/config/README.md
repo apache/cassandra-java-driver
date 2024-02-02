@@ -133,7 +133,7 @@ You will find the generated files in `build/generated/sources/annotationProcesso
 * [Java 14 records](record/)
 * [Scala](scala/)
 
-```eval_rst
+```{eval-rst}
 .. toctree::
    :hidden:
    :glob:
