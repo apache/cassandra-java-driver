@@ -632,21 +632,21 @@ changelog](https://docs.datastax.com/en/developer/java-driver-dse/latest/changel
 - [bug] JAVA-1499: Wait for load balancing policy at cluster initialization
 - [new feature] JAVA-1495: Add prepared statements
 
-## 3.11.3
+### 3.11.3
 
 - [improvement] JAVA-3023: Upgrade Netty to 4.1.77, 3.x edition
 
-## 3.11.2
+### 3.11.2
 
 - [improvement] JAVA-3008: Upgrade Netty to 4.1.75, 3.x edition
 - [improvement] JAVA-2984: Upgrade Jackson to resolve high-priority CVEs
 
-## 3.11.1
+### 3.11.1
 
 - [bug] JAVA-2967: Support native transport peer information for DSE 6.8.
 - [bug] JAVA-2976: Support missing protocol v5 error codes CAS_WRITE_UNKNOWN, CDC_WRITE_FAILURE.
 
-## 3.11.0
+### 3.11.0
 
 - [improvement] JAVA-2705: Remove protocol v5 beta status, add v6-beta.
 - [bug] JAVA-2923: Detect and use Guava's new HostAndPort.getHost method.
