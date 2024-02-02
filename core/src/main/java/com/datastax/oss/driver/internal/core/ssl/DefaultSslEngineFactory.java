@@ -33,6 +33,7 @@ import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
@@ -153,14 +154,11 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
   private ReloadingKeyManagerFactory buildReloadingKeyManagerFactory(DriverExecutionProfile config)
       throws Exception {
     Path keystorePath = Paths.get(config.getString(DefaultDriverOption.SSL_KEYSTORE_PATH));
-    String password =
-        config.isDefined(DefaultDriverOption.SSL_KEYSTORE_PASSWORD)
-            ? config.getString(DefaultDriverOption.SSL_KEYSTORE_PASSWORD)
-            : null;
-    Duration reloadInterval =
-        config.isDefined(DefaultDriverOption.SSL_KEYSTORE_RELOAD_INTERVAL)
-            ? config.getDuration(DefaultDriverOption.SSL_KEYSTORE_RELOAD_INTERVAL)
-            : Duration.ZERO;
+    String password = config.getString(DefaultDriverOption.SSL_KEYSTORE_PASSWORD, null);
+    Optional<Duration> reloadInterval =
+        Optional.ofNullable(
+            config.getDuration(DefaultDriverOption.SSL_KEYSTORE_RELOAD_INTERVAL, null));
+
     return ReloadingKeyManagerFactory.create(keystorePath, password, reloadInterval);
   }
 

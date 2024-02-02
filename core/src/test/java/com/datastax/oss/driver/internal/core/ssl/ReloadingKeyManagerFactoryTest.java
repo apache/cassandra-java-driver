@@ -34,7 +34,6 @@ import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
-import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -86,7 +85,6 @@ public class ReloadingKeyManagerFactoryTest {
 
   static final Path CLIENT_TRUSTSTORE_PATH = CERT_BASE.resolve("client.truststore");
   static final String CERTSTORE_PASSWORD = "changeit";
-  static final Duration NO_SCHEDULED_RELOAD = Duration.ofMillis(0);
 
   private static TrustManagerFactory buildTrustManagerFactory() {
     TrustManagerFactory tmf;
@@ -186,7 +184,7 @@ public class ReloadingKeyManagerFactoryTest {
 
     final ReloadingKeyManagerFactory kmf =
         ReloadingKeyManagerFactory.create(
-            TMP_CLIENT_KEYSTORE_PATH, CERTSTORE_PASSWORD, NO_SCHEDULED_RELOAD);
+            TMP_CLIENT_KEYSTORE_PATH, CERTSTORE_PASSWORD, Optional.empty());
     // Need a tmf that tells the server to send its certs
     final TrustManagerFactory tmf = buildTrustManagerFactory();
 
