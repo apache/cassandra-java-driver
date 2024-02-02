@@ -36,6 +36,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -68,12 +69,12 @@ public class ReloadingKeyManagerFactory extends KeyManagerFactory implements Aut
    *
    * @param keystorePath the keystore file to reload
    * @param keystorePassword the keystore password
-   * @param reloadInterval the duration between reload attempts. Set to {@link
-   *     java.time.Duration#ZERO} to disable scheduled reloading.
+   * @param reloadInterval the duration between reload attempts. Set to {@link Optional#empty()} to
+   *     disable scheduled reloading.
    * @return
    */
-  public static ReloadingKeyManagerFactory create(
-      Path keystorePath, String keystorePassword, Duration reloadInterval)
+  static ReloadingKeyManagerFactory create(
+      Path keystorePath, String keystorePassword, Optional<Duration> reloadInterval)
       throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException,
           CertificateException, IOException {
     KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
@@ -103,14 +104,24 @@ public class ReloadingKeyManagerFactory extends KeyManagerFactory implements Aut
     this.spi = spi;
   }
 
-  private void start(Path keystorePath, String keystorePassword, Duration reloadInterval) {
+  private void start(
+      Path keystorePath, String keystorePassword, Optional<Duration> reloadInterval) {
     this.keystorePath = keystorePath;
     this.keystorePassword = keystorePassword;
 
     // Ensure that reload is called once synchronously, to make sure the file exists etc.
     reload();
 
-    if (!reloadInterval.isZero()) {
+    if (!reloadInterval.isPresent() || reloadInterval.get().isZero()) {
+      final String msg =
+          "KeyStore reloading is disabled. If your Cassandra cluster requires client certificates, "
+              + "client application restarts are infrequent, and client certificates have short lifetimes, then your client "
+              + "may fail to re-establish connections to Cassandra hosts. To enable KeyStore reloading, see "
+              + "`advanced.ssl-engine-factory.keystore-reload-interval` in reference.conf.";
+      logger.info(msg);
+    } else {
+      logger.info("KeyStore reloading is enabled with interval {}", reloadInterval.get());
+
       this.executor =
           Executors.newScheduledThreadPool(
               1,
@@ -122,8 +133,8 @@ public class ReloadingKeyManagerFactory extends KeyManagerFactory implements Aut
               });
       this.executor.scheduleWithFixedDelay(
           this::reload,
-          reloadInterval.toMillis(),
-          reloadInterval.toMillis(),
+          reloadInterval.get().toMillis(),
+          reloadInterval.get().toMillis(),
           TimeUnit.MILLISECONDS);
     }
   }
@@ -135,7 +146,7 @@ public class ReloadingKeyManagerFactory extends KeyManagerFactory implements Aut
     } catch (Exception e) {
       String msg =
           "Failed to reload KeyStore. If this continues to happen, your client may use stale identity"
-              + "certificates and fail to re-establish connections to Cassandra hosts.";
+              + " certificates and fail to re-establish connections to Cassandra hosts.";
       logger.warn(msg, e);
     }
   }
