@@ -89,6 +89,20 @@ public class DaoUpdateMethodGeneratorTest extends DaoMethodGeneratorTest {
             .returns(TypeName.VOID)
             .build(),
       },
+      {
+        "Invalid "
+            + "USING TIMEOUT"
+            + " value: "
+            + "'15zz' is not a bind marker name and can't be parsed as a CqlDuration "
+            + "either",
+        MethodSpec.methodBuilder("select")
+            .addAnnotation(
+                AnnotationSpec.builder(Update.class).addMember("usingTimeout", "\"15zz\"").build())
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
+            .returns(TypeName.VOID)
+            .build(),
+      },
     };
   }
 
@@ -150,6 +164,16 @@ public class DaoUpdateMethodGeneratorTest extends DaoMethodGeneratorTest {
 
     // then
     assertThat(builder.build().code).isEqualTo(expected);
+  }
+
+  @Test
+  @UseDataProvider("usingTimeoutProvider") // superclass method
+  public void should_process_timeout(String timeout, CodeBlock expected) {
+    // given
+    ProcessorContext processorContext = mock(ProcessorContext.class);
+    DaoMethodGenerator daoUpdateMethodGenerator =
+        new DaoUpdateMethodGenerator(null, null, null, null, processorContext);
+    super.should_process_timeout(daoUpdateMethodGenerator, timeout, expected);
   }
 
   @DataProvider

@@ -15,15 +15,21 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.internal.mapper.processor.MapperProcessorTest;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
+import com.tngtech.java.junit.dataprovider.DataProvider;
 import java.util.UUID;
 import javax.lang.model.element.Modifier;
 
@@ -160,5 +166,47 @@ public abstract class DaoMethodGeneratorTest extends MapperProcessorTest {
             .addAnnotation(Dao.class)
             .addMethod(method)
             .build());
+  }
+
+  protected void should_process_timeout(
+      DaoMethodGenerator daoMethodGenerator, String timeout, CodeBlock expected) {
+    // given (including subclassed DaoMethodGenerator)
+    MethodSpec.Builder builder = MethodSpec.constructorBuilder();
+
+    // when
+    daoMethodGenerator.maybeAddTimeout(timeout, builder);
+
+    // then
+    assertThat(builder.build().code).isEqualTo(expected);
+  }
+
+  @DataProvider
+  public static Object[][] usingTimeoutProvider() {
+    return new Object[][] {
+      {"1y", CodeBlock.of(".usingTimeout($T.from(\"1y\"))", CqlDuration.class)},
+      {"1mo", CodeBlock.of(".usingTimeout($T.from(\"1mo\"))", CqlDuration.class)},
+      {"1w", CodeBlock.of(".usingTimeout($T.from(\"1w\"))", CqlDuration.class)},
+      {"1d", CodeBlock.of(".usingTimeout($T.from(\"1d\"))", CqlDuration.class)},
+      {"1h", CodeBlock.of(".usingTimeout($T.from(\"1h\"))", CqlDuration.class)},
+      {"1m", CodeBlock.of(".usingTimeout($T.from(\"1m\"))", CqlDuration.class)},
+      {"1s", CodeBlock.of(".usingTimeout($T.from(\"1s\"))", CqlDuration.class)},
+      {"1ms", CodeBlock.of(".usingTimeout($T.from(\"1ms\"))", CqlDuration.class)},
+      {"1us", CodeBlock.of(".usingTimeout($T.from(\"1us\"))", CqlDuration.class)},
+      {"1ns", CodeBlock.of(".usingTimeout($T.from(\"1ns\"))", CqlDuration.class)},
+      {
+        ":ts", CodeBlock.of(".usingTimeout($T.bindMarker($S))", QueryBuilder.class, "ts"),
+      },
+      {
+        "P4Y5M3DT11H30M55S",
+        CodeBlock.of(".usingTimeout($T.from(\"P4Y5M3DT11H30M55S\"))", CqlDuration.class)
+      },
+      {
+        ":TS", CodeBlock.of(".usingTimeout($T.bindMarker($S))", QueryBuilder.class, "TS"),
+      },
+      {
+        "P0003-06-04T12:30:05",
+        CodeBlock.of(".usingTimeout($T.from(\"P0003-06-04T12:30:05\"))", CqlDuration.class)
+      },
+    };
   }
 }

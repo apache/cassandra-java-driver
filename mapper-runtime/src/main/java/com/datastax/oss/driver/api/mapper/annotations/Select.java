@@ -66,13 +66,13 @@ import java.util.function.UnaryOperator;
  * </pre>
  *
  * The generated SELECT query can be further customized with {@link #limit()}, {@link
- * #perPartitionLimit()}, {@link #orderBy()}, {@link #groupBy()} and {@link #allowFiltering()}. Some
- * of these clauses can also contain placeholders whose values will be provided through additional
- * method parameters. Note that it is sometimes not possible to determine if a parameter is a
- * primary key component or a placeholder value; therefore the rule is that <b>if your method takes
- * a partial primary key, the first parameter that is not a primary key component must be explicitly
- * annotated with {@link CqlName}.</b> For example if the primary key is {@code ((day int, hour int,
- * minute int), ts timestamp)}:
+ * #perPartitionLimit()}, {@link #orderBy()}, {@link #groupBy()}, {@link #allowFiltering()} and
+ * {@link #bypassCache()}. Some of these clauses can also contain placeholders whose values will be
+ * provided through additional method parameters. Note that it is sometimes not possible to
+ * determine if a parameter is a primary key component or a placeholder value; therefore the rule is
+ * that <b>if your method takes a partial primary key, the first parameter that is not a primary key
+ * component must be explicitly annotated with {@link CqlName}.</b> For example if the primary key
+ * is {@code ((day int, hour int, minute int), ts timestamp)}:
  *
  * <pre>
  * // Annotate 'l' so that it's not mistaken for the second PK component
@@ -201,4 +201,22 @@ public @interface Select {
 
   /** Whether to add an ALLOW FILTERING clause to the SELECT query. */
   boolean allowFiltering() default false;
+
+  /** Whether to add BYPASS CACHE clause to the SELECT query. */
+  boolean bypassCache() default false;
+
+  /**
+   * The timeout to use in the generated SELECT query. Equivalent to {@code USING TIMEOUT
+   * <duration>} clause.
+   *
+   * <p>If this starts with ":", it is interpreted as a named placeholder (that must have a
+   * corresponding parameter in the method signature). Otherwise, it must be a String representing a
+   * valid CqlDuration.
+   *
+   * <p>If the placeholder name is invalid or the literal can't be parsed as a CqlDuration
+   * (according to the rules of {@link
+   * com.datastax.oss.driver.api.core.data.CqlDuration#from(String)}), the mapper will issue a
+   * compile-time error.
+   */
+  String usingTimeout() default "";
 }

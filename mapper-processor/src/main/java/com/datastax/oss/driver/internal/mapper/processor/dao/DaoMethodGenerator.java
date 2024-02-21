@@ -19,6 +19,7 @@ import static com.datastax.oss.driver.internal.mapper.processor.dao.DefaultDaoRe
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
+import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Delete;
 import com.datastax.oss.driver.api.mapper.annotations.Increment;
@@ -101,6 +102,41 @@ public abstract class DaoMethodGenerator implements MethodGenerator {
 
   protected void maybeAddTimestamp(String timestamp, MethodSpec.Builder methodBuilder) {
     maybeAddSimpleClause(timestamp, Long::parseLong, "usingTimestamp", "timestamp", methodBuilder);
+  }
+
+  protected void maybeAddTimeout(String timeout, MethodSpec.Builder methodBuilder) {
+    if (timeout.isEmpty()) return;
+    if (timeout.startsWith(":")) {
+      String bindMarkerName = timeout.substring(1);
+      try {
+        CqlIdentifier.fromCql(bindMarkerName);
+      } catch (IllegalArgumentException ignored) {
+        context
+            .getMessager()
+            .error(
+                methodElement,
+                "Invalid " + "USING TIMEOUT" + " value: " + "'%s' is not a valid placeholder",
+                timeout);
+      }
+      methodBuilder.addCode(
+          ".$L($T.bindMarker($S))", "usingTimeout", QueryBuilder.class, bindMarkerName);
+    } else {
+      try {
+        CqlDuration unused = CqlDuration.from(timeout);
+      } catch (Exception ex) {
+        context
+            .getMessager()
+            .error(
+                methodElement,
+                "Invalid "
+                    + "USING TIMEOUT"
+                    + " value: "
+                    + "'%s' is not a bind marker name and can't be parsed as a CqlDuration "
+                    + "either",
+                timeout);
+      }
+      methodBuilder.addCode(".$L($T.$L($S))", "usingTimeout", CqlDuration.class, "from", timeout);
+    }
   }
 
   protected void maybeAddSimpleClause(

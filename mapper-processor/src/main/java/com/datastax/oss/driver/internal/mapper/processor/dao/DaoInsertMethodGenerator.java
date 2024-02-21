@@ -193,6 +193,7 @@ public class DaoInsertMethodGenerator extends DaoMethodGenerator {
 
     maybeAddTtl(annotation.ttl(), methodBuilder);
     maybeAddTimestamp(annotation.timestamp(), methodBuilder);
+    maybeAddTimeout(annotation.usingTimeout(), methodBuilder);
 
     methodBuilder.addCode(".build()$];\n");
   }

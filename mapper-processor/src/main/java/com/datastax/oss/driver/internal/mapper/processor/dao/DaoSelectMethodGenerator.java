@@ -239,6 +239,7 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
         "perPartitionLimit",
         "perPartitionLimit",
         methodBuilder);
+    maybeAddTimeout(annotation.usingTimeout(), methodBuilder);
     for (String orderingSpec : annotation.orderBy()) {
       addOrdering(orderingSpec, methodBuilder);
     }
@@ -247,6 +248,9 @@ public class DaoSelectMethodGenerator extends DaoMethodGenerator {
     }
     if (annotation.allowFiltering()) {
       methodBuilder.addCode(".allowFiltering()");
+    }
+    if (annotation.bypassCache()) {
+      methodBuilder.addCode(".bypassCache()");
     }
     methodBuilder.addCode(".build();$]\n");
   }

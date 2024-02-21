@@ -15,8 +15,12 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import static org.mockito.Mockito.mock;
+
 import com.datastax.oss.driver.api.mapper.annotations.Insert;
+import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
@@ -64,6 +68,20 @@ public class DaoInsertMethodGeneratorTest extends DaoMethodGeneratorTest {
             .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
             .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
             .returns(TypeName.INT)
+            .build(),
+      },
+      {
+        "Invalid "
+            + "USING TIMEOUT"
+            + " value: "
+            + "'15zz' is not a bind marker name and can't be parsed as a CqlDuration "
+            + "either",
+        MethodSpec.methodBuilder("select")
+            .addAnnotation(
+                AnnotationSpec.builder(Insert.class).addMember("usingTimeout", "\"15zz\"").build())
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .addParameter(ParameterSpec.builder(ENTITY_CLASS_NAME, "entity").build())
+            .returns(TypeName.VOID)
             .build(),
       },
     };
@@ -124,5 +142,15 @@ public class DaoInsertMethodGeneratorTest extends DaoMethodGeneratorTest {
             .build(),
       },
     };
+  }
+
+  @Test
+  @UseDataProvider("usingTimeoutProvider") // superclass method
+  public void should_process_timeout(String timeout, CodeBlock expected) {
+    // given
+    ProcessorContext processorContext = mock(ProcessorContext.class);
+    DaoMethodGenerator daoInsertMethodGenerator =
+        new DaoInsertMethodGenerator(null, null, null, null, processorContext);
+    super.should_process_timeout(daoInsertMethodGenerator, timeout, expected);
   }
 }

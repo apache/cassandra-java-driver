@@ -151,6 +151,21 @@ public @interface Insert {
   String ttl() default "";
 
   /**
+   * The timeout to use in the generated INSERT query. Equivalent to {@code USING TIMEOUT
+   * <duration>} clause.
+   *
+   * <p>If this starts with ":", it is interpreted as a named placeholder (that must have a
+   * corresponding parameter in the method signature). Otherwise, it must be a String representing a
+   * valid CqlDuration.
+   *
+   * <p>If the placeholder name is invalid or the literal can't be parsed as a CqlDuration
+   * (according to the rules of {@link
+   * com.datastax.oss.driver.api.core.data.CqlDuration#from(String)}), the mapper will issue a
+   * compile-time error.
+   */
+  String usingTimeout() default "";
+
+  /**
    * The timestamp to use in the generated INSERT query.
    *
    * <p>If this starts with ":", it is interpreted as a named placeholder (that must have a

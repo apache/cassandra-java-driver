@@ -15,12 +15,18 @@
  */
 package com.datastax.oss.driver.internal.mapper.processor.dao;
 
+import static org.mockito.Mockito.mock;
+
 import com.datastax.oss.driver.api.mapper.annotations.Select;
+import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
+import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import javax.lang.model.element.Modifier;
 import org.junit.Test;
@@ -70,6 +76,42 @@ public class DaoSelectMethodGeneratorTest extends DaoMethodGeneratorTest {
             .returns(ENTITY_CLASS_NAME)
             .build(),
       },
+      {
+        "Invalid "
+            + "USING TIMEOUT"
+            + " value: "
+            + "'15zz' is not a bind marker name and can't be parsed as a CqlDuration "
+            + "either",
+        MethodSpec.methodBuilder("select")
+            .addAnnotation(
+                AnnotationSpec.builder(Select.class).addMember("usingTimeout", "\"15zz\"").build())
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .addParameter(UUID.class, "id")
+            .returns(ENTITY_CLASS_NAME)
+            .build(),
+      },
     };
+  }
+
+  @Test
+  @UseDataProvider("usingTimeoutProvider") // superclass method
+  public void should_process_timeout(String timeout, CodeBlock expected) {
+    // given
+    ProcessorContext processorContext = mock(ProcessorContext.class);
+    DaoMethodGenerator daoSelectMethodGenerator =
+        new DaoSelectMethodGenerator(null, null, null, null, processorContext);
+    super.should_process_timeout(daoSelectMethodGenerator, timeout, expected);
+  }
+
+  @Test
+  public void should_process_bypass_cache() {
+    System.out.println("aaa");
+    System.out.println(
+        MethodSpec.methodBuilder("select")
+            .addAnnotation(
+                AnnotationSpec.builder(Select.class).addMember("bypassCache", "true").build())
+            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+            .returns(ParameterizedTypeName.get(CompletionStage.class, Integer.class))
+            .build());
   }
 }
