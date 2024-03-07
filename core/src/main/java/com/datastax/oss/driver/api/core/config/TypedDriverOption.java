@@ -235,6 +235,12 @@ public class TypedDriverOption<ValueT> {
   /** The keystore password. */
   public static final TypedDriverOption<String> SSL_KEYSTORE_PASSWORD =
       new TypedDriverOption<>(DefaultDriverOption.SSL_KEYSTORE_PASSWORD, GenericType.STRING);
+
+  /** The duration between attempts to reload the keystore. */
+  public static final TypedDriverOption<Duration> SSL_KEYSTORE_RELOAD_INTERVAL =
+      new TypedDriverOption<>(
+          DefaultDriverOption.SSL_KEYSTORE_RELOAD_INTERVAL, GenericType.DURATION);
+
   /** The location of the truststore file. */
   public static final TypedDriverOption<String> SSL_TRUSTSTORE_PATH =
       new TypedDriverOption<>(DefaultDriverOption.SSL_TRUSTSTORE_PATH, GenericType.STRING);

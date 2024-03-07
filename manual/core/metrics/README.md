@@ -56,7 +56,7 @@ module contains the actual bindings for Micrometer, and depends itself on the Mi
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-metrics-micrometer</artifactId>
   <version>${driver.version}</version>
 </dependency>
@@ -67,7 +67,7 @@ driver, because they are not relevant when using Micrometer:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <exclusions>
     <exclusion>
@@ -100,7 +100,7 @@ library:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-metrics-microprofile</artifactId>
   <version>${driver.version}</version>
 </dependency>
@@ -111,7 +111,7 @@ driver, because they are not relevant when using MicroProfile Metrics:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <exclusions>
     <exclusion>
