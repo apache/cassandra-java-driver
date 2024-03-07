@@ -36,6 +36,7 @@ import com.datastax.oss.driver.internal.core.util.collection.SimpleQueryPlan;
 import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
 import com.datastax.oss.driver.shaded.guava.common.cache.CacheLoader;
 import com.datastax.oss.driver.shaded.guava.common.cache.LoadingCache;
+import com.datastax.oss.driver.shaded.guava.common.cache.RemovalListener;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.BitSet;
@@ -130,7 +131,18 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
             return array;
           }
         };
-    this.responseTimes = CacheBuilder.newBuilder().weakKeys().build(cacheLoader);
+    this.responseTimes =
+        CacheBuilder.newBuilder()
+            .weakKeys()
+            .removalListener(
+                (RemovalListener<Node, AtomicLongArray>)
+                    notification ->
+                        LOG.trace(
+                            "[{}] Evicting response times for {}: {}",
+                            logPrefix,
+                            notification.getKey(),
+                            notification.getCause()))
+            .build(cacheLoader);
   }
 
   @NonNull
@@ -304,11 +316,12 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
     // response rate is considered insufficient when less than 2 responses were obtained in
     // the past interval delimited by RESPONSE_COUNT_RESET_INTERVAL_NANOS.
     AtomicLongArray array = responseTimes.getIfPresent(node);
-    if (array != null && array.length() == 2) {
-      long threshold = now - RESPONSE_COUNT_RESET_INTERVAL_NANOS;
-      long leastRecent = array.get(0);
-      return leastRecent - threshold < 0;
-    } else return true;
+    if (array == null || array.length() != 2) {
+      return true;
+    }
+    long threshold = now - RESPONSE_COUNT_RESET_INTERVAL_NANOS;
+    long leastRecent = array.get(0);
+    return leastRecent - threshold < 0;
   }
 
   /**
