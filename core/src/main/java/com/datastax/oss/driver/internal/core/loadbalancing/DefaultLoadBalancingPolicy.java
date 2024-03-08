@@ -100,7 +100,7 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
   private static final int MAX_IN_FLIGHT_THRESHOLD = 10;
   private static final long RESPONSE_COUNT_RESET_INTERVAL_NANOS = MILLISECONDS.toNanos(200);
 
-  protected final LoadingCache<Node, AtomicLongArray> responseTimes;
+  protected final LoadingCache<Node, NodeResponseRateSample> responseTimes;
   protected final Map<Node, Long> upTimes = new ConcurrentHashMap<>();
   private final boolean avoidSlowReplicas;
 
@@ -108,34 +108,24 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
     super(context, profileName);
     this.avoidSlowReplicas =
         profile.getBoolean(DefaultDriverOption.LOAD_BALANCING_POLICY_SLOW_AVOIDANCE, true);
-    CacheLoader<Node, AtomicLongArray> cacheLoader =
-        new CacheLoader<Node, AtomicLongArray>() {
+    CacheLoader<Node, NodeResponseRateSample> cacheLoader =
+        new CacheLoader<Node, NodeResponseRateSample>() {
           @Override
-          public AtomicLongArray load(Node key) throws Exception {
-            // The array stores at most two timestamps, since we don't need more;
-            // the first one is always the least recent one, and hence the one to inspect.
-            long now = nanoTime();
-            AtomicLongArray array = responseTimes.getIfPresent(key);
-            if (array == null) {
-              array = new AtomicLongArray(1);
-              array.set(0, now);
-            } else if (array.length() == 1) {
-              long previous = array.get(0);
-              array = new AtomicLongArray(2);
-              array.set(0, previous);
-              array.set(1, now);
+          public NodeResponseRateSample load(Node key) {
+            NodeResponseRateSample sample = responseTimes.getIfPresent(key);
+            if (sample == null) {
+              sample = new NodeResponseRateSample();
             } else {
-              array.set(0, array.get(1));
-              array.set(1, now);
+              sample.update();
             }
-            return array;
+            return sample;
           }
         };
     this.responseTimes =
         CacheBuilder.newBuilder()
             .weakKeys()
             .removalListener(
-                (RemovalListener<Node, AtomicLongArray>)
+                (RemovalListener<Node, NodeResponseRateSample>)
                     notification ->
                         LOG.trace(
                             "[{}] Evicting response times for {}: {}",
@@ -313,15 +303,12 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
   }
 
   protected boolean isResponseRateInsufficient(@NonNull Node node, long now) {
-    // response rate is considered insufficient when less than 2 responses were obtained in
-    // the past interval delimited by RESPONSE_COUNT_RESET_INTERVAL_NANOS.
-    AtomicLongArray array = responseTimes.getIfPresent(node);
-    if (array == null || array.length() != 2) {
+    NodeResponseRateSample sample = responseTimes.getIfPresent(node);
+    if (sample == null) {
       return true;
+    } else {
+      return !sample.hasSufficientResponses(now);
     }
-    long threshold = now - RESPONSE_COUNT_RESET_INTERVAL_NANOS;
-    long leastRecent = array.get(0);
-    return leastRecent - threshold < 0;
   }
 
   /**
@@ -342,5 +329,43 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
     // for requests that were cancelled or timed out (since the node is likely to still be
     // processing them).
     return (pool == null) ? 0 : pool.getInFlight();
+  }
+
+  // Exposed as protected for unit tests
+  protected class NodeResponseRateSample {
+    // The array stores at most two timestamps, since we don't need more;
+    // the first one is always the least recent one, and hence the one to inspect.
+    protected AtomicLongArray times;
+
+    private NodeResponseRateSample() {
+      times = new AtomicLongArray(1);
+      times.set(0, nanoTime());
+    }
+
+    // Only for unit tests
+    protected NodeResponseRateSample(AtomicLongArray times) {
+      this.times = times;
+    }
+
+    private void update() {
+      long now = nanoTime();
+      if (times.length() == 1) {
+        long previous = times.get(0);
+        times = new AtomicLongArray(2);
+        times.set(0, previous);
+        times.set(1, now);
+      } else {
+        times.set(0, times.get(1));
+        times.set(1, now);
+      }
+    }
+
+    private boolean hasSufficientResponses(long now) {
+      // response rate is considered insufficient when less than 2 responses were obtained in
+      // the past interval delimited by RESPONSE_COUNT_RESET_INTERVAL_NANOS.
+      long threshold = now - RESPONSE_COUNT_RESET_INTERVAL_NANOS;
+      long leastRecent = times.get(0);
+      return leastRecent - threshold >= 0;
+    }
   }
 }
