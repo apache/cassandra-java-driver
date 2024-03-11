@@ -44,20 +44,24 @@ public class DefaultSchemaQueriesFactory implements SchemaQueriesFactory {
   public SchemaQueries newInstance() {
     DriverChannel channel = context.getControlConnection().channel();
     if (channel == null || channel.closeFuture().isDone()) {
-      throw new IllegalStateException("Control channel not available, aborting schema refresh");
+      return new HandlerSchemaQueries("Control channel not available, aborting schema refresh");
     }
-    Node node =
-        context
-            .getMetadataManager()
-            .getMetadata()
-            .findNode(channel.getEndPoint())
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "Could not find control node metadata "
-                            + channel.getEndPoint()
-                            + ", aborting schema refresh"));
-    return newInstance(node, channel);
+    try {
+      Node node =
+          context
+              .getMetadataManager()
+              .getMetadata()
+              .findNode(channel.getEndPoint())
+              .orElseThrow(
+                  () ->
+                      new IllegalStateException(
+                          "Could not find control node metadata "
+                              + channel.getEndPoint()
+                              + ", aborting schema refresh"));
+      return newInstance(node, channel);
+    } catch (IllegalStateException ex) {
+      return new HandlerSchemaQueries(ex.getMessage());
+    }
   }
 
   protected SchemaQueries newInstance(Node node, DriverChannel channel) {
