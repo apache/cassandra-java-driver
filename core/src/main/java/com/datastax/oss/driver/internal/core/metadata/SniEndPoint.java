@@ -80,7 +80,8 @@ public class SniEndPoint implements EndPoint {
       }
 
       // This address is immutable
-      lastResolvedAddress = new InetSocketAddress(aRecords[nextOffset % aRecords.length], proxyAddress.getPort());
+      lastResolvedAddress =
+          new InetSocketAddress(aRecords[nextOffset % aRecords.length], proxyAddress.getPort());
       return lastResolvedAddress;
     } catch (UnknownHostException e) {
       throw new IllegalArgumentException(
