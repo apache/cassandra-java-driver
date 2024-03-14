@@ -437,30 +437,35 @@ public class MetadataManager implements AsyncAutoCloseable {
                   if (agreementError != null) {
                     refreshFuture.completeExceptionally(agreementError);
                   } else {
-                    schemaQueriesFactory
-                        .newInstance()
-                        .execute()
-                        .thenApplyAsync(this::parseAndApplySchemaRows, adminExecutor)
-                        .whenComplete(
-                            (newMetadata, metadataError) -> {
-                              if (metadataError != null) {
-                                refreshFuture.completeExceptionally(metadataError);
-                              } else {
-                                refreshFuture.complete(
-                                    new RefreshSchemaResult(newMetadata, schemaInAgreement));
-                              }
+                    try {
+                      schemaQueriesFactory
+                              .newInstance()
+                              .execute()
+                              .thenApplyAsync(this::parseAndApplySchemaRows, adminExecutor)
+                              .whenComplete(
+                                      (newMetadata, metadataError) -> {
+                                        if (metadataError != null) {
+                                          refreshFuture.completeExceptionally(metadataError);
+                                        } else {
+                                          refreshFuture.complete(
+                                                  new RefreshSchemaResult(newMetadata, schemaInAgreement));
+                                        }
 
-                              firstSchemaRefreshFuture.complete(null);
+                                        firstSchemaRefreshFuture.complete(null);
 
-                              currentSchemaRefresh = null;
-                              // If another refresh was enqueued during this one, run it now
-                              if (queuedSchemaRefresh != null) {
-                                CompletableFuture<RefreshSchemaResult> tmp =
-                                    this.queuedSchemaRefresh;
-                                this.queuedSchemaRefresh = null;
-                                startSchemaRequest(tmp);
-                              }
-                            });
+                                        currentSchemaRefresh = null;
+                                        // If another refresh was enqueued during this one, run it now
+                                        if (queuedSchemaRefresh != null) {
+                                          CompletableFuture<RefreshSchemaResult> tmp =
+                                                  this.queuedSchemaRefresh;
+                                          this.queuedSchemaRefresh = null;
+                                          startSchemaRequest(tmp);
+                                        }
+                                      });
+                    } catch (Throwable t) {
+                      LOG.debug("[{}] Exception getting new metadata", logPrefix, t);
+                      refreshFuture.completeExceptionally(t);
+                    }
                   }
                 });
       } else if (queuedSchemaRefresh == null) {
