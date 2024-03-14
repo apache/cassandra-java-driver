@@ -173,6 +173,12 @@ public abstract class PlainTextAuthProviderBase implements AuthProvider {
 
           @NonNull
           @Override
+          public SocketAddress retrieve() {
+            return new InetSocketAddress("127.0.0.1", 9042);
+          }
+
+          @NonNull
+          @Override
           public String asMetricPrefix() {
             return ""; // will never be used
           }
