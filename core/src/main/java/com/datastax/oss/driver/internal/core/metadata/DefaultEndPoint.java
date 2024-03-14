@@ -38,7 +38,7 @@ public class DefaultEndPoint implements EndPoint, Serializable {
   @NonNull
   @Override
   public InetSocketAddress resolve() {
-    return retrieve();
+    return address;
   }
 
   @Override

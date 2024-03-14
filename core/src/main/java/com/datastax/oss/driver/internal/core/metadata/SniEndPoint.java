@@ -39,6 +39,8 @@ public class SniEndPoint implements EndPoint {
   private final InetSocketAddress proxyAddress;
   private final String serverName;
 
+  private InetSocketAddress lastResolvedAddress = null;
+
   /**
    * @param proxyAddress the address of the proxy. If it is {@linkplain
    *     InetSocketAddress#isUnresolved() unresolved}, each call to {@link #resolve()} will
@@ -77,7 +79,9 @@ public class SniEndPoint implements EndPoint {
         nextOffset = OFFSET.updateAndGet(v -> v < 0 ? 1 : v + 1) - 1;
       }
 
-      return new InetSocketAddress(aRecords[nextOffset % aRecords.length], proxyAddress.getPort());
+      // This address is immutable
+      lastResolvedAddress = new InetSocketAddress(aRecords[nextOffset % aRecords.length], proxyAddress.getPort());
+      return lastResolvedAddress;
     } catch (UnknownHostException e) {
       throw new IllegalArgumentException(
           "Could not resolve proxy address " + proxyAddress.getHostName(), e);
@@ -92,7 +96,7 @@ public class SniEndPoint implements EndPoint {
 
   @Override
   public InetSocketAddress retrieve() {
-    return proxyAddress;
+    return lastResolvedAddress != null ? lastResolvedAddress : proxyAddress;
   }
 
   @Override

@@ -47,10 +47,7 @@ public interface EndPoint {
    * if the node hostname or port number is needed.
    */
   @NonNull
-  default SocketAddress retrieve() {
-    return resolve();
-  }
-
+  SocketAddress retrieve();
   /**
    * Returns an alternate string representation for use in node-level metric names.
    *
