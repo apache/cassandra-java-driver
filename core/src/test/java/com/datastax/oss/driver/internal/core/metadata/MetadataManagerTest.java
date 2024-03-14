@@ -20,6 +20,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -33,6 +34,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
+import com.datastax.oss.driver.internal.core.control.ControlConnection;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParserFactory;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
@@ -64,6 +66,7 @@ public class MetadataManagerTest {
 
   @Mock private InternalDriverContext context;
   @Mock private NettyOptions nettyOptions;
+  @Mock private ControlConnection controlConnection;
   @Mock private TopologyMonitor topologyMonitor;
   @Mock private DriverConfig config;
   @Mock private DriverExecutionProfile defaultProfile;
@@ -85,6 +88,7 @@ public class MetadataManagerTest {
     when(context.getNettyOptions()).thenReturn(nettyOptions);
 
     when(context.getTopologyMonitor()).thenReturn(topologyMonitor);
+    when(context.getControlConnection()).thenReturn(controlConnection);
 
     when(defaultProfile.getDuration(DefaultDriverOption.METADATA_SCHEMA_WINDOW))
         .thenReturn(Duration.ZERO);
@@ -284,6 +288,25 @@ public class MetadataManagerTest {
     assertThat(metadataManager.refreshes).hasSize(1);
     RemoveNodeRefresh refresh = (RemoveNodeRefresh) metadataManager.refreshes.get(0);
     assertThat(refresh.broadcastRpcAddressToRemove).isEqualTo(broadcastRpcAddress2);
+  }
+
+  @Test
+  public void refreshSchema_should_work() {
+    // Given
+    IllegalStateException expectedException = new IllegalStateException("Error we're testing");
+    when(schemaQueriesFactory.newInstance()).thenThrow(expectedException);
+    when(topologyMonitor.refreshNodeList()).thenReturn(CompletableFuture.completedFuture(ImmutableList.of(mock(NodeInfo.class))));
+    when(topologyMonitor.checkSchemaAgreement()).thenReturn(CompletableFuture.completedFuture(Boolean.TRUE));
+    when(controlConnection.init(anyBoolean(), anyBoolean(), anyBoolean())).thenReturn(CompletableFuture.completedFuture(null));
+    metadataManager.refreshNodes(); // required internal state setup for this
+    waitForPendingAdminTasks(() -> metadataManager.refreshes.size() == 1); // sanity check
+
+    // When
+    CompletionStage<MetadataManager.RefreshSchemaResult> result = metadataManager.refreshSchema("foo", true, true);
+
+    // Then
+    waitForPendingAdminTasks(() -> result.toCompletableFuture().isDone());
+    assertThatStage(result).isFailed(t -> assertThat(t).isEqualTo(expectedException));
   }
 
   private static class TestMetadataManager extends MetadataManager {
