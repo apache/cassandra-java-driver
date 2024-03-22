@@ -26,14 +26,14 @@ public class TestNodeFactory {
   public static DefaultNode newNode(int lastIpByte, InternalDriverContext context) {
     DefaultNode node = newContactPoint(lastIpByte, context);
     node.hostId = UUID.randomUUID();
-    node.broadcastRpcAddress = ((InetSocketAddress) node.getEndPoint().resolve());
+    node.broadcastRpcAddress = ((InetSocketAddress) node.getEndPoint().retrieve());
     return node;
   }
 
   public static DefaultNode newNode(int lastIpByte, UUID hostId, InternalDriverContext context) {
     DefaultNode node = newContactPoint(lastIpByte, context);
     node.hostId = hostId;
-    node.broadcastRpcAddress = ((InetSocketAddress) node.getEndPoint().resolve());
+    node.broadcastRpcAddress = ((InetSocketAddress) node.getEndPoint().retrieve());
     return node;
   }
 

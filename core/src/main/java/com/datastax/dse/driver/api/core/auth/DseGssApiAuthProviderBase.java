@@ -319,7 +319,7 @@ public abstract class DseGssApiAuthProviderBase implements AuthProvider {
                 SUPPORTED_MECHANISMS,
                 options.getAuthorizationId(),
                 protocol,
-                ((InetSocketAddress) endPoint.resolve()).getAddress().getCanonicalHostName(),
+                ((InetSocketAddress) endPoint.retrieve()).getAddress().getCanonicalHostName(),
                 options.getSaslProperties(),
                 null);
       } catch (LoginException | SaslException e) {

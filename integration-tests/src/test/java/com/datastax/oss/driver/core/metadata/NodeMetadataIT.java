@@ -54,7 +54,7 @@ public class NodeMetadataIT {
       Node node = getUniqueNode(session);
       // Run a few basic checks given what we know about our test environment:
       assertThat(node.getEndPoint()).isNotNull();
-      InetSocketAddress connectAddress = (InetSocketAddress) node.getEndPoint().resolve();
+      InetSocketAddress connectAddress = (InetSocketAddress) node.getEndPoint().retrieve();
       node.getBroadcastAddress()
           .ifPresent(
               broadcastAddress ->

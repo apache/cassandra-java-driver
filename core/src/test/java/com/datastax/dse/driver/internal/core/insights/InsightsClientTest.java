@@ -485,7 +485,7 @@ public class InsightsClientTest {
     when(context.getProtocolVersion()).thenReturn(DSE_V2);
     DefaultNode contactPoint = mock(DefaultNode.class);
     EndPoint contactEndPoint = mock(EndPoint.class);
-    when(contactEndPoint.resolve()).thenReturn(new InetSocketAddress("127.0.0.1", 9999));
+    when(contactEndPoint.retrieve()).thenReturn(new InetSocketAddress("127.0.0.1", 9999));
     when(contactPoint.getEndPoint()).thenReturn(contactEndPoint);
     when(manager.getContactPoints()).thenReturn(ImmutableSet.of(contactPoint));
 
@@ -501,7 +501,7 @@ public class InsightsClientTest {
     ControlConnection controlConnection = mock(ControlConnection.class);
     DriverChannel channel = mock(DriverChannel.class);
     EndPoint controlConnectionEndpoint = mock(EndPoint.class);
-    when(controlConnectionEndpoint.resolve()).thenReturn(new InetSocketAddress("127.0.0.1", 10));
+    when(controlConnectionEndpoint.retrieve()).thenReturn(new InetSocketAddress("127.0.0.1", 10));
 
     when(channel.getEndPoint()).thenReturn(controlConnectionEndpoint);
     when(channel.localAddress()).thenReturn(new InetSocketAddress("127.0.0.1", 10));
@@ -513,7 +513,7 @@ public class InsightsClientTest {
   private void mockConnectionPools(DefaultDriverContext driverContext) {
     Node node1 = mock(Node.class);
     EndPoint endPoint1 = mock(EndPoint.class);
-    when(endPoint1.resolve()).thenReturn(new InetSocketAddress("127.0.0.1", 10));
+    when(endPoint1.retrieve()).thenReturn(new InetSocketAddress("127.0.0.1", 10));
     when(node1.getEndPoint()).thenReturn(endPoint1);
     when(node1.getOpenConnections()).thenReturn(1);
     ChannelPool channelPool1 = mock(ChannelPool.class);
@@ -521,7 +521,7 @@ public class InsightsClientTest {
 
     Node node2 = mock(Node.class);
     EndPoint endPoint2 = mock(EndPoint.class);
-    when(endPoint2.resolve()).thenReturn(new InetSocketAddress("127.0.0.1", 20));
+    when(endPoint2.retrieve()).thenReturn(new InetSocketAddress("127.0.0.1", 20));
     when(node2.getEndPoint()).thenReturn(endPoint2);
     when(node2.getOpenConnections()).thenReturn(2);
     ChannelPool channelPool2 = mock(ChannelPool.class);

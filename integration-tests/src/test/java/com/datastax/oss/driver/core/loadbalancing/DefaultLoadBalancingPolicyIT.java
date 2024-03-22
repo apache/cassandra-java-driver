@@ -276,7 +276,7 @@ public class DefaultLoadBalancingPolicyIT {
   private EndPoint firstNonDefaultContactPoint(Iterable<Node> nodes) {
     for (Node localNode : nodes) {
       EndPoint endPoint = localNode.getEndPoint();
-      InetSocketAddress connectAddress = (InetSocketAddress) endPoint.resolve();
+      InetSocketAddress connectAddress = (InetSocketAddress) endPoint.retrieve();
       if (!connectAddress.getAddress().getHostAddress().equals("127.0.0.1")) {
         return endPoint;
       }

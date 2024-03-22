@@ -89,7 +89,7 @@ public class ProgrammaticSslEngineFactory implements SslEngineFactory {
   @Override
   public SSLEngine newSslEngine(@NonNull EndPoint remoteEndpoint) {
     SSLEngine engine;
-    SocketAddress remoteAddress = remoteEndpoint.resolve();
+    SocketAddress remoteAddress = remoteEndpoint.retrieve();
     if (remoteAddress instanceof InetSocketAddress) {
       InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
       engine = sslContext.createSSLEngine(socketAddress.getHostName(), socketAddress.getPort());

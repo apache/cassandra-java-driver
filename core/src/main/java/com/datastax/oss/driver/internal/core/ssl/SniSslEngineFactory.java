@@ -53,7 +53,7 @@ public class SniSslEngineFactory implements SslEngineFactory {
               this.getClass().getSimpleName()));
     }
     SniEndPoint sniEndPoint = (SniEndPoint) remoteEndpoint;
-    InetSocketAddress address = sniEndPoint.resolve();
+    InetSocketAddress address = sniEndPoint.retrieve();
     String sniServerName = sniEndPoint.getServerName();
 
     // When hostname verification is enabled (with setEndpointIdentificationAlgorithm), the SSL
