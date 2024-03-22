@@ -48,7 +48,11 @@ import com.datastax.oss.driver.shaded.guava.common.base.Predicates;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -57,6 +61,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntUnaryOperator;
+import java.util.stream.Stream;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,6 +122,7 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   private volatile NodeDistanceEvaluator nodeDistanceEvaluator;
   private volatile String localDc;
   private volatile NodeSet liveNodes;
+  private final List<String> preferredRemoteDcs;
 
   public BasicLoadBalancingPolicy(@NonNull DriverContext context, @NonNull String profileName) {
     this.context = (InternalDriverContext) context;
@@ -131,6 +137,14 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
         this.context
             .getConsistencyLevelRegistry()
             .nameToLevel(profile.getString(DefaultDriverOption.REQUEST_CONSISTENCY));
+
+    Set<String> remoteDcs =
+        new LinkedHashSet<>(
+            Objects.requireNonNull(
+                profile.getStringList(
+                    DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_PREFERRED_REMOTE_DCS,
+                    new ArrayList<>())));
+    preferredRemoteDcs = new ArrayList<>(remoteDcs);
   }
 
   /**
@@ -322,20 +336,41 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
     }
     QueryPlan remote =
         new LazyQueryPlan() {
-
           @Override
           protected Object[] computeNodes() {
             Object[] remoteNodes =
                 liveNodes.dcs().stream()
                     .filter(Predicates.not(Predicates.equalTo(localDc)))
-                    .flatMap(dc -> liveNodes.dc(dc).stream().limit(maxNodesPerRemoteDc))
+                    .sorted(
+                        Comparator.comparingInt(
+                            dc -> {
+                              int i = preferredRemoteDcs.indexOf(dc);
+                              return i < 0 ? Integer.MAX_VALUE : i;
+                            }))
+                    .flatMap(
+                        dc -> {
+                          if (preferredRemoteDcs.isEmpty()) {
+                            return liveNodes.dc(dc).stream().limit(maxNodesPerRemoteDc);
+                          } else {
+                            final Object[] nodesPerRemoteDc =
+                                liveNodes.dc(dc).stream().limit(maxNodesPerRemoteDc).toArray();
+                            if (nodesPerRemoteDc.length > 0) {
+                              shuffleHead(nodesPerRemoteDc, nodesPerRemoteDc.length);
+                            }
+                            return Stream.of(nodesPerRemoteDc);
+                          }
+                        })
                     .toArray();
 
             int remoteNodesLength = remoteNodes.length;
             if (remoteNodesLength == 0) {
               return EMPTY_NODES;
             }
-            shuffleHead(remoteNodes, remoteNodesLength);
+
+            if (preferredRemoteDcs.isEmpty()) {
+              shuffleHead(remoteNodes, remoteNodesLength);
+            }
+
             return remoteNodes;
           }
         };
