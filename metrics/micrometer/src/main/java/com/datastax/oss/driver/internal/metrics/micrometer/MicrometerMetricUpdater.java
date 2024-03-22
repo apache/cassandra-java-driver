@@ -100,7 +100,10 @@ public abstract class MicrometerMetricUpdater<MetricT> extends AbstractMetricUpd
           m -> {
             MetricId id = getMetricId(m);
             Iterable<Tag> tags = MicrometerTags.toMicrometerTags(id.getTags());
-            return Gauge.builder(id.getName(), supplier).tags(tags).register(registry);
+            return Gauge.builder(id.getName(), supplier)
+                .strongReference(false)
+                .tags(tags)
+                .register(registry);
           });
     }
   }
