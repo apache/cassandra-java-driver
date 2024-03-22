@@ -28,10 +28,10 @@ driver is configured in an application and that you will need to obtain a *secur
 1. [Download][Download Maven] and [install][Install Maven] Maven.
 2. Create an Astra database on [AWS/Azure/GCP][Create an Astra database - AWS/Azure/GCP];
    alternatively, have a team member provide access to their
-   Astra database (instructions for [AWS/Azure/GCP][Access an Astra database - AWS/Azure/GCP] to
+   Astra database (see instructions for [AWS/Azure/GCP][Access an Astra database - AWS/Azure/GCP]) to
    obtain database connection details.
-3. Download the secure connect bundle (instructions for 
-   [AWS/Azure/GCP][Download the secure connect bundle - AWS/Azure/GCP], that contains connection
+3. Download the secure connect bundle (see instructions for 
+   [AWS/Azure/GCP][Download the secure connect bundle - AWS/Azure/GCP]) that contains connection
    information such as contact points and certificates.
 
 ### Procedure
