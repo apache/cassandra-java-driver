@@ -173,9 +173,8 @@ public abstract class AbstractMetricUpdater<MetricT> implements MetricUpdater<Me
         .getTimer()
         .newTimeout(
             t -> {
-              if (t.isExpired()) {
-                clearMetrics();
-              }
+              clearMetrics();
+              cancelMetricsExpirationTimeout();
             },
             expireAfter.toNanos(),
             TimeUnit.NANOSECONDS);

@@ -19,7 +19,9 @@ package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.NodeState;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import java.lang.ref.WeakReference;
 import java.util.Objects;
+import javax.annotation.Nullable;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -53,12 +55,17 @@ public class NodeStateEvent {
    */
   public final NodeState newState;
 
-  public final DefaultNode node;
+  private final WeakReference<DefaultNode> node;
 
   private NodeStateEvent(NodeState oldState, NodeState newState, DefaultNode node) {
-    this.node = node;
+    this.node = new WeakReference<>(node);
     this.oldState = oldState;
     this.newState = newState;
+  }
+
+  @Nullable
+  public DefaultNode getNode() {
+    return node.get();
   }
 
   @Override
@@ -69,7 +76,7 @@ public class NodeStateEvent {
       NodeStateEvent that = (NodeStateEvent) other;
       return this.oldState == that.oldState
           && this.newState == that.newState
-          && Objects.equals(this.node, that.node);
+          && Objects.equals(this.getNode(), that.getNode());
     } else {
       return false;
     }
@@ -77,11 +84,11 @@ public class NodeStateEvent {
 
   @Override
   public int hashCode() {
-    return Objects.hash(oldState, newState, node);
+    return Objects.hash(oldState, newState, this.getNode());
   }
 
   @Override
   public String toString() {
-    return "NodeStateEvent(" + oldState + "=>" + newState + ", " + node + ")";
+    return "NodeStateEvent(" + oldState + "=>" + newState + ", " + this.getNode() + ")";
   }
 }
