@@ -29,8 +29,10 @@ import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +77,11 @@ class FullNodeListRefresh extends NodesRefresh {
         DefaultNode node = (DefaultNode) oldNodes.get(id);
         if (node == null) {
           node = new DefaultNode(nodeInfo.getEndPoint(), context);
-          LOG.debug("[{}] Adding new node {}", logPrefix, node);
+          LOG.debug(
+              "[{}] Adding new node {} with system-table address {}",
+              logPrefix,
+              node,
+              nodeInfo.getBroadcastRpcAddress().orElse(null));
           added.put(id, node);
         }
         if (tokenFactory == null && nodeInfo.getPartitioner() != null) {
@@ -86,6 +92,18 @@ class FullNodeListRefresh extends NodesRefresh {
     }
 
     Set<UUID> removed = Sets.difference(oldNodes.keySet(), seen);
+
+    if (!removed.isEmpty()) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(
+            "[{}] Removing nodes: [{}]",
+            logPrefix,
+            removed.stream()
+                .map(oldNodes::get)
+                .map(Objects::toString)
+                .collect(Collectors.joining(", ")));
+      }
+    }
 
     if (added.isEmpty() && removed.isEmpty()) { // The list didn't change
       if (!oldMetadata.getTokenMap().isPresent() && tokenFactory != null) {

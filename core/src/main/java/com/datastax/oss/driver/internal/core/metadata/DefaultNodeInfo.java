@@ -129,6 +129,40 @@ public class DefaultNodeInfo implements NodeInfo {
     return schemaVersion;
   }
 
+  @Override
+  public String toString() {
+    return "DefaultNodeInfo{"
+        + "endPoint="
+        + endPoint
+        + ", broadcastRpcAddress="
+        + broadcastRpcAddress
+        + ", broadcastAddress="
+        + broadcastAddress
+        + ", listenAddress="
+        + listenAddress
+        + ", datacenter='"
+        + datacenter
+        + '\''
+        + ", rack='"
+        + rack
+        + '\''
+        + ", cassandraVersion='"
+        + cassandraVersion
+        + '\''
+        + ", partitioner='"
+        + partitioner
+        + '\''
+        + ", tokens="
+        + tokens
+        + ", extras="
+        + extras
+        + ", hostId="
+        + hostId
+        + ", schemaVersion="
+        + schemaVersion
+        + '}';
+  }
+
   @NotThreadSafe
   public static class Builder {
     private EndPoint endPoint;
