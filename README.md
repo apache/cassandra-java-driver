@@ -80,7 +80,7 @@ See the [Cassandra error handling done right blog](https://www.datastax.com/blog
 * [FAQ]
 
 [API docs]: https://docs.datastax.com/en/drivers/java/4.17
-[JIRA]: https://datastax-oss.atlassian.net/browse/JAVA
+[JIRA]: https://issues.apache.org/jira/projects/CASSANDRA/issues/
 [Mailing list]: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
 [Changelog]: changelog/
 [FAQ]: faq/
