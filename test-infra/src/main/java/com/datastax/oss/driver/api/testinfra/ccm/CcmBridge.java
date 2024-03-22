@@ -80,6 +80,7 @@ public class CcmBridge implements AutoCloseable {
   // Contains the same keypair as the client keystore, but in format usable by OpenSSL
   public static final File DEFAULT_CLIENT_PRIVATE_KEY_FILE = createTempStore("/client.key");
   public static final File DEFAULT_CLIENT_CERT_CHAIN_FILE = createTempStore("/client.crt");
+  public static final File DEFAULT_CERT_FILE = createTempStore("/client.pem");
 
   public static final String DEFAULT_SERVER_TRUSTSTORE_PASSWORD = "fakePasswordForTests";
   public static final String DEFAULT_SERVER_TRUSTSTORE_PATH = "/server.truststore";

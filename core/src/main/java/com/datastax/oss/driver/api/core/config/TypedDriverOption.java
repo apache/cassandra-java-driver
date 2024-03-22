@@ -240,6 +240,12 @@ public class TypedDriverOption<ValueT> {
   public static final TypedDriverOption<Duration> SSL_KEYSTORE_RELOAD_INTERVAL =
       new TypedDriverOption<>(
           DefaultDriverOption.SSL_KEYSTORE_RELOAD_INTERVAL, GenericType.DURATION);
+  /** The location of the private key file. */
+  public static final TypedDriverOption<String> SSL_PRIVATE_KEY_PATH =
+      new TypedDriverOption<>(DefaultDriverOption.SSL_PRIVATE_KEY_PATH, GenericType.STRING);
+  /** The location of the client certificate file. */
+  public static final TypedDriverOption<String> SSL_CLIENT_CERT_PATH =
+      new TypedDriverOption<>(DefaultDriverOption.SSL_CLIENT_CERT_PATH, GenericType.STRING);
 
   /** The location of the truststore file. */
   public static final TypedDriverOption<String> SSL_TRUSTSTORE_PATH =
