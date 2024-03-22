@@ -30,6 +30,7 @@ import net.jcip.annotations.Immutable;
 public class ByteOrderedToken implements Token {
 
   private final ByteBuffer value;
+  private int hashCode = 0;
 
   public ByteOrderedToken(@NonNull ByteBuffer value) {
     this.value = ByteBuffer.wrap(Bytes.getArray(value)).asReadOnlyBuffer();
@@ -54,7 +55,14 @@ public class ByteOrderedToken implements Token {
 
   @Override
   public int hashCode() {
-    return value.hashCode();
+    int hash = this.hashCode;
+    if (hash == 0) {
+      // memoize hashCode via benign data race to avoid expensive computation
+      // when Token are used in hash based data structures
+      hash = value.hashCode();
+      this.hashCode = hash;
+    }
+    return hash;
   }
 
   @Override
