@@ -19,11 +19,13 @@ package com.datastax.dse.driver.internal.core.cql.continuous;
 
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.api.core.cql.continuous.ContinuousAsyncResultSet;
+import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.internal.core.DseProtocolFeature;
 import com.datastax.dse.driver.internal.core.cql.DseConversions;
 import com.datastax.dse.protocol.internal.request.Revise;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.AsyncPagingIterable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.NodeUnavailableException;
@@ -1447,7 +1449,8 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
         long latencyNanos = System.nanoTime() - this.messageStartTimeNanos;
         context
             .getRequestTracker()
-            .onNodeError(this.statement, error, latencyNanos, executionProfile, node, logPrefix);
+            .onNodeError(
+                this.statement, error, latencyNanos, executionProfile, node, logPrefix, null);
       }
     }
 
@@ -1561,21 +1564,32 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       if (resultSetClass.isInstance(pageOrError)) {
         if (future.complete(resultSetClass.cast(pageOrError))) {
           throttler.signalSuccess(ContinuousRequestHandlerBase.this);
+
+          ExecutionInfo executionInfo = null;
+          if (pageOrError instanceof AsyncPagingIterable) {
+            executionInfo = ((AsyncPagingIterable) pageOrError).getExecutionInfo();
+          } else if (pageOrError instanceof AsyncGraphResultSet) {
+            executionInfo = ((AsyncGraphResultSet) pageOrError).getRequestExecutionInfo();
+          }
+
           if (nodeSuccessReported.compareAndSet(false, true)) {
             context
                 .getRequestTracker()
-                .onNodeSuccess(statement, nodeLatencyNanos, executionProfile, node, logPrefix);
+                .onNodeSuccess(
+                    statement, nodeLatencyNanos, executionProfile, node, logPrefix, executionInfo);
           }
           context
               .getRequestTracker()
-              .onSuccess(statement, totalLatencyNanos, executionProfile, node, logPrefix);
+              .onSuccess(
+                  statement, totalLatencyNanos, executionProfile, node, logPrefix, executionInfo);
         }
       } else {
         Throwable error = (Throwable) pageOrError;
         if (future.completeExceptionally(error)) {
           context
               .getRequestTracker()
-              .onError(statement, error, totalLatencyNanos, executionProfile, node, logPrefix);
+              .onError(
+                  statement, error, totalLatencyNanos, executionProfile, node, logPrefix, null);
           if (error instanceof DriverTimeoutException) {
             throttler.signalTimeout(ContinuousRequestHandlerBase.this);
             session

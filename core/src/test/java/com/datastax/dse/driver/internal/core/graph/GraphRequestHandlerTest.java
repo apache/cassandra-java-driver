@@ -56,6 +56,7 @@ import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.internal.core.cql.Conversions;
@@ -521,14 +522,16 @@ public class GraphRequestHandlerTest {
             anyLong(),
             any(DriverExecutionProfile.class),
             eq(node),
-            matches(LOG_PREFIX_PER_REQUEST));
+            matches(LOG_PREFIX_PER_REQUEST),
+            any(ExecutionInfo.class));
     verify(requestTracker)
         .onNodeSuccess(
             eq(graphStatement),
             anyLong(),
             any(DriverExecutionProfile.class),
             eq(node),
-            matches(LOG_PREFIX_PER_REQUEST));
+            matches(LOG_PREFIX_PER_REQUEST),
+            any(ExecutionInfo.class));
     verifyNoMoreInteractions(requestTracker);
 
     verify(nodeMetricUpdater1)
