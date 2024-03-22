@@ -144,7 +144,7 @@
         <groupId>com.github.jnr</groupId>
         <artifactId>jnr-posix</artifactId>
         <!-- when changing version also update jnr-* and asm versions in LICENSE_binary  -->
-        <version>3.1.15</version>
+        <version>3.1.18</version>
       </dependency>
       <dependency>
         <groupId>io.dropwizard.metrics</groupId>
