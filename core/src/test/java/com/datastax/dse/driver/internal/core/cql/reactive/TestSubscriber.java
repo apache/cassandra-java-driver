@@ -17,6 +17,7 @@
  */
 package com.datastax.dse.driver.internal.core.cql.reactive;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
@@ -81,7 +82,9 @@ public class TestSubscriber<T> implements Subscriber<T> {
   }
 
   public void awaitTermination() {
-    Uninterruptibles.awaitUninterruptibly(latch, 1, TimeUnit.MINUTES);
-    if (latch.getCount() > 0) fail("subscriber not terminated");
+    assertThat(Uninterruptibles.awaitUninterruptibly(latch, 1, TimeUnit.MINUTES))
+        .withFailMessage("latch await failed, subscriber not terminated")
+        .isTrue();
+    assertThat(latch.getCount()).withFailMessage("subscriber not terminated").isGreaterThan(0);
   }
 }
