@@ -24,6 +24,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 import com.datastax.oss.driver.internal.core.ssl.SniSslEngineFactory;
@@ -137,6 +138,57 @@ public class CloudConfigFactoryTest {
     CloudConfigFactory cloudConfigFactory = new CloudConfigFactory();
     Throwable t = catchThrowable(() -> cloudConfigFactory.createCloudConfig(configFile));
     assertThat(t).isInstanceOf(FileNotFoundException.class).hasMessageContaining("metadata");
+  }
+
+  @Test
+  public void should_retry_when_metadata_return_non_200() throws Exception {
+    // given, first attempt 421, subsequent attempts 200
+    mockHttpSecureBundle(secureBundle());
+    URL configFile = new URL("http", "localhost", wireMockRule.port(), BUNDLE_PATH);
+    stubFor(
+        any(urlPathEqualTo("/metadata"))
+            .inScenario("retry")
+            .whenScenarioStateIs(STARTED)
+            .willReturn(aResponse().withStatus(421))
+            .willSetStateTo("second-200"));
+    stubFor(
+        any(urlPathEqualTo("/metadata"))
+            .inScenario("retry")
+            .whenScenarioStateIs("second-200")
+            .willReturn(
+                aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(jsonMetadata())));
+    // when
+    CloudConfigFactory cloudConfigFactory = new CloudConfigFactory();
+    CloudConfig cloudConfig = cloudConfigFactory.createCloudConfig(configFile);
+    // then
+    assertCloudConfig(cloudConfig);
+  }
+
+  @Test
+  public void should_throw_illegal_state_when_421() throws Exception {
+    // given status code 421
+    mockHttpSecureBundle(secureBundle());
+    URL configFile = new URL("http", "localhost", wireMockRule.port(), BUNDLE_PATH);
+    stubFor(any(urlPathEqualTo("/metadata")).willReturn(aResponse().withStatus(421)));
+    // when
+    CloudConfigFactory cloudConfigFactory = new CloudConfigFactory();
+    Throwable t = catchThrowable(() -> cloudConfigFactory.createCloudConfig(configFile));
+    assertThat(t).isInstanceOf(IllegalStateException.class).hasMessageContaining("metadata");
+  }
+
+  @Test
+  public void should_throw_IOException_when_500() throws Exception {
+    // given status code 500
+    mockHttpSecureBundle(secureBundle());
+    URL configFile = new URL("http", "localhost", wireMockRule.port(), BUNDLE_PATH);
+    stubFor(any(urlPathEqualTo("/metadata")).willReturn(aResponse().withStatus(500)));
+    // when
+    CloudConfigFactory cloudConfigFactory = new CloudConfigFactory();
+    Throwable t = catchThrowable(() -> cloudConfigFactory.createCloudConfig(configFile));
+    assertThat(t).isInstanceOf(IOException.class).hasMessageContaining("500");
   }
 
   @Test
