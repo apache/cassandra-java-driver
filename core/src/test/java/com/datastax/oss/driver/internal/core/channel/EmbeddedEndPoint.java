@@ -35,4 +35,10 @@ public class EmbeddedEndPoint implements EndPoint {
   public String asMetricPrefix() {
     throw new UnsupportedOperationException("This should not get called from unit tests");
   }
+
+  @NonNull
+  @Override
+  public SocketAddress retrieve() {
+    throw new UnsupportedOperationException("This should not get called from unit tests");
+  }
 }

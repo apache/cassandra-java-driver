@@ -39,6 +39,12 @@ public class LocalEndPoint implements EndPoint {
 
   @NonNull
   @Override
+  public SocketAddress retrieve() {
+    return localAddress;
+  }
+
+  @NonNull
+  @Override
   public String asMetricPrefix() {
     throw new UnsupportedOperationException("This should not get called from unit tests");
   }

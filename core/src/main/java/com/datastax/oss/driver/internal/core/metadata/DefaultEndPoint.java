@@ -42,6 +42,11 @@ public class DefaultEndPoint implements EndPoint, Serializable {
   }
 
   @Override
+  public InetSocketAddress retrieve() {
+    return address;
+  }
+
+  @Override
   public boolean equals(Object other) {
     if (other == this) {
       return true;
