@@ -19,7 +19,6 @@ package com.datastax.oss.driver.internal.metrics.micrometer;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metrics.AbstractMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.MetricId;
@@ -160,6 +159,12 @@ public abstract class MicrometerMetricUpdater<MetricT> extends AbstractMetricUpd
     if (profile.getBoolean(DefaultDriverOption.METRICS_GENERATE_AGGREGABLE_HISTOGRAMS)) {
       builder.publishPercentileHistogram();
     }
+    if (profile.isDefined(DefaultDriverOption.METRICS_HISTOGRAM_PUBLISH_LOCAL_PERCENTILES)) {
+      builder.publishPercentiles(
+          toDoubleArray(
+              profile.getDoubleList(
+                  DefaultDriverOption.METRICS_HISTOGRAM_PUBLISH_LOCAL_PERCENTILES)));
+    }
     return builder;
   }
 
@@ -175,12 +180,5 @@ public abstract class MicrometerMetricUpdater<MetricT> extends AbstractMetricUpd
 
   static double[] toDoubleArray(List<Double> doubleList) {
     return doubleList.stream().mapToDouble(Double::doubleValue).toArray();
-  }
-
-  static void configurePercentilesPublishIfDefined(
-      Timer.Builder builder, DriverExecutionProfile profile, DriverOption driverOption) {
-    if (profile.isDefined(driverOption)) {
-      builder.publishPercentiles(toDoubleArray(profile.getDoubleList(driverOption)));
-    }
   }
 }
