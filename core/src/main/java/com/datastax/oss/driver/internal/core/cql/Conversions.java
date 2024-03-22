@@ -537,16 +537,31 @@ public class Conversions {
 
   public static boolean resolveIdempotence(Request request, InternalDriverContext context) {
     Boolean requestIsIdempotent = request.isIdempotent();
-    DriverExecutionProfile executionProfile = resolveExecutionProfile(request, context);
+    return (requestIsIdempotent == null)
+        ? resolveExecutionProfile(request, context)
+            .getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
+        : requestIsIdempotent;
+  }
+
+  public static boolean resolveIdempotence(Request request, DriverExecutionProfile executionProfile) {
+    Boolean requestIsIdempotent = request.isIdempotent();
     return (requestIsIdempotent == null)
         ? executionProfile.getBoolean(DefaultDriverOption.REQUEST_DEFAULT_IDEMPOTENCE)
         : requestIsIdempotent;
   }
 
   public static Duration resolveRequestTimeout(Request request, InternalDriverContext context) {
-    DriverExecutionProfile executionProfile = resolveExecutionProfile(request, context);
-    return request.getTimeout() != null
-        ? request.getTimeout()
+    Duration timeout = request.getTimeout();
+    return timeout != null
+        ? timeout
+        : resolveExecutionProfile(request, context)
+            .getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
+  }
+
+  public static Duration resolveRequestTimeout(Request request, DriverExecutionProfile executionProfile) {
+    Duration timeout = request.getTimeout();
+    return timeout != null
+        ? timeout
         : executionProfile.getDuration(DefaultDriverOption.REQUEST_TIMEOUT);
   }
 
@@ -555,9 +570,18 @@ public class Conversions {
     return context.getRetryPolicy(executionProfile.getName());
   }
 
+  public static RetryPolicy resolveRetryPolicy(Request request, InternalDriverContext context, DriverExecutionProfile executionProfile) {
+    return context.getRetryPolicy(executionProfile.getName());
+  }
+
   public static SpeculativeExecutionPolicy resolveSpeculativeExecutionPolicy(
       Request request, InternalDriverContext context) {
     DriverExecutionProfile executionProfile = resolveExecutionProfile(request, context);
+    return context.getSpeculativeExecutionPolicy(executionProfile.getName());
+  }
+
+  public static SpeculativeExecutionPolicy resolveSpeculativeExecutionPolicy(
+      Request request, InternalDriverContext context, DriverExecutionProfile executionProfile) {
     return context.getSpeculativeExecutionPolicy(executionProfile.getName());
   }
 }
