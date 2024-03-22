@@ -20,6 +20,7 @@ package com.datastax.oss.driver.internal.core.loadbalancing;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
+import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
@@ -92,7 +93,7 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultLoadBalancingPolicy.class);
 
-  private static final long NEWLY_UP_INTERVAL_NANOS = MINUTES.toNanos(1);
+  protected static final long NEWLY_UP_INTERVAL_NANOS = MINUTES.toNanos(1);
   private static final int MAX_IN_FLIGHT_THRESHOLD = 10;
   private static final long RESPONSE_COUNT_RESET_INTERVAL_NANOS = MILLISECONDS.toNanos(200);
 
@@ -252,6 +253,7 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
       @NonNull String logPrefix) {
+    if (error instanceof DriverTimeoutException) return;
     updateResponseTimes(node);
   }
 
