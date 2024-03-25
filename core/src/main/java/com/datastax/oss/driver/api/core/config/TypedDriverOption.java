@@ -891,6 +891,36 @@ public class TypedDriverOption<ValueT> {
           new TypedDriverOption<>(
               DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_ALLOW_FOR_LOCAL_CONSISTENCY_LEVELS,
               GenericType.BOOLEAN);
+  /** How many items in the plan to score. */
+  public static final TypedDriverOption<Integer>
+          LOAD_BALANCING_SCORED_PLAN_SIZE =
+          new TypedDriverOption<>(
+                  DefaultDriverOption.LOAD_BALANCING_SCORED_PLAN_SIZE,
+                  GenericType.INTEGER);
+  /** Weight to apply when load balancing for a non-rack node. */
+  public static final TypedDriverOption<Double>
+          LOAD_BALANCING_WEIGHT_NON_RACK =
+          new TypedDriverOption<>(
+                  DefaultDriverOption.LOAD_BALANCING_WEIGHT_NON_RACK,
+                  GenericType.DOUBLE);
+  /** Weight to apply when load balancing for a non-replica node. */
+  public static final TypedDriverOption<Double>
+          LOAD_BALANCING_WEIGHT_NON_REPLICA =
+          new TypedDriverOption<>(
+                  DefaultDriverOption.LOAD_BALANCING_WEIGHT_NON_REPLICA,
+                  GenericType.DOUBLE);
+  /** Weight to apply when load balancing for a node that is still starting up. */
+  public static final TypedDriverOption<Double>
+          LOAD_BALANCING_WEIGHT_STARTING =
+          new TypedDriverOption<>(
+                  DefaultDriverOption.LOAD_BALANCING_WEIGHT_STARTING,
+                  GenericType.DOUBLE);
+  /** Weight to apply when load balancing for an unhealthy node. */
+  public static final TypedDriverOption<Double>
+          LOAD_BALANCING_WEIGHT_UNHEALTHY =
+          new TypedDriverOption<>(
+                  DefaultDriverOption.LOAD_BALANCING_WEIGHT_UNHEALTHY,
+                  GenericType.DOUBLE);
 
   private static Iterable<TypedDriverOption<?>> introspectBuiltInValues() {
     try {
