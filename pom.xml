@@ -67,7 +67,7 @@
     <slf4j.version>1.7.26</slf4j.version>
     <!-- when changing version also update version in LICENSE_binary  -->
     <reactive-streams.version>1.0.3</reactive-streams.version>
-    <json.version>20230227</json.version>
+    <json.version>20231013</json.version>
     <jackson.version>2.13.4</jackson.version>
     <jackson-databind.version>2.13.4.2</jackson-databind.version>
     <!-- optional dependencies -->
