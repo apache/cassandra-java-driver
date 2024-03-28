@@ -61,12 +61,6 @@ def initializeEnvironment() {
     . ${JABBA_SHELL}
     jabba which 1.8''', returnStdout: true).trim()
 
-  env.TEST_JAVA_HOME = sh(label: 'Get TEST_JAVA_HOME',script: '''#!/bin/bash -le
-    . ${JABBA_SHELL}
-    jabba which ${JABBA_VERSION}''', returnStdout: true).trim()
-  env.TEST_JAVA_VERSION = sh(label: 'Get TEST_JAVA_VERSION',script: '''#!/bin/bash -le
-    echo "${JABBA_VERSION##*.}"''', returnStdout: true).trim()
-
   sh label: 'Download Apache CassandraⓇ or DataStax Enterprise',script: '''#!/bin/bash -le
     . ${JABBA_SHELL}
     jabba use 1.8
@@ -115,7 +109,12 @@ def buildDriver(jabbaVersion) {
 }
 
 def executeTests() {
-  sh label: 'Execute tests', script: '''#!/bin/bash -le
+  def testJavaHome = sh(label: 'Get TEST_JAVA_HOME',script: '''#!/bin/bash -le
+    . ${JABBA_SHELL}
+    jabba which ${JABBA_VERSION}''', returnStdout: true).trim()
+  def testJavaVersion = (JABBA_VERSION =~ /.*\.(\d+)/)[0][1]
+
+  def executeTestScript = '''#!/bin/bash -le
     # Load CCM environment variables
     set -o allexport
     . ${HOME}/environment.txt
@@ -137,8 +136,8 @@ def executeTests() {
     printenv | sort
 
     mvn -B -V ${INTEGRATION_TESTS_FILTER_ARGUMENT} -T 1 verify \
-      -Ptest-jdk-${TEST_JAVA_VERSION} \
-      -DtestJavaHome=${TEST_JAVA_HOME} \
+      -Ptest-jdk-'''+testJavaVersion+''' \
+      -DtestJavaHome='''+testJavaHome+''' \
       -DfailIfNoTests=false \
       -Dmaven.test.failure.ignore=true \
       -Dmaven.javadoc.skip=${SKIP_JAVADOCS} \
@@ -149,6 +148,8 @@ def executeTests() {
       ${ISOLATED_ITS_ARGUMENT} \
       ${PARALLELIZABLE_ITS_ARGUMENT}
   '''
+  echo "Invoking Maven with parameters test-jdk-${testJavaVersion} and testJavaHome = ${testJavaHome}"
+  sh label: 'Execute tests', script: executeTestScript
 }
 
 def executeCodeCoverage() {
