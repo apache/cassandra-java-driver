@@ -74,7 +74,7 @@ See the [Cassandra error handling done right blog](https://www.datastax.com/blog
 
 * [Manual](manual/)
 * [API docs]
-* Bug tracking: [JIRA]
+* Bug tracking: [JIRA].  Make sure to select the "Client/java-driver" component when filing new tickets!
 * [Mailing list]
 * [Changelog]
 * [FAQ]
