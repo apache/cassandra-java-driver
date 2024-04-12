@@ -187,6 +187,12 @@ public class MicrometerMetricsIT extends MetricsITBase {
   }
 
   @Override
+  protected void assertMetricsNotPresent(Object registry) {
+    MeterRegistry micrometerRegistry = (MeterRegistry) registry;
+    assertThat(micrometerRegistry.getMeters()).isEmpty();
+  }
+
+  @Override
   protected void assertNodeMetricsEvicted(CqlSession session, Node node) {
     InternalDriverContext context = (InternalDriverContext) session.getContext();
     MetricIdGenerator metricIdGenerator = context.getMetricIdGenerator();

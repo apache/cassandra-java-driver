@@ -91,7 +91,7 @@ public abstract class DropwizardMetricUpdater<MetricT> extends AbstractMetricUpd
   }
 
   @Override
-  protected void clearMetrics() {
+  public void clearMetrics() {
     for (MetricT metric : metrics.keySet()) {
       MetricId id = getMetricId(metric);
       registry.remove(id.getName());

@@ -83,7 +83,7 @@ public abstract class MicroProfileMetricUpdater<MetricT> extends AbstractMetricU
   }
 
   @Override
-  protected void clearMetrics() {
+  public void clearMetrics() {
     for (MetricT metric : metrics.keySet()) {
       MetricId id = getMetricId(metric);
       Tag[] tags = MicroProfileTags.toMicroProfileTags(id.getTags());

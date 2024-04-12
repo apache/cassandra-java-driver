@@ -46,4 +46,6 @@ public interface MetricUpdater<MetricT> {
   void updateTimer(MetricT metric, @Nullable String profileName, long duration, TimeUnit unit);
 
   boolean isEnabled(MetricT metric, @Nullable String profileName);
+
+  void clearMetrics();
 }
