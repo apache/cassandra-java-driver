@@ -199,6 +199,12 @@ public class DropwizardMetricsIT extends MetricsITBase {
   }
 
   @Override
+  protected void assertMetricsNotPresent(Object registry) {
+    MetricRegistry dropwizardRegistry = (MetricRegistry) registry;
+    assertThat(dropwizardRegistry.getMetrics()).isEmpty();
+  }
+
+  @Override
   protected void assertNodeMetricsEvicted(CqlSession session, Node node) {
     InternalDriverContext context = (InternalDriverContext) session.getContext();
     MetricRegistry registry = (MetricRegistry) context.getMetricRegistry();

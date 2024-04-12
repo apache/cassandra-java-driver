@@ -180,6 +180,4 @@ public abstract class AbstractMetricUpdater<MetricT> implements MetricUpdater<Me
             expireAfter.toNanos(),
             TimeUnit.NANOSECONDS);
   }
-
-  protected abstract void clearMetrics();
 }

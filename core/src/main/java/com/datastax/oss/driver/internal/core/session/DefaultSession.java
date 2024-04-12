@@ -34,6 +34,7 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.LifecycleListener;
+import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager.RefreshSchemaResult;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
@@ -546,6 +547,13 @@ public class DefaultSession implements CqlSession {
 
       closePolicies();
 
+      // clear metrics to prevent memory leak
+      for (Node n : metadataManager.getMetadata().getNodes().values()) {
+        ((DefaultNode) n).getMetricUpdater().clearMetrics();
+      }
+
+      DefaultSession.this.metricUpdater.clearMetrics();
+
       List<CompletionStage<Void>> childrenCloseStages = new ArrayList<>();
       for (AsyncAutoCloseable closeable : internalComponentsToClose()) {
         childrenCloseStages.add(closeable.closeAsync());
@@ -564,6 +572,13 @@ public class DefaultSession implements CqlSession {
           "[{}] Starting forced shutdown (was {}closed before)",
           logPrefix,
           (closeWasCalled ? "" : "not "));
+
+      // clear metrics to prevent memory leak
+      for (Node n : metadataManager.getMetadata().getNodes().values()) {
+        ((DefaultNode) n).getMetricUpdater().clearMetrics();
+      }
+
+      DefaultSession.this.metricUpdater.clearMetrics();
 
       if (closeWasCalled) {
         // onChildrenClosed has already been scheduled

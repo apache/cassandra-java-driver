@@ -53,4 +53,7 @@ public class NoopSessionMetricUpdater implements SessionMetricUpdater {
     // since methods don't do anything, return false
     return false;
   }
+
+  @Override
+  public void clearMetrics() {}
 }
