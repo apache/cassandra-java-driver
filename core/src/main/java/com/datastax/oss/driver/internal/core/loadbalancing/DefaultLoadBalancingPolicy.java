@@ -20,6 +20,7 @@ package com.datastax.oss.driver.internal.core.loadbalancing;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
+import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
@@ -252,7 +253,9 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
       @NonNull String logPrefix) {
-    updateResponseTimes(node);
+    if (!(error instanceof DriverTimeoutException)) {
+      updateResponseTimes(node);
+    }
   }
 
   /** Exposed as a protected method so that it can be accessed by tests */
