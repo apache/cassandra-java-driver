@@ -295,14 +295,18 @@ public class MetadataManagerTest {
     // Given
     IllegalStateException expectedException = new IllegalStateException("Error we're testing");
     when(schemaQueriesFactory.newInstance()).thenThrow(expectedException);
-    when(topologyMonitor.refreshNodeList()).thenReturn(CompletableFuture.completedFuture(ImmutableList.of(mock(NodeInfo.class))));
-    when(topologyMonitor.checkSchemaAgreement()).thenReturn(CompletableFuture.completedFuture(Boolean.TRUE));
-    when(controlConnection.init(anyBoolean(), anyBoolean(), anyBoolean())).thenReturn(CompletableFuture.completedFuture(null));
+    when(topologyMonitor.refreshNodeList())
+        .thenReturn(CompletableFuture.completedFuture(ImmutableList.of(mock(NodeInfo.class))));
+    when(topologyMonitor.checkSchemaAgreement())
+        .thenReturn(CompletableFuture.completedFuture(Boolean.TRUE));
+    when(controlConnection.init(anyBoolean(), anyBoolean(), anyBoolean()))
+        .thenReturn(CompletableFuture.completedFuture(null));
     metadataManager.refreshNodes(); // required internal state setup for this
     waitForPendingAdminTasks(() -> metadataManager.refreshes.size() == 1); // sanity check
 
     // When
-    CompletionStage<MetadataManager.RefreshSchemaResult> result = metadataManager.refreshSchema("foo", true, true);
+    CompletionStage<MetadataManager.RefreshSchemaResult> result =
+        metadataManager.refreshSchema("foo", true, true);
 
     // Then
     waitForPendingAdminTasks(() -> result.toCompletableFuture().isDone());
