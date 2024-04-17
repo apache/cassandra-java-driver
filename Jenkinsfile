@@ -98,14 +98,16 @@ ENVIRONMENT_EOF
 }
 
 def buildDriver(jabbaVersion) {
-  withEnv(["BUILD_JABBA_VERSION=${jabbaVersion}"]) {
-    sh label: 'Build driver', script: '''#!/bin/bash -le
-      . ${JABBA_SHELL}
-      jabba use ${BUILD_JABBA_VERSION}
+  def buildDriverScript = '''#!/bin/bash -le
 
-      mvn -B -V install -DskipTests -Dmaven.javadoc.skip=true
-    '''
-  }
+    . ${JABBA_SHELL}
+    jabba use '''+jabbaVersion+'''
+
+    echo "Building with Java version '''+jabbaVersion+'''
+
+    mvn -B -V install -DskipTests -Dmaven.javadoc.skip=true
+  '''
+  sh label: 'Build driver', script: buildDriverScript
 }
 
 def executeTests() {
@@ -484,7 +486,7 @@ pipeline {
           }
           stage('Build-Driver') {
             steps {
-              buildDriver('default')
+              buildDriver('1.8')
             }
           }
           stage('Execute-Tests') {
@@ -600,8 +602,7 @@ pipeline {
           }
           stage('Build-Driver') {
             steps {
-              // Jabba default should be a JDK8 for now
-              buildDriver('default')
+              buildDriver('1.8')
             }
           }
           stage('Execute-Tests') {
