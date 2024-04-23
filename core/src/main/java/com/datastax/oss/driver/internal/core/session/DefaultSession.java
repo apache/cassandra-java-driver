@@ -39,6 +39,7 @@ import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager.RefreshSchemaResult;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateManager;
+import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.util.Loggers;
@@ -549,10 +550,11 @@ public class DefaultSession implements CqlSession {
 
       // clear metrics to prevent memory leak
       for (Node n : metadataManager.getMetadata().getNodes().values()) {
-        ((DefaultNode) n).getMetricUpdater().clearMetrics();
+        NodeMetricUpdater updater = ((DefaultNode) n).getMetricUpdater();
+        if (updater != null) updater.clearMetrics();
       }
 
-      DefaultSession.this.metricUpdater.clearMetrics();
+      if (metricUpdater != null) metricUpdater.clearMetrics();
 
       List<CompletionStage<Void>> childrenCloseStages = new ArrayList<>();
       for (AsyncAutoCloseable closeable : internalComponentsToClose()) {
@@ -575,10 +577,11 @@ public class DefaultSession implements CqlSession {
 
       // clear metrics to prevent memory leak
       for (Node n : metadataManager.getMetadata().getNodes().values()) {
-        ((DefaultNode) n).getMetricUpdater().clearMetrics();
+        NodeMetricUpdater updater = ((DefaultNode) n).getMetricUpdater();
+        if (updater != null) updater.clearMetrics();
       }
 
-      DefaultSession.this.metricUpdater.clearMetrics();
+      if (metricUpdater != null) metricUpdater.clearMetrics();
 
       if (closeWasCalled) {
         // onChildrenClosed has already been scheduled
