@@ -56,17 +56,18 @@ public class PeersV2NodeRefreshIT {
   @Test
   public void should_successfully_send_peers_v2_node_refresh_query()
       throws InterruptedException, ExecutionException {
-    CqlSession session =
-        CqlSession.builder().addContactPoint(cluster.node(1).inetSocketAddress()).build();
-    Node node = findNonControlNode(session);
-    ((InternalDriverContext) session.getContext())
-        .getMetadataManager()
-        .refreshNode(node)
-        .toCompletableFuture()
-        .get();
-    assertThat(hasNodeRefreshQuery())
-        .describedAs("Expecting peers_v2 node refresh query to be present but it wasn't")
-        .isTrue();
+    try (CqlSession session =
+        CqlSession.builder().addContactPoint(cluster.node(1).inetSocketAddress()).build()) {
+      Node node = findNonControlNode(session);
+      ((InternalDriverContext) session.getContext())
+          .getMetadataManager()
+          .refreshNode(node)
+          .toCompletableFuture()
+          .get();
+      assertThat(hasNodeRefreshQuery())
+          .describedAs("Expecting peers_v2 node refresh query to be present but it wasn't")
+          .isTrue();
+    }
   }
 
   private Node findNonControlNode(CqlSession session) {
