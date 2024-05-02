@@ -1,3 +1,22 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Native protocol layer
 
 The native protocol layer encodes protocol messages into binary, before they are sent over the
@@ -9,10 +28,8 @@ This part of the code lives in its own project:
 
 The protocol specifications are available in
 [native-protocol/src/main/resources](https://github.com/datastax/native-protocol/tree/1.x/src/main/resources).
-These files originally come from Cassandra, we copy them over for easy access. Note that, if the
-latest version is a beta (this is the case for v5 at the time of writing -- September 2019), the
-specification might not be up to date. Always compare with the latest revision in
-[cassandra/doc](https://github.com/apache/cassandra/tree/trunk/doc).
+These files originally come from Cassandra, we copy them over for easy access. Authoritative specifications can
+always be found in [cassandra/doc](https://github.com/apache/cassandra/tree/trunk/doc).
 
 
 For a broad overview of how protocol types are used in the driver, let's step through an example:

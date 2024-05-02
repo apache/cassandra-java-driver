@@ -1,3 +1,22 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 # OSGi
 
 The driver is available as an [OSGi] bundle.  More specifically, the following maven artifacts are
@@ -138,7 +157,7 @@ starting the driver:
 [driver configuration]: ../core/configuration
 [OSGi]:https://www.osgi.org
 [JNR]: https://github.com/jnr/jnr-posix
-[withClassLoader()]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
+[withClassLoader()]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-
 [JAVA-1127]:https://datastax-oss.atlassian.net/browse/JAVA-1127
-[DriverConfigLoader.fromDefaults(ClassLoader)]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromDefaults-java.lang.ClassLoader-
-[DriverConfigLoader.programmaticBuilder(ClassLoader)]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#programmaticBuilder-java.lang.ClassLoader-
+[DriverConfigLoader.fromDefaults(ClassLoader)]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromDefaults-java.lang.ClassLoader-
+[DriverConfigLoader.programmaticBuilder(ClassLoader)]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#programmaticBuilder-java.lang.ClassLoader-

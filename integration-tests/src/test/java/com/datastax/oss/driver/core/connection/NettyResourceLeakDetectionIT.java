@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,13 +26,15 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirementRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
@@ -42,10 +46,10 @@ import io.netty.util.ResourceLeakDetector.Level;
 import java.nio.ByteBuffer;
 import java.util.List;
 import org.junit.After;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
@@ -69,6 +73,10 @@ public class NettyResourceLeakDetectionIT {
 
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
+
+  // Separately use BackendRequirementRule with @Rule so backend requirements are evaluated for each
+  // test method.
+  @Rule public final BackendRequirementRule backendRequirementRule = new BackendRequirementRule();
 
   private static final ByteBuffer LARGE_PAYLOAD =
       Bytes.fromHexString("0x" + Strings.repeat("ab", Segment.MAX_PAYLOAD_LENGTH + 100));
@@ -118,12 +126,15 @@ public class NettyResourceLeakDetectionIT {
     }
   }
 
+  @BackendRequirement(
+      type = BackendType.DSE,
+      description = "Snappy is not supported in OSS C* 4.0+ with protocol v5")
+  @BackendRequirement(
+      type = BackendType.CASSANDRA,
+      maxExclusive = "4.0.0",
+      description = "Snappy is not supported in OSS C* 4.0+ with protocol v5")
   @Test
   public void should_not_leak_compressed_snappy() {
-    Assume.assumeTrue(
-        "Snappy is not supported in OSS C* 4.0+ with protocol v5",
-        CCM_RULE.getDseVersion().isPresent()
-            || CCM_RULE.getCassandraVersion().nextStable().compareTo(Version.V4_0_0) < 0);
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
             .withString(DefaultDriverOption.PROTOCOL_COMPRESSION, "snappy")

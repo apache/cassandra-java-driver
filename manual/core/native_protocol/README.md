@@ -1,3 +1,22 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Native protocol
 
 ### Quick overview
@@ -21,20 +40,17 @@ only available with specific protocol versions.
 
 ### Compatibility matrix
 
-Java driver 4 supports protocol versions 3 to 5. By default, the version is negotiated with the
+Java Driver 4 supports protocol versions 3 to 5. By default, the version is negotiated with the
 first node the driver connects to:
 
-| Cassandra version   | Negotiated protocol version with driver 4 ¹     |
-|---------------------|-------------------------------------------------|
-| 2.1.x               | v3                                              |
-| 2.2.x               | v4                                              |
-| 3.x                 | v4                                              |
-| 4.x ²               | v5                                              |
+| Cassandra version | Negotiated protocol version with driver 4 ¹     |
+|-------------------|-------------------------------------------------|
+| 2.1.x             | v3                                              |
+| 2.2.x             | v4                                              |
+| 3.x               | v4                                              |
+| 4.x               | v5                                              |
 
 *(1) for previous driver versions, see the [3.x documentation][driver3]*
-
-*(2) at the time of writing, Cassandra 4 is not released yet. Protocol v5 support is still in beta,
-and must be enabled explicitly (negotiation will yield v4).*
 
 Since version 4.5.0, the driver can also use DSE protocols when all nodes are running a version of
 DSE. The table below shows the protocol matrix for these cases:
@@ -43,10 +59,10 @@ DSE. The table below shows the protocol matrix for these cases:
 |---------------------|-------------------------------------------------|
 | 4.7/4.8             | v3                                              |
 | 5.0                 | v4                                              |
-| 5.1                 | DSE_V1 ³                                        |
-| 6.0/6.7/6.8         | DSE_V2 ³                                        |
+| 5.1                 | DSE_V1 ²                                        |
+| 6.0/6.7/6.8         | DSE_V2 ²                                        |
 
-*(3) DSE Protocols are chosen before other Cassandra native protocols.*
+*(2) DSE Protocols are chosen before other Cassandra native protocols.*
 
 ### Controlling the protocol version
 
@@ -62,10 +78,13 @@ the [configuration](../configuration/):
 ```
 datastax-java-driver {
   advanced.protocol {
-    version = v3
+    version = V3
   }
 }
 ```
+
+Note that the protocol version you specify above is case sensitive so make sure to only use uppercase letters.
+"V3" is correct, "v3" is not.
 
 If you force a version that is too high for the server, you'll get an error:
 
@@ -135,6 +154,6 @@ If you want to see the details of mixed cluster negotiation, enable `DEBUG` leve
 [protocol spec]: https://github.com/datastax/native-protocol/tree/1.x/src/main/resources
 [driver3]: https://docs.datastax.com/en/developer/java-driver/3.10/manual/native_protocol/
 
-[ExecutionInfo.getWarnings]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getWarnings--
-[Request.getCustomPayload]:  https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/Request.html#getCustomPayload--
-[AttachmentPoint.getProtocolVersion]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/detach/AttachmentPoint.html#getProtocolVersion--
+[ExecutionInfo.getWarnings]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#getWarnings--
+[Request.getCustomPayload]:  https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/Request.html#getCustomPayload--
+[AttachmentPoint.getProtocolVersion]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/detach/AttachmentPoint.html#getProtocolVersion--

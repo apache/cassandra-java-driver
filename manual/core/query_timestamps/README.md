@@ -1,3 +1,22 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Query timestamps
 
 ### Quick overview
@@ -187,9 +206,9 @@ Here is the order of precedence of all the methods described so far:
 3. otherwise, if the timestamp generator assigned a timestamp, use it;
 4. otherwise, let the server assign the timestamp.
 
-[TimestampGenerator]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/time/TimestampGenerator.html
+[TimestampGenerator]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/time/TimestampGenerator.html
 
 [gettimeofday]: http://man7.org/linux/man-pages/man2/settimeofday.2.html
 [JNR]: https://github.com/jnr/jnr-posix
 [Lightweight transactions]: https://docs.datastax.com/en/dse/6.0/cql/cql/cql_using/useInsertLWT.html
-[Statement.setQueryTimestamp()]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/Statement.html#setQueryTimestamp-long-
+[Statement.setQueryTimestamp()]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/cql/Statement.html#setQueryTimestamp-long-

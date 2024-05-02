@@ -1,4 +1,89 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Upgrade guide
+
+### NEW VERSION PLACEHOLDER
+
+#### Keystore reloading in DefaultSslEngineFactory
+
+`DefaultSslEngineFactory` now includes an optional keystore reloading interval, for detecting changes in the local
+client keystore file. This is relevant in environments with mTLS enabled and short-lived client certificates, especially
+when an application restart might not always happen between a new keystore becoming available and the previous
+keystore certificate expiring.
+
+This feature is disabled by default for compatibility. To enable, see `keystore-reload-interval` in `reference.conf`.
+
+### 4.17.0
+
+#### Beta support for Java17
+
+With the completion of [JAVA-3042](https://datastax-oss.atlassian.net/browse/JAVA-3042) the driver now passes our automated test matrix for Java Driver releases.
+While all features function normally when run with Java 17 tests, we do not offer full support for this
+platform until we've received feedback from other users in the ecosystem.
+
+If you discover an issue with the Java Driver running on Java 17, please let us know. We will triage and address Java 17 issues.
+
+#### Updated API for vector search
+
+The 4.16.0 release introduced support for the CQL `vector` datatype. This release modifies the `CqlVector`
+value type used to represent a CQL vector to make it easier to use.  `CqlVector` now implements the Iterable interface
+as well as several methods modelled on the JDK's List interface. For more, see
+[JAVA-3060](https://datastax-oss.atlassian.net/browse/JAVA-3060). 
+
+The builder interface was replaced with factory methods that resemble similar methods on `CqlDuration`.
+For example, the following code will create a keyspace and table, populate that table with some data, and then execute
+a query that will return a `vector` type.  This data is retrieved directly via `Row.getVector()` and the resulting
+`CqlVector` value object can be interrogated directly.
+
+```java
+try (CqlSession session = new CqlSessionBuilder().withLocalDatacenter("datacenter1").build()) {
+
+    session.execute("DROP KEYSPACE IF EXISTS test");
+    session.execute("CREATE KEYSPACE test WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
+    session.execute("CREATE TABLE test.foo(i int primary key, j vector<float, 3>)");
+    session.execute("CREATE CUSTOM INDEX ann_index ON test.foo(j) USING 'StorageAttachedIndex'");
+    session.execute("INSERT INTO test.foo (i, j) VALUES (1, [8, 2.3, 58])");
+    session.execute("INSERT INTO test.foo (i, j) VALUES (2, [1.2, 3.4, 5.6])");
+    session.execute("INSERT INTO test.foo (i, j) VALUES (5, [23, 18, 3.9])");
+    ResultSet rs=session.execute("SELECT j FROM test.foo WHERE j ann of [3.4, 7.8, 9.1] limit 1");
+    for (Row row : rs){
+        CqlVector<Float> v = row.getVector(0, Float.class);
+        System.out.println(v);
+        if (Iterables.size(v) != 3) {
+            throw new RuntimeException("Expected vector with three dimensions");
+        }
+    }
+}
+```
+
+You can also use the `CqlVector` type with prepared statements:
+
+```java
+PreparedStatement preparedInsert = session.prepare("INSERT INTO test.foo (i, j) VALUES (?,?)");
+CqlVector<Float> vector = CqlVector.newInstance(1.4f, 2.5f, 3.6f);
+session.execute(preparedInsert.bind(3, vector));
+```
+
+In some cases, it makes sense to access the vector directly as an array of some numerical type. This version
+supports such use cases by providing a codec which translates a CQL vector to and from a primitive array. Only float arrays are supported. 
+You can find more information about this codec in the manual documentation on [custom codecs](../manual/core/custom_codecs/)
 
 ### 4.15.0
 
@@ -15,7 +100,7 @@ a logic such as below, it won't compile anymore:
 
 ```java
 try {
-  doSomethingWithDriver();
+    doSomethingWithDriver();
 } catch(DriverException e) {
 } catch(CodecNotFoundException e) { 
 }
@@ -25,7 +110,7 @@ You need to either reverse the catch order and catch `CodecNotFoundException` fi
 
 ```java
 try {
-  doSomethingWithDriver();
+    doSomethingWithDriver();
 } catch(CodecNotFoundException e) { 
 } catch(DriverException e) {
 }
@@ -35,7 +120,7 @@ Or catch only `DriverException`:
 
 ```java
 try {
-  doSomethingWithDriver();
+    doSomethingWithDriver();
 } catch(DriverException e) { 
 }
 ```
@@ -51,7 +136,7 @@ request cannot be executed because all nodes tried were busy. Previously you wou
 
 #### Esri Geometry dependency now optional
 
-Previous versions of the Java driver defined a mandatory dependency on the Esri geometry library.
+Previous versions of the Java Driver defined a mandatory dependency on the Esri geometry library.
 This library offered support for primitive geometric types supported by DSE.  As of driver 4.14.0
 this dependency is now optional.
 
@@ -229,16 +314,16 @@ The above can also be achieved by an adapter class as shown below:
 ```java
 public class NodeFilterToDistanceEvaluatorAdapter implements NodeDistanceEvaluator {
 
-  private final Predicate<Node> nodeFilter;
+    private final Predicate<Node> nodeFilter;
 
-  public NodeFilterToDistanceEvaluatorAdapter(@NonNull Predicate<Node> nodeFilter) {
-    this.nodeFilter = nodeFilter;
-  }
+    public NodeFilterToDistanceEvaluatorAdapter(@NonNull Predicate<Node> nodeFilter) {
+        this.nodeFilter = nodeFilter;
+    }
 
-  @Nullable @Override
-  public NodeDistance evaluateDistance(@NonNull Node node, @Nullable String localDc) {
-    return nodeFilter.test(node) ? null : NodeDistance.IGNORED;
-  }
+    @Nullable @Override
+    public NodeDistance evaluateDistance(@NonNull Node node, @Nullable String localDc) {
+        return nodeFilter.test(node) ? null : NodeDistance.IGNORED;
+    }
 }
 ```
 
@@ -531,7 +616,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.SimpleStatement;
 
 SimpleStatement statement =
-  new SimpleStatement("SELECT release_version FROM system.local");
+    new SimpleStatement("SELECT release_version FROM system.local");
 ResultSet resultSet = session.execute(statement);
 Row row = resultSet.one();
 System.out.println(row.getString("release_version"));
@@ -543,7 +628,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 
 SimpleStatement statement =
-  SimpleStatement.newInstance("SELECT release_version FROM system.local");
+    SimpleStatement.newInstance("SELECT release_version FROM system.local");
 ResultSet resultSet = session.execute(statement);
 Row row = resultSet.one();
 System.out.println(row.getString("release_version"));
@@ -606,9 +691,9 @@ datastax-java-driver {
 
 // Application code:
 SimpleStatement statement1 =
-  SimpleStatement.newInstance("...").setExecutionProfileName("profile1");
+    SimpleStatement.newInstance("...").setExecutionProfileName("profile1");
 SimpleStatement statement2 =
-  SimpleStatement.newInstance("...").setExecutionProfileName("profile2");
+    SimpleStatement.newInstance("...").setExecutionProfileName("profile2");
 ```
 
 The configuration can be reloaded periodically at runtime:
@@ -727,13 +812,13 @@ propagating its own consistency level to its bound statements:
 
 ```java
 PreparedStatement ps1 =
-  session.prepare(
-      SimpleStatement.newInstance("SELECT * FROM product WHERE sku = ?")
-          .setConsistencyLevel(DefaultConsistencyLevel.ONE));
+    session.prepare(
+        SimpleStatement.newInstance("SELECT * FROM product WHERE sku = ?")
+            .setConsistencyLevel(DefaultConsistencyLevel.ONE));
 PreparedStatement ps2 =
-  session.prepare(
-      SimpleStatement.newInstance("SELECT * FROM product WHERE sku = ?")
-          .setConsistencyLevel(DefaultConsistencyLevel.TWO));
+    session.prepare(
+        SimpleStatement.newInstance("SELECT * FROM product WHERE sku = ?")
+            .setConsistencyLevel(DefaultConsistencyLevel.TWO));
 
 assert ps1 != ps2;
 
@@ -834,8 +919,8 @@ Optional<KeyspaceMetadata> ks = metadata.getKeyspace("test");
 assert !ks.isPresent();
 
 session.execute(
-  "CREATE KEYSPACE IF NOT EXISTS test "
-      + "WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
+    "CREATE KEYSPACE IF NOT EXISTS test "
+        + "WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
 
 // This is still the same metadata from before the CREATE
 ks = metadata.getKeyspace("test");

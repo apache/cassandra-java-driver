@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,6 +38,7 @@ import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.internal.core.addresstranslation.PassThroughAddressTranslator;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
@@ -48,9 +51,11 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
+import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.Error;
+import com.google.common.collect.Streams;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
@@ -92,6 +97,8 @@ public class DefaultTopologyMonitorTest {
 
   @Mock private Appender<ILoggingEvent> appender;
   @Captor private ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
+
+  @Mock private SslEngineFactory sslEngineFactory;
 
   private DefaultNode node1;
   private DefaultNode node2;
@@ -412,18 +419,6 @@ public class DefaultTopologyMonitorTest {
             + "This is likely a gossip or snitch issue, this node will be ignored.");
   }
 
-  @DataProvider
-  public static Object[][] columnsToCheckV1() {
-    return new Object[][] {{"rpc_address"}, {"host_id"}, {"data_center"}, {"rack"}, {"tokens"}};
-  }
-
-  @DataProvider
-  public static Object[][] columnsToCheckV2() {
-    return new Object[][] {
-      {"native_address"}, {"native_port"}, {"host_id"}, {"data_center"}, {"rack"}, {"tokens"}
-    };
-  }
-
   @Test
   public void should_stop_executing_queries_once_closed() {
     // Given
@@ -441,9 +436,9 @@ public class DefaultTopologyMonitorTest {
   public void should_warn_when_control_host_found_in_system_peers() {
     // Given
     AdminRow local = mockLocalRow(1, node1.getHostId());
-    AdminRow peer3 = mockPeersRow(3, UUID.randomUUID());
-    AdminRow peer2 = mockPeersRow(2, node2.getHostId());
     AdminRow peer1 = mockPeersRow(1, node2.getHostId()); // invalid
+    AdminRow peer2 = mockPeersRow(2, node2.getHostId());
+    AdminRow peer3 = mockPeersRow(3, UUID.randomUUID());
     topologyMonitor.stubQueries(
         new StubbedQuery("SELECT * FROM system.local", mockResult(local)),
         new StubbedQuery("SELECT * FROM system.peers_v2", Collections.emptyMap(), null, true),
@@ -460,7 +455,7 @@ public class DefaultTopologyMonitorTest {
                     .hasSize(3)
                     .extractingResultOf("getEndPoint")
                     .containsOnlyOnce(node1.getEndPoint()));
-    assertLog(
+    assertLogContains(
         Level.WARN,
         "[null] Control node /127.0.0.1:9042 has an entry for itself in system.peers: "
             + "this entry will be ignored. This is likely due to a misconfiguration; "
@@ -490,12 +485,122 @@ public class DefaultTopologyMonitorTest {
                     .hasSize(3)
                     .extractingResultOf("getEndPoint")
                     .containsOnlyOnce(node1.getEndPoint()));
-    assertLog(
+    assertLogContains(
         Level.WARN,
         "[null] Control node /127.0.0.1:9042 has an entry for itself in system.peers_v2: "
             + "this entry will be ignored. This is likely due to a misconfiguration; "
             + "please verify your rpc_address configuration in cassandra.yaml on "
             + "all nodes in your cluster.");
+  }
+
+  // Confirm the base case of extracting peer info from peers_v2, no SSL involved
+  @Test
+  public void should_get_peer_address_info_peers_v2() {
+    // Given
+    AdminRow local = mockLocalRow(1, node1.getHostId());
+    AdminRow peer2 = mockPeersV2Row(3, node2.getHostId());
+    AdminRow peer1 = mockPeersV2Row(2, node1.getHostId());
+    topologyMonitor.isSchemaV2 = true;
+    topologyMonitor.stubQueries(
+        new StubbedQuery("SELECT * FROM system.local", mockResult(local)),
+        new StubbedQuery("SELECT * FROM system.peers_v2", mockResult(peer2, peer1)));
+    when(context.getSslEngineFactory()).thenReturn(Optional.empty());
+
+    // When
+    CompletionStage<Iterable<NodeInfo>> futureInfos = topologyMonitor.refreshNodeList();
+
+    // Then
+    assertThatStage(futureInfos)
+        .isSuccess(
+            infos -> {
+              Iterator<NodeInfo> iterator = infos.iterator();
+              // First NodeInfo is for local, skip past that
+              iterator.next();
+              NodeInfo peer2nodeInfo = iterator.next();
+              assertThat(peer2nodeInfo.getEndPoint().resolve())
+                  .isEqualTo(new InetSocketAddress("127.0.0.3", 9042));
+              NodeInfo peer1nodeInfo = iterator.next();
+              assertThat(peer1nodeInfo.getEndPoint().resolve())
+                  .isEqualTo(new InetSocketAddress("127.0.0.2", 9042));
+            });
+  }
+
+  // Confirm the base case of extracting peer info from DSE peers table, no SSL involved
+  @Test
+  public void should_get_peer_address_info_peers_dse() {
+    // Given
+    AdminRow local = mockLocalRow(1, node1.getHostId());
+    AdminRow peer2 = mockPeersRowDse(3, node2.getHostId());
+    AdminRow peer1 = mockPeersRowDse(2, node1.getHostId());
+    topologyMonitor.isSchemaV2 = true;
+    topologyMonitor.stubQueries(
+        new StubbedQuery("SELECT * FROM system.local", mockResult(local)),
+        new StubbedQuery("SELECT * FROM system.peers_v2", Maps.newHashMap(), null, true),
+        new StubbedQuery("SELECT * FROM system.peers", mockResult(peer2, peer1)));
+    when(context.getSslEngineFactory()).thenReturn(Optional.empty());
+
+    // When
+    CompletionStage<Iterable<NodeInfo>> futureInfos = topologyMonitor.refreshNodeList();
+
+    // Then
+    assertThatStage(futureInfos)
+        .isSuccess(
+            infos -> {
+              Iterator<NodeInfo> iterator = infos.iterator();
+              // First NodeInfo is for local, skip past that
+              iterator.next();
+              NodeInfo peer2nodeInfo = iterator.next();
+              assertThat(peer2nodeInfo.getEndPoint().resolve())
+                  .isEqualTo(new InetSocketAddress("127.0.0.3", 9042));
+              NodeInfo peer1nodeInfo = iterator.next();
+              assertThat(peer1nodeInfo.getEndPoint().resolve())
+                  .isEqualTo(new InetSocketAddress("127.0.0.2", 9042));
+            });
+  }
+
+  // Confirm the base case of extracting peer info from DSE peers table, this time with SSL
+  @Test
+  public void should_get_peer_address_info_peers_dse_with_ssl() {
+    // Given
+    AdminRow local = mockLocalRow(1, node1.getHostId());
+    AdminRow peer2 = mockPeersRowDseWithSsl(3, node2.getHostId());
+    AdminRow peer1 = mockPeersRowDseWithSsl(2, node1.getHostId());
+    topologyMonitor.isSchemaV2 = true;
+    topologyMonitor.stubQueries(
+        new StubbedQuery("SELECT * FROM system.local", mockResult(local)),
+        new StubbedQuery("SELECT * FROM system.peers_v2", Maps.newHashMap(), null, true),
+        new StubbedQuery("SELECT * FROM system.peers", mockResult(peer2, peer1)));
+    when(context.getSslEngineFactory()).thenReturn(Optional.of(sslEngineFactory));
+
+    // When
+    CompletionStage<Iterable<NodeInfo>> futureInfos = topologyMonitor.refreshNodeList();
+
+    // Then
+    assertThatStage(futureInfos)
+        .isSuccess(
+            infos -> {
+              Iterator<NodeInfo> iterator = infos.iterator();
+              // First NodeInfo is for local, skip past that
+              iterator.next();
+              NodeInfo peer2nodeInfo = iterator.next();
+              assertThat(peer2nodeInfo.getEndPoint().resolve())
+                  .isEqualTo(new InetSocketAddress("127.0.0.3", 9043));
+              NodeInfo peer1nodeInfo = iterator.next();
+              assertThat(peer1nodeInfo.getEndPoint().resolve())
+                  .isEqualTo(new InetSocketAddress("127.0.0.2", 9043));
+            });
+  }
+
+  @DataProvider
+  public static Object[][] columnsToCheckV1() {
+    return new Object[][] {{"rpc_address"}, {"host_id"}, {"data_center"}, {"rack"}, {"tokens"}};
+  }
+
+  @DataProvider
+  public static Object[][] columnsToCheckV2() {
+    return new Object[][] {
+      {"native_address"}, {"native_port"}, {"host_id"}, {"data_center"}, {"rack"}, {"tokens"}
+    };
   }
 
   /** Mocks the query execution logic. */
@@ -639,6 +744,43 @@ public class DefaultTopologyMonitorTest {
     }
   }
 
+  // Mock row for DSE ~6.8
+  private AdminRow mockPeersRowDse(int i, UUID hostId) {
+    try {
+      AdminRow row = mock(AdminRow.class);
+      when(row.contains("peer")).thenReturn(true);
+      when(row.isNull("data_center")).thenReturn(false);
+      when(row.getString("data_center")).thenReturn("dc" + i);
+      when(row.getString("dse_version")).thenReturn("6.8.30");
+      when(row.contains("graph")).thenReturn(true);
+      when(row.isNull("host_id")).thenReturn(hostId == null);
+      when(row.getUuid("host_id")).thenReturn(hostId);
+      when(row.getInetAddress("peer")).thenReturn(InetAddress.getByName("127.0.0." + i));
+      when(row.isNull("rack")).thenReturn(false);
+      when(row.getString("rack")).thenReturn("rack" + i);
+      when(row.isNull("native_transport_address")).thenReturn(false);
+      when(row.getInetAddress("native_transport_address"))
+          .thenReturn(InetAddress.getByName("127.0.0." + i));
+      when(row.isNull("native_transport_port")).thenReturn(false);
+      when(row.getInteger("native_transport_port")).thenReturn(9042);
+      when(row.isNull("tokens")).thenReturn(false);
+      when(row.getSetOfString("tokens")).thenReturn(ImmutableSet.of("token" + i));
+      when(row.isNull("rpc_address")).thenReturn(false);
+
+      return row;
+    } catch (UnknownHostException e) {
+      fail("unexpected", e);
+      return null;
+    }
+  }
+
+  private AdminRow mockPeersRowDseWithSsl(int i, UUID hostId) {
+    AdminRow row = mockPeersRowDse(i, hostId);
+    when(row.isNull("native_transport_port_ssl")).thenReturn(false);
+    when(row.getInteger("native_transport_port_ssl")).thenReturn(9043);
+    return row;
+  }
+
   private AdminResult mockResult(AdminRow... rows) {
     AdminResult result = mock(AdminResult.class);
     when(result.iterator()).thenReturn(Iterators.forArray(rows));
@@ -651,5 +793,13 @@ public class DefaultTopologyMonitorTest {
         filter(loggingEventCaptor.getAllValues()).with("level", level).get();
     assertThat(logs).hasSize(1);
     assertThat(logs.iterator().next().getFormattedMessage()).contains(message);
+  }
+
+  private void assertLogContains(Level level, String message) {
+    verify(appender, atLeast(1)).doAppend(loggingEventCaptor.capture());
+    Iterable<ILoggingEvent> logs =
+        filter(loggingEventCaptor.getAllValues()).with("level", level).get();
+    assertThat(
+        Streams.stream(logs).map(ILoggingEvent::getFormattedMessage).anyMatch(message::contains));
   }
 }

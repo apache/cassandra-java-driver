@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,22 +21,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.api.core.data.CqlVector;
-import com.datastax.oss.driver.api.core.type.CqlVectorType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
+import java.util.Arrays;
 import org.junit.Test;
 
-public class CqlVectorCodecTest extends CodecTestBase<CqlVector<Float>> {
+public class VectorCodecTest extends CodecTestBase<CqlVector<Float>> {
 
-  private static final CqlVector VECTOR = CqlVector.builder().add(1.0f, 2.5f).build();
+  private static final Float[] VECTOR_ARGS = {1.0f, 2.5f};
+
+  private static final CqlVector<Float> VECTOR = CqlVector.newInstance(VECTOR_ARGS);
 
   private static final String VECTOR_HEX_STRING = "0x" + "3f800000" + "40200000";
 
   private static final String FORMATTED_VECTOR = "[1.0, 2.5]";
 
-  public CqlVectorCodecTest() {
-    CqlVectorType vectorType = DataTypes.vectorOf(DataTypes.FLOAT, 2);
+  public VectorCodecTest() {
+    VectorType vectorType = DataTypes.vectorOf(DataTypes.FLOAT, 2);
     this.codec = TypeCodecs.vectorOf(vectorType, TypeCodecs.FLOAT);
   }
 
@@ -42,6 +48,26 @@ public class CqlVectorCodecTest extends CodecTestBase<CqlVector<Float>> {
   public void should_encode() {
     assertThat(encode(VECTOR)).isEqualTo(VECTOR_HEX_STRING);
     assertThat(encode(null)).isNull();
+  }
+
+  /** Too few eleements will cause an exception, extra elements will be silently ignored */
+  @Test
+  public void should_throw_on_encode_with_too_few_elements() {
+    assertThatThrownBy(() -> encode(VECTOR.subVector(0, 1)))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  public void should_throw_on_encode_with_empty_list() {
+    assertThatThrownBy(() -> encode(CqlVector.newInstance()))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
+  public void should_encode_with_too_many_elements() {
+    Float[] doubledVectorContents = Arrays.copyOf(VECTOR_ARGS, VECTOR_ARGS.length * 2);
+    System.arraycopy(VECTOR_ARGS, 0, doubledVectorContents, VECTOR_ARGS.length, VECTOR_ARGS.length);
+    assertThat(encode(CqlVector.newInstance(doubledVectorContents))).isEqualTo(VECTOR_HEX_STRING);
   }
 
   @Test
@@ -52,7 +78,7 @@ public class CqlVectorCodecTest extends CodecTestBase<CqlVector<Float>> {
   }
 
   @Test
-  public void decode_throws_if_too_few_bytes() {
+  public void should_throw_on_decode_if_too_few_bytes() {
     // Dropping 4 bytes would knock off exactly 1 float, anything less than that would be something
     // we couldn't parse a float out of
     for (int i = 1; i <= 3; ++i) {
@@ -80,17 +106,17 @@ public class CqlVectorCodecTest extends CodecTestBase<CqlVector<Float>> {
 
   @Test
   public void should_accept_data_type() {
-    assertThat(codec.accepts(new CqlVectorType(DataTypes.FLOAT, 2))).isTrue();
+    assertThat(codec.accepts(new DefaultVectorType(DataTypes.FLOAT, 2))).isTrue();
     assertThat(codec.accepts(DataTypes.INT)).isFalse();
   }
 
   @Test
   public void should_accept_vector_type_correct_dimension_only() {
-    assertThat(codec.accepts(new CqlVectorType(DataTypes.FLOAT, 0))).isFalse();
-    assertThat(codec.accepts(new CqlVectorType(DataTypes.FLOAT, 1))).isFalse();
-    assertThat(codec.accepts(new CqlVectorType(DataTypes.FLOAT, 2))).isTrue();
+    assertThat(codec.accepts(new DefaultVectorType(DataTypes.FLOAT, 0))).isFalse();
+    assertThat(codec.accepts(new DefaultVectorType(DataTypes.FLOAT, 1))).isFalse();
+    assertThat(codec.accepts(new DefaultVectorType(DataTypes.FLOAT, 2))).isTrue();
     for (int i = 3; i < 1000; ++i) {
-      assertThat(codec.accepts(new CqlVectorType(DataTypes.FLOAT, i))).isFalse();
+      assertThat(codec.accepts(new DefaultVectorType(DataTypes.FLOAT, i))).isFalse();
     }
   }
 

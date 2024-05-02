@@ -1,3 +1,4 @@
+
 CREATE KEYSPACE ks_0 WITH replication = { 'class' : 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '1' } AND durable_writes = true;
 
 CREATE TYPE ks_0.btype (

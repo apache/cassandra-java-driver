@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +18,7 @@
 package com.datastax.oss.driver.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -30,8 +33,9 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -120,7 +124,7 @@ public class BatchStatementIT {
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "2.2")
   public void should_execute_batch_of_bound_statements_with_unset_values() {
     // Build a batch of batchCount statements with bound statements, each with their own positional
     // variables.
@@ -338,16 +342,20 @@ public class BatchStatementIT {
     sessionRule.session().execute(batchStatement);
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void should_not_allow_unset_value_when_protocol_less_than_v4() {
     //    CREATE TABLE test (k0 text, k1 int, v int, PRIMARY KEY (k0, k1))
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V3")
             .build();
-    try (CqlSession v3Session = SessionUtils.newSession(ccmRule, sessionRule.keyspace(), loader)) {
+    try (CqlSession v3Session = SessionUtils.newSession(ccmRule, loader)) {
+      // Intentionally use fully qualified table here to avoid warnings as these are not supported
+      // by v3 protocol version, see JAVA-3068
       PreparedStatement prepared =
-          v3Session.prepare("INSERT INTO test (k0, k1, v) values (?, ?, ?)");
+          v3Session.prepare(
+              String.format(
+                  "INSERT INTO %s.test (k0, k1, v) values (?, ?, ?)", sessionRule.keyspace()));
 
       BatchStatementBuilder builder = BatchStatement.builder(DefaultBatchType.LOGGED);
       builder.addStatements(
@@ -361,7 +369,9 @@ public class BatchStatementIT {
               .unset(2)
               .build());
 
-      v3Session.execute(builder.build());
+      assertThatThrownBy(() -> v3Session.execute(builder.build()))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining("Unset value at index");
     }
   }
 

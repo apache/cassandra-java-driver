@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -415,7 +417,7 @@ public interface SettableByIndex<SelfT extends SettableByIndex<SelfT>> extends A
   }
 
   /**
-   * Sets the {@code i}th value to the provided duration.
+   * Sets the {@code i}th value to the provided vector.
    *
    * <p>By default, this works with CQL type {@code vector}.
    *
@@ -423,8 +425,9 @@ public interface SettableByIndex<SelfT extends SettableByIndex<SelfT>> extends A
    */
   @NonNull
   @CheckReturnValue
-  default SelfT setCqlVector(int i, @Nullable CqlVector<?> v) {
-    return set(i, v, CqlVector.class);
+  default <ElementT extends Number> SelfT setVector(
+      int i, @Nullable CqlVector<ElementT> v, @NonNull Class<ElementT> elementsClass) {
+    return set(i, v, GenericType.vectorOf(elementsClass));
   }
 
   /**

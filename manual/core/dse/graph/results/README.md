@@ -1,3 +1,22 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Handling graph results
 
 [Script queries](../script/) and [explicit fluent traversals](../fluent/explicit/) return graph
@@ -109,7 +128,7 @@ translate into specific Java classes when the data is returned from the server.
 
 Here is an exhaustive compatibility matrix (for DSE 6.0):
 
-| DSE graph  | Java driver         |
+| DSE graph  | Java Driver         |
 |------------|---------------------|
 | bigint     | Long                |
 | blob       | byte[]              |
@@ -137,8 +156,8 @@ If a type doesn't have a corresponding `asXxx()` method, use the variant that ta
 UUID uuid = graphNode.as(UUID.class);
 ```
 
-[GraphNode]:           https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/graph/GraphNode.html
-[GraphResultSet]:      https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/graph/GraphResultSet.html
-[AsyncGraphResultSet]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/graph/AsyncGraphResultSet.html
+[GraphNode]:           https://docs.datastax.com/en/drivers/java/4.17/com/datastax/dse/driver/api/core/graph/GraphNode.html
+[GraphResultSet]:      https://docs.datastax.com/en/drivers/java/4.17/com/datastax/dse/driver/api/core/graph/GraphResultSet.html
+[AsyncGraphResultSet]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/dse/driver/api/core/graph/AsyncGraphResultSet.html
 
 [DSE data types]: https://docs.datastax.com/en/dse/6.0/dse-dev/datastax_enterprise/graph/reference/refDSEGraphDataTypes.html

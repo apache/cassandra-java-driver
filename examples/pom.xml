@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright DataStax, Inc.
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
+        http://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,12 +22,12 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <artifactId>java-driver-parent</artifactId>
-    <groupId>com.datastax.oss</groupId>
-    <version>4.15.1-SNAPSHOT</version>
+    <groupId>org.apache.cassandra</groupId>
+    <version>4.18.1-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-examples</artifactId>
-  <name>DataStax Java driver for Apache Cassandra(R) - examples.</name>
-  <description>A collection of examples to demonstrate DataStax Java Driver for Apache Cassandra(R).</description>
+  <name>Apache Cassandra Java Driver - examples.</name>
+  <description>A collection of examples to demonstrate Java Driver for Apache Cassandra(R).</description>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -140,6 +142,11 @@
       <groupId>io.projectreactor</groupId>
       <artifactId>reactor-core</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.github.spotbugs</groupId>
+      <artifactId>spotbugs-annotations</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
@@ -150,7 +157,7 @@
           <target>1.8</target>
           <annotationProcessorPaths>
             <path>
-              <groupId>com.datastax.oss</groupId>
+              <groupId>org.apache.cassandra</groupId>
               <artifactId>java-driver-mapper-processor</artifactId>
               <version>${project.version}</version>
             </path>

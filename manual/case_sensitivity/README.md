@@ -1,3 +1,22 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Case sensitivity
 
 ### In Cassandra
@@ -106,18 +125,18 @@ For "consuming" methods, string overloads are also provided for convenience, for
 * in other cases, the string is always assumed to be in CQL form, and converted on the fly with
   `CqlIdentifier.fromCql`. 
 
-[CqlIdentifier]:    https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/CqlIdentifier.html
-[Row]:              https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/Row.html
-[UdtValue]:         https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/UdtValue.html
-[BoundStatement]:   https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/BoundStatement.html
-[AccessibleByName]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/AccessibleByName.html
+[CqlIdentifier]:    https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/CqlIdentifier.html
+[Row]:              https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/cql/Row.html
+[UdtValue]:         https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/data/UdtValue.html
+[BoundStatement]:   https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/cql/BoundStatement.html
+[AccessibleByName]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/data/AccessibleByName.html
 
 ### Good practices
 
 As should be clear by now, case sensitivity introduces a lot of extra (and arguably unnecessary)
 complexity.
 
-The Java driver team's recommendation is:
+The Java Driver team's recommendation is:
 
 > **Always use case-insensitive identifiers in your data model.**
 

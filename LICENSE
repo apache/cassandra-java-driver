@@ -200,3 +200,24 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
+Apache Cassandra Java Driver bundles code and files from the following projects:
+
+JNR project
+Copyright (C) 2008-2010 Wayne Meissner
+This product includes software developed as part of the JNR project ( https://github.com/jnr/jnr-ffi )s.
+see core/src/main/java/com/datastax/oss/driver/internal/core/os/CpuInfo.java
+
+Protocol Buffers
+Copyright 2008 Google Inc.
+This product includes software developed as part of the Protocol Buffers project ( https://developers.google.com/protocol-buffers/ ).
+see core/src/main/java/com/datastax/oss/driver/internal/core/type/util/VIntCoding.java
+
+Guava
+Copyright (C) 2007 The Guava Authors
+This product includes software developed as part of the Guava project ( https://guava.dev ).
+see core/src/main/java/com/datastax/oss/driver/internal/core/util/CountingIterator.java
+
+Copyright (C) 2018 Christian Stein
+This product includes software developed by Christian Stein
+see ci/install-jdk.sh

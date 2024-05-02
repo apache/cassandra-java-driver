@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +18,7 @@
 package com.datastax.oss.driver.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
@@ -36,8 +39,9 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -126,19 +130,25 @@ public class BoundStatementCcmIT {
                 .build());
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void should_not_allow_unset_value_when_protocol_less_than_v4() {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V3")
             .build();
-    try (CqlSession v3Session = SessionUtils.newSession(ccmRule, sessionRule.keyspace(), loader)) {
-      PreparedStatement prepared = v3Session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
+    try (CqlSession v3Session = SessionUtils.newSession(ccmRule, loader)) {
+      // Intentionally use fully qualified table here to avoid warnings as these are not supported
+      // by v3 protocol version, see JAVA-3068
+      PreparedStatement prepared =
+          v3Session.prepare(
+              String.format("INSERT INTO %s.test2 (k, v0) values (?, ?)", sessionRule.keyspace()));
 
       BoundStatement boundStatement =
           prepared.boundStatementBuilder().setString(0, name.getMethodName()).unset(1).build();
 
-      v3Session.execute(boundStatement);
+      assertThatThrownBy(() -> v3Session.execute(boundStatement))
+          .isInstanceOf(IllegalStateException.class)
+          .hasMessageContaining("Unset value at index");
     }
   }
 
@@ -346,7 +356,7 @@ public class BoundStatementCcmIT {
 
   // Test for JAVA-2066
   @Test
-  @CassandraRequirement(min = "2.2")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "2.2")
   public void should_compute_routing_key_when_indices_randomly_distributed() {
     try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
 

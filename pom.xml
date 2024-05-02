@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright DataStax, Inc.
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
+        http://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,12 +20,16 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.datastax.oss</groupId>
+  <parent>
+    <groupId>org.apache</groupId>
+    <artifactId>apache</artifactId>
+    <version>23</version>
+  </parent>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-parent</artifactId>
-  <version>4.15.1-SNAPSHOT</version>
+  <version>4.18.1-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>DataStax Java driver for Apache Cassandra(R)</name>
-  <description>A driver for Apache Cassandra(R) 2.1+ that works exclusively with the Cassandra Query Language version 3 (CQL3) and Cassandra's native protocol versions 3 and above.</description>
+  <name>Apache Cassandra Java Driver</name>
   <url>https://github.com/datastax/java-driver</url>
   <inceptionYear>2017</inceptionYear>
   <modules>
@@ -37,7 +43,9 @@
     <module>test-infra</module>
     <module>integration-tests</module>
     <module>osgi-tests</module>
+    <module>distribution-source</module>
     <module>distribution</module>
+    <module>distribution-tests</module>
     <module>examples</module>
     <module>bom</module>
   </modules>
@@ -45,23 +53,25 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <config.version>1.4.1</config.version>
+    <!-- when changing version also update version in LICENSE_binary  -->
     <hdrhistogram.version>2.1.12</hdrhistogram.version>
     <metrics.version>4.1.18</metrics.version>
-    <netty.version>4.1.77.Final</netty.version>
+    <netty.version>4.1.94.Final</netty.version>
     <esri.version>1.2.1</esri.version>
     <!--
     When upgrading TinkerPop please upgrade the version matrix in
     manual/core/integration/README.md
     -->
-    <tinkerpop.version>3.5.3</tinkerpop.version>
+    <tinkerpop.version>3.5.6</tinkerpop.version>
+    <!-- when changing version also update version in LICENSE_binary  -->
     <slf4j.version>1.7.26</slf4j.version>
+    <!-- when changing version also update version in LICENSE_binary  -->
     <reactive-streams.version>1.0.3</reactive-streams.version>
-    <json.version>20210307</json.version>
-    <jackson.version>2.13.2</jackson.version>
-    <jackson-databind.version>2.13.2.2</jackson-databind.version>
-    <legacy-jackson.version>1.9.12</legacy-jackson.version>
+    <json.version>20230227</json.version>
+    <jackson.version>2.13.4</jackson.version>
+    <jackson-databind.version>2.13.4.2</jackson-databind.version>
     <!-- optional dependencies -->
-    <snappy.version>1.1.7.3</snappy.version>
+    <snappy.version>1.1.10.1</snappy.version>
     <lz4.version>1.7.1</lz4.version>
     <!-- test dependencies -->
     <assertj.version>3.19.0</assertj.version>
@@ -69,18 +79,19 @@
     <junit.version>4.13.2</junit.version>
     <logback.version>1.2.3</logback.version>
     <osgi.version>6.0.0</osgi.version>
-    <felix.version>6.0.3</felix.version>
+    <felix.version>7.0.1</felix.version>
     <pax-exam.version>4.13.4</pax-exam.version>
+    <pax-url.version>2.6.4</pax-url.version>
     <simulacron.version>0.11.0</simulacron.version>
     <jsr353-api.version>1.1.4</jsr353-api.version>
-    <jersey.version>2.28</jersey.version>
+    <jersey.version>2.31</jersey.version>
     <hk2.version>2.5.0</hk2.version>
     <jax-rs.version>2.1.1</jax-rs.version>
     <jsr353-ri.version>1.1.4</jsr353-ri.version>
     <rxjava.version>2.2.2</rxjava.version>
     <awaitility.version>4.0.3</awaitility.version>
     <apacheds.version>2.0.0-M19</apacheds.version>
-    <surefire.version>2.22.2</surefire.version>
+    <surefire.version>3.0.0</surefire.version>
     <graalapi.version>22.0.0.2</graalapi.version>
     <skipTests>false</skipTests>
     <skipUnitTests>${skipTests}</skipUnitTests>
@@ -88,7 +99,7 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.datastax.oss</groupId>
+        <groupId>org.apache.cassandra</groupId>
         <artifactId>java-driver-core</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
@@ -132,6 +143,7 @@
       <dependency>
         <groupId>com.github.jnr</groupId>
         <artifactId>jnr-posix</artifactId>
+        <!-- when changing version also update jnr-* and asm versions in LICENSE_binary  -->
         <version>3.1.15</version>
       </dependency>
       <dependency>
@@ -270,12 +282,17 @@
       <dependency>
         <groupId>org.ops4j.pax.url</groupId>
         <artifactId>pax-url-wrap</artifactId>
-        <version>2.6.3</version>
+        <version>${pax-url.version}</version>
       </dependency>
       <dependency>
         <groupId>org.ops4j.pax.url</groupId>
         <artifactId>pax-url-reference</artifactId>
-        <version>2.6.2</version>
+        <version>${pax-url.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.ops4j.pax.tinybundles</groupId>
+        <artifactId>tinybundles</artifactId>
+        <version>3.0.0</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish</groupId>
@@ -433,12 +450,12 @@
       <dependency>
         <groupId>io.projectreactor.tools</groupId>
         <artifactId>blockhound</artifactId>
-        <version>1.0.4.RELEASE</version>
+        <version>1.0.8.RELEASE</version>
       </dependency>
       <dependency>
         <groupId>io.projectreactor.tools</groupId>
         <artifactId>blockhound-junit-platform</artifactId>
-        <version>1.0.4.RELEASE</version>
+        <version>1.0.8.RELEASE</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -533,12 +550,12 @@
         <plugin>
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.8.5</version>
+          <version>0.8.10</version>
         </plugin>
         <plugin>
           <groupId>org.apache.felix</groupId>
           <artifactId>maven-bundle-plugin</artifactId>
-          <version>4.2.1</version>
+          <version>5.1.1</version>
         </plugin>
         <plugin>
           <groupId>org.revapi</groupId>
@@ -555,6 +572,10 @@
                 </item>
               </revapi.ignore>
             </analysisConfiguration>
+            <oldArtifacts>
+              <!-- The previous release used DataStax groupId, remove this after the next release -->
+              <artifact>com.datastax.oss:${project.artifactId}:RELEASE</artifact>
+            </oldArtifacts>
           </configuration>
           <dependencies>
             <dependency>
@@ -588,6 +609,7 @@
             <compilerArg>-Xep:FutureReturnValueIgnored:OFF</compilerArg>
             <compilerArg>-Xep:PreferJavaTimeOverload:OFF</compilerArg>
             <compilerArg>-Xep:AnnotateFormatMethod:OFF</compilerArg>
+            <compilerArg>-Xep:WildcardImport:WARN</compilerArg>
             <compilerArg>-XepExcludedPaths:.*/target/(?:generated-sources|generated-test-sources)/.*</compilerArg>
           </compilerArgs>
           <showWarnings>true</showWarnings>
@@ -644,13 +666,15 @@
         <artifactId>license-maven-plugin</artifactId>
         <configuration>
           <inlineHeader><![CDATA[
-Copyright DataStax, Inc.
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -704,6 +728,7 @@ limitations under the License.]]></inlineHeader>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <jvm>${testing.jvm}/bin/java</jvm>
           <systemPropertyVariables>
             <logback.configurationFile>${project.basedir}/src/test/resources/logback-test.xml</logback.configurationFile>
           </systemPropertyVariables>
@@ -743,6 +768,12 @@ limitations under the License.]]></inlineHeader>
             <goals>
               <goal>jar-no-fork</goal>
             </goals>
+            <configuration>
+              <excludes>
+                <exclude>LICENSE_binary</exclude>
+                <exclude>NOTICE_binary.txt</exclude>
+              </excludes>
+            </configuration>
           </execution>
         </executions>
       </plugin>
@@ -770,28 +801,6 @@ limitations under the License.]]></inlineHeader>
           </tags>
         </configuration>
         <executions>
-          <execution>
-            <id>attach-javadocs</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-            <configuration>
-              <header><![CDATA[<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-TWSQ28');</script>
-<!-- End Google Tag Manager -->
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TWSQ28"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->]]></header>
-              <additionalOptions>
-                <additionalOption>--allow-script-in-comments</additionalOption>
-              </additionalOptions>
-            </configuration>
-          </execution>
           <execution>
             <!-- Check that our "official" API (api.* packages) does not leak unwanted types -->
             <id>check-api-leaks</id>
@@ -900,6 +909,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-remote-resources-plugin</artifactId>
+        <version>1.7.0</version>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
   <profiles>
@@ -936,13 +953,58 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <revapi.skip>true</revapi.skip>
       </properties>
     </profile>
+    <!-- Use $JAVA_HOME as the default JDK to run surefire/failsafe to maintain portability -->
+    <profile>
+      <id>test-jdk-environment</id>
+      <activation>
+        <property>
+          <name>!testJavaHome</name>
+        </property>
+      </activation>
+      <properties>
+        <testing.jvm>${env.JAVA_HOME}</testing.jvm>
+      </properties>
+    </profile>
+    <!-- set -DtestJavaHome=/path/to/jdk/home to use a different JDK for surefire/failsafe -->
+    <profile>
+      <id>test-jdk-specified</id>
+      <activation>
+        <property>
+          <name>testJavaHome</name>
+        </property>
+      </activation>
+      <properties>
+        <testing.jvm>${testJavaHome}</testing.jvm>
+      </properties>
+    </profile>
+    <profile>
+      <!-- workarounds for running tests with JDK1.8 -->
+      <id>test-jdk-8</id>
+      <activation>
+        <jdk>[8,)</jdk>
+      </activation>
+    </profile>
+    <profile>
+      <!-- workarounds for running tests with JDK11 -->
+      <id>test-jdk-11</id>
+      <activation>
+        <jdk>[11,)</jdk>
+      </activation>
+    </profile>
+    <profile>
+      <!-- workarounds for running tests with JDK17 -->
+      <id>test-jdk-17</id>
+      <activation>
+        <jdk>[17,)</jdk>
+      </activation>
+      <properties>
+        <!-- for DriverBlockHoundIntegrationIT when using JDK 13+, see https://github.com/reactor/BlockHound/issues/33 -->
+        <blockhound.argline>-XX:+AllowRedefinitionToAddDeleteMethods</blockhound.argline>
+        <!-- allow deep reflection for mockito when using JDK 17+, see https://stackoverflow.com/questions/70993863/mockito-can-not-mock-random-in-java-17 -->
+        <mockitoopens.argline>--add-opens java.base/jdk.internal.util.random=ALL-UNNAMED</mockitoopens.argline>
+      </properties>
+    </profile>
   </profiles>
-  <distributionManagement>
-    <repository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-  </distributionManagement>
   <licenses>
     <license>
       <name>Apache 2</name>

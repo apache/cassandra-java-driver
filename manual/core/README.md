@@ -1,3 +1,22 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Core driver
 
 The core module handles cluster connectivity and request execution. It is published under the
@@ -5,7 +24,7 @@ following coordinates:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
 </dependency>
@@ -231,34 +250,35 @@ See [AccessibleByName] for an explanation of the conversion rules.
 
 ##### CQL to Java type mapping
 
-| CQL3 data type      | Getter name    | Java type            | See also                            |
-|---------------------|----------------|----------------------|-------------------------------------|
-| ascii               | getString      | java.lang.String     |                                     |
-| bigint              | getLong        | long                 |                                     |
-| blob                | getByteBuffer  | java.nio.ByteBuffer  |                                     |
-| boolean             | getBoolean     | boolean              |                                     |
-| counter             | getLong        | long                 |                                     |
-| date                | getLocalDate   | java.time.LocalDate  | [Temporal types](temporal_types/)   |
-| decimal             | getBigDecimal  | java.math.BigDecimal |                                     |
-| double              | getDouble      | double               |                                     |
-| duration            | getCqlDuration | [CqlDuration]        | [Temporal types](temporal_types/)   |
-| float               | getFloat       | float                |                                     |
-| inet                | getInetAddress | java.net.InetAddress |                                     |
-| int                 | getInt         | int                  |                                     |
-| list                | getList        | java.util.List<T>    |                                     |
-| map                 | getMap         | java.util.Map<K, V>  |                                     |
-| set                 | getSet         | java.util.Set<T>     |                                     |
-| smallint            | getShort       | short                |                                     |
-| text                | getString      | java.lang.String     |                                     |
-| time                | getLocalTime   | java.time.LocalTime  | [Temporal types](temporal_types/)   |
-| timestamp           | getInstant     | java.time.Instant    | [Temporal types](temporal_types/)   |
-| timeuuid            | getUuid        | java.util.UUID       |                                     |
-| tinyint             | getByte        | byte                 |                                     |
-| tuple               | getTupleValue  | [TupleValue]         | [Tuples](tuples/)                   |
-| user-defined types  | getUDTValue    | [UDTValue]           | [User-defined types](udts/)         |
-| uuid                | getUuid        | java.util.UUID       |                                     |
-| varchar             | getString      | java.lang.String     |                                     |
-| varint              | getBigInteger  | java.math.BigInteger |                                     |
+| CQL3 data type     | Getter name    | Java type            | See also                          |
+|--------------------|----------------|----------------------|-----------------------------------|
+| ascii              | getString      | java.lang.String     |                                   |
+| bigint             | getLong        | long                 |                                   |
+| blob               | getByteBuffer  | java.nio.ByteBuffer  |                                   |
+| boolean            | getBoolean     | boolean              |                                   |
+| counter            | getLong        | long                 |                                   |
+| date               | getLocalDate   | java.time.LocalDate  | [Temporal types](temporal_types/) |
+| decimal            | getBigDecimal  | java.math.BigDecimal |                                   |
+| double             | getDouble      | double               |                                   |
+| duration           | getCqlDuration | [CqlDuration]        | [Temporal types](temporal_types/) |
+| float              | getFloat       | float                |                                   |
+| inet               | getInetAddress | java.net.InetAddress |                                   |
+| int                | getInt         | int                  |                                   |
+| list               | getList        | java.util.List<T>    |                                   |
+| map                | getMap         | java.util.Map<K, V>  |                                   |
+| set                | getSet         | java.util.Set<T>     |                                   |
+| smallint           | getShort       | short                |                                   |
+| text               | getString      | java.lang.String     |                                   |
+| time               | getLocalTime   | java.time.LocalTime  | [Temporal types](temporal_types/) |
+| timestamp          | getInstant     | java.time.Instant    | [Temporal types](temporal_types/) |
+| timeuuid           | getUuid        | java.util.UUID       |                                   |
+| tinyint            | getByte        | byte                 |                                   |
+| tuple              | getTupleValue  | [TupleValue]         | [Tuples](tuples/)                 |
+| user-defined types | getUDTValue    | [UDTValue]           | [User-defined types](udts/)       |
+| uuid               | getUuid        | java.util.UUID       |                                   |
+| varchar            | getString      | java.lang.String     |                                   |
+| varint             | getBigInteger  | java.math.BigInteger |                                   |
+| vector             | getVector      | [CqlVector]          | [Custom Codecs](custom_codecs/)   |
 
 Sometimes the driver has to infer a CQL type from a Java type (for example when handling the values 
 of [simple statements](statements/simple/)); for those that have multiple CQL equivalents, it makes
@@ -314,18 +334,19 @@ for (ColumnDefinitions.Definition definition : row.getColumnDefinitions()) {
 }
 ```
 
-[CqlSession]:                           https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/CqlSession.html
-[CqlSession#builder()]:                 https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/CqlSession.html#builder--
-[ResultSet]:                            https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/ResultSet.html
-[Row]:                                  https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/Row.html
-[CqlIdentifier]:                        https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/CqlIdentifier.html
-[AccessibleByName]:                     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/AccessibleByName.html
-[GenericType]:                          https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
-[CqlDuration]:                          https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/CqlDuration.html
-[TupleValue]:                           https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/TupleValue.html
-[UdtValue]:                             https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/data/UdtValue.html
-[SessionBuilder.addContactPoint()]:     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoint-java.net.InetSocketAddress-
-[SessionBuilder.addContactPoints()]:    https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoints-java.util.Collection-
-[SessionBuilder.withLocalDatacenter()]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withLocalDatacenter-java.lang.String-
+[CqlSession]:                           https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/CqlSession.html
+[CqlSession#builder()]:                 https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/CqlSession.html#builder--
+[ResultSet]:                            https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/cql/ResultSet.html
+[Row]:                                  https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/cql/Row.html
+[CqlIdentifier]:                        https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/CqlIdentifier.html
+[AccessibleByName]:                     https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/data/AccessibleByName.html
+[GenericType]:                          https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/reflect/GenericType.html
+[CqlDuration]:                          https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/data/CqlDuration.html
+[CqlVector]:                            https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/data/CqlVector.html
+[TupleValue]:                           https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/data/TupleValue.html
+[UdtValue]:                             https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/data/UdtValue.html
+[SessionBuilder.addContactPoint()]:     https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoint-java.net.InetSocketAddress-
+[SessionBuilder.addContactPoints()]:    https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoints-java.util.Collection-
+[SessionBuilder.withLocalDatacenter()]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withLocalDatacenter-java.lang.String-
 
 [CASSANDRA-10145]: https://issues.apache.org/jira/browse/CASSANDRA-10145

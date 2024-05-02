@@ -1,3 +1,22 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Retries
 
 ### Quick overview
@@ -231,21 +250,21 @@ configuration).
 Each request uses its declared profile's policy. If it doesn't declare any profile, or if the
 profile doesn't have a dedicated policy, then the default profile's policy is used.
 
-[AllNodesFailedException]:   https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/AllNodesFailedException.html
-[ClosedConnectionException]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/connection/ClosedConnectionException.html
-[DriverTimeoutException]:    https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/DriverTimeoutException.html
-[FunctionFailureException]:  https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/servererrors/FunctionFailureException.html
-[HeartbeatException]:        https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/connection/HeartbeatException.html
-[ProtocolError]:             https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/servererrors/ProtocolError.html
-[OverloadedException]:       https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/servererrors/OverloadedException.html
-[QueryValidationException]:  https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/servererrors/QueryValidationException.html
-[ReadFailureException]:      https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/servererrors/ReadFailureException.html
-[ReadTimeoutException]:      https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/servererrors/ReadTimeoutException.html
-[RetryDecision]:             https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/retry/RetryDecision.html
-[RetryPolicy]:               https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/retry/RetryPolicy.html
-[RetryVerdict]:              https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/retry/RetryVerdict.html
-[ServerError]:               https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/servererrors/ServerError.html
-[TruncateException]:         https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/servererrors/TruncateException.html
-[UnavailableException]:      https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/servererrors/UnavailableException.html
-[WriteFailureException]:     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/servererrors/WriteFailureException.html
-[WriteTimeoutException]:     https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/servererrors/WriteTimeoutException.html
+[AllNodesFailedException]:   https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/AllNodesFailedException.html
+[ClosedConnectionException]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/connection/ClosedConnectionException.html
+[DriverTimeoutException]:    https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/DriverTimeoutException.html
+[FunctionFailureException]:  https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/servererrors/FunctionFailureException.html
+[HeartbeatException]:        https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/connection/HeartbeatException.html
+[ProtocolError]:             https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/servererrors/ProtocolError.html
+[OverloadedException]:       https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/servererrors/OverloadedException.html
+[QueryValidationException]:  https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/servererrors/QueryValidationException.html
+[ReadFailureException]:      https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/servererrors/ReadFailureException.html
+[ReadTimeoutException]:      https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/servererrors/ReadTimeoutException.html
+[RetryDecision]:             https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/retry/RetryDecision.html
+[RetryPolicy]:               https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/retry/RetryPolicy.html
+[RetryVerdict]:              https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/retry/RetryVerdict.html
+[ServerError]:               https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/servererrors/ServerError.html
+[TruncateException]:         https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/servererrors/TruncateException.html
+[UnavailableException]:      https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/servererrors/UnavailableException.html
+[WriteFailureException]:     https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/servererrors/WriteFailureException.html
+[WriteTimeoutException]:     https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/servererrors/WriteTimeoutException.html

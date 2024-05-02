@@ -6824,6 +6824,138 @@
         "new": "class com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException",
         "superClass": "com.datastax.oss.driver.api.core.DriverException",
         "justification": "Make CodecNotFoundException to extend DriverException as all other driver exceptions do"
+      },
+      {
+        "code": "java.class.removed",
+        "old": "class com.datastax.oss.driver.api.core.data.CqlVector<T>",
+        "justification": "Refactoring in JAVA-3061"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method com.datastax.oss.driver.api.core.data.CqlVector<?> com.datastax.oss.driver.api.core.data.GettableById::getCqlVector(com.datastax.oss.driver.api.core.CqlIdentifier)",
+        "justification": "Refactoring in JAVA-3061"
+     },
+     {
+       "code": "java.method.removed",
+       "old": "method com.datastax.oss.driver.api.core.data.CqlVector<?> com.datastax.oss.driver.api.core.data.GettableByIndex::getCqlVector(int)",
+       "justification": "Refactoring in JAVA-3061"
+     },
+     {
+       "code": "java.method.removed",
+       "old": "method com.datastax.oss.driver.api.core.data.CqlVector<?> com.datastax.oss.driver.api.core.data.GettableByName::getCqlVector(java.lang.String)",
+       "justification": "Refactoring in JAVA-3061"
+     },
+     {
+       "code": "java.method.removed",
+       "old": "method SelfT com.datastax.oss.driver.api.core.data.SettableById<SelfT extends com.datastax.oss.driver.api.core.data.SettableById<SelfT>>::setCqlVector(com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.data.CqlVector<?>)",
+       "justification": "Refactoring in JAVA-3061"
+     },
+     {
+       "code": "java.method.removed",
+       "old": "method SelfT com.datastax.oss.driver.api.core.data.SettableByIndex<SelfT extends com.datastax.oss.driver.api.core.data.SettableByIndex<SelfT>>::setCqlVector(int, com.datastax.oss.driver.api.core.data.CqlVector<?>)",
+       "justification": "Refactoring in JAVA-3061"
+     },
+     {
+       "code": "java.method.removed",
+       "old": "method SelfT com.datastax.oss.driver.api.core.data.SettableByName<SelfT extends com.datastax.oss.driver.api.core.data.SettableByName<SelfT>>::setCqlVector(java.lang.String, com.datastax.oss.driver.api.core.data.CqlVector<?>)",
+       "justification": "Refactoring in JAVA-3061"
+     },
+     {
+       "code": "java.class.removed",
+       "old": "class com.datastax.oss.driver.api.core.type.CqlVectorType",
+       "justification": "Refactoring in JAVA-3061"
+     },
+     {
+       "code": "java.method.returnTypeChanged",
+       "old": "method com.datastax.oss.driver.api.core.type.CqlVectorType com.datastax.oss.driver.api.core.type.DataTypes::vectorOf(com.datastax.oss.driver.api.core.type.DataType, int)",
+       "new": "method com.datastax.oss.driver.api.core.type.VectorType com.datastax.oss.driver.api.core.type.DataTypes::vectorOf(com.datastax.oss.driver.api.core.type.DataType, int)",
+       "justification": "Refactoring in JAVA-3061"
+     },
+     {
+       "code": "java.method.parameterTypeChanged",
+       "old": "parameter <SubtypeT> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(===com.datastax.oss.driver.api.core.type.CqlVectorType===, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+       "new": "parameter <SubtypeT> com.datastax.oss.driver.api.core.type.codec.TypeCodec<java.util.List<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(===com.datastax.oss.driver.api.core.type.VectorType===, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+       "justification": "Refactoring in JAVA-3061"
+     },
+     {
+       "code": "java.method.returnTypeTypeParametersChanged",
+       "old": "method <SubtypeT> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(com.datastax.oss.driver.api.core.type.CqlVectorType, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+       "new": "method <SubtypeT> com.datastax.oss.driver.api.core.type.codec.TypeCodec<java.util.List<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(com.datastax.oss.driver.api.core.type.VectorType, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+       "justification": "Refactoring in JAVA-3061"
+     },
+     {
+       "code": "java.method.removed",
+       "old": "method <T> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(com.datastax.oss.driver.api.core.type.reflect.GenericType<T>)",
+       "justification": "Refactoring in JAVA-3061"
+     },
+      {
+        "code": "java.class.removed",
+        "old": "class com.datastax.oss.driver.api.core.data.CqlVector.Builder<T>",
+        "justification": "Refactorings in PR 1666"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method com.datastax.oss.driver.api.core.data.CqlVector.Builder com.datastax.oss.driver.api.core.data.CqlVector<T>::builder()",
+        "justification": "Refactorings in PR 1666"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method java.lang.Iterable<T> com.datastax.oss.driver.api.core.data.CqlVector<T>::getValues()",
+        "justification": "Refactorings in PR 1666"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "class com.datastax.oss.driver.api.core.data.CqlVector<T>",
+        "new": "class com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>",
+        "justification": "Refactorings in PR 1666"
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter <SubtypeT> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(===com.datastax.oss.driver.api.core.type.CqlVectorType===, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+        "new": "parameter <SubtypeT extends java.lang.Number> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(===com.datastax.oss.driver.api.core.type.VectorType===, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+        "justification": "Refactorings in PR 1666"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter <SubtypeT> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(com.datastax.oss.driver.api.core.type.CqlVectorType, ===com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>===)",
+        "new": "parameter <SubtypeT extends java.lang.Number> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(com.datastax.oss.driver.api.core.type.VectorType, ===com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>===)",
+        "justification": "Refactorings in PR 1666"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method <SubtypeT> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(com.datastax.oss.driver.api.core.type.CqlVectorType, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+        "new": "method <SubtypeT extends java.lang.Number> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(com.datastax.oss.driver.api.core.type.VectorType, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+        "justification": "Refactorings in PR 1666"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <SubtypeT> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(com.datastax.oss.driver.api.core.type.CqlVectorType, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+        "new": "method <SubtypeT extends java.lang.Number> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(com.datastax.oss.driver.api.core.type.VectorType, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+        "justification": "Refactorings in PR 1666"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter <T> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(===com.datastax.oss.driver.api.core.type.reflect.GenericType<T>===)",
+        "new": "parameter <T extends java.lang.Number> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(===com.datastax.oss.driver.api.core.type.reflect.GenericType<T>===)",
+        "justification": "Refactorings in PR 1666"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method <T> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(com.datastax.oss.driver.api.core.type.reflect.GenericType<T>)",
+        "new": "method <T extends java.lang.Number> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(com.datastax.oss.driver.api.core.type.reflect.GenericType<T>)",
+        "justification": "Refactorings in PR 1666"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <T> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(com.datastax.oss.driver.api.core.type.reflect.GenericType<T>)",
+        "new": "method <T extends java.lang.Number> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(com.datastax.oss.driver.api.core.type.reflect.GenericType<T>)",
+        "justification": "Refactorings in PR 1666"
+      },
+      {
+        "code": "java.method.returnTypeChangedCovariantly",
+        "old": "method java.lang.Throwable java.lang.Throwable::fillInStackTrace() @ com.fasterxml.jackson.databind.deser.UnresolvedForwardReference",
+        "new": "method com.fasterxml.jackson.databind.deser.UnresolvedForwardReference com.fasterxml.jackson.databind.deser.UnresolvedForwardReference::fillInStackTrace()",
+        "justification": "Upgrade jackson-databind to 2.13.4.1 to address CVEs, API change cause: https://github.com/FasterXML/jackson-databind/issues/3419"
       }
     ]
   }

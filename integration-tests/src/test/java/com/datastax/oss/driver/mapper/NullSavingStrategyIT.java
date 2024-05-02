@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,9 +38,11 @@ import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.Objects;
 import java.util.UUID;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -51,13 +55,24 @@ public class NullSavingStrategyIT {
 
   private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static final SessionRule<CqlSession> SESSION_RULE =
-      SessionRule.builder(CCM_RULE)
-          .withConfigLoader(
-              DriverConfigLoader.programmaticBuilder()
-                  .withString(DefaultDriverOption.PROTOCOL_VERSION, "V3")
-                  .build())
-          .build();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
+
+  // JAVA-3076: V3 protocol calls that could trigger cassandra to issue client warnings appear to be
+  // inherently unstable when used at the same time as V4+ protocol clients (common since this is
+  // part of the parallelizable test suite).
+  //
+  // For this test we'll use latest protocol version for SessionRule set-up, which creates the
+  // keyspace and could potentially result in warning about too many keyspaces, and then create a
+  // new client for the tests to use, which they access via the static InventoryMapper instance
+  // `mapper`.
+  //
+  // This additional client is created in the @BeforeClass method #setup() and guaranteed to be
+  // closed in @AfterClass method #teardown().
+  //
+  // Note: The standard junit runner executes rules before class/test setup so the order of
+  // execution will be CcmRule#before > SessionRule#before > NullSavingStrategyIT#setup, meaning
+  // CCM_RULE/SESSION_RULE should be fully initialized by the time #setup() is invoked.
+  private static CqlSession v3Session;
 
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
@@ -66,14 +81,34 @@ public class NullSavingStrategyIT {
 
   @BeforeClass
   public static void setup() {
-    CqlSession session = SESSION_RULE.session();
-    session.execute(
-        SimpleStatement.builder(
-                "CREATE TABLE product_simple(id uuid PRIMARY KEY, description text)")
-            .setExecutionProfile(SESSION_RULE.slowProfile())
-            .build());
+    // setup table for use in tests, this can use the default session
+    SESSION_RULE
+        .session()
+        .execute(
+            SimpleStatement.builder(
+                    "CREATE TABLE product_simple(id uuid PRIMARY KEY, description text)")
+                .setExecutionProfile(SESSION_RULE.slowProfile())
+                .build());
 
-    mapper = new NullSavingStrategyIT_InventoryMapperBuilder(session).build();
+    // Create V3 protocol session for use in tests, will be closed in #teardown()
+    v3Session =
+        SessionUtils.newSession(
+            CCM_RULE,
+            SESSION_RULE.keyspace(),
+            DriverConfigLoader.programmaticBuilder()
+                .withString(DefaultDriverOption.PROTOCOL_VERSION, "V3")
+                .build());
+
+    // Hand V3 session to InventoryMapper which the tests will use to perform db calls
+    mapper = new NullSavingStrategyIT_InventoryMapperBuilder(v3Session).build();
+  }
+
+  @AfterClass
+  public static void teardown() {
+    // Close V3 session (SESSION_RULE will be closed separately by @ClassRule handling)
+    if (v3Session != null) {
+      v3Session.close();
+    }
   }
 
   @Test

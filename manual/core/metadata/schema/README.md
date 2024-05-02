@@ -1,3 +1,22 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Schema metadata
 
 ### Quick overview
@@ -321,16 +340,16 @@ unavailable for the excluded keyspaces.
 If you issue schema-altering requests from the driver (e.g. `session.execute("CREATE TABLE ..")`),
 take a look at the [Performance](../../performance/#schema-updates) page for a few tips.
 
-[Metadata#getKeyspaces]:             https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
-[SchemaChangeListener]:              https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListener.html
-[SchemaChangeListenerBase]:          https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListenerBase.html
-[Session#setSchemaMetadataEnabled]:  https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/Session.html#setSchemaMetadataEnabled-java.lang.Boolean-
-[Session#checkSchemaAgreementAsync]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/Session.html#checkSchemaAgreementAsync--
-[SessionBuilder#addSchemaChangeListener]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addSchemaChangeListener-com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener-
-[ExecutionInfo#isSchemaInAgreement]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#isSchemaInAgreement--
-[com.datastax.dse.driver.api.core.metadata.schema]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/metadata/schema/package-frame.html
-[DseFunctionMetadata]:  https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/metadata/schema/DseFunctionMetadata.html
-[DseAggregateMetadata]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/metadata/schema/DseAggregateMetadata.html
+[Metadata#getKeyspaces]:             https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
+[SchemaChangeListener]:              https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListener.html
+[SchemaChangeListenerBase]:          https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListenerBase.html
+[Session#setSchemaMetadataEnabled]:  https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/Session.html#setSchemaMetadataEnabled-java.lang.Boolean-
+[Session#checkSchemaAgreementAsync]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/Session.html#checkSchemaAgreementAsync--
+[SessionBuilder#addSchemaChangeListener]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addSchemaChangeListener-com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener-
+[ExecutionInfo#isSchemaInAgreement]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/cql/ExecutionInfo.html#isSchemaInAgreement--
+[com.datastax.dse.driver.api.core.metadata.schema]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/dse/driver/api/core/metadata/schema/package-frame.html
+[DseFunctionMetadata]:  https://docs.datastax.com/en/drivers/java/4.17/com/datastax/dse/driver/api/core/metadata/schema/DseFunctionMetadata.html
+[DseAggregateMetadata]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/dse/driver/api/core/metadata/schema/DseAggregateMetadata.html
 
 [JAVA-750]: https://datastax-oss.atlassian.net/browse/JAVA-750
 [java.util.regex.Pattern]: https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html

@@ -1,3 +1,22 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Non-blocking programming
 
 ### Quick overview
@@ -11,7 +30,7 @@ such as [Vert.x] or [Reactor], along with tools for automatic detection of block
 [Reactor]: https://projectreactor.io
 [BlockHound]: https://github.com/reactor/BlockHound
 
-**In summary, when used properly, the DataStax Java driver offers non-blocking guarantees for most 
+**In summary, when used properly, the Java Driver offers non-blocking guarantees for most 
 of its operations, and during most of the session lifecycle.**
 
 These guarantees and their exceptions are detailed below. A final chapter explains how to use the 
@@ -49,22 +68,22 @@ For example, calling any synchronous method declared in [`SyncCqlSession`], such
 will block until the result is available. These methods should never be used in non-blocking 
 applications.
 
-[`SyncCqlSession`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/SyncCqlSession.html`
-[`execute`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/SyncCqlSession.html#execute-com.datastax.oss.driver.api.core.cql.Statement-
+[`SyncCqlSession`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/cql/SyncCqlSession.html`
+[`execute`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/cql/SyncCqlSession.html#execute-com.datastax.oss.driver.api.core.cql.Statement-
 
 However, the asynchronous methods declared in [`AsyncCqlSession`], such as [`executeAsync`], are all 
 safe for use in non-blocking applications; the statement execution and asynchronous result delivery 
 is guaranteed to never block. 
 
-[`AsyncCqlSession`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/AsyncCqlSession.html
-[`executeAsync`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/cql/AsyncCqlSession.html#executeAsync-com.datastax.oss.driver.api.core.cql.Statement-
+[`AsyncCqlSession`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/cql/AsyncCqlSession.html
+[`executeAsync`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/cql/AsyncCqlSession.html#executeAsync-com.datastax.oss.driver.api.core.cql.Statement-
 
 The same applies to the methods declared in [`ReactiveSession`] such as [`executeReactive`]: the 
 returned publisher will never block when subscribed to, until the final results are delivered to 
 the subscriber.
 
-[`ReactiveSession`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/cql/reactive/ReactiveSession.html
-[`executeReactive`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/cql/reactive/ReactiveSession.html#executeReactive-com.datastax.oss.driver.api.core.cql.Statement-
+[`ReactiveSession`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/dse/driver/api/core/cql/reactive/ReactiveSession.html
+[`executeReactive`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/dse/driver/api/core/cql/reactive/ReactiveSession.html#executeReactive-com.datastax.oss.driver.api.core.cql.Statement-
 
 There is one exception though: continuous paging queries (a feature specific to DSE) have a special
 execution model which uses internal locks for coordination. Although such locks are only held for 
@@ -77,10 +96,10 @@ reactive APIs like [`executeContinuouslyAsync`] and [`executeContinuouslyReactiv
 though, continuous paging is extremely efficient and can safely be used in most non-blocking 
 contexts, unless they require strict lock-freedom.
 
-[`ContinuousSession`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/cql/continuous/ContinuousSession.html
-[`ContinuousReactiveSession`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/cql/continuous/reactive/ContinuousReactiveSession.html
-[`executeContinuouslyAsync`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/cql/continuous/ContinuousSession.html#executeContinuouslyAsync-com.datastax.oss.driver.api.core.cql.Statement-
-[`executeContinuouslyReactive`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/dse/driver/api/core/cql/continuous/reactive/ContinuousReactiveSession.html#executeContinuouslyReactive-com.datastax.oss.driver.api.core.cql.Statement-
+[`ContinuousSession`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/dse/driver/api/core/cql/continuous/ContinuousSession.html
+[`ContinuousReactiveSession`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/dse/driver/api/core/cql/continuous/reactive/ContinuousReactiveSession.html
+[`executeContinuouslyAsync`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/dse/driver/api/core/cql/continuous/ContinuousSession.html#executeContinuouslyAsync-com.datastax.oss.driver.api.core.cql.Statement-
+[`executeContinuouslyReactive`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/dse/driver/api/core/cql/continuous/reactive/ContinuousReactiveSession.html#executeContinuouslyReactive-com.datastax.oss.driver.api.core.cql.Statement-
 
 #### Driver lock-free guarantees per session lifecycle phases
 
@@ -110,8 +129,8 @@ Similarly, a call to [`SessionBuilder.build()`] should be considered blocking as
 calling thread and wait until the method returns. For this reason, calls to `SessionBuilder.build()` 
 should be avoided in non-blocking applications.
 
-[`SessionBuilder.buildAsync()`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#buildAsync--
-[`SessionBuilder.build()`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#build--
+[`SessionBuilder.buildAsync()`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/SessionBuilder.html#buildAsync--
+[`SessionBuilder.build()`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/SessionBuilder.html#build--
 
 Once the session is initialized, however, the driver is guaranteed to be non-blocking during the
 session's lifecycle, and under normal operation, unless otherwise noted elsewhere in this document.
@@ -121,8 +140,8 @@ during that phase. Therefore, calls to any method declared in [`AsyncAutoCloseab
 asynchronous ones like [`closeAsync()`], should also be preferably deferred until the application is 
 shut down and lock-freedom enforcement is disabled.
 
-[`AsyncAutoCloseable`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/AsyncAutoCloseable.html
-[`closeAsync()`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/AsyncAutoCloseable.html#closeAsync--
+[`AsyncAutoCloseable`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/AsyncAutoCloseable.html
+[`closeAsync()`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/AsyncAutoCloseable.html#closeAsync--
 
 #### Driver lock-free guarantees for specific components
 
@@ -131,7 +150,7 @@ Certain driver components are not implemented in lock-free algorithms.
 For example, [`SafeInitNodeStateListener`] is implemented with internal locks for coordination. It 
 should not be used if strict lock-freedom is enforced.
 
-[`SafeInitNodeStateListener`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/metadata/SafeInitNodeStateListener.html
+[`SafeInitNodeStateListener`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/metadata/SafeInitNodeStateListener.html
 
 The same is valid for both built-in [request throttlers]:
 
@@ -143,7 +162,7 @@ use locks internally, and depending on how many requests are being executed in p
 contention on these locks can be high: in short, if your application enforces strict lock-freedom, 
 then these components should not be used.
 
-[request throttlers]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/throttling/RequestThrottler.html
+[request throttlers]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/throttling/RequestThrottler.html
 
 Other components may be lock-free, *except* for their first invocation. This is the case of the 
 following items:
@@ -151,8 +170,8 @@ following items:
 * All built-in implementations of [`TimestampGenerator`], upon instantiation;
 * The utility method [`Uuids.timeBased()`].
 
-[`TimestampGenerator`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/time/TimestampGenerator.html
-[`Uuids.timeBased()`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/uuid/Uuids.html#timeBased--
+[`TimestampGenerator`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/time/TimestampGenerator.html
+[`Uuids.timeBased()`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/uuid/Uuids.html#timeBased--
 
 Both components need to access native libraries when they get initialized and this may involve 
 hitting the local filesystem, thus causing the initialization to become a blocking call.
@@ -172,7 +191,7 @@ One component, the codec registry, can block when its [`register`] method is cal
 therefore advised that codecs should be registered during application startup exclusively. See the
 [custom codecs](../custom_codecs) section for more details about registering codecs.
 
-[`register`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/type/codec/registry/MutableCodecRegistry.html#register-com.datastax.oss.driver.api.core.type.codec.TypeCodec-
+[`register`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/registry/MutableCodecRegistry.html#register-com.datastax.oss.driver.api.core.type.codec.TypeCodec-
 
 Finally, a few internal components also use locks, but only during session initialization; once the 
 session is ready, they are either discarded, or don't use locks anymore for the rest of the 
@@ -213,7 +232,7 @@ lock-freedom enforcement tools could report calls to that method, but it was imp
 these calls. Thanks to [JAVA-2449], released with driver 4.10.0, `Uuids.random()` became a
 non-blocking call and random UUIDs can now be safely generated in non-blocking applications.
 
-[`Uuids.random()`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/uuid/Uuids.html#random--
+[`Uuids.random()`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/uuid/Uuids.html#random--
 [JAVA-2449]: https://datastax-oss.atlassian.net/browse/JAVA-2449
 
 #### Driver lock-free guarantees when reloading the configuration
@@ -228,8 +247,8 @@ detectors. If that is the case, it is advised to disable hot-reloading by settin
 `datastax-java-driver.basic.config-reload-interval` option to 0. See the manual page on 
 [configuration](../configuration) for more information.
 
-[`DriverConfigLoader`]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html
-[hot-reloading]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#supportsReloading--
+[`DriverConfigLoader`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html
+[hot-reloading]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#supportsReloading--
 
 #### Driver lock-free guarantees when connecting to DSE
 

@@ -1,3 +1,22 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Bill of Materials (BOM)
 
 A "Bill Of Materials" is a special Maven descriptor that defines the versions of a set of related
@@ -11,9 +30,9 @@ To import the driver's BOM, add the following section in your application's own 
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.datastax.oss</groupId>
+        <groupId>org.apache.cassandra</groupId>
         <artifactId>java-driver-bom</artifactId>
-        <version>4.15.0</version>
+        <version>4.17.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -28,7 +47,7 @@ This allows you to omit the version when you later reference the driver artifact
   ...
   <dependencies>
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>org.apache.cassandra</groupId>
       <artifactId>java-driver-query-builder</artifactId>
     </dependency>
   </dependencies>
@@ -52,7 +71,7 @@ scope:
 ```xml
   <dependencies>
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>org.apache.cassandra</groupId>
       <artifactId>java-driver-mapper-processor</artifactId>
       <scope>provided</scope>
     </dependency>
@@ -65,12 +84,12 @@ good idea to extract a property to keep it in sync with the BOM:
 ```xml
 <project>
   <properties>
-    <java-driver.version>4.15.0</java-driver.version>
+    <java-driver.version>4.17.0</java-driver.version>
   </properties>
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.datastax.oss</groupId>
+        <groupId>org.apache.cassandra</groupId>
         <artifactId>java-driver-bom</artifactId>
         <version>${java-driver.version}</version>
         <type>pom</type>
@@ -81,7 +100,7 @@ good idea to extract a property to keep it in sync with the BOM:
   <dependencies>
     <!-- Regular dependency, no need to repeat the version: -->
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>org.apache.cassandra</groupId>
       <artifactId>java-driver-mapper-runtime</artifactId>
     </dependency>
   </dependencies>
@@ -93,7 +112,7 @@ good idea to extract a property to keep it in sync with the BOM:
           <annotationProcessorPaths>
             <!-- Annotation processor, can't use the BOM => explicit version -->
             <path>
-              <groupId>com.datastax.oss</groupId>
+              <groupId>org.apache.cassandra</groupId>
               <artifactId>java-driver-mapper-processor</artifactId>
               <version>${java-driver.version}</version>
             </path>

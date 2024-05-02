@@ -1,6 +1,25 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Connecting to Astra (Cloud)
 
-Using the DataStax Java Driver to connect to a DataStax Astra database is almost identical to using
+Using the Java Driver to connect to a DataStax Astra database is almost identical to using
 the driver to connect to any normal Apache Cassandra® database. The only differences are in how the
 driver is configured in an application and that you will need to obtain a *secure connect bundle*.
 
@@ -9,10 +28,10 @@ driver is configured in an application and that you will need to obtain a *secur
 1. [Download][Download Maven] and [install][Install Maven] Maven.
 2. Create an Astra database on [AWS/Azure/GCP][Create an Astra database - AWS/Azure/GCP];
    alternatively, have a team member provide access to their
-   Astra database (instructions for [AWS/Azure/GCP][Access an Astra database - AWS/Azure/GCP] to
+   Astra database (see instructions for [AWS/Azure/GCP][Access an Astra database - AWS/Azure/GCP]) to
    obtain database connection details.
-3. Download the secure connect bundle (instructions for 
-   [AWS/Azure/GCP][Download the secure connect bundle - AWS/Azure/GCP], that contains connection
+3. Download the secure connect bundle (see instructions for 
+   [AWS/Azure/GCP][Download the secure connect bundle - AWS/Azure/GCP]) that contains connection
    information such as contact points and certificates.
 
 ### Procedure
