@@ -20,9 +20,11 @@ package com.datastax.oss.driver.api.querybuilder.select;
 import static com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder.ASC;
 import static com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder.DESC;
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.annOf;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 
+import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import org.junit.Test;
@@ -73,5 +75,24 @@ public class SelectOrderingTest {
                 .orderBy("c3", ASC)
                 .orderBy(ImmutableMap.of("c1", DESC, "c2", ASC)))
         .hasCql("SELECT * FROM foo WHERE k=1 ORDER BY c3 ASC,c1 DESC,c2 ASC");
+  }
+
+  @Test
+  public void should_generate_ann_clause() {
+    assertThat(
+            selectFrom("foo")
+                .all()
+                .where(Relation.column("k").isEqualTo(literal(1)))
+                .orderBy(annOf("c1", CqlVector.newInstance(0.1, 0.2, 0.3))))
+        .hasCql("SELECT * FROM foo WHERE k=1 ORDER BY c1 ANN OF [0.1, 0.2, 0.3]");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void should_fail_when_provided_ann_with_other_orderings(){
+    selectFrom("foo")
+            .all()
+            .where(Relation.column("k").isEqualTo(literal(1)))
+            .orderBy("c1", ASC)
+            .orderBy(annOf("c1", CqlVector.newInstance(0.1, 0.2, 0.3)));
   }
 }

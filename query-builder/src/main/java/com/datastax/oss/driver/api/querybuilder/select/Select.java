@@ -146,6 +146,8 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
     return orderBy(CqlIdentifier.fromCql(columnName), order);
   }
 
+  @NonNull
+  Select orderBy(@NonNull Ann ann);
   /**
    * Adds a LIMIT clause to this query with a literal value.
    *
