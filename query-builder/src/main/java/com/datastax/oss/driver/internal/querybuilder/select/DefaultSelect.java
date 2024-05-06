@@ -77,7 +77,8 @@ public class DefaultSelect implements SelectFrom, Select {
    * @param selectors if it contains {@link AllSelector#INSTANCE}, that must be the only element.
    *     This isn't re-checked because methods that call this constructor internally already do it,
    *     make sure you do it yourself.
-   * @param ann Approximate nearest neighbor. ANN ordering does not support secondary ordering or ASC order.
+   * @param ann Approximate nearest neighbor. ANN ordering does not support secondary ordering or
+   *     ASC order.
    */
   public DefaultSelect(
       @Nullable CqlIdentifier keyspace,
@@ -100,8 +101,7 @@ public class DefaultSelect implements SelectFrom, Select {
             || limit instanceof BindMarker,
         "limit must be a strictly positive integer or a bind marker");
     Preconditions.checkArgument(
-            orderings.isEmpty() || ann == null,
-    "ANN ordering does not support secondary ordering");
+        orderings.isEmpty() || ann == null, "ANN ordering does not support secondary ordering");
     this.ann = ann;
     this.keyspace = keyspace;
     this.table = table;
@@ -282,7 +282,7 @@ public class DefaultSelect implements SelectFrom, Select {
 
   @NonNull
   @Override
-  public Select orderBy(@NonNull Ann ann){
+  public Select orderBy(@NonNull Ann ann) {
     return withAnn(ann);
   }
 
@@ -303,7 +303,8 @@ public class DefaultSelect implements SelectFrom, Select {
         allowsFiltering);
   }
 
-  @NonNull Select withAnn(@NonNull Ann ann){
+  @NonNull
+  Select withAnn(@NonNull Ann ann) {
     return new DefaultSelect(
         keyspace,
         table,
@@ -433,9 +434,9 @@ public class DefaultSelect implements SelectFrom, Select {
     CqlHelper.append(relations, builder, " WHERE ", " AND ", null);
     CqlHelper.append(groupByClauses, builder, " GROUP BY ", ",", null);
 
-    if (ann != null){
+    if (ann != null) {
       builder.append(" ").append(this.ann.asCql());
-    }else{
+    } else {
       boolean first = true;
       for (Map.Entry<CqlIdentifier, ClusteringOrder> entry : orderings.entrySet()) {
         if (first) {

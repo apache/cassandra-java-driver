@@ -88,11 +88,11 @@ public class SelectOrderingTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void should_fail_when_provided_ann_with_other_orderings(){
+  public void should_fail_when_provided_ann_with_other_orderings() {
     selectFrom("foo")
-            .all()
-            .where(Relation.column("k").isEqualTo(literal(1)))
-            .orderBy("c1", ASC)
-            .orderBy(annOf("c1", CqlVector.newInstance(0.1, 0.2, 0.3)));
+        .all()
+        .where(Relation.column("k").isEqualTo(literal(1)))
+        .orderBy("c1", ASC)
+        .orderBy(annOf("c1", CqlVector.newInstance(0.1, 0.2, 0.3)));
   }
 }

@@ -26,7 +26,6 @@ import static org.assertj.core.api.Assertions.catchThrowable;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.insert.DefaultInsert;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-
 import java.util.Arrays;
 import java.util.Map;
 import org.junit.Test;
