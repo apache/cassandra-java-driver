@@ -33,7 +33,6 @@ public class DefaultVectorType implements VectorType {
   private final int dimensions;
 
   public DefaultVectorType(DataType subtype, int dimensions) {
-
     this.dimensions = dimensions;
     this.subtype = subtype;
   }
@@ -60,7 +59,8 @@ public class DefaultVectorType implements VectorType {
   @NonNull
   @Override
   public String asCql(boolean includeFrozen, boolean pretty) {
-    return String.format("VECTOR<%s, %d>", this.subtype.asCql(includeFrozen, pretty).toUpperCase(), getDimensions());
+    return String.format(
+        "VECTOR<%s, %d>", this.subtype.asCql(includeFrozen, pretty).toUpperCase(), getDimensions());
   }
 
   /* ============== General class implementation ============== */
