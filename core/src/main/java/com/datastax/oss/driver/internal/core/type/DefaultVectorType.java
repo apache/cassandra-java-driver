@@ -33,6 +33,7 @@ public class DefaultVectorType implements VectorType {
   private final int dimensions;
 
   public DefaultVectorType(DataType subtype, int dimensions) {
+
     this.dimensions = dimensions;
     this.subtype = subtype;
   }
