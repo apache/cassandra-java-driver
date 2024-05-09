@@ -103,7 +103,7 @@ def buildDriver(jabbaVersion) {
     . ${JABBA_SHELL}
     jabba use '''+jabbaVersion+'''
 
-    echo "Building with Java version '''+jabbaVersion+'''
+    echo "Building with Java version '''+jabbaVersion+'''"
 
     mvn -B -V install -DskipTests -Dmaven.javadoc.skip=true
   '''
