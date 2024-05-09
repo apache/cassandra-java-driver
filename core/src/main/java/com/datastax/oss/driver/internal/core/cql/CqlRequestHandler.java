@@ -948,8 +948,21 @@ public class CqlRequestHandler implements Throttled {
         nodeResponseTimeNanos = System.nanoTime();
       }
       long latencyNanos = nodeResponseTimeNanos - this.nodeStartTimeNanos;
+      ExecutionInfo executionInfo =
+          new DefaultExecutionInfo(
+              statement,
+              node,
+              startedSpeculativeExecutionsCount.get(),
+              execution,
+              errors,
+              null,
+              null,
+              true,
+              session,
+              context,
+              executionProfile);
       requestTracker.onNodeError(
-          statement, error, latencyNanos, executionProfile, node, logPrefix, null);
+          statement, error, latencyNanos, executionProfile, node, logPrefix, executionInfo);
     }
 
     @Override
