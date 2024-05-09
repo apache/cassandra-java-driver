@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -435,30 +437,35 @@ public class MetadataManager implements AsyncAutoCloseable {
                   if (agreementError != null) {
                     refreshFuture.completeExceptionally(agreementError);
                   } else {
-                    schemaQueriesFactory
-                        .newInstance()
-                        .execute()
-                        .thenApplyAsync(this::parseAndApplySchemaRows, adminExecutor)
-                        .whenComplete(
-                            (newMetadata, metadataError) -> {
-                              if (metadataError != null) {
-                                refreshFuture.completeExceptionally(metadataError);
-                              } else {
-                                refreshFuture.complete(
-                                    new RefreshSchemaResult(newMetadata, schemaInAgreement));
-                              }
+                    try {
+                      schemaQueriesFactory
+                          .newInstance()
+                          .execute()
+                          .thenApplyAsync(this::parseAndApplySchemaRows, adminExecutor)
+                          .whenComplete(
+                              (newMetadata, metadataError) -> {
+                                if (metadataError != null) {
+                                  refreshFuture.completeExceptionally(metadataError);
+                                } else {
+                                  refreshFuture.complete(
+                                      new RefreshSchemaResult(newMetadata, schemaInAgreement));
+                                }
 
-                              firstSchemaRefreshFuture.complete(null);
+                                firstSchemaRefreshFuture.complete(null);
 
-                              currentSchemaRefresh = null;
-                              // If another refresh was enqueued during this one, run it now
-                              if (queuedSchemaRefresh != null) {
-                                CompletableFuture<RefreshSchemaResult> tmp =
-                                    this.queuedSchemaRefresh;
-                                this.queuedSchemaRefresh = null;
-                                startSchemaRequest(tmp);
-                              }
-                            });
+                                currentSchemaRefresh = null;
+                                // If another refresh was enqueued during this one, run it now
+                                if (queuedSchemaRefresh != null) {
+                                  CompletableFuture<RefreshSchemaResult> tmp =
+                                      this.queuedSchemaRefresh;
+                                  this.queuedSchemaRefresh = null;
+                                  startSchemaRequest(tmp);
+                                }
+                              });
+                    } catch (Throwable t) {
+                      LOG.debug("[{}] Exception getting new metadata", logPrefix, t);
+                      refreshFuture.completeExceptionally(t);
+                    }
                   }
                 });
       } else if (queuedSchemaRefresh == null) {

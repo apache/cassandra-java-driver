@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,6 +52,7 @@ public class Version implements Comparable<Version>, Serializable {
   @NonNull public static final Version V2_2_0 = Objects.requireNonNull(parse("2.2.0"));
   @NonNull public static final Version V3_0_0 = Objects.requireNonNull(parse("3.0.0"));
   @NonNull public static final Version V4_0_0 = Objects.requireNonNull(parse("4.0.0"));
+  @NonNull public static final Version V4_1_0 = Objects.requireNonNull(parse("4.1.0"));
   @NonNull public static final Version V5_0_0 = Objects.requireNonNull(parse("5.0.0"));
   @NonNull public static final Version V6_7_0 = Objects.requireNonNull(parse("6.7.0"));
   @NonNull public static final Version V6_8_0 = Objects.requireNonNull(parse("6.8.0"));

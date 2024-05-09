@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,8 +33,8 @@ import java.util.concurrent.CompletionStage;
  * A session that has the ability to execute continuous paging queries.
  *
  * <p>Continuous paging is a new method of streaming bulk amounts of records from DataStax
- * Enterprise (DSE) to the DataStax Java Driver, available since DSE 5.1. It is mainly intended to
- * be leveraged by <a
+ * Enterprise (DSE) to the Java Driver, available since DSE 5.1. It is mainly intended to be
+ * leveraged by <a
  * href="https://docs.datastax.com/en/dse/5.1/dse-dev/datastax_enterprise/analytics/analyticsTOC.html">DSE
  * Analytics</a> and Apache Spark™, or by any similar analytics tool that needs to read large
  * portions of a table in one single operation, as quick and reliably as possible.

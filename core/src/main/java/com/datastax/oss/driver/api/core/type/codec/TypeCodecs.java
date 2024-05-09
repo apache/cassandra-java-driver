@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,18 +21,17 @@ import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.data.UdtValue;
-import com.datastax.oss.driver.api.core.type.CqlVectorType;
 import com.datastax.oss.driver.api.core.type.CustomType;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
+import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.internal.core.type.codec.BigIntCodec;
 import com.datastax.oss.driver.internal.core.type.codec.BlobCodec;
 import com.datastax.oss.driver.internal.core.type.codec.BooleanCodec;
 import com.datastax.oss.driver.internal.core.type.codec.CounterCodec;
 import com.datastax.oss.driver.internal.core.type.codec.CqlDurationCodec;
-import com.datastax.oss.driver.internal.core.type.codec.CqlVectorCodec;
 import com.datastax.oss.driver.internal.core.type.codec.CustomCodec;
 import com.datastax.oss.driver.internal.core.type.codec.DateCodec;
 import com.datastax.oss.driver.internal.core.type.codec.DecimalCodec;
@@ -51,6 +52,7 @@ import com.datastax.oss.driver.internal.core.type.codec.TupleCodec;
 import com.datastax.oss.driver.internal.core.type.codec.UdtCodec;
 import com.datastax.oss.driver.internal.core.type.codec.UuidCodec;
 import com.datastax.oss.driver.internal.core.type.codec.VarIntCodec;
+import com.datastax.oss.driver.internal.core.type.codec.VectorCodec;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -208,10 +210,15 @@ public class TypeCodecs {
     return new TupleCodec(cqlType);
   }
 
-  public static <SubtypeT> TypeCodec<CqlVector<SubtypeT>> vectorOf(
-      @NonNull CqlVectorType type, @NonNull TypeCodec<SubtypeT> subtypeCodec) {
-    return new CqlVectorCodec(
+  public static <SubtypeT extends Number> TypeCodec<CqlVector<SubtypeT>> vectorOf(
+      @NonNull VectorType type, @NonNull TypeCodec<SubtypeT> subtypeCodec) {
+    return new VectorCodec(
         DataTypes.vectorOf(subtypeCodec.getCqlType(), type.getDimensions()), subtypeCodec);
+  }
+
+  public static <SubtypeT extends Number> TypeCodec<CqlVector<SubtypeT>> vectorOf(
+      int dimensions, @NonNull TypeCodec<SubtypeT> subtypeCodec) {
+    return new VectorCodec(DataTypes.vectorOf(subtypeCodec.getCqlType(), dimensions), subtypeCodec);
   }
 
   /**

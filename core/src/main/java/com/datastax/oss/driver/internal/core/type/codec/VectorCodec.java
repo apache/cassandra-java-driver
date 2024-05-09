@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,29 +19,34 @@ package com.datastax.oss.driver.internal.core.type.codec;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.data.CqlVector;
-import com.datastax.oss.driver.api.core.type.CqlVectorType;
 import com.datastax.oss.driver.api.core.type.DataType;
+import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
-import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
 
-public class CqlVectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
+public class VectorCodec<SubtypeT extends Number> implements TypeCodec<CqlVector<SubtypeT>> {
 
-  private final CqlVectorType cqlType;
+  private final VectorType cqlType;
   private final GenericType<CqlVector<SubtypeT>> javaType;
   private final TypeCodec<SubtypeT> subtypeCodec;
 
-  public CqlVectorCodec(CqlVectorType cqlType, TypeCodec<SubtypeT> subtypeCodec) {
+  public VectorCodec(@NonNull VectorType cqlType, @NonNull TypeCodec<SubtypeT> subtypeCodec) {
     this.cqlType = cqlType;
     this.subtypeCodec = subtypeCodec;
     this.javaType = GenericType.vectorOf(subtypeCodec.getJavaType());
+  }
+
+  public VectorCodec(int dimensions, @NonNull TypeCodec<SubtypeT> subtypeCodec) {
+    this(new DefaultVectorType(subtypeCodec.getCqlType(), dimensions), subtypeCodec);
   }
 
   @NonNull
@@ -62,10 +69,29 @@ public class CqlVectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> 
       return null;
     }
     ByteBuffer[] valueBuffs = new ByteBuffer[cqlType.getDimensions()];
-    Iterator<SubtypeT> values = value.getValues().iterator();
+    Iterator<SubtypeT> values = value.iterator();
     int allValueBuffsSize = 0;
     for (int i = 0; i < cqlType.getDimensions(); ++i) {
-      ByteBuffer valueBuff = this.subtypeCodec.encode(values.next(), protocolVersion);
+      ByteBuffer valueBuff;
+      SubtypeT valueObj;
+
+      try {
+        valueObj = values.next();
+      } catch (NoSuchElementException nsee) {
+        throw new IllegalArgumentException(
+            String.format(
+                "Not enough elements; must provide elements for %d dimensions",
+                cqlType.getDimensions()));
+      }
+
+      try {
+        valueBuff = this.subtypeCodec.encode(valueObj, protocolVersion);
+      } catch (ClassCastException e) {
+        throw new IllegalArgumentException("Invalid type for element: " + valueObj.getClass());
+      }
+      if (valueBuff == null) {
+        throw new NullPointerException("Vector elements cannot encode to CQL NULL");
+      }
       allValueBuffsSize += valueBuff.limit();
       valueBuff.rewind();
       valueBuffs[i] = valueBuff;
@@ -101,35 +127,33 @@ public class CqlVectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> 
               cqlType.getDimensions(), bytes.remaining()));
     }
 
-    ImmutableList.Builder<SubtypeT> builder = ImmutableList.builder();
+    ByteBuffer slice = bytes.slice();
+    List<SubtypeT> rv = new ArrayList<SubtypeT>(cqlType.getDimensions());
     for (int i = 0; i < cqlType.getDimensions(); ++i) {
-      ByteBuffer slice = bytes.slice();
-      slice.limit(elementSize);
-      builder.add(this.subtypeCodec.decode(slice, protocolVersion));
-      bytes.position(bytes.position() + elementSize);
+      // Set the limit for the current element
+      int originalPosition = slice.position();
+      slice.limit(originalPosition + elementSize);
+      rv.add(this.subtypeCodec.decode(slice, protocolVersion));
+      // Move to the start of the next element
+      slice.position(originalPosition + elementSize);
+      // Reset the limit to the end of the buffer
+      slice.limit(slice.capacity());
     }
 
-    /* Restore the input ByteBuffer to its original state */
-    bytes.rewind();
-
-    return CqlVector.builder().addAll(builder.build()).build();
+    return CqlVector.newInstance(rv);
   }
 
   @NonNull
   @Override
   public String format(@Nullable CqlVector<SubtypeT> value) {
-    return value == null ? "NULL" : Iterables.toString(value.getValues());
+    return value == null ? "NULL" : Iterables.toString(value);
   }
 
   @Nullable
   @Override
   public CqlVector<SubtypeT> parse(@Nullable String value) {
-    if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL")) return null;
-
-    ImmutableList<SubtypeT> values =
-        Streams.stream(Splitter.on(", ").split(value.substring(1, value.length() - 1)))
-            .map(subtypeCodec::parse)
-            .collect(ImmutableList.toImmutableList());
-    return CqlVector.builder().addAll(values).build();
+    return (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL"))
+        ? null
+        : CqlVector.from(value, this.subtypeCodec);
   }
 }

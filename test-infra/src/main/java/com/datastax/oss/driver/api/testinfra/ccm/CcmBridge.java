@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -44,6 +46,7 @@ import org.apache.commons.exec.ExecuteWatchdog;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.LogOutputStream;
 import org.apache.commons.exec.PumpStreamHandler;
+import org.assertj.core.util.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -233,12 +236,33 @@ public class CcmBridge implements AutoCloseable {
           Arrays.stream(nodes).mapToObj(n -> "" + n).collect(Collectors.joining(":")),
           createOptions.stream().collect(Collectors.joining(" ")));
 
+      Version cassandraVersion = getCassandraVersion();
       for (Map.Entry<String, Object> conf : cassandraConfiguration.entrySet()) {
-        execute("updateconf", String.format("%s:%s", conf.getKey(), conf.getValue()));
+        String originalKey = conf.getKey();
+        Object originalValue = conf.getValue();
+        execute(
+            "updateconf",
+            String.join(
+                ":",
+                getConfigKey(originalKey, originalValue, cassandraVersion),
+                getConfigValue(originalKey, originalValue, cassandraVersion)));
       }
-      if (getCassandraVersion().compareTo(Version.V2_2_0) >= 0) {
-        execute("updateconf", "enable_user_defined_functions:true");
+
+      // If we're dealing with anything more recent than 2.2 explicitly enable UDF... but run it
+      // through our conversion process to make
+      // sure more recent versions don't have a problem.
+      if (cassandraVersion.compareTo(Version.V2_2_0) >= 0) {
+        String originalKey = "enable_user_defined_functions";
+        Object originalValue = "true";
+        execute(
+            "updateconf",
+            String.join(
+                ":",
+                getConfigKey(originalKey, originalValue, cassandraVersion),
+                getConfigValue(originalKey, originalValue, cassandraVersion)));
       }
+
+      // Note that we aren't performing any substitution on DSE key/value props (at least for now)
       if (DSE_ENABLEMENT) {
         for (Map.Entry<String, Object> conf : dseConfiguration.entrySet()) {
           execute("updatedseconf", String.format("%s:%s", conf.getKey(), conf.getValue()));
@@ -267,8 +291,11 @@ public class CcmBridge implements AutoCloseable {
 
   public void start() {
     if (started.compareAndSet(false, true)) {
+      List<String> cmdAndArgs = Lists.newArrayList("start", jvmArgs, "--wait-for-binary-proto");
+      overrideJvmVersionForDseWorkloads()
+          .ifPresent(jvmVersion -> cmdAndArgs.add(String.format("--jvm_version=%d", jvmVersion)));
       try {
-        execute("start", jvmArgs, "--wait-for-binary-proto");
+        execute(cmdAndArgs.toArray(new String[0]));
       } catch (RuntimeException re) {
         // if something went wrong starting CCM, see if we can also dump the error
         executeCheckLogError();
@@ -296,7 +323,10 @@ public class CcmBridge implements AutoCloseable {
   }
 
   public void start(int n) {
-    execute("node" + n, "start");
+    List<String> cmdAndArgs = Lists.newArrayList("node" + n, "start");
+    overrideJvmVersionForDseWorkloads()
+        .ifPresent(jvmVersion -> cmdAndArgs.add(String.format("--jvm_version=%d", jvmVersion)));
+    execute(cmdAndArgs.toArray(new String[0]));
   }
 
   public void stop(int n) {
@@ -414,6 +444,78 @@ public class CcmBridge implements AutoCloseable {
       LOG.warn("Failure to write keystore, SSL-enabled servers may fail to start.", e);
     }
     return f;
+  }
+
+  /**
+   * Get the current JVM major version (1.8.0_372 -> 8, 11.0.19 -> 11)
+   *
+   * @return major version of current JVM
+   */
+  private static int getCurrentJvmMajorVersion() {
+    String version = System.getProperty("java.version");
+    if (version.startsWith("1.")) {
+      version = version.substring(2, 3);
+    } else {
+      int dot = version.indexOf(".");
+      if (dot != -1) {
+        version = version.substring(0, dot);
+      }
+    }
+    return Integer.parseInt(version);
+  }
+
+  private Optional<Integer> overrideJvmVersionForDseWorkloads() {
+    if (getCurrentJvmMajorVersion() <= 8) {
+      return Optional.empty();
+    }
+
+    if (!DSE_ENABLEMENT || !getDseVersion().isPresent()) {
+      return Optional.empty();
+    }
+
+    if (getDseVersion().get().compareTo(Version.parse("6.8.19")) < 0) {
+      return Optional.empty();
+    }
+
+    if (dseWorkloads.contains("graph")) {
+      return Optional.of(8);
+    }
+
+    return Optional.empty();
+  }
+
+  private static String IN_MS_STR = "_in_ms";
+  private static int IN_MS_STR_LENGTH = IN_MS_STR.length();
+  private static String ENABLE_STR = "enable_";
+  private static int ENABLE_STR_LENGTH = ENABLE_STR.length();
+  private static String IN_KB_STR = "_in_kb";
+  private static int IN_KB_STR_LENGTH = IN_KB_STR.length();
+
+  @SuppressWarnings("unused")
+  private String getConfigKey(String originalKey, Object originalValue, Version cassandraVersion) {
+
+    // At least for now we won't support substitutions on nested keys.  This requires an extra
+    // traversal of the string
+    // but we'll live with that for now
+    if (originalKey.contains(".")) return originalKey;
+    if (cassandraVersion.compareTo(Version.V4_1_0) < 0) return originalKey;
+    if (originalKey.endsWith(IN_MS_STR))
+      return originalKey.substring(0, originalKey.length() - IN_MS_STR_LENGTH);
+    if (originalKey.startsWith(ENABLE_STR))
+      return originalKey.substring(ENABLE_STR_LENGTH) + "_enabled";
+    if (originalKey.endsWith(IN_KB_STR))
+      return originalKey.substring(0, originalKey.length() - IN_KB_STR_LENGTH);
+    return originalKey;
+  }
+
+  private String getConfigValue(
+      String originalKey, Object originalValue, Version cassandraVersion) {
+
+    String originalValueStr = originalValue.toString();
+    if (cassandraVersion.compareTo(Version.V4_1_0) < 0) return originalValueStr;
+    if (originalKey.endsWith(IN_MS_STR)) return originalValueStr + "ms";
+    if (originalKey.endsWith(IN_KB_STR)) return originalValueStr + "KiB";
+    return originalValueStr;
   }
 
   public static Builder builder() {

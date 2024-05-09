@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright DataStax, Inc.
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
+        http://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,14 +21,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>com.datastax.oss</groupId>
+    <groupId>org.apache.cassandra</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.15.1-SNAPSHOT</version>
+    <version>4.18.1-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-distribution</artifactId>
   <!-- Should be pom but Javadoc generation requires a "classpath-capable" package -->
   <packaging>jar</packaging>
-  <name>DataStax Java driver for Apache Cassandra(R) - binary distribution</name>
+  <name>Apache Cassandra Java Driver - binary distribution</name>
   <!--
     These dependencies are only here to ensure proper build order and proper inclusion of binaries
     in the final tarball
@@ -65,7 +67,7 @@
     </dependency>
   </dependencies>
   <build>
-    <finalName>datastax-java-driver-${project.version}</finalName>
+    <finalName>apache-cassandra-java-driver-${project.version}</finalName>
     <plugins>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
@@ -117,45 +119,6 @@
       <build>
         <plugins>
           <plugin>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>attach-javadocs</id>
-                <phase>package</phase>
-                <goals>
-                  <goal>jar</goal>
-                </goals>
-                <configuration>
-                  <includeDependencySources>true</includeDependencySources>
-                  <doctitle>DataStax Java driver for Apache Cassandra® ${project.version} API</doctitle>
-                  <windowtitle>DataStax Java driver for Apache Cassandra(R) ${project.version} API</windowtitle>
-                  <additionalDependencies>
-                    <additionalDependency>
-                      <groupId>org.lz4</groupId>
-                      <artifactId>lz4-java</artifactId>
-                      <version>${lz4.version}</version>
-                    </additionalDependency>
-                    <additionalDependency>
-                      <groupId>org.xerial.snappy</groupId>
-                      <artifactId>snappy-java</artifactId>
-                      <version>${snappy.version}</version>
-                    </additionalDependency>
-                    <additionalDependency>
-                      <groupId>org.apache.tinkerpop</groupId>
-                      <artifactId>gremlin-core</artifactId>
-                      <version>${tinkerpop.version}</version>
-                    </additionalDependency>
-                    <additionalDependency>
-                      <groupId>org.apache.tinkerpop</groupId>
-                      <artifactId>tinkergraph-gremlin</artifactId>
-                      <version>${tinkerpop.version}</version>
-                    </additionalDependency>
-                  </additionalDependencies>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
             <artifactId>maven-assembly-plugin</artifactId>
             <executions>
               <execution>
@@ -172,6 +135,25 @@
                 <descriptor>src/assembly/binary-tarball.xml</descriptor>
               </descriptors>
               <tarLongFileMode>posix</tarLongFileMode>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>net.nicoulaj.maven.plugins</groupId>
+            <artifactId>checksum-maven-plugin</artifactId>
+            <version>1.7</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>artifacts</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <attachChecksums>true</attachChecksums>
+              <algorithms>
+                <algorithm>sha256</algorithm>
+                <algorithm>sha512</algorithm>
+              </algorithms>
             </configuration>
           </plugin>
         </plugins>

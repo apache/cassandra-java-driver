@@ -1,4 +1,22 @@
 #!groovy
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 def initializeEnvironment() {
   env.DRIVER_DISPLAY_NAME = 'CassandraⓇ Java Driver'
@@ -18,6 +36,24 @@ def initializeEnvironment() {
 
   env.MAVEN_HOME = "${env.HOME}/.mvn/apache-maven-3.3.9"
   env.PATH = "${env.MAVEN_HOME}/bin:${env.PATH}"
+
+  /*
+  * As of JAVA-3042 JAVA_HOME is always set to JDK8 and this is currently necessary for mvn compile and DSE Search/Graph.
+  * To facilitate testing with JDK11/17 we feed the appropriate JAVA_HOME into the maven build via commandline.
+  *
+  * Maven command-line flags:
+  * - -DtestJavaHome=/path/to/java/home: overrides JAVA_HOME for surefire/failsafe tests, defaults to environment JAVA_HOME.
+  * - -Ptest-jdk-N: enables profile for running tests with a specific JDK version (substitute N for 8/11/17).
+  *
+  * Note test-jdk-N is also automatically loaded based off JAVA_HOME SDK version so testing with an older SDK is not supported.
+  *
+  * Environment variables:
+  * - JAVA_HOME: Path to JDK used for mvn (all steps except surefire/failsafe), Cassandra, DSE.
+  * - JAVA8_HOME: Path to JDK8 used for Cassandra/DSE if ccm determines JAVA_HOME is not compatible with the chosen backend.
+  * - TEST_JAVA_HOME: PATH to JDK used for surefire/failsafe testing.
+  * - TEST_JAVA_VERSION: TEST_JAVA_HOME SDK version number [8/11/17], used to configure test-jdk-N profile in maven (see above)
+  */
+
   env.JAVA_HOME = sh(label: 'Get JAVA_HOME',script: '''#!/bin/bash -le
     . ${JABBA_SHELL}
     jabba which ${JABBA_VERSION}''', returnStdout: true).trim()
@@ -27,7 +63,7 @@ def initializeEnvironment() {
 
   sh label: 'Download Apache CassandraⓇ or DataStax Enterprise',script: '''#!/bin/bash -le
     . ${JABBA_SHELL}
-    jabba use ${JABBA_VERSION}
+    jabba use 1.8
     . ${CCM_ENVIRONMENT_SHELL} ${SERVER_VERSION}
   '''
 
@@ -53,7 +89,7 @@ ENVIRONMENT_EOF
     set +o allexport
 
     . ${JABBA_SHELL}
-    jabba use ${JABBA_VERSION}
+    jabba use 1.8
 
     java -version
     mvn -v
@@ -62,25 +98,32 @@ ENVIRONMENT_EOF
 }
 
 def buildDriver(jabbaVersion) {
-  withEnv(["BUILD_JABBA_VERSION=${jabbaVersion}"]) {
-    sh label: 'Build driver', script: '''#!/bin/bash -le
-      . ${JABBA_SHELL}
-      jabba use ${BUILD_JABBA_VERSION}
+  def buildDriverScript = '''#!/bin/bash -le
 
-      mvn -B -V install -DskipTests -Dmaven.javadoc.skip=true
-    '''
-  }
+    . ${JABBA_SHELL}
+    jabba use '''+jabbaVersion+'''
+
+    echo "Building with Java version '''+jabbaVersion+'''"
+
+    mvn -B -V install -DskipTests -Dmaven.javadoc.skip=true
+  '''
+  sh label: 'Build driver', script: buildDriverScript
 }
 
 def executeTests() {
-  sh label: 'Execute tests', script: '''#!/bin/bash -le
+  def testJavaHome = sh(label: 'Get TEST_JAVA_HOME',script: '''#!/bin/bash -le
+    . ${JABBA_SHELL}
+    jabba which ${JABBA_VERSION}''', returnStdout: true).trim()
+  def testJavaVersion = (JABBA_VERSION =~ /.*\.(\d+)/)[0][1]
+
+  def executeTestScript = '''#!/bin/bash -le
     # Load CCM environment variables
     set -o allexport
     . ${HOME}/environment.txt
     set +o allexport
 
     . ${JABBA_SHELL}
-    jabba use ${JABBA_VERSION}
+    jabba use 1.8
 
     if [ "${JABBA_VERSION}" != "1.8" ]; then
       SKIP_JAVADOCS=true
@@ -94,7 +137,9 @@ def executeTests() {
     fi
     printenv | sort
 
-    mvn -B -V ${INTEGRATION_TESTS_FILTER_ARGUMENT} verify \
+    mvn -B -V ${INTEGRATION_TESTS_FILTER_ARGUMENT} -T 1 verify \
+      -Ptest-jdk-'''+testJavaVersion+''' \
+      -DtestJavaHome='''+testJavaHome+''' \
       -DfailIfNoTests=false \
       -Dmaven.test.failure.ignore=true \
       -Dmaven.javadoc.skip=${SKIP_JAVADOCS} \
@@ -105,6 +150,8 @@ def executeTests() {
       ${ISOLATED_ITS_ARGUMENT} \
       ${PARALLELIZABLE_ITS_ARGUMENT}
   '''
+  echo "Invoking Maven with parameters test-jdk-${testJavaVersion} and testJavaHome = ${testJavaHome}"
+  sh label: 'Execute tests', script: executeTestScript
 }
 
 def executeCodeCoverage() {
@@ -211,8 +258,10 @@ pipeline {
       choices: ['2.1',       // Legacy Apache CassandraⓇ
                 '2.2',       // Legacy Apache CassandraⓇ
                 '3.0',       // Previous Apache CassandraⓇ
-                '3.11',      // Current Apache CassandraⓇ
-                '4.0',       // Development Apache CassandraⓇ
+                '3.11',      // Previous Apache CassandraⓇ
+                '4.0',       // Previous Apache CassandraⓇ
+                '4.1',       // Current Apache CassandraⓇ
+                '5.0',       // Development Apache CassandraⓇ
                 'dse-4.8.16',   // Previous EOSL DataStax Enterprise
                 'dse-5.0.15',   // Long Term Support DataStax Enterprise
                 'dse-5.1.35',   // Legacy DataStax Enterprise
@@ -246,7 +295,11 @@ pipeline {
                         </tr>
                         <tr>
                           <td><strong>4.0</strong></td>
-                          <td>Apache Cassandra&reg; v4.x (<b>CURRENTLY UNDER DEVELOPMENT</b>)</td>
+                          <td>Apache Cassandra&reg; v4.0.x</td>
+                        </tr>
+                        <tr>
+                          <td><strong>4.1</strong></td>
+                          <td>Apache Cassandra&reg; v4.1.x</td>
                         </tr>
                         <tr>
                           <td><strong>dse-4.8.16</strong></td>
@@ -400,17 +453,19 @@ pipeline {
           axis {
             name 'SERVER_VERSION'
             values '3.11',     // Latest stable Apache CassandraⓇ
-                   '4.0',      // Development Apache CassandraⓇ
+                   '4.1',      // Development Apache CassandraⓇ
                    'dse-6.8.30' // Current DataStax Enterprise
+          }
+          axis {
+            name 'JABBA_VERSION'
+            values '1.8',           // jdk8
+                   'openjdk@1.11',  // jdk11
+                   'openjdk@1.17'   // jdk17
           }
         }
 
         agent {
           label "${OS_VERSION}"
-        }
-        environment {
-          // Per-commit builds are only going to run against JDK8
-          JABBA_VERSION = '1.8'
         }
 
         stages {
@@ -431,7 +486,7 @@ pipeline {
           }
           stage('Build-Driver') {
             steps {
-              buildDriver(env.JABBA_VERSION)
+              buildDriver('1.8')
             }
           }
           stage('Execute-Tests') {
@@ -507,8 +562,10 @@ pipeline {
             name 'SERVER_VERSION'
             values '2.1',       // Legacy Apache CassandraⓇ
                    '3.0',       // Previous Apache CassandraⓇ
-                   '3.11',      // Current Apache CassandraⓇ
-                   '4.0',       // Development Apache CassandraⓇ
+                   '3.11',      // Previous Apache CassandraⓇ
+                   '4.0',       // Previous Apache CassandraⓇ
+                   '4.1',       // Current Apache CassandraⓇ
+                   '5.0',       // Development Apache CassandraⓇ
                    'dse-4.8.16',   // Previous EOSL DataStax Enterprise
                    'dse-5.0.15',   // Last EOSL DataStax Enterprise
                    'dse-5.1.35',   // Legacy DataStax Enterprise
@@ -545,8 +602,7 @@ pipeline {
           }
           stage('Build-Driver') {
             steps {
-              // Jabba default should be a JDK8 for now
-              buildDriver('default')
+              buildDriver('1.8')
             }
           }
           stage('Execute-Tests') {

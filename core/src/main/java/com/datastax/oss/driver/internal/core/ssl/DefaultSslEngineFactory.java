@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,11 +27,13 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.List;
-import javax.net.ssl.KeyManagerFactory;
+import java.util.Optional;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
@@ -52,6 +56,7 @@ import net.jcip.annotations.ThreadSafe;
  *     truststore-password = password123
  *     keystore-path = /path/to/client.keystore
  *     keystore-password = password123
+ *     keystore-reload-interval = 30 minutes
  *   }
  * }
  * </pre>
@@ -64,6 +69,7 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
   private final SSLContext sslContext;
   private final String[] cipherSuites;
   private final boolean requireHostnameValidation;
+  private ReloadingKeyManagerFactory kmf;
 
   /** Builds a new instance from the driver configuration. */
   public DefaultSslEngineFactory(DriverContext driverContext) {
@@ -130,20 +136,8 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
       }
 
       // initialize keystore if configured.
-      KeyManagerFactory kmf = null;
       if (config.isDefined(DefaultDriverOption.SSL_KEYSTORE_PATH)) {
-        try (InputStream ksf =
-            Files.newInputStream(
-                Paths.get(config.getString(DefaultDriverOption.SSL_KEYSTORE_PATH)))) {
-          KeyStore ks = KeyStore.getInstance("JKS");
-          char[] password =
-              config.isDefined(DefaultDriverOption.SSL_KEYSTORE_PASSWORD)
-                  ? config.getString(DefaultDriverOption.SSL_KEYSTORE_PASSWORD).toCharArray()
-                  : null;
-          ks.load(ksf, password);
-          kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-          kmf.init(ks, password);
-        }
+        kmf = buildReloadingKeyManagerFactory(config);
       }
 
       context.init(
@@ -157,8 +151,19 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
     }
   }
 
+  private ReloadingKeyManagerFactory buildReloadingKeyManagerFactory(DriverExecutionProfile config)
+      throws Exception {
+    Path keystorePath = Paths.get(config.getString(DefaultDriverOption.SSL_KEYSTORE_PATH));
+    String password = config.getString(DefaultDriverOption.SSL_KEYSTORE_PASSWORD, null);
+    Optional<Duration> reloadInterval =
+        Optional.ofNullable(
+            config.getDuration(DefaultDriverOption.SSL_KEYSTORE_RELOAD_INTERVAL, null));
+
+    return ReloadingKeyManagerFactory.create(keystorePath, password, reloadInterval);
+  }
+
   @Override
   public void close() throws Exception {
-    // nothing to do
+    kmf.close();
   }
 }

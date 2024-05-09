@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright DataStax, Inc.
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
+        http://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,12 +21,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>com.datastax.oss</groupId>
+    <groupId>org.apache.cassandra</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.15.1-SNAPSHOT</version>
+    <version>4.18.1-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-core-shaded</artifactId>
-  <name>DataStax Java driver for Apache Cassandra(R) - core with shaded deps</name>
+  <name>Apache Cassandra Java Driver - core with shaded deps</name>
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -42,7 +44,7 @@
     this dependency will be removed from the final pom by the shade plugin.
     -->
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>org.apache.cassandra</groupId>
       <artifactId>java-driver-core</artifactId>
     </dependency>
     <!--
@@ -110,10 +112,12 @@
     <dependency>
       <groupId>com.github.stephenc.jcip</groupId>
       <artifactId>jcip-annotations</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.github.spotbugs</groupId>
       <artifactId>spotbugs-annotations</artifactId>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
   <!--
@@ -124,6 +128,20 @@
   4) assembly plugin re-creates the shaded jar by packing target/classes + manifest + shaded pom
   -->
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>${project.basedir}/..</directory>
+        <includes>
+          <include>LICENSE</include>
+          <include>NOTICE_binary.txt</include>
+          <include>NOTICE.txt</include>
+        </includes>
+        <targetPath>META-INF</targetPath>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
@@ -144,7 +162,7 @@
                   - The core driver itself; it is not relocated but needs to be included.
                   - All the dependencies we want to shade & relocate.
                   -->
-                  <include>com.datastax.oss:java-driver-core</include>
+                  <include>org.apache.cassandra:java-driver-core</include>
                   <include>io.netty:*</include>
                   <include>com.fasterxml.jackson.core:*</include>
                 </includes>
@@ -166,7 +184,7 @@
               <filters>
                 <!-- Exclude everything under META-INF -->
                 <filter>
-                  <artifact>com.datastax.oss:*</artifact>
+                  <artifact>org.apache.cassandra:*</artifact>
                   <excludes>
                     <!-- Don't exclude META-INF/services and META-INF/native-image -->
                     <exclude>META-INF/MANIFEST.MF</exclude>
@@ -202,7 +220,7 @@
             <configuration>
               <artifactItems>
                 <artifactItem>
-                  <groupId>com.datastax.oss</groupId>
+                  <groupId>org.apache.cassandra</groupId>
                   <artifactId>java-driver-core-shaded</artifactId>
                   <type>jar</type>
                   <outputDirectory>${project.build.outputDirectory}</outputDirectory>
@@ -220,7 +238,7 @@
             <configuration>
               <artifactItems>
                 <artifactItem>
-                  <groupId>com.datastax.oss</groupId>
+                  <groupId>org.apache.cassandra</groupId>
                   <artifactId>java-driver-core-shaded</artifactId>
                   <type>jar</type>
                   <classifier>sources</classifier>
@@ -255,38 +273,6 @@
             </replacement>
           </replacements>
         </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>attach-javadocs</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-            <configuration>
-              <sourcepath>${project.build.directory}/shaded-sources</sourcepath>
-              <excludePackageNames>com.datastax.*.driver.internal*,com.datastax.oss.driver.shaded*</excludePackageNames>
-              <!--
-                javadoc processes the shaded Netty sources (even though they're not included in the
-                report), and will complain if it doesn't find JCTools classes.
-                Add the dependency just to avoid warnings:
-              -->
-              <additionalDependencies>
-                <additionalDependency>
-                  <groupId>org.jctools</groupId>
-                  <artifactId>jctools-core</artifactId>
-                  <version>2.1.2</version>
-                </additionalDependency>
-                <additionalDependency>
-                  <groupId>com.esri.geometry</groupId>
-                  <artifactId>esri-geometry-api</artifactId>
-                  <version>1.2.1</version>
-                </additionalDependency>
-              </additionalDependencies>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.felix</groupId>

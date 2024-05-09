@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,6 +36,7 @@ import com.datastax.oss.driver.internal.core.cql.CqlRequestSyncProcessor;
 import com.datastax.oss.driver.internal.core.util.DefaultDependencyChecker;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +46,7 @@ public class BuiltInRequestProcessors {
 
   public static List<RequestProcessor<?, ?>> createDefaultProcessors(DefaultDriverContext context) {
     List<RequestProcessor<?, ?>> processors = new ArrayList<>();
-    addBasicProcessors(processors);
+    addBasicProcessors(processors, context);
     if (DefaultDependencyChecker.isPresent(TINKERPOP)) {
       addGraphProcessors(context, processors);
     } else {
@@ -62,7 +65,8 @@ public class BuiltInRequestProcessors {
     return processors;
   }
 
-  public static void addBasicProcessors(List<RequestProcessor<?, ?>> processors) {
+  public static void addBasicProcessors(
+      List<RequestProcessor<?, ?>> processors, DefaultDriverContext context) {
     // regular requests (sync and async)
     CqlRequestAsyncProcessor cqlRequestAsyncProcessor = new CqlRequestAsyncProcessor();
     CqlRequestSyncProcessor cqlRequestSyncProcessor =
@@ -71,7 +75,8 @@ public class BuiltInRequestProcessors {
     processors.add(cqlRequestSyncProcessor);
 
     // prepare requests (sync and async)
-    CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor = new CqlPrepareAsyncProcessor();
+    CqlPrepareAsyncProcessor cqlPrepareAsyncProcessor =
+        new CqlPrepareAsyncProcessor(Optional.of(context));
     CqlPrepareSyncProcessor cqlPrepareSyncProcessor =
         new CqlPrepareSyncProcessor(cqlPrepareAsyncProcessor);
     processors.add(cqlPrepareAsyncProcessor);

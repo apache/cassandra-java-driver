@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -61,39 +63,46 @@ import org.slf4j.LoggerFactory;
  * SessionRule} provides a simpler alternative.
  */
 public class SessionUtils {
+
+  public static final String SESSION_BUILDER_CLASS_PROPERTY = "session.builder";
+
   private static final Logger LOG = LoggerFactory.getLogger(SessionUtils.class);
   private static final AtomicInteger keyspaceId = new AtomicInteger();
   private static final String DEFAULT_SESSION_CLASS_NAME = CqlSession.class.getName();
-  private static final String SESSION_BUILDER_CLASS =
-      System.getProperty("session.builder", DEFAULT_SESSION_CLASS_NAME);
+
+  private static String getSessionBuilderClass() {
+    return System.getProperty(SESSION_BUILDER_CLASS_PROPERTY, DEFAULT_SESSION_CLASS_NAME);
+  }
 
   @SuppressWarnings("unchecked")
   public static <SessionT extends Session> SessionBuilder<?, SessionT> baseBuilder() {
+    String sessionBuilderClass = getSessionBuilderClass();
     try {
-      Class<?> clazz = Class.forName(SESSION_BUILDER_CLASS);
+      Class<?> clazz = Class.forName(sessionBuilderClass);
       Method m = clazz.getMethod("builder");
       return (SessionBuilder<?, SessionT>) m.invoke(null);
     } catch (Exception e) {
       LOG.warn(
           "Could not construct SessionBuilder from {} using builder(), using default "
               + "implementation.",
-          SESSION_BUILDER_CLASS,
+          sessionBuilderClass,
           e);
       return (SessionBuilder<?, SessionT>) CqlSession.builder();
     }
   }
 
   public static ProgrammaticDriverConfigLoaderBuilder configLoaderBuilder() {
+    String sessionBuilderClass = getSessionBuilderClass();
     try {
-      Class<?> clazz = Class.forName(SESSION_BUILDER_CLASS);
+      Class<?> clazz = Class.forName(sessionBuilderClass);
       Method m = clazz.getMethod("configLoaderBuilder");
       return (ProgrammaticDriverConfigLoaderBuilder) m.invoke(null);
     } catch (Exception e) {
-      if (!SESSION_BUILDER_CLASS.equals(DEFAULT_SESSION_CLASS_NAME)) {
+      if (!sessionBuilderClass.equals(DEFAULT_SESSION_CLASS_NAME)) {
         LOG.warn(
             "Could not construct ProgrammaticDriverConfigLoaderBuilder from {} using "
                 + "configLoaderBuilder(), using default implementation.",
-            SESSION_BUILDER_CLASS,
+            sessionBuilderClass,
             e);
       }
       return DriverConfigLoader.programmaticBuilder();

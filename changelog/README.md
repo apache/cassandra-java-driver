@@ -1,6 +1,50 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Changelog
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
+
+### 4.18.0
+
+- [improvement] PR 1689: Add support for publishing percentile time series for the histogram metrics (nparaddi-walmart)
+- [improvement] JAVA-3104: Do not eagerly pre-allocate array when deserializing CqlVector
+- [improvement] JAVA-3111: upgrade jackson-databind to 2.13.4.2 to address gradle dependency issue
+- [improvement] PR 1617: Improve ByteBufPrimitiveCodec readBytes (chibenwa)
+- [improvement] JAVA-3095: Fix CREATE keyword in vector search example in upgrade guide
+- [improvement] JAVA-3100: Update jackson-databind to 2.13.4.1 and jackson-jaxrs-json-provider to 2.13.4 to address recent CVEs
+- [improvement] JAVA-3089: Forbid wildcard imports
+
+### 4.17.0
+
+- [improvement] JAVA-3070: Make CqlVector and CqlDuration serializable
+- [improvement] JAVA-3085: Initialize c.d.o.d.i.core.util.Dependency at Graal native image build-time
+- [improvement] JAVA-3061: CqlVector API improvements, add support for accessing vectors directly as float arrays
+- [improvement] JAVA-3042: Enable automated testing for Java17
+- [improvement] JAVA-3050: Upgrade Netty to 4.1.94
+
+### 4.16.0
+
+- [improvement] JAVA-3058: Clear prepared statement cache on UDT type change event
+- [improvement] JAVA-3060: Add vector type, codec + support for parsing CQL type
+- [improvement] DOC-2813: Add error handling guidance linking to a helpful blog post
+- [improvement] JAVA-3045: Fix GraalVM native image support for GraalVM 22.2
 
 ### 4.15.0
 
@@ -616,6 +660,15 @@ changelog](https://docs.datastax.com/en/developer/java-driver-dse/latest/changel
 - [new feature] JAVA-1501: Reprepare on the fly when we get an UNPREPARED response
 - [bug] JAVA-1499: Wait for load balancing policy at cluster initialization
 - [new feature] JAVA-1495: Add prepared statements
+
+## 3.11.5
+- [improvement] JAVA-3114: Shade io.dropwizard.metrics:metrics-core in shaded driver
+- [improvement] JAVA-3115: SchemaChangeListener#onKeyspaceChanged can fire when keyspace has not changed if using SimpleStrategy replication
+
+## 3.11.4
+- [improvement] JAVA-3079: Upgrade Netty to 4.1.94, 3.x edition
+- [improvement] JAVA-3082: Fix maven build for Apple-silicon
+- [improvement] PR 1671: Fix LatencyAwarePolicy scale docstring
 
 ## 3.11.3
 

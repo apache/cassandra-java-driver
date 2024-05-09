@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,11 +20,9 @@ package com.datastax.dse.driver.api.core.auth;
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.dse.driver.internal.core.auth.DseGssApiAuthProvider;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
-import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirementRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.io.File;
@@ -151,50 +151,20 @@ public class EmbeddedAdsRule extends ExternalResource {
     }
   }
 
-  private Statement buildErrorStatement(
-      Version requirement, Version actual, String description, boolean lessThan) {
-    return new Statement() {
-
-      @Override
-      public void evaluate() {
-        throw new AssumptionViolatedException(
-            String.format(
-                "Test requires %s %s %s but %s is configured.  Description: %s",
-                lessThan ? "less than" : "at least", "DSE", requirement, actual, description));
-      }
-    };
-  }
-
   @Override
   public Statement apply(Statement base, Description description) {
-    DseRequirement dseRequirement = description.getAnnotation(DseRequirement.class);
-    if (dseRequirement != null) {
-      if (!CcmBridge.DSE_ENABLEMENT) {
-        return new Statement() {
-          @Override
-          public void evaluate() {
-            throw new AssumptionViolatedException("Test Requires DSE but C* is configured.");
-          }
-        };
-      } else {
-        Version dseVersion = CcmBridge.VERSION;
-        if (!dseRequirement.min().isEmpty()) {
-          Version minVersion = Version.parse(dseRequirement.min());
-          if (minVersion.compareTo(dseVersion) > 0) {
-            return buildErrorStatement(dseVersion, dseVersion, dseRequirement.description(), false);
-          }
+    if (BackendRequirementRule.meetsDescriptionRequirements(description)) {
+      return super.apply(base, description);
+    } else {
+      // requirements not met, throw reasoning assumption to skip test
+      return new Statement() {
+        @Override
+        public void evaluate() {
+          throw new AssumptionViolatedException(
+              BackendRequirementRule.buildReasonString(description));
         }
-
-        if (!dseRequirement.max().isEmpty()) {
-          Version maxVersion = Version.parse(dseRequirement.max());
-
-          if (maxVersion.compareTo(dseVersion) <= 0) {
-            return buildErrorStatement(dseVersion, dseVersion, dseRequirement.description(), true);
-          }
-        }
-      }
+      };
     }
-    return super.apply(base, description);
   }
 
   @Override

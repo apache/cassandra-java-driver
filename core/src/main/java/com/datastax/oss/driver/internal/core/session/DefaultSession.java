@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,10 +34,12 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.LifecycleListener;
+import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager.RefreshSchemaResult;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateManager;
+import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.util.Loggers;
@@ -544,6 +548,14 @@ public class DefaultSession implements CqlSession {
 
       closePolicies();
 
+      // clear metrics to prevent memory leak
+      for (Node n : metadataManager.getMetadata().getNodes().values()) {
+        NodeMetricUpdater updater = ((DefaultNode) n).getMetricUpdater();
+        if (updater != null) updater.clearMetrics();
+      }
+
+      if (metricUpdater != null) metricUpdater.clearMetrics();
+
       List<CompletionStage<Void>> childrenCloseStages = new ArrayList<>();
       for (AsyncAutoCloseable closeable : internalComponentsToClose()) {
         childrenCloseStages.add(closeable.closeAsync());
@@ -562,6 +574,14 @@ public class DefaultSession implements CqlSession {
           "[{}] Starting forced shutdown (was {}closed before)",
           logPrefix,
           (closeWasCalled ? "" : "not "));
+
+      // clear metrics to prevent memory leak
+      for (Node n : metadataManager.getMetadata().getNodes().values()) {
+        NodeMetricUpdater updater = ((DefaultNode) n).getMetricUpdater();
+        if (updater != null) updater.clearMetrics();
+      }
+
+      if (metricUpdater != null) metricUpdater.clearMetrics();
 
       if (closeWasCalled) {
         // onChildrenClosed has already been scheduled

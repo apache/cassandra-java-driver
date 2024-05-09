@@ -1,3 +1,22 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Integration
 
 ### Quick overview
@@ -130,7 +149,7 @@ dependencies, and tell Maven that we're going to use Java 8:
 
   <dependencies>
     <dependency>
-      <groupId>com.datastax.oss</groupId>
+      <groupId>org.apache.cassandra</groupId>
       <artifactId>java-driver-core</artifactId>
       <version>${driver.version}</version>
     </dependency>
@@ -237,7 +256,7 @@ You should see output similar to:
 [INFO] Nothing to compile - all classes are up to date
 [INFO]
 [INFO] --- exec-maven-plugin:1.3.1:java (default-cli) @ yourapp ---
-11:39:45.355 [Main.main()] INFO  c.d.o.d.i.c.DefaultMavenCoordinates - DataStax Java driver for Apache Cassandra(R) (com.datastax.oss:java-driver-core) version 4.0.1
+11:39:45.355 [Main.main()] INFO  c.d.o.d.i.c.DefaultMavenCoordinates - Apache Cassandra Java Driver (com.datastax.oss:java-driver-core) version 4.0.1
 11:39:45.648 [poc-admin-0] INFO  c.d.o.d.internal.core.time.Clock - Using native clock for microsecond precision
 11:39:45.649 [poc-admin-0] INFO  c.d.o.d.i.c.metadata.MetadataManager - [poc] No contact points provided, defaulting to /127.0.0.1:9042
 3.11.2
@@ -307,7 +326,7 @@ $ ./gradlew execute
 :processResources
 :classes
 :execute
-13:32:25.339 [main] INFO  c.d.o.d.i.c.DefaultMavenCoordinates - DataStax Java driver for Apache Cassandra(R) (com.datastax.oss:java-driver-core) version 4.0.1-alpha4-SNAPSHOT
+13:32:25.339 [main] INFO  c.d.o.d.i.c.DefaultMavenCoordinates - Apache Cassandra Java Driver (com.datastax.oss:java-driver-core) version 4.0.1-alpha4-SNAPSHOT
 13:32:25.682 [poc-admin-0] INFO  c.d.o.d.internal.core.time.Clock - Using native clock for microsecond precision
 13:32:25.683 [poc-admin-0] INFO  c.d.o.d.i.c.metadata.MetadataManager - [poc] No contact points provided, defaulting to /127.0.0.1:9042
 3.11.2
@@ -355,7 +374,7 @@ In that case, you can exclude the dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -383,7 +402,7 @@ are not available on your platform, you can exclude the following dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -414,7 +433,7 @@ your application, then you can remove the dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -437,7 +456,7 @@ dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -462,7 +481,7 @@ don't use any of the above features, you can safely exclude the dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -485,7 +504,7 @@ anywhere in your application you can exclude the dependency:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -525,7 +544,7 @@ you can exclude the TinkerPop dependencies:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -562,6 +581,8 @@ Here are the recommended TinkerPop versions for each driver version:
 
 <table>
 <tr><th>Driver version</th><th>TinkerPop version</th></tr>
+<tr><td>4.17.0</td><td>3.5.3</td></tr>
+<tr><td>4.16.0</td><td>3.5.3</td></tr>
 <tr><td>4.15.0</td><td>3.5.3</td></tr>
 <tr><td>4.14.1</td><td>3.5.3</td></tr>
 <tr><td>4.14.0</td><td>3.4.10</td></tr>
@@ -587,7 +608,7 @@ without it. If you never call any of the `executeReactive` methods, you can excl
 
 ```xml
 <dependency>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-core</artifactId>
   <version>${driver.version}</version>
   <exclusions>
@@ -608,25 +629,22 @@ The driver team uses annotations to document certain aspects of the code:
 * nullability with [SpotBugs](https://spotbugs.github.io/) annotations `@Nullable` and `@NonNull`.
 
 This is mostly used during development; while these annotations are retained in class files, they
-serve no purpose at runtime. If you want to minimize the number of JARs in your classpath, you can
-exclude them:
+serve no purpose at runtime. This class is an optional dependency of the driver. If you wish to
+make use of these annotations in your own code you have to explicitly depend on these jars:
 
 ```xml
-<dependency>
-  <groupId>com.datastax.oss</groupId>
-  <artifactId>java-driver-core</artifactId>
-  <version>${driver.version}</version>
-  <exclusions>
-    <exclusion>
-      <groupId>com.github.stephenc.jcip</groupId>
-      <artifactId>jcip-annotations</artifactId>
-    </exclusion>
-    <exclusion>
-      <groupId>com.github.spotbugs</groupId>
-      <artifactId>spotbugs-annotations</artifactId>
-    </exclusion>
-  </exclusions>
-</dependency>
+<dependencies>
+  <dependency>
+    <groupId>com.github.stephenc.jcip</groupId>
+    <artifactId>jcip-annotations</artifactId>
+    <version>1.0-1</version>
+  </dependency>
+  <dependency>
+    <groupId>com.github.spotbugs</groupId>
+    <artifactId>spotbugs-annotations</artifactId>
+    <version>3.1.12</version>
+  </dependency>
+</dependencies>
 ```
 
 However, there is one case when excluding those dependencies won't work: if you use [annotation
@@ -665,6 +683,6 @@ The remaining core driver dependencies are the only ones that are truly mandator
 [guava]: https://github.com/google/guava/issues/2721
 [annotation processing]: https://docs.oracle.com/javase/8/docs/technotes/tools/windows/javac.html#sthref65
 
-[Session.getMetrics]:             https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/Session.html#getMetrics--
-[SessionBuilder.addContactPoint]: https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoint-java.net.InetSocketAddress-
-[Uuids]:                          https://docs.datastax.com/en/drivers/java/4.14/com/datastax/oss/driver/api/core/uuid/Uuids.html
+[Session.getMetrics]:             https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/Session.html#getMetrics--
+[SessionBuilder.addContactPoint]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addContactPoint-java.net.InetSocketAddress-
+[Uuids]:                          https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/uuid/Uuids.html

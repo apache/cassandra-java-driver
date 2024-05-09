@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,6 +25,7 @@ import com.datastax.oss.driver.internal.core.type.DefaultListType;
 import com.datastax.oss.driver.internal.core.type.DefaultMapType;
 import com.datastax.oss.driver.internal.core.type.DefaultSetType;
 import com.datastax.oss.driver.internal.core.type.DefaultTupleType;
+import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import com.datastax.oss.driver.internal.core.type.PrimitiveType;
 import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
@@ -65,14 +68,19 @@ public class DataTypes {
     if (className.equals("org.apache.cassandra.db.marshal.DurationType")) return DURATION;
 
     /* Vector support is currently implemented as a custom type but is also parameterized */
-    if (className.startsWith(CqlVectorType.CQLVECTOR_CLASS_NAME)) {
+    if (className.startsWith(DefaultVectorType.VECTOR_CLASS_NAME)) {
       List<String> params =
           paramSplitter.splitToList(
               className.substring(
-                  CqlVectorType.CQLVECTOR_CLASS_NAME.length() + 1, className.length() - 1));
+                  DefaultVectorType.VECTOR_CLASS_NAME.length() + 1, className.length() - 1));
       DataType subType = classNameParser.parse(params.get(0), AttachmentPoint.NONE);
       int dimensions = Integer.parseInt(params.get(1));
-      return new CqlVectorType(subType, dimensions);
+      if (dimensions <= 0) {
+        throw new IllegalArgumentException(
+            String.format(
+                "Request to create vector of size %d, size must be positive", dimensions));
+      }
+      return new DefaultVectorType(subType, dimensions);
     }
     return new DefaultCustomType(className);
   }
@@ -135,7 +143,7 @@ public class DataTypes {
     return new DefaultTupleType(ImmutableList.copyOf(Arrays.asList(componentTypes)));
   }
 
-  public static CqlVectorType vectorOf(DataType subtype, int dimensions) {
-    return new CqlVectorType(subtype, dimensions);
+  public static VectorType vectorOf(DataType subtype, int dimensions) {
+    return new DefaultVectorType(subtype, dimensions);
   }
 }

@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,8 +33,9 @@ import com.datastax.oss.driver.api.core.metadata.schema.ColumnMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.type.DataTypes;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -185,7 +188,10 @@ public class SchemaIT {
     }
   }
 
-  @CassandraRequirement(min = "4.0", description = "virtual tables introduced in 4.0")
+  @BackendRequirement(
+      type = BackendType.CASSANDRA,
+      minInclusive = "4.0",
+      description = "virtual tables introduced in 4.0")
   @Test
   public void should_get_virtual_metadata() {
     skipIfDse60();
@@ -259,6 +265,19 @@ public class SchemaIT {
                   + "    total bigint,\n"
                   + "    unit text,\n"
                   + "    PRIMARY KEY (keyspace_name, table_name, task_id)\n"
+                  + "); */",
+              // Cassandra 4.1
+              "/* VIRTUAL TABLE system_views.sstable_tasks (\n"
+                  + "    keyspace_name text,\n"
+                  + "    table_name text,\n"
+                  + "    task_id timeuuid,\n"
+                  + "    completion_ratio double,\n"
+                  + "    kind text,\n"
+                  + "    progress bigint,\n"
+                  + "    sstables int,\n"
+                  + "    total bigint,\n"
+                  + "    unit text,\n"
+                  + "    PRIMARY KEY (keyspace_name, table_name, task_id)\n"
                   + "); */");
       // ColumnMetadata is as expected
       ColumnMetadata cm = tm.getColumn("progress").get();
@@ -269,7 +288,10 @@ public class SchemaIT {
     }
   }
 
-  @CassandraRequirement(min = "4.0", description = "virtual tables introduced in 4.0")
+  @BackendRequirement(
+      type = BackendType.CASSANDRA,
+      minInclusive = "4.0",
+      description = "virtual tables introduced in 4.0")
   @Test
   public void should_exclude_virtual_keyspaces_from_token_map() {
     skipIfDse60();
