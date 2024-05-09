@@ -67,7 +67,7 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     nextNanoTime = 123;
 
     // When
-    policy.onNodeSuccess(request, 0, profile, node1, logPrefix, executionInfo);
+    policy.onNodeSuccess(request, 0, profile, node1, executionInfo, logPrefix);
 
     // Then
     assertThat(policy.responseTimes)
@@ -85,7 +85,7 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     nextNanoTime = 456;
 
     // When
-    policy.onNodeSuccess(request, 0, profile, node1, logPrefix, executionInfo);
+    policy.onNodeSuccess(request, 0, profile, node1, executionInfo, logPrefix);
 
     // Then
     assertThat(policy.responseTimes)
@@ -109,8 +109,8 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     nextNanoTime = 789;
 
     // When
-    policy.onNodeSuccess(request, 0, profile, node1, logPrefix, executionInfo);
-    policy.onNodeSuccess(request, 0, profile, node2, logPrefix, executionInfo);
+    policy.onNodeSuccess(request, 0, profile, node1, executionInfo, logPrefix);
+    policy.onNodeSuccess(request, 0, profile, node2, executionInfo, logPrefix);
 
     // Then
     assertThat(policy.responseTimes)
@@ -135,7 +135,7 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     Throwable iae = new IllegalArgumentException();
 
     // When
-    policy.onNodeError(request, iae, 0, profile, node1, logPrefix, executionInfo);
+    policy.onNodeError(request, iae, 0, profile, node1, executionInfo, logPrefix);
 
     // Then
     assertThat(policy.responseTimes)
@@ -154,7 +154,7 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     Throwable iae = new IllegalArgumentException();
 
     // When
-    policy.onNodeError(request, iae, 0, profile, node1, logPrefix, executionInfo);
+    policy.onNodeError(request, iae, 0, profile, node1, executionInfo, logPrefix);
 
     // Then
     assertThat(policy.responseTimes)
@@ -179,8 +179,8 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     Throwable iae = new IllegalArgumentException();
 
     // When
-    policy.onNodeError(request, iae, 0, profile, node1, logPrefix, executionInfo);
-    policy.onNodeError(request, iae, 0, profile, node2, logPrefix, executionInfo);
+    policy.onNodeError(request, iae, 0, profile, node1, executionInfo, logPrefix);
+    policy.onNodeError(request, iae, 0, profile, node2, executionInfo, logPrefix);
 
     // Then
     assertThat(policy.responseTimes)

@@ -88,8 +88,8 @@ public class RequestLogger implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix,
-      @NonNull ExecutionInfo executionInfo) {
+      @NonNull ExecutionInfo executionInfo,
+      @NonNull String logPrefix) {
 
     boolean successEnabled =
         executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, false);
@@ -142,8 +142,8 @@ public class RequestLogger implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       Node node,
-      @NonNull String logPrefix,
-      @NonNull ExecutionInfo executionInfo) {
+      @NonNull ExecutionInfo executionInfo,
+      @NonNull String logPrefix) {
 
     if (!executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, false)) {
       return;
@@ -187,8 +187,8 @@ public class RequestLogger implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix,
-      @Nullable ExecutionInfo executionInfo) {
+      @Nullable ExecutionInfo executionInfo,
+      @NonNull String logPrefix) {
     // Nothing to do
   }
 
@@ -198,8 +198,8 @@ public class RequestLogger implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix,
-      @NonNull ExecutionInfo executionInfo) {
+      @NonNull ExecutionInfo executionInfo,
+      @NonNull String logPrefix) {
     // Nothing to do
   }
 

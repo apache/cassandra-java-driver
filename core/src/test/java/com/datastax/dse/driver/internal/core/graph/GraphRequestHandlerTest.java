@@ -522,16 +522,16 @@ public class GraphRequestHandlerTest {
             anyLong(),
             any(DriverExecutionProfile.class),
             eq(node),
-            matches(LOG_PREFIX_PER_REQUEST),
-            any(ExecutionInfo.class));
+            any(ExecutionInfo.class),
+            matches(LOG_PREFIX_PER_REQUEST));
     verify(requestTracker)
         .onNodeSuccess(
             eq(graphStatement),
             anyLong(),
             any(DriverExecutionProfile.class),
             eq(node),
-            matches(LOG_PREFIX_PER_REQUEST),
-            any(ExecutionInfo.class));
+            any(ExecutionInfo.class),
+            matches(LOG_PREFIX_PER_REQUEST));
     verifyNoMoreInteractions(requestTracker);
 
     verify(nodeMetricUpdater1)

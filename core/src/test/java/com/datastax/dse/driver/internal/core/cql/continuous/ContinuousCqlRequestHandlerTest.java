@@ -499,24 +499,24 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node1),
-                        matches(LOG_PREFIX_PER_REQUEST),
-                        nullable(ExecutionInfo.class));
+                        nullable(ExecutionInfo.class),
+                        matches(LOG_PREFIX_PER_REQUEST));
                 verify(requestTracker)
                     .onNodeSuccess(
                         eq(UNDEFINED_IDEMPOTENCE_STATEMENT),
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node2),
-                        matches(LOG_PREFIX_PER_REQUEST),
-                        any(ExecutionInfo.class));
+                        any(ExecutionInfo.class),
+                        matches(LOG_PREFIX_PER_REQUEST));
                 verify(requestTracker)
                     .onSuccess(
                         eq(UNDEFINED_IDEMPOTENCE_STATEMENT),
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node2),
-                        matches(LOG_PREFIX_PER_REQUEST),
-                        any(ExecutionInfo.class));
+                        any(ExecutionInfo.class),
+                        matches(LOG_PREFIX_PER_REQUEST));
                 verifyNoMoreInteractions(requestTracker);
               });
     }

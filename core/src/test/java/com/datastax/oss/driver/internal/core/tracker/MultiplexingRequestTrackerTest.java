@@ -113,12 +113,12 @@ public class MultiplexingRequestTrackerTest {
     MultiplexingRequestTracker tracker = new MultiplexingRequestTracker(child1, child2);
     willThrow(new NullPointerException())
         .given(child1)
-        .onSuccess(request, 123456L, profile, node, "test", executionInfo);
+        .onSuccess(request, 123456L, profile, node, executionInfo, "test");
     // when
-    tracker.onSuccess(request, 123456L, profile, node, "test", executionInfo);
+    tracker.onSuccess(request, 123456L, profile, node, executionInfo, "test");
     // then
-    verify(child1).onSuccess(request, 123456L, profile, node, "test", executionInfo);
-    verify(child2).onSuccess(request, 123456L, profile, node, "test", executionInfo);
+    verify(child1).onSuccess(request, 123456L, profile, node, executionInfo, "test");
+    verify(child2).onSuccess(request, 123456L, profile, node, executionInfo, "test");
     verify(appender).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getAllValues().stream().map(ILoggingEvent::getFormattedMessage))
         .contains(
@@ -131,12 +131,12 @@ public class MultiplexingRequestTrackerTest {
     MultiplexingRequestTracker tracker = new MultiplexingRequestTracker(child1, child2);
     willThrow(new NullPointerException())
         .given(child1)
-        .onError(request, error, 123456L, profile, node, "test", executionInfo);
+        .onError(request, error, 123456L, profile, node, executionInfo, "test");
     // when
-    tracker.onError(request, error, 123456L, profile, node, "test", executionInfo);
+    tracker.onError(request, error, 123456L, profile, node, executionInfo, "test");
     // then
-    verify(child1).onError(request, error, 123456L, profile, node, "test", executionInfo);
-    verify(child2).onError(request, error, 123456L, profile, node, "test", executionInfo);
+    verify(child1).onError(request, error, 123456L, profile, node, executionInfo, "test");
+    verify(child2).onError(request, error, 123456L, profile, node, executionInfo, "test");
     verify(appender).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getAllValues().stream().map(ILoggingEvent::getFormattedMessage))
         .contains(
@@ -149,12 +149,12 @@ public class MultiplexingRequestTrackerTest {
     MultiplexingRequestTracker tracker = new MultiplexingRequestTracker(child1, child2);
     willThrow(new NullPointerException())
         .given(child1)
-        .onNodeSuccess(request, 123456L, profile, node, "test", executionInfo);
+        .onNodeSuccess(request, 123456L, profile, node, executionInfo, "test");
     // when
-    tracker.onNodeSuccess(request, 123456L, profile, node, "test", executionInfo);
+    tracker.onNodeSuccess(request, 123456L, profile, node, executionInfo, "test");
     // then
-    verify(child1).onNodeSuccess(request, 123456L, profile, node, "test", executionInfo);
-    verify(child2).onNodeSuccess(request, 123456L, profile, node, "test", executionInfo);
+    verify(child1).onNodeSuccess(request, 123456L, profile, node, executionInfo, "test");
+    verify(child2).onNodeSuccess(request, 123456L, profile, node, executionInfo, "test");
     verify(appender).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getAllValues().stream().map(ILoggingEvent::getFormattedMessage))
         .contains(
@@ -167,12 +167,12 @@ public class MultiplexingRequestTrackerTest {
     MultiplexingRequestTracker tracker = new MultiplexingRequestTracker(child1, child2);
     willThrow(new NullPointerException())
         .given(child1)
-        .onNodeError(request, error, 123456L, profile, node, "test", executionInfo);
+        .onNodeError(request, error, 123456L, profile, node, executionInfo, "test");
     // when
-    tracker.onNodeError(request, error, 123456L, profile, node, "test", executionInfo);
+    tracker.onNodeError(request, error, 123456L, profile, node, executionInfo, "test");
     // then
-    verify(child1).onNodeError(request, error, 123456L, profile, node, "test", executionInfo);
-    verify(child2).onNodeError(request, error, 123456L, profile, node, "test", executionInfo);
+    verify(child1).onNodeError(request, error, 123456L, profile, node, executionInfo, "test");
+    verify(child2).onNodeError(request, error, 123456L, profile, node, executionInfo, "test");
     verify(appender).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getAllValues().stream().map(ILoggingEvent::getFormattedMessage))
         .contains(

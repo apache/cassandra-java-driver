@@ -1457,8 +1457,8 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
                 latencyNanos,
                 executionProfile,
                 node,
-                logPrefix,
-                createExecutionInfo(frame));
+                createExecutionInfo(frame),
+                logPrefix);
       }
     }
 
@@ -1584,12 +1584,12 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
             context
                 .getRequestTracker()
                 .onNodeSuccess(
-                    statement, nodeLatencyNanos, executionProfile, node, logPrefix, executionInfo);
+                    statement, nodeLatencyNanos, executionProfile, node, executionInfo, logPrefix);
           }
           context
               .getRequestTracker()
               .onSuccess(
-                  statement, totalLatencyNanos, executionProfile, node, logPrefix, executionInfo);
+                  statement, totalLatencyNanos, executionProfile, node, executionInfo, logPrefix);
         }
       } else {
         Throwable error = (Throwable) pageOrError;
@@ -1597,7 +1597,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
           context
               .getRequestTracker()
               .onError(
-                  statement, error, totalLatencyNanos, executionProfile, node, logPrefix, null);
+                  statement, error, totalLatencyNanos, executionProfile, node, null, logPrefix);
           if (error instanceof DriverTimeoutException) {
             throttler.signalTimeout(ContinuousRequestHandlerBase.this);
             session

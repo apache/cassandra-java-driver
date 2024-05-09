@@ -73,24 +73,24 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node1),
-                        any(String.class),
-                        nullable(ExecutionInfo.class));
+                        nullable(ExecutionInfo.class),
+                        any(String.class));
                 verify(requestTracker)
                     .onNodeSuccess(
                         eq(UNDEFINED_IDEMPOTENCE_STATEMENT),
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node2),
-                        any(String.class),
-                        any(ExecutionInfo.class));
+                        any(ExecutionInfo.class),
+                        any(String.class));
                 verify(requestTracker)
                     .onSuccess(
                         eq(UNDEFINED_IDEMPOTENCE_STATEMENT),
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node2),
-                        any(String.class),
-                        any(ExecutionInfo.class));
+                        any(ExecutionInfo.class),
+                        any(String.class));
                 verifyNoMoreInteractions(requestTracker);
               });
     }

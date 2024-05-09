@@ -44,8 +44,8 @@ public class NoopRequestTracker implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String requestPrefix,
-      @NonNull ExecutionInfo executionInfo) {
+      @NonNull ExecutionInfo executionInfo,
+      @NonNull String requestPrefix) {
     // nothing to do
   }
 
@@ -56,8 +56,8 @@ public class NoopRequestTracker implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       Node node,
-      @NonNull String requestPrefix,
-      @Nullable ExecutionInfo executionInfo) {
+      @Nullable ExecutionInfo executionInfo,
+      @NonNull String requestPrefix) {
     // nothing to do
   }
 
@@ -68,8 +68,8 @@ public class NoopRequestTracker implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String requestPrefix,
-      @Nullable ExecutionInfo executionInfo) {
+      @Nullable ExecutionInfo executionInfo,
+      @NonNull String requestPrefix) {
     // nothing to do
   }
 
@@ -79,8 +79,8 @@ public class NoopRequestTracker implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String requestPrefix,
-      @NonNull ExecutionInfo executionInfo) {
+      @NonNull ExecutionInfo executionInfo,
+      @NonNull String requestPrefix) {
     // nothing to do
   }
 

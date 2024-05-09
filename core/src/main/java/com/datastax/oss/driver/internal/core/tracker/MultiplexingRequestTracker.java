@@ -83,12 +83,12 @@ public class MultiplexingRequestTracker implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix,
-      @NonNull ExecutionInfo executionInfo) {
+      @NonNull ExecutionInfo executionInfo,
+      @NonNull String logPrefix) {
     invokeTrackers(
         tracker ->
             tracker.onSuccess(
-                request, latencyNanos, executionProfile, node, logPrefix, executionInfo),
+                request, latencyNanos, executionProfile, node, executionInfo, logPrefix),
         logPrefix,
         "onSuccess");
   }
@@ -100,12 +100,12 @@ public class MultiplexingRequestTracker implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @Nullable Node node,
-      @NonNull String logPrefix,
-      @Nullable ExecutionInfo executionInfo) {
+      @Nullable ExecutionInfo executionInfo,
+      @NonNull String logPrefix) {
     invokeTrackers(
         tracker ->
             tracker.onError(
-                request, error, latencyNanos, executionProfile, node, logPrefix, executionInfo),
+                request, error, latencyNanos, executionProfile, node, executionInfo, logPrefix),
         logPrefix,
         "onError");
   }
@@ -116,12 +116,12 @@ public class MultiplexingRequestTracker implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix,
-      @NonNull ExecutionInfo executionInfo) {
+      @NonNull ExecutionInfo executionInfo,
+      @NonNull String logPrefix) {
     invokeTrackers(
         tracker ->
             tracker.onNodeSuccess(
-                request, latencyNanos, executionProfile, node, logPrefix, executionInfo),
+                request, latencyNanos, executionProfile, node, executionInfo, logPrefix),
         logPrefix,
         "onNodeSuccess");
   }
@@ -133,12 +133,12 @@ public class MultiplexingRequestTracker implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix,
-      ExecutionInfo executionInfo) {
+      ExecutionInfo executionInfo,
+      @NonNull String logPrefix) {
     invokeTrackers(
         tracker ->
             tracker.onNodeError(
-                request, error, latencyNanos, executionProfile, node, logPrefix, executionInfo),
+                request, error, latencyNanos, executionProfile, node, executionInfo, logPrefix),
         logPrefix,
         "onNodeError");
   }
