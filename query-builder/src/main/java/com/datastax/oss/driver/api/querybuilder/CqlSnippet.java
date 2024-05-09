@@ -22,4 +22,13 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 /** An element in the query builder DSL, that will generate part of a CQL query. */
 public interface CqlSnippet {
   void appendTo(@NonNull StringBuilder builder);
+
+  /**
+   * Optional method used in collection types to append all elements to CQL query. List and set
+   * codecs typically enclose elements with '[]', '{}' characters. When we would like to append
+   * elements directly inside IN clause, mentioned behaviour generates incorrect CQL statement.
+   */
+  default void appendElementsTo(@NonNull StringBuilder builder) {
+    appendTo(builder);
+  }
 }

@@ -59,6 +59,17 @@ public class DefaultLiteral<ValueT> implements Literal {
   }
 
   @Override
+  public void appendElementsTo(@NonNull StringBuilder builder) {
+    if (value != null) {
+      if (codec.getJavaType().isCollection()) {
+        builder.append(codec.formatElements(value));
+      } else {
+        builder.append(codec.format(value));
+      }
+    }
+  }
+
+  @Override
   public boolean isIdempotent() {
     return true;
   }
