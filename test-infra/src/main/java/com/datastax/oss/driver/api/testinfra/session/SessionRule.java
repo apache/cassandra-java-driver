@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import java.util.Objects;
 import java.util.Optional;
@@ -195,7 +196,10 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
               ScriptGraphStatement.SYNC);
     }
     if (keyspace != null) {
-      SessionUtils.dropKeyspace(session, keyspace, slowProfile);
+      SchemaChangeSynchronizer.withLock(
+          () -> {
+            SessionUtils.dropKeyspace(session, keyspace, slowProfile);
+          });
     }
     session.close();
   }

@@ -24,6 +24,7 @@ import com.datastax.dse.driver.api.core.cql.reactive.ReactiveRow;
 import com.datastax.dse.driver.api.mapper.reactive.MappedReactiveResultSet;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.DaoFactory;
@@ -34,27 +35,34 @@ import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
-import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
+import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
-import com.datastax.oss.driver.categories.ParallelizableTests;
 import io.reactivex.Flowable;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@Category(ParallelizableTests.class)
+// Do not run LWT tests in parallel because they may interfere. Tests operate on the same row.
 public class DeleteReactiveIT extends InventoryITBase {
 
-  private static CcmRule ccmRule = CcmRule.getInstance();
+  private static CustomCcmRule ccmRule = configureCcm(CustomCcmRule.builder()).build();
 
   private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+
+  private static CustomCcmRule.Builder configureCcm(CustomCcmRule.Builder builder) {
+    if (!CcmBridge.DSE_ENABLEMENT
+        && CcmBridge.VERSION.nextStable().compareTo(Version.V4_0_0) >= 0) {
+      builder.withCassandraConfiguration("enable_sasi_indexes", true);
+    }
+    return builder;
+  }
 
   private static DseProductDao dao;
 

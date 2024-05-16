@@ -42,6 +42,7 @@ import com.datastax.oss.driver.api.mapper.annotations.PropertyStrategy;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.Objects;
@@ -70,10 +71,15 @@ public class ImmutableEntityIT extends InventoryITBase {
   public static void setup() {
     CqlSession session = SESSION_RULE.session();
 
-    for (String query : createStatements(CCM_RULE)) {
-      session.execute(
-          SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
-    }
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          for (String query : createStatements(CCM_RULE)) {
+            session.execute(
+                SimpleStatement.builder(query)
+                    .setExecutionProfile(SESSION_RULE.slowProfile())
+                    .build());
+          }
+        });
 
     UserDefinedType dimensions2d =
         session
