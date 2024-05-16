@@ -81,7 +81,7 @@ public class CcmStagedReactor extends AllConfinedStagedReactor {
     if (running) {
       LOGGER.info("Stopping CCM");
       CCM_BRIDGE.stop();
-      CCM_BRIDGE.remove();
+      CCM_BRIDGE.close();
       running = false;
       LOGGER.info("CCM stopped");
     }

@@ -992,6 +992,17 @@ limitations under the License.]]></inlineHeader>
       </activation>
     </profile>
     <profile>
+      <!-- workarounds for running tests with JDK14 -->
+      <id>test-jdk-14</id>
+      <activation>
+        <jdk>[14,)</jdk>
+      </activation>
+      <properties>
+        <!-- for DriverBlockHoundIntegrationIT when using JDK 13+, see https://github.com/reactor/BlockHound/issues/33 -->
+        <blockhound.argline>-XX:+AllowRedefinitionToAddDeleteMethods</blockhound.argline>
+      </properties>
+    </profile>
+    <profile>
       <!-- workarounds for running tests with JDK17 -->
       <id>test-jdk-17</id>
       <activation>

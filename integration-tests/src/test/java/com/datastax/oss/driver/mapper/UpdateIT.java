@@ -37,6 +37,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -65,14 +66,18 @@ public class UpdateIT extends InventoryITBase {
   @BeforeClass
   public static void setup() {
     CqlSession session = SESSION_RULE.session();
-
-    for (String query : createStatements(CCM_RULE)) {
-      session.execute(
-          SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
-    }
-    session.execute(
-        SimpleStatement.newInstance("CREATE TABLE only_p_k(id uuid PRIMARY KEY)")
-            .setExecutionProfile(SESSION_RULE.slowProfile()));
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          for (String query : createStatements(CCM_RULE)) {
+            session.execute(
+                SimpleStatement.builder(query)
+                    .setExecutionProfile(SESSION_RULE.slowProfile())
+                    .build());
+          }
+          session.execute(
+              SimpleStatement.newInstance("CREATE TABLE only_p_k(id uuid PRIMARY KEY)")
+                  .setExecutionProfile(SESSION_RULE.slowProfile()));
+        });
 
     inventoryMapper = new UpdateIT_InventoryMapperBuilder(session).build();
     dao = inventoryMapper.productDao(SESSION_RULE.keyspace());

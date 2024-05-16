@@ -33,6 +33,7 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -88,12 +89,16 @@ public class ExecutionInfoWarningsIT {
   @Before
   public void createSchema() {
     // table with simple primary key, single cell.
-    sessionRule
-        .session()
-        .execute(
-            SimpleStatement.builder("CREATE TABLE IF NOT EXISTS test (k int primary key, v text)")
-                .setExecutionProfile(sessionRule.slowProfile())
-                .build());
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          sessionRule
+              .session()
+              .execute(
+                  SimpleStatement.builder(
+                          "CREATE TABLE IF NOT EXISTS test (k int primary key, v text)")
+                      .setExecutionProfile(sessionRule.slowProfile())
+                      .build());
+        });
     for (int i = 0; i < 100; i++) {
       sessionRule
           .session()

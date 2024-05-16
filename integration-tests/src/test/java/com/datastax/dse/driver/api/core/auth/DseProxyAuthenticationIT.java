@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.servererrors.UnauthorizedException;
+import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -57,33 +58,38 @@ public class DseProxyAuthenticationIT {
   @Before
   public void setupRoles() {
 
-    try (CqlSession session = ads.newKeyTabSession()) {
-      session.execute(
-          "CREATE ROLE IF NOT EXISTS alice WITH PASSWORD = 'fakePasswordForAlice' AND LOGIN = FALSE");
-      session.execute(
-          "CREATE ROLE IF NOT EXISTS ben WITH PASSWORD = 'fakePasswordForBen' AND LOGIN = TRUE");
-      session.execute("CREATE ROLE IF NOT EXISTS 'bob@DATASTAX.COM' WITH LOGIN = TRUE");
-      session.execute(
-          "CREATE ROLE IF NOT EXISTS 'charlie@DATASTAX.COM' WITH PASSWORD = 'fakePasswordForCharlie' AND LOGIN = TRUE");
-      session.execute(
-          "CREATE ROLE IF NOT EXISTS steve WITH PASSWORD = 'fakePasswordForSteve' AND LOGIN = TRUE");
-      session.execute(
-          "CREATE KEYSPACE IF NOT EXISTS aliceks WITH REPLICATION = {'class':'SimpleStrategy', 'replication_factor':'1'}");
-      session.execute(
-          "CREATE TABLE IF NOT EXISTS aliceks.alicetable (key text PRIMARY KEY, value text)");
-      session.execute("INSERT INTO aliceks.alicetable (key, value) VALUES ('hello', 'world')");
-      session.execute("GRANT ALL ON KEYSPACE aliceks TO alice");
-      session.execute("GRANT EXECUTE ON ALL AUTHENTICATION SCHEMES TO 'ben'");
-      session.execute("GRANT EXECUTE ON ALL AUTHENTICATION SCHEMES TO 'bob@DATASTAX.COM'");
-      session.execute("GRANT EXECUTE ON ALL AUTHENTICATION SCHEMES TO 'steve'");
-      session.execute("GRANT EXECUTE ON ALL AUTHENTICATION SCHEMES TO 'charlie@DATASTAX.COM'");
-      session.execute("GRANT PROXY.LOGIN ON ROLE 'alice' TO 'ben'");
-      session.execute("GRANT PROXY.LOGIN ON ROLE 'alice' TO 'bob@DATASTAX.COM'");
-      session.execute("GRANT PROXY.EXECUTE ON ROLE 'alice' TO 'steve'");
-      session.execute("GRANT PROXY.EXECUTE ON ROLE 'alice' TO 'charlie@DATASTAX.COM'");
-      // ben and bob are allowed to login as alice, but not execute as alice.
-      // charlie and steve are allowed to execute as alice, but not login as alice.
-    }
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          try (CqlSession session = ads.newKeyTabSession()) {
+            session.execute(
+                "CREATE ROLE IF NOT EXISTS alice WITH PASSWORD = 'fakePasswordForAlice' AND LOGIN = FALSE");
+            session.execute(
+                "CREATE ROLE IF NOT EXISTS ben WITH PASSWORD = 'fakePasswordForBen' AND LOGIN = TRUE");
+            session.execute("CREATE ROLE IF NOT EXISTS 'bob@DATASTAX.COM' WITH LOGIN = TRUE");
+            session.execute(
+                "CREATE ROLE IF NOT EXISTS 'charlie@DATASTAX.COM' WITH PASSWORD = 'fakePasswordForCharlie' AND LOGIN = TRUE");
+            session.execute(
+                "CREATE ROLE IF NOT EXISTS steve WITH PASSWORD = 'fakePasswordForSteve' AND LOGIN = TRUE");
+            session.execute(
+                "CREATE KEYSPACE IF NOT EXISTS aliceks WITH REPLICATION = {'class':'SimpleStrategy', 'replication_factor':'1'}");
+            session.execute(
+                "CREATE TABLE IF NOT EXISTS aliceks.alicetable (key text PRIMARY KEY, value text)");
+            session.execute(
+                "INSERT INTO aliceks.alicetable (key, value) VALUES ('hello', 'world')");
+            session.execute("GRANT ALL ON KEYSPACE aliceks TO alice");
+            session.execute("GRANT EXECUTE ON ALL AUTHENTICATION SCHEMES TO 'ben'");
+            session.execute("GRANT EXECUTE ON ALL AUTHENTICATION SCHEMES TO 'bob@DATASTAX.COM'");
+            session.execute("GRANT EXECUTE ON ALL AUTHENTICATION SCHEMES TO 'steve'");
+            session.execute(
+                "GRANT EXECUTE ON ALL AUTHENTICATION SCHEMES TO 'charlie@DATASTAX.COM'");
+            session.execute("GRANT PROXY.LOGIN ON ROLE 'alice' TO 'ben'");
+            session.execute("GRANT PROXY.LOGIN ON ROLE 'alice' TO 'bob@DATASTAX.COM'");
+            session.execute("GRANT PROXY.EXECUTE ON ROLE 'alice' TO 'steve'");
+            session.execute("GRANT PROXY.EXECUTE ON ROLE 'alice' TO 'charlie@DATASTAX.COM'");
+            // ben and bob are allowed to login as alice, but not execute as alice.
+            // charlie and steve are allowed to execute as alice, but not login as alice.
+          }
+        });
   }
   /**
    * Validates that a connection may be successfully made as user 'alice' using the credentials of a
