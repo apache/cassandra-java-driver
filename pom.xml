@@ -755,7 +755,7 @@ limitations under the License.]]></inlineHeader>
         <extensions>true</extensions>
         <configuration>
           <serverId>ossrh</serverId>
-          <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+          <nexusUrl>https://repository.apache.org/</nexusUrl>
           <autoReleaseAfterClose>false</autoReleaseAfterClose>
           <skipLocalStaging>true</skipLocalStaging>
         </configuration>
