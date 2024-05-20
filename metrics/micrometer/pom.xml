@@ -26,7 +26,7 @@
   <parent>
     <groupId>com.scylladb</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.17.0.1-SNAPSHOT</version>
+    <version>4.17.0.1</version>
     <relativePath>../../</relativePath>
   </parent>
   <artifactId>java-driver-metrics-micrometer</artifactId>
