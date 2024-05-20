@@ -64,8 +64,12 @@ public class DefaultReactiveResultSetIT {
   @BeforeClass
   public static void initialize() {
     CqlSession session = sessionRule.session();
-    session.execute("DROP TABLE IF EXISTS test_reactive_read");
-    session.execute("DROP TABLE IF EXISTS test_reactive_write");
+    session.execute(
+        SimpleStatement.newInstance("DROP TABLE IF EXISTS test_reactive_read")
+            .setExecutionProfile(sessionRule.slowProfile()));
+    session.execute(
+        SimpleStatement.newInstance("DROP TABLE IF EXISTS test_reactive_write")
+            .setExecutionProfile(sessionRule.slowProfile()));
     session.checkSchemaAgreement();
     session.execute(
         SimpleStatement.builder(
