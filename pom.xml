@@ -25,7 +25,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.scylladb</groupId>
   <artifactId>java-driver-parent</artifactId>
-  <version>4.17.0.1</version>
+  <version>4.17.0.2-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Java Driver for Scylla and Apache Cassandra</name>
   <description>A driver for Scylla and Apache Cassandra(R) 2.1+ that works exclusively with the Cassandra Query Language version 3 (CQL3) and Cassandra's native protocol versions 3 and above.</description>
@@ -1018,7 +1018,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <connection>scm:git:https://github.com/scylladb/java-driver</connection>
     <developerConnection>scm:git:https://github.com/scylladb/java-driver</developerConnection>
     <url>https://github.com/scylladb/java-driver</url>
-    <tag>4.17.0.1</tag>
+    <tag>HEAD</tag>
   </scm>
   <developers>
     <developer>
