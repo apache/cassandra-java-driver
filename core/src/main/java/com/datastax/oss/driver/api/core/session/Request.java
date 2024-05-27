@@ -96,6 +96,17 @@ public interface Request {
   CqlIdentifier getRoutingKeyspace();
 
   /**
+   * The table to use for tablet-aware routing. Infers the table from available ColumnDefinitions or
+   * {@code null} if it is not possible.
+   *
+   * @return
+   */
+  @Nullable
+  default CqlIdentifier getRoutingTable() {
+    return null;
+  }
+
+  /**
    * The partition key to use for token-aware routing.
    *
    * <p>For each request, the driver tries to determine a <em>routing keyspace</em> and a

@@ -157,7 +157,7 @@ public class ChannelPool implements AsyncAutoCloseable {
    *     to the caller to fail fast and move to the next node.
    */
   public DriverChannel next() {
-    return next(null);
+    return next(null, null);
   }
 
   /**
@@ -167,7 +167,7 @@ public class ChannelPool implements AsyncAutoCloseable {
    *     to the caller to fail fast and move to the next node.
    *     <p>There is no need to return the channel.
    */
-  public DriverChannel next(@Nullable Token routingKey) {
+  public DriverChannel next(@Nullable Token routingKey, @Nullable Integer shardSuggestion) {
     if (!singleThreaded.initialized) {
       return null;
     }
@@ -175,10 +175,20 @@ public class ChannelPool implements AsyncAutoCloseable {
       return channels[0].next();
     }
 
-    int shardId =
-        routingKey != null
-            ? singleThreaded.shardingInfo.shardId(routingKey)
-            : ThreadLocalRandom.current().nextInt(channels.length);
+    int shardId = -1;
+    if (shardSuggestion != null) {
+      if (shardSuggestion >= channels.length) {
+        LOG.warn("Shard suggestion is out of channels array bounds. Ignoring.");
+      } else {
+        shardId = shardSuggestion;
+      }
+    }
+    if (shardId == -1) {
+      shardId =
+          routingKey != null
+              ? singleThreaded.shardingInfo.shardId(routingKey)
+              : ThreadLocalRandom.current().nextInt(channels.length);
+    }
 
     if (channels[shardId].size() > 0) {
       return channels[shardId].next();

@@ -472,6 +472,17 @@ public class DefaultBatchStatement implements BatchStatement {
     return null;
   }
 
+  @Override
+  public CqlIdentifier getRoutingTable() {
+    for (BatchableStatement<?> statement : statements) {
+      CqlIdentifier ks = statement.getRoutingTable();
+      if (ks != null) {
+        return ks;
+      }
+    }
+    return null;
+  }
+
   @NonNull
   @Override
   public BatchStatement setRoutingKeyspace(CqlIdentifier newRoutingKeyspace) {

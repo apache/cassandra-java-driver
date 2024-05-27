@@ -34,6 +34,8 @@ import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.Tablet;
+import com.datastax.oss.driver.api.core.metadata.TabletMap;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
 import com.datastax.oss.driver.api.core.metadata.token.Partitioner;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
@@ -59,8 +61,10 @@ import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.token.DefaultTokenMap;
+import com.datastax.oss.driver.internal.core.metadata.token.TokenLong64;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
+import com.datastax.oss.driver.internal.core.protocol.TabletInfo;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
 import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
@@ -284,6 +288,51 @@ public class CqlRequestHandler implements Throttled {
     return tokenMap == null ? null : ((DefaultTokenMap) tokenMap).getTokenFactory().hash(key);
   }
 
+  public Integer getShardFromTabletMap(Statement statement, Node node, Token token) {
+    TabletMap tabletMap = context.getMetadataManager().getMetadata().getTabletMap();
+    if (!(token instanceof TokenLong64)) {
+      LOG.trace(
+          "Token ({}) is not a TokenLong64. Not performing tablet shard lookup for statement {}.",
+          token,
+          statement);
+      return null;
+    }
+    CqlIdentifier statementKeyspace = statement.getKeyspace();
+    if (statementKeyspace == null) {
+      statementKeyspace = statement.getRoutingKeyspace();
+    }
+    if (statementKeyspace == null) {
+      statementKeyspace = this.keyspace;
+    }
+    CqlIdentifier statementTable = statement.getRoutingTable();
+    if (statementKeyspace == null || statementTable == null) {
+      return null;
+    }
+    long tokenValue = ((TokenLong64) token).getValue();
+
+    Tablet targetTablet = tabletMap.getTablet(statementKeyspace, statementTable, tokenValue);
+    if (targetTablet == null) {
+      LOG.trace(
+          "Could not determine shard for token {} and table {}.{} on Node {}: Could not find corresponding tablet, returning null.",
+          token,
+          statementKeyspace,
+          statementTable,
+          node);
+      return null;
+    }
+    int shard = targetTablet.getShardForNode(node);
+    if (shard == -1) {
+      LOG.trace(
+          "Could not find shard corresponding to token {} and Node {} for table {} in keyspace {}. Returning null.",
+          token,
+          node,
+          statementTable,
+          statementKeyspace);
+      return null;
+    }
+    return shard;
+  }
+
   /**
    * Sends the request to the next available node.
    *
@@ -309,9 +358,20 @@ public class CqlRequestHandler implements Throttled {
     Node node = retriedNode;
     DriverChannel channel = null;
     if (node == null
-        || (channel = session.getChannel(node, logPrefix, getRoutingToken(statement))) == null) {
+        || (channel =
+                session.getChannel(
+                    node,
+                    logPrefix,
+                    getRoutingToken(statement),
+                    getShardFromTabletMap(statement, node, getRoutingToken(statement))))
+            == null) {
       while (!result.isDone() && (node = queryPlan.poll()) != null) {
-        channel = session.getChannel(node, logPrefix, getRoutingToken(statement));
+        channel =
+            session.getChannel(
+                node,
+                logPrefix,
+                getRoutingToken(statement),
+                getShardFromTabletMap(statement, node, getRoutingToken(statement)));
         if (channel != null) {
           break;
         } else {
@@ -419,6 +479,18 @@ public class CqlRequestHandler implements Throttled {
               callback.executionProfile.getName(),
               totalLatencyNanos,
               TimeUnit.NANOSECONDS);
+        }
+        if (resultSet.getColumnDefinitions().size() > 0
+            && resultSet
+                .getExecutionInfo()
+                .getIncomingPayload()
+                .containsKey(TabletInfo.TABLETS_ROUTING_V1_CUSTOM_PAYLOAD_KEY)) {
+          context
+              .getMetadataManager()
+              .addTabletFromPayload(
+                  resultSet.getColumnDefinitions().get(0).getKeyspace(),
+                  resultSet.getColumnDefinitions().get(0).getTable(),
+                  resultSet.getExecutionInfo().getIncomingPayload());
         }
       }
       // log the warnings if they have NOT been disabled

@@ -50,6 +50,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.metadata.DefaultMetadata;
 import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper;
+import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.servererrors.DefaultWriteTypeRegistry;
@@ -98,6 +99,7 @@ public class RequestHandlerTestHarness implements AutoCloseable {
   @Mock protected TimestampGenerator timestampGenerator;
   @Mock protected ProtocolVersionRegistry protocolVersionRegistry;
   @Mock protected SessionMetricUpdater sessionMetricUpdater;
+  @Mock protected MetadataManager metadataManager;
 
   protected RequestHandlerTestHarness(Builder builder) {
     MockitoAnnotations.initMocks(this);
@@ -139,8 +141,17 @@ public class RequestHandlerTestHarness implements AutoCloseable {
 
     when(timestampGenerator.next()).thenReturn(Statement.NO_DEFAULT_TIMESTAMP);
     when(context.getTimestampGenerator()).thenReturn(timestampGenerator);
+    when(context.getMetadataManager()).thenReturn(metadataManager);
+    when(metadataManager.getMetadata()).thenReturn(DefaultMetadata.EMPTY);
 
     pools = builder.buildMockPools();
+    // Call variation introduced with Tablets (shardSuggestion field)
+    when(session.getChannel(any(Node.class), anyString(), any(), any()))
+        .thenAnswer(
+            invocation -> {
+              Node node = invocation.getArgument(0);
+              return pools.get(node).next();
+            });
     when(session.getChannel(any(Node.class), anyString(), any()))
         .thenAnswer(
             invocation -> {

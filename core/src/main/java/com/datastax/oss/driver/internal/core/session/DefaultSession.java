@@ -239,18 +239,27 @@ public class DefaultSession implements CqlSession {
 
   @Nullable
   public DriverChannel getChannel(@NonNull Node node, @NonNull String logPrefix) {
-    return getChannel(node, logPrefix, null);
+    return getChannel(node, logPrefix, null, null);
   }
 
   @Nullable
   public DriverChannel getChannel(
       @NonNull Node node, @NonNull String logPrefix, @Nullable Token routingKey) {
+    return getChannel(node, logPrefix, routingKey, null);
+  }
+
+  @Nullable
+  public DriverChannel getChannel(
+      @NonNull Node node,
+      @NonNull String logPrefix,
+      @Nullable Token routingKey,
+      @Nullable Integer shardSuggestion) {
     ChannelPool pool = poolManager.getPools().get(node);
     if (pool == null) {
       LOG.trace("[{}] No pool to {}, skipping", logPrefix, node);
       return null;
     } else {
-      DriverChannel channel = pool.next(routingKey);
+      DriverChannel channel = pool.next(routingKey, shardSuggestion);
       if (channel == null) {
         LOG.trace("[{}] Pool returned no channel for {}, skipping", logPrefix, node);
         return null;

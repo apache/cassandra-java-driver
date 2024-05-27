@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.TabletMap;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -46,22 +47,34 @@ import org.slf4j.LoggerFactory;
 public class DefaultMetadata implements Metadata {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadata.class);
   public static DefaultMetadata EMPTY =
-      new DefaultMetadata(Collections.emptyMap(), Collections.emptyMap(), null, null);
+      new DefaultMetadata(
+          Collections.emptyMap(), Collections.emptyMap(), null, null, DefaultTabletMap.emptyMap());
 
   protected final Map<UUID, Node> nodes;
   protected final Map<CqlIdentifier, KeyspaceMetadata> keyspaces;
   protected final TokenMap tokenMap;
   protected final String clusterName;
+  protected final TabletMap tabletMap;
 
   protected DefaultMetadata(
       Map<UUID, Node> nodes,
       Map<CqlIdentifier, KeyspaceMetadata> keyspaces,
       TokenMap tokenMap,
       String clusterName) {
+    this(nodes, keyspaces, tokenMap, clusterName, DefaultTabletMap.emptyMap());
+  }
+
+  protected DefaultMetadata(
+      Map<UUID, Node> nodes,
+      Map<CqlIdentifier, KeyspaceMetadata> keyspaces,
+      TokenMap tokenMap,
+      String clusterName,
+      TabletMap tabletMap) {
     this.nodes = nodes;
     this.keyspaces = keyspaces;
     this.tokenMap = tokenMap;
     this.clusterName = clusterName;
+    this.tabletMap = tabletMap;
   }
 
   @NonNull
@@ -82,6 +95,11 @@ public class DefaultMetadata implements Metadata {
     return Optional.ofNullable(tokenMap);
   }
 
+  @Override
+  public TabletMap getTabletMap() {
+    return tabletMap;
+  }
+
   @NonNull
   @Override
   public Optional<String> getClusterName() {
@@ -90,6 +108,8 @@ public class DefaultMetadata implements Metadata {
 
   /**
    * Refreshes the current metadata with the given list of nodes.
+   *
+   * <p>Does not rebuild the tablet map.
    *
    * @param tokenMapEnabled whether to rebuild the token map or not; if this is {@code false} the
    *     current token map will be copied into the new metadata without being recomputed.
@@ -114,7 +134,19 @@ public class DefaultMetadata implements Metadata {
         this.keyspaces,
         rebuildTokenMap(
             newNodes, keyspaces, tokenMapEnabled, forceFullRebuild, tokenFactory, context),
-        context.getChannelFactory().getClusterName());
+        context.getChannelFactory().getClusterName(),
+        this.tabletMap);
+  }
+
+  /**
+   * Refreshes the current metadata with new TabletMap.
+   *
+   * @param newTabletMap replacement TabletMap.
+   * @return new metadata.
+   */
+  public DefaultMetadata withTabletMap(TabletMap newTabletMap) {
+    return new DefaultMetadata(
+        this.nodes, this.keyspaces, this.tokenMap, this.clusterName, newTabletMap);
   }
 
   public DefaultMetadata withSchema(
@@ -125,7 +157,8 @@ public class DefaultMetadata implements Metadata {
         this.nodes,
         ImmutableMap.copyOf(newKeyspaces),
         rebuildTokenMap(nodes, newKeyspaces, tokenMapEnabled, false, null, context),
-        context.getChannelFactory().getClusterName());
+        context.getChannelFactory().getClusterName(),
+        this.tabletMap);
   }
 
   @Nullable

@@ -301,6 +301,12 @@ public class DefaultBoundStatement implements BoundStatement {
     }
   }
 
+  @Override
+  public CqlIdentifier getRoutingTable() {
+    ColumnDefinitions definitions = preparedStatement.getVariableDefinitions();
+    return (definitions.size() == 0) ? null : definitions.get(0).getTable();
+  }
+
   @NonNull
   @Override
   public BoundStatement setRoutingKeyspace(@Nullable CqlIdentifier newRoutingKeyspace) {

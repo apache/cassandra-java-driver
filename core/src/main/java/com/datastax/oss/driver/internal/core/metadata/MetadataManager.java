@@ -16,11 +16,17 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.data.TupleValue;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.Tablet;
+import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.api.core.type.TupleType;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
@@ -29,6 +35,7 @@ import com.datastax.oss.driver.internal.core.metadata.schema.queries.KeyspaceFil
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
 import com.datastax.oss.driver.internal.core.metadata.schema.refresh.SchemaRefresh;
+import com.datastax.oss.driver.internal.core.protocol.TabletInfo;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
@@ -39,8 +46,10 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -71,6 +80,7 @@ public class MetadataManager implements AsyncAutoCloseable {
   private volatile boolean tokenMapEnabled;
   private volatile Set<DefaultNode> contactPoints;
   private volatile boolean wasImplicitContactPoint;
+  private volatile TypeCodec<TupleValue> tabletPayloadCodec = null;
 
   public MetadataManager(InternalDriverContext context) {
     this(context, DefaultMetadata.EMPTY);
@@ -492,6 +502,10 @@ public class MetadataManager implements AsyncAutoCloseable {
       return metadata;
     }
 
+    private void addTablet(CqlIdentifier keyspace, CqlIdentifier table, Tablet tablet) {
+      apply(new AddTabletRefresh(keyspace, table, tablet));
+    }
+
     private void close() {
       if (closeWasCalled) {
         return;
@@ -519,5 +533,40 @@ public class MetadataManager implements AsyncAutoCloseable {
       }
     }
     return null;
+  }
+
+  private TypeCodec<TupleValue> getTabletPayloadCodec() {
+    if (tabletPayloadCodec == null) {
+      TupleType payloadOuterTuple =
+          DataTypes.tupleOf(
+              DataTypes.BIGINT,
+              DataTypes.BIGINT,
+              DataTypes.listOf(DataTypes.tupleOf(DataTypes.UUID, DataTypes.INT)));
+      tabletPayloadCodec = context.getCodecRegistry().codecFor(payloadOuterTuple);
+    }
+    return tabletPayloadCodec;
+  }
+
+  public void addTabletFromPayload(
+      CqlIdentifier keyspace,
+      CqlIdentifier table,
+      @NonNull Map<String, ByteBuffer> incomingPayload) {
+    // Assumes payload is present
+    TupleValue tabletTuple =
+        getTabletPayloadCodec()
+            .decode(
+                incomingPayload.get(TabletInfo.TABLETS_ROUTING_V1_CUSTOM_PAYLOAD_KEY),
+                context.getProtocolVersion());
+    if (tabletTuple == null) {
+      LOG.warn(
+          "Custom payload containing tablet information for table {}.{} decoded to null. This should not ever "
+              + "happen.",
+          keyspace,
+          table);
+      return;
+    }
+    DefaultTabletMap.DefaultTablet tabletToAdd =
+        DefaultTabletMap.DefaultTablet.parseTabletPayloadV1(tabletTuple, getMetadata().getNodes());
+    RunOrSchedule.on(adminExecutor, () -> singleThreaded.addTablet(keyspace, table, tabletToAdd));
   }
 }

@@ -43,6 +43,7 @@ import com.datastax.oss.driver.internal.core.protocol.SegmentToBytesEncoder;
 import com.datastax.oss.driver.internal.core.protocol.SegmentToFrameDecoder;
 import com.datastax.oss.driver.internal.core.protocol.ShardingInfo;
 import com.datastax.oss.driver.internal.core.protocol.ShardingInfo.ConnectionShardingInfo;
+import com.datastax.oss.driver.internal.core.protocol.TabletInfo;
 import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.protocol.internal.Message;
@@ -94,6 +95,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
   private ChannelHandlerContext ctx;
   private final boolean querySupportedOptions;
   private LwtInfo lwtInfo;
+  private TabletInfo tabletInfo;
 
   /**
    * @param querySupportedOptions whether to send OPTIONS as the first message, to request which
@@ -191,6 +193,9 @@ class ProtocolInitHandler extends ConnectInitHandler {
           if (lwtInfo != null) {
             lwtInfo.addOption(startupOptions);
           }
+          if (tabletInfo != null && tabletInfo.isEnabled()) {
+            TabletInfo.addOption(startupOptions);
+          }
           return request = new Startup(startupOptions);
         case GET_CLUSTER_NAME:
           return request = CLUSTER_NAME_QUERY;
@@ -230,6 +235,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
           if (lwtInfo != null) {
             channel.attr(LWT_INFO_KEY).set(lwtInfo);
           }
+          tabletInfo = TabletInfo.parseTabletInfo(res.options);
           step = Step.STARTUP;
           send();
         } else if (step == Step.STARTUP && response instanceof Ready) {

@@ -32,6 +32,8 @@ import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistanceEvaluator;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
+import com.datastax.oss.driver.api.core.metadata.Tablet;
+import com.datastax.oss.driver.api.core.metadata.TabletMap;
 import com.datastax.oss.driver.api.core.metadata.TokenMap;
 import com.datastax.oss.driver.api.core.metadata.token.Partitioner;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
@@ -45,6 +47,7 @@ import com.datastax.oss.driver.internal.core.loadbalancing.nodeset.DcAgnosticNod
 import com.datastax.oss.driver.internal.core.loadbalancing.nodeset.MultiDcNodeSet;
 import com.datastax.oss.driver.internal.core.loadbalancing.nodeset.NodeSet;
 import com.datastax.oss.driver.internal.core.loadbalancing.nodeset.SingleDcNodeSet;
+import com.datastax.oss.driver.internal.core.metadata.token.TokenLong64;
 import com.datastax.oss.driver.internal.core.util.ArrayUtils;
 import com.datastax.oss.driver.internal.core.util.collection.CompositeQueryPlan;
 import com.datastax.oss.driver.internal.core.util.collection.LazyQueryPlan;
@@ -285,17 +288,17 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
     }
 
     Optional<TokenMap> maybeTokenMap = context.getMetadataManager().getMetadata().getTokenMap();
-    if (!maybeTokenMap.isPresent()) {
-      return Collections.emptySet();
-    }
+    TabletMap tabletMap = context.getMetadataManager().getMetadata().getTabletMap();
 
     // Note: we're on the hot path and the getXxx methods are potentially more than simple getters,
     // so we only call each method when strictly necessary (which is why the code below looks a bit
     // weird).
     CqlIdentifier keyspace;
+    CqlIdentifier table;
     Token token;
     ByteBuffer key;
-    Partitioner partitioner = null;
+    Partitioner partitioner;
+
     try {
       keyspace = request.getKeyspace();
       if (keyspace == null) {
@@ -307,6 +310,8 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
       if (keyspace == null) {
         return Collections.emptySet();
       }
+
+      table = request.getRoutingTable();
 
       token = request.getRoutingToken();
       key = (token == null) ? request.getRoutingKey() : null;
@@ -321,6 +326,27 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
       return Collections.emptySet();
     }
 
+    if (table != null) {
+      if (token == null) {
+        if (partitioner != null) {
+          token = partitioner.hash(key);
+        }
+      }
+      if (token instanceof TokenLong64) {
+        Tablet targetTablet =
+            tabletMap.getTablet(keyspace, table, ((TokenLong64) token).getValue());
+        if (targetTablet != null) {
+          Set<Node> replicas = targetTablet.getReplicaNodes();
+          if (!replicas.isEmpty()) {
+            return replicas;
+          }
+        }
+      }
+    }
+
+    if (!maybeTokenMap.isPresent()) {
+      return Collections.emptySet();
+    }
     TokenMap tokenMap = maybeTokenMap.get();
     return token != null
         ? tokenMap.getReplicas(keyspace, token)
