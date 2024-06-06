@@ -199,14 +199,14 @@ public class InFlightHandler extends ChannelDuplexHandler {
       LOG.debug("[{}] No pending queries, completing graceful shutdown now", logPrefix);
       ctx.channel().close();
     } else {
-      // remove heartbeat handler from pipeline if present.
+      // Remove heartbeat handler from pipeline if present.
       ChannelHandler heartbeatHandler = ctx.pipeline().get(ChannelFactory.HEARTBEAT_HANDLER_NAME);
       if (heartbeatHandler != null) {
         ctx.pipeline().remove(heartbeatHandler);
       }
       LOG.debug("[{}] There are pending queries, delaying graceful shutdown", logPrefix);
       closingGracefully = true;
-      closeStartedFuture.setSuccess();
+      closeStartedFuture.trySuccess();
     }
   }
 
