@@ -329,7 +329,18 @@ public class GraphRequestHandler implements Throttled {
   private void setFinalResult(
       Result resultMessage, Frame responseFrame, NodeResponseCallback callback) {
     try {
-      ExecutionInfo executionInfo = buildExecutionInfo(callback, responseFrame);
+      ExecutionInfo executionInfo =
+          DefaultExecutionInfo.builder(
+                  callback.statement,
+                  callback.node,
+                  startedSpeculativeExecutionsCount.get(),
+                  callback.execution,
+                  errors,
+                  session,
+                  context,
+                  callback.executionProfile)
+              .withServerResponse(resultMessage, responseFrame)
+              .build();
       DriverExecutionProfile executionProfile =
           Conversions.resolveExecutionProfile(callback.statement, context);
       GraphProtocol subProtocol =
@@ -426,23 +437,6 @@ public class GraphRequestHandler implements Throttled {
             LOG.warn("Query '{}' generated server side warning(s): {}", statementString, warning));
   }
 
-  private ExecutionInfo buildExecutionInfo(NodeResponseCallback callback, Frame responseFrame) {
-    DriverExecutionProfile executionProfile =
-        Conversions.resolveExecutionProfile(callback.statement, context);
-    return new DefaultExecutionInfo(
-        callback.statement,
-        callback.node,
-        startedSpeculativeExecutionsCount.get(),
-        callback.execution,
-        errors,
-        null,
-        responseFrame,
-        true,
-        session,
-        context,
-        executionProfile);
-  }
-
   @Override
   public void onThrottleFailure(@NonNull RequestThrottlingException error) {
     DriverExecutionProfile executionProfile =
@@ -457,18 +451,16 @@ public class GraphRequestHandler implements Throttled {
     DriverExecutionProfile executionProfile =
         Conversions.resolveExecutionProfile(statement, context);
     ExecutionInfo executionInfo =
-        new DefaultExecutionInfo(
-            statement,
-            node,
-            startedSpeculativeExecutionsCount.get(),
-            execution,
-            errors,
-            null,
-            null,
-            true,
-            session,
-            context,
-            executionProfile);
+        DefaultExecutionInfo.builder(
+                statement,
+                node,
+                startedSpeculativeExecutionsCount.get(),
+                execution,
+                errors,
+                session,
+                context,
+                executionProfile)
+            .build();
     if (error instanceof DriverException) {
       ((DriverException) error).setExecutionInfo(executionInfo);
     }

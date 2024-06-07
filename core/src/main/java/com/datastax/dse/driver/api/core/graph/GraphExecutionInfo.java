@@ -18,8 +18,10 @@
 package com.datastax.dse.driver.api.core.graph;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,12 @@ public interface GraphExecutionInfo {
 
   /** The statement that was executed. */
   GraphStatement<?> getStatement();
+
+  /** @return Execution profile applied when executing given request. */
+  @Nullable
+  default DriverExecutionProfile getExecutionProfile() {
+    return null;
+  }
 
   /** The node that was used as a coordinator to successfully complete the query. */
   Node getCoordinator();

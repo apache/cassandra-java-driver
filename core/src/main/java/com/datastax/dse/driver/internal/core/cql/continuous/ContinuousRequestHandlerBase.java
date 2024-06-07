@@ -833,7 +833,8 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     private void processResultResponse(@NonNull Result result, @Nullable Frame frame) {
       assert lock.isHeldByCurrentThread();
       try {
-        ExecutionInfo executionInfo = createExecutionInfo(result, frame);
+        ExecutionInfo executionInfo =
+            createExecutionInfo().withServerResponse(result, frame).build();
         if (result instanceof Rows) {
           DseRowsMetadata rowsMetadata = (DseRowsMetadata) ((Rows) result).getMetadata();
           if (columnDefinitions == null) {
@@ -1458,7 +1459,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
                 latencyNanos,
                 executionProfile,
                 node,
-                createExecutionInfo(frame),
+                createExecutionInfo().withServerResponse(frame).build(),
                 logPrefix);
       }
     }
@@ -1576,7 +1577,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
 
           ExecutionInfo executionInfo = null;
           if (pageOrError instanceof AsyncPagingIterable) {
-            executionInfo = ((AsyncPagingIterable) pageOrError).getExecutionInfo();
+            executionInfo = ((AsyncPagingIterable<?, ?>) pageOrError).getExecutionInfo();
           } else if (pageOrError instanceof AsyncGraphResultSet) {
             executionInfo = ((AsyncGraphResultSet) pageOrError).getRequestExecutionInfo();
           }
@@ -1612,34 +1613,13 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     }
 
     @NonNull
-    private ExecutionInfo createExecutionInfo(@NonNull Result result, @Nullable Frame response) {
-      ByteBuffer pagingState =
-          result instanceof Rows ? ((Rows) result).getMetadata().pagingState : null;
-      return new DefaultExecutionInfo(
+    private DefaultExecutionInfo.Builder createExecutionInfo() {
+      return DefaultExecutionInfo.builder(
           statement,
           node,
           startedSpeculativeExecutionsCount.get(),
           executionIndex,
           errors,
-          pagingState,
-          response,
-          true,
-          session,
-          context,
-          executionProfile);
-    }
-
-    @NonNull
-    private ExecutionInfo createExecutionInfo(@Nullable Frame response) {
-      return new DefaultExecutionInfo(
-          statement,
-          node,
-          startedSpeculativeExecutionsCount.get(),
-          executionIndex,
-          errors,
-          null,
-          response,
-          true,
           session,
           context,
           executionProfile);
