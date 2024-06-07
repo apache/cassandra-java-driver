@@ -18,6 +18,7 @@
 package com.datastax.dse.driver.internal.core.graph;
 
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.QueryTrace;
 import com.datastax.oss.driver.api.core.cql.Statement;
@@ -60,6 +61,11 @@ public class GraphExecutionInfoConverter {
       @Override
       public Statement<?> getStatement() {
         throw new ClassCastException("GraphStatement cannot be cast to Statement");
+      }
+
+      @Override
+      public DriverExecutionProfile getExecutionProfile() {
+        return graphExecutionInfo.getExecutionProfile();
       }
 
       @Nullable
@@ -144,6 +150,11 @@ public class GraphExecutionInfoConverter {
       @Override
       public GraphStatement<?> getStatement() {
         return (GraphStatement<?>) executionInfo.getRequest();
+      }
+
+      @Override
+      public DriverExecutionProfile getExecutionProfile() {
+        return executionInfo.getExecutionProfile();
       }
 
       @Override

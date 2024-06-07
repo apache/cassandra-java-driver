@@ -18,11 +18,13 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import static com.datastax.oss.driver.Assertions.assertThatStage;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockingDetails;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -31,13 +33,18 @@ import static org.mockito.Mockito.when;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
+import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.Error;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 import org.junit.Test;
+import org.mockito.invocation.Invocation;
 
 public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
   @Test
@@ -93,7 +100,30 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
                         any(String.class));
                 verifyNoMoreInteractions(requestTracker);
               });
+
+      // verify that passed ExecutionInfo object had correct details
+      List<Invocation> invocations =
+          new ArrayList<>(mockingDetails(requestTracker).getInvocations());
+      checkExecutionInfo(
+          (ExecutionInfo) invocations.get(0).getRawArguments()[5],
+          UNDEFINED_IDEMPOTENCE_STATEMENT,
+          node1);
+      checkExecutionInfo(
+          (ExecutionInfo) invocations.get(1).getRawArguments()[4],
+          UNDEFINED_IDEMPOTENCE_STATEMENT,
+          node2);
+      checkExecutionInfo(
+          (ExecutionInfo) invocations.get(2).getRawArguments()[4],
+          UNDEFINED_IDEMPOTENCE_STATEMENT,
+          node2);
     }
+  }
+
+  private void checkExecutionInfo(
+      ExecutionInfo executionInfo, Request expectedRequest, Node expectedNode) {
+    assertThat(executionInfo.getRequest()).isEqualTo(expectedRequest);
+    assertThat(executionInfo.getExecutionProfile()).isNotNull();
+    assertThat(executionInfo.getCoordinator()).isEqualTo(expectedNode);
   }
 
   @Test

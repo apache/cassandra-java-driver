@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.retry.RetryDecision;
@@ -65,6 +66,12 @@ public interface ExecutionInfo {
   @NonNull
   @Deprecated
   Statement<?> getStatement();
+
+  /** @return Execution profile applied when executing given request. */
+  @Nullable
+  default DriverExecutionProfile getExecutionProfile() {
+    return null;
+  }
 
   /**
    * The node that acted as a coordinator for the query.
