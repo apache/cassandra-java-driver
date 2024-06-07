@@ -19,6 +19,17 @@ under the License.
 
 ## Upgrade guide
 
+### NEW VERSION PLACEHOLDER
+
+#### Keystore reloading in DefaultSslEngineFactory
+
+`DefaultSslEngineFactory` now includes an optional keystore reloading interval, for detecting changes in the local
+client keystore file. This is relevant in environments with mTLS enabled and short-lived client certificates, especially
+when an application restart might not always happen between a new keystore becoming available and the previous
+keystore certificate expiring.
+
+This feature is disabled by default for compatibility. To enable, see `keystore-reload-interval` in `reference.conf`.
+
 ### 4.17.0
 
 #### Beta support for Java17

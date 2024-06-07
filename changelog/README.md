@@ -21,6 +21,26 @@ under the License.
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.18.1
+
+- [improvement] JAVA-3142: Ability to specify ordering of remote local dc's via new configuration for graceful automatic failovers
+- [bug] CASSANDRA-19457: Object reference in Micrometer metrics prevent GC from reclaiming Session instances
+- [improvement] CASSANDRA-19468: Don't swallow exception during metadata refresh
+- [bug] CASSANDRA-19333: Fix data corruption in VectorCodec when using heap buffers
+- [improvement] CASSANDRA-19290: Replace uses of AttributeKey.newInstance
+- [improvement] CASSANDRA-19352: Support native_transport_(address|port) + native_transport_port_ssl for DSE 6.8 (4.x edition)
+- [improvement] CASSANDRA-19180: Support reloading keystore in cassandra-java-driver
+
+### 4.18.0
+
+- [improvement] PR 1689: Add support for publishing percentile time series for the histogram metrics (nparaddi-walmart)
+- [improvement] JAVA-3104: Do not eagerly pre-allocate array when deserializing CqlVector
+- [improvement] JAVA-3111: upgrade jackson-databind to 2.13.4.2 to address gradle dependency issue
+- [improvement] PR 1617: Improve ByteBufPrimitiveCodec readBytes (chibenwa)
+- [improvement] JAVA-3095: Fix CREATE keyword in vector search example in upgrade guide
+- [improvement] JAVA-3100: Update jackson-databind to 2.13.4.1 and jackson-jaxrs-json-provider to 2.13.4 to address recent CVEs
+- [improvement] JAVA-3089: Forbid wildcard imports
+
 ### 4.17.0
 
 - [improvement] JAVA-3070: Make CqlVector and CqlDuration serializable

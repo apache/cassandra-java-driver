@@ -25,9 +25,9 @@
     <artifactId>apache</artifactId>
     <version>23</version>
   </parent>
-  <groupId>com.datastax.oss</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>java-driver-parent</artifactId>
-  <version>4.17.1-SNAPSHOT</version>
+  <version>4.18.2-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Apache Cassandra Java Driver</name>
   <url>https://github.com/datastax/java-driver</url>
@@ -43,6 +43,7 @@
     <module>test-infra</module>
     <module>integration-tests</module>
     <module>osgi-tests</module>
+    <module>distribution-source</module>
     <module>distribution</module>
     <module>distribution-tests</module>
     <module>examples</module>
@@ -52,6 +53,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <config.version>1.4.1</config.version>
+    <!-- when changing version also update version in LICENSE_binary  -->
     <hdrhistogram.version>2.1.12</hdrhistogram.version>
     <metrics.version>4.1.18</metrics.version>
     <netty.version>4.1.94.Final</netty.version>
@@ -61,7 +63,9 @@
     manual/core/integration/README.md
     -->
     <tinkerpop.version>3.5.6</tinkerpop.version>
+    <!-- when changing version also update version in LICENSE_binary  -->
     <slf4j.version>1.7.26</slf4j.version>
+    <!-- when changing version also update version in LICENSE_binary  -->
     <reactive-streams.version>1.0.3</reactive-streams.version>
     <json.version>20230227</json.version>
     <jackson.version>2.13.4</jackson.version>
@@ -95,7 +99,7 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.datastax.oss</groupId>
+        <groupId>org.apache.cassandra</groupId>
         <artifactId>java-driver-core</artifactId>
         <version>${project.version}</version>
         <type>test-jar</type>
@@ -139,6 +143,7 @@
       <dependency>
         <groupId>com.github.jnr</groupId>
         <artifactId>jnr-posix</artifactId>
+        <!-- when changing version also update jnr-* and asm versions in LICENSE_binary  -->
         <version>3.1.15</version>
       </dependency>
       <dependency>
@@ -567,6 +572,10 @@
                 </item>
               </revapi.ignore>
             </analysisConfiguration>
+            <oldArtifacts>
+              <!-- The previous release used DataStax groupId, remove this after the next release -->
+              <artifact>com.datastax.oss:${project.artifactId}:RELEASE</artifact>
+            </oldArtifacts>
           </configuration>
           <dependencies>
             <dependency>
@@ -719,6 +728,7 @@ limitations under the License.]]></inlineHeader>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <jvm>${testing.jvm}/bin/java</jvm>
           <systemPropertyVariables>
             <logback.configurationFile>${project.basedir}/src/test/resources/logback-test.xml</logback.configurationFile>
           </systemPropertyVariables>
@@ -745,7 +755,7 @@ limitations under the License.]]></inlineHeader>
         <extensions>true</extensions>
         <configuration>
           <serverId>ossrh</serverId>
-          <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+          <nexusUrl>https://repository.apache.org/</nexusUrl>
           <autoReleaseAfterClose>false</autoReleaseAfterClose>
           <skipLocalStaging>true</skipLocalStaging>
         </configuration>
@@ -759,10 +769,8 @@ limitations under the License.]]></inlineHeader>
               <goal>jar-no-fork</goal>
             </goals>
             <configuration>
-              <includes>
-                <include>NOTICE.txt</include>
-              </includes>
               <excludes>
+                <exclude>LICENSE_binary</exclude>
                 <exclude>NOTICE_binary.txt</exclude>
               </excludes>
             </configuration>
@@ -793,28 +801,6 @@ limitations under the License.]]></inlineHeader>
           </tags>
         </configuration>
         <executions>
-          <execution>
-            <id>attach-javadocs</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-            <configuration>
-              <header><![CDATA[<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-TWSQ28');</script>
-<!-- End Google Tag Manager -->
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TWSQ28"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->]]></header>
-              <additionalOptions>
-                <additionalOption>--allow-script-in-comments</additionalOption>
-              </additionalOptions>
-            </configuration>
-          </execution>
           <execution>
             <!-- Check that our "official" API (api.* packages) does not leak unwanted types -->
             <id>check-api-leaks</id>
@@ -1006,6 +992,17 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </activation>
     </profile>
     <profile>
+      <!-- workarounds for running tests with JDK14 -->
+      <id>test-jdk-14</id>
+      <activation>
+        <jdk>[14,)</jdk>
+      </activation>
+      <properties>
+        <!-- for DriverBlockHoundIntegrationIT when using JDK 13+, see https://github.com/reactor/BlockHound/issues/33 -->
+        <blockhound.argline>-XX:+AllowRedefinitionToAddDeleteMethods</blockhound.argline>
+      </properties>
+    </profile>
+    <profile>
       <!-- workarounds for running tests with JDK17 -->
       <id>test-jdk-17</id>
       <activation>
@@ -1019,12 +1016,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       </properties>
     </profile>
   </profiles>
-  <distributionManagement>
-    <repository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-  </distributionManagement>
   <licenses>
     <license>
       <name>Apache 2</name>

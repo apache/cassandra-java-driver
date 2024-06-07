@@ -976,7 +976,19 @@ public enum DefaultDriverOption implements DriverOption {
    * <p>Value-type: boolean
    */
   METRICS_GENERATE_AGGREGABLE_HISTOGRAMS("advanced.metrics.histograms.generate-aggregable"),
-  ;
+  /**
+   * The duration between attempts to reload the keystore.
+   *
+   * <p>Value-type: {@link java.time.Duration}
+   */
+  SSL_KEYSTORE_RELOAD_INTERVAL("advanced.ssl-engine-factory.keystore-reload-interval"),
+  /**
+   * Ordered preference list of remote dcs optionally supplied for automatic failover.
+   *
+   * <p>Value type: {@link java.util.List List}&#60;{@link String}&#62;
+   */
+  LOAD_BALANCING_DC_FAILOVER_PREFERRED_REMOTE_DCS(
+      "advanced.load-balancing-policy.dc-failover.preferred-remote-dcs");
 
   private final String path;
 

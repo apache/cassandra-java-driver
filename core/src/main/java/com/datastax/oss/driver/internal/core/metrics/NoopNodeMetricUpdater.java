@@ -53,4 +53,9 @@ public class NoopNodeMetricUpdater implements NodeMetricUpdater {
     // since methods don't do anything, return false
     return false;
   }
+
+  @Override
+  public void clearMetrics() {
+    // nothing to do
+  }
 }

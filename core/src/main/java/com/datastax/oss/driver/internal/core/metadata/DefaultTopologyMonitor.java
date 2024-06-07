@@ -34,6 +34,7 @@ import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.Error;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -68,6 +69,10 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
 
   // Assume topology queries never need paging
   private static final int INFINITE_PAGE_SIZE = -1;
+
+  // A few system.peers columns which get special handling below
+  private static final String NATIVE_PORT = "native_port";
+  private static final String NATIVE_TRANSPORT_PORT = "native_transport_port";
 
   private final String logPrefix;
   private final InternalDriverContext context;
@@ -494,28 +499,65 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   @Nullable
   protected InetSocketAddress getBroadcastRpcAddress(
       @NonNull AdminRow row, @NonNull EndPoint localEndPoint) {
-    // in system.peers or system.local
-    InetAddress broadcastRpcInetAddress = row.getInetAddress("rpc_address");
+
+    InetAddress broadcastRpcInetAddress = null;
+    Iterator<String> addrCandidates =
+        Iterators.forArray(
+            // in system.peers_v2 (Cassandra >= 4.0)
+            "native_address",
+            // DSE 6.8 introduced native_transport_address and native_transport_port for the
+            // listen address.
+            "native_transport_address",
+            // in system.peers or system.local
+            "rpc_address");
+
+    while (broadcastRpcInetAddress == null && addrCandidates.hasNext())
+      broadcastRpcInetAddress = row.getInetAddress(addrCandidates.next());
+    // This could only happen if system tables are corrupted, but handle gracefully
     if (broadcastRpcInetAddress == null) {
-      // in system.peers_v2 (Cassandra >= 4.0)
-      broadcastRpcInetAddress = row.getInetAddress("native_address");
-      if (broadcastRpcInetAddress == null) {
-        // This could only happen if system tables are corrupted, but handle gracefully
-        return null;
+      LOG.warn(
+          "[{}] Unable to determine broadcast RPC IP address, returning null.  "
+              + "This is likely due to a misconfiguration or invalid system tables.  "
+              + "Please validate the contents of system.local and/or {}.",
+          logPrefix,
+          getPeerTableName());
+      return null;
+    }
+
+    Integer broadcastRpcPort = null;
+    Iterator<String> portCandidates =
+        Iterators.forArray(
+            // in system.peers_v2 (Cassandra >= 4.0)
+            NATIVE_PORT,
+            // DSE 6.8 introduced native_transport_address and native_transport_port for the
+            // listen address.
+            NATIVE_TRANSPORT_PORT,
+            // system.local for Cassandra >= 4.0
+            "rpc_port");
+
+    while ((broadcastRpcPort == null || broadcastRpcPort == 0) && portCandidates.hasNext()) {
+
+      String colName = portCandidates.next();
+      broadcastRpcPort = row.getInteger(colName);
+      // Support override for SSL port (if enabled) in DSE
+      if (NATIVE_TRANSPORT_PORT.equals(colName) && context.getSslEngineFactory().isPresent()) {
+
+        String sslColName = colName + "_ssl";
+        broadcastRpcPort = row.getInteger(sslColName);
       }
     }
-    // system.local for Cassandra >= 4.0
-    Integer broadcastRpcPort = row.getInteger("rpc_port");
+    // use the default port if no port information was found in the row;
+    // note that in rare situations, the default port might not be known, in which case we
+    // report zero, as advertised in the javadocs of Node and NodeInfo.
     if (broadcastRpcPort == null || broadcastRpcPort == 0) {
-      // system.peers_v2
-      broadcastRpcPort = row.getInteger("native_port");
-      if (broadcastRpcPort == null || broadcastRpcPort == 0) {
-        // use the default port if no port information was found in the row;
-        // note that in rare situations, the default port might not be known, in which case we
-        // report zero, as advertised in the javadocs of Node and NodeInfo.
-        broadcastRpcPort = port == -1 ? 0 : port;
-      }
+
+      LOG.warn(
+          "[{}] Unable to determine broadcast RPC port.  "
+              + "Trying to fall back to port used by the control connection.",
+          logPrefix);
+      broadcastRpcPort = port == -1 ? 0 : port;
     }
+
     InetSocketAddress broadcastRpcAddress =
         new InetSocketAddress(broadcastRpcInetAddress, broadcastRpcPort);
     if (row.contains("peer") && broadcastRpcAddress.equals(localEndPoint.resolve())) {

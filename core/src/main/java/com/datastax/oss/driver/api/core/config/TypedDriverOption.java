@@ -235,6 +235,12 @@ public class TypedDriverOption<ValueT> {
   /** The keystore password. */
   public static final TypedDriverOption<String> SSL_KEYSTORE_PASSWORD =
       new TypedDriverOption<>(DefaultDriverOption.SSL_KEYSTORE_PASSWORD, GenericType.STRING);
+
+  /** The duration between attempts to reload the keystore. */
+  public static final TypedDriverOption<Duration> SSL_KEYSTORE_RELOAD_INTERVAL =
+      new TypedDriverOption<>(
+          DefaultDriverOption.SSL_KEYSTORE_RELOAD_INTERVAL, GenericType.DURATION);
+
   /** The location of the truststore file. */
   public static final TypedDriverOption<String> SSL_TRUSTSTORE_PATH =
       new TypedDriverOption<>(DefaultDriverOption.SSL_TRUSTSTORE_PATH, GenericType.STRING);
@@ -885,6 +891,16 @@ public class TypedDriverOption<ValueT> {
           new TypedDriverOption<>(
               DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_ALLOW_FOR_LOCAL_CONSISTENCY_LEVELS,
               GenericType.BOOLEAN);
+
+  /**
+   * Ordered preference list of remote dcs optionally supplied for automatic failover and included
+   * in query plan. This feature is enabled only when max-nodes-per-remote-dc is greater than 0.
+   */
+  public static final TypedDriverOption<List<String>>
+      LOAD_BALANCING_DC_FAILOVER_PREFERRED_REMOTE_DCS =
+          new TypedDriverOption<>(
+              DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_PREFERRED_REMOTE_DCS,
+              GenericType.listOf(String.class));
 
   private static Iterable<TypedDriverOption<?>> introspectBuiltInValues() {
     try {

@@ -34,6 +34,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -72,13 +73,16 @@ public class BatchStatementIT {
           "CREATE TABLE counter3 (k0 text PRIMARY KEY, c counter)",
         };
 
-    for (String schemaStatement : schemaStatements) {
-      sessionRule
-          .session()
-          .execute(
-              SimpleStatement.newInstance(schemaStatement)
-                  .setExecutionProfile(sessionRule.slowProfile()));
-    }
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          for (String schemaStatement : schemaStatements) {
+            sessionRule
+                .session()
+                .execute(
+                    SimpleStatement.newInstance(schemaStatement)
+                        .setExecutionProfile(sessionRule.slowProfile()));
+          }
+        });
   }
 
   @Test

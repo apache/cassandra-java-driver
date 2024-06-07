@@ -30,6 +30,7 @@ import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.MappingCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -55,11 +56,14 @@ public class PagingStateIT {
   @Before
   public void setupSchema() {
     CqlSession session = SESSION_RULE.session();
-    session.execute(
-        SimpleStatement.builder(
-                "CREATE TABLE IF NOT EXISTS foo (k int, cc int, v int, PRIMARY KEY(k, cc))")
-            .setExecutionProfile(SESSION_RULE.slowProfile())
-            .build());
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          session.execute(
+              SimpleStatement.builder(
+                      "CREATE TABLE IF NOT EXISTS foo (k int, cc int, v int, PRIMARY KEY(k, cc))")
+                  .setExecutionProfile(SESSION_RULE.slowProfile())
+                  .build());
+        });
     for (int i = 0; i < 20; i++) {
       session.execute(
           SimpleStatement.newInstance("INSERT INTO foo (k, cc, v) VALUES (1, ?, ?)", i, i));
