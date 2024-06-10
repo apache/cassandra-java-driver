@@ -60,8 +60,7 @@ import org.junit.rules.TestRule;
     description = ">= in WHERE clause not supported in legacy versions")
 public class DeleteIT extends InventoryITBase {
 
-  private static CustomCcmRule CCM_RULE =
-      CustomCcmRule.builder().withCassandraConfiguration("enable_sasi_indexes", "true").build();
+  private static CustomCcmRule CCM_RULE = CustomCcmRule.builder().build();
 
   private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 

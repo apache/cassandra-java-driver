@@ -59,6 +59,10 @@ public abstract class InventoryITBase {
       new ProductSale(MP3_DOWNLOAD.getId(), DATE_3, 7, Uuids.startOf(915192000), 0.99, 12);
 
   protected static List<String> createStatements(BaseCcmRule ccmRule) {
+    return createStatements(ccmRule, false);
+  }
+
+  protected static List<String> createStatements(BaseCcmRule ccmRule, boolean requiresSasiIndex) {
     ImmutableList.Builder<String> builder =
         ImmutableList.<String>builder()
             .add(
@@ -71,7 +75,7 @@ public abstract class InventoryITBase {
                 "CREATE TABLE product_sale(id uuid, day text, ts uuid, customer_id int, price "
                     + "double, count int, PRIMARY KEY ((id, day), customer_id, ts))");
 
-    if (supportsSASI(ccmRule) && !isSasiBroken(ccmRule)) {
+    if (requiresSasiIndex && supportsSASI(ccmRule) && !isSasiBroken(ccmRule)) {
       builder.add(
           "CREATE CUSTOM INDEX product_description ON product(description) "
               + "USING 'org.apache.cassandra.index.sasi.SASIIndex' "
