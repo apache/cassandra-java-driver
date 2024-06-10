@@ -75,7 +75,7 @@ public class SelectCustomWhereClauseIT extends InventoryITBase {
 
     SchemaChangeSynchronizer.withLock(
         () -> {
-          for (String query : createStatements(CCM_RULE)) {
+          for (String query : createStatements(CCM_RULE, true)) {
             session.execute(
                 SimpleStatement.builder(query)
                     .setExecutionProfile(SESSION_RULE.slowProfile())
