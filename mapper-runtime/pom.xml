@@ -28,7 +28,7 @@
   <parent>
     <groupId>com.scylladb</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.18.0</version>
+    <version>4.18.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-mapper-runtime</artifactId>
   <packaging>bundle</packaging>
