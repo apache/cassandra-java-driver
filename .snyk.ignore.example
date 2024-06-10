@@ -1,9 +1,0 @@
-# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
-version: v1.22.2
-# ignores vulnerabilities until expiry date; change duration by modifying expiry date
-ignore:
-  SNYK-PYTHON-URLLIB3-1533435:
-    - '*':
-        reason: state your ignore reason here
-        expires: 2030-01-01T00:00:00.000Z
-        created: 2022-03-21T00:00:00.000Z

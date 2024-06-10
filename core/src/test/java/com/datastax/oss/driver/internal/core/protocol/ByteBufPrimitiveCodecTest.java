@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -162,6 +164,64 @@ public class ByteBufPrimitiveCodecTest {
             0xbe);
     ByteBuffer bytes = codec.readBytes(source);
     assertThat(Bytes.toHexString(bytes)).isEqualTo("0xcafebabe");
+  }
+
+  @Test
+  public void should_read_bytes_when_extra_data() {
+    ByteBuf source =
+        ByteBufs.wrap(
+            // length (as an int)
+            0x00,
+            0x00,
+            0x00,
+            0x04,
+            // contents
+            0xca,
+            0xfe,
+            0xba,
+            0xbe,
+            0xde,
+            0xda,
+            0xdd);
+    ByteBuffer bytes = codec.readBytes(source);
+    assertThat(Bytes.toHexString(bytes)).isEqualTo("0xcafebabe");
+  }
+
+  @Test
+  public void read_bytes_should_udpate_reader_index() {
+    ByteBuf source =
+        ByteBufs.wrap(
+            // length (as an int)
+            0x00,
+            0x00,
+            0x00,
+            0x04,
+            // contents
+            0xca,
+            0xfe,
+            0xba,
+            0xbe,
+            0xde,
+            0xda,
+            0xdd);
+    codec.readBytes(source);
+
+    assertThat(source.readerIndex()).isEqualTo(8);
+  }
+
+  @Test
+  public void read_bytes_should_throw_when_not_enough_content() {
+    ByteBuf source =
+        ByteBufs.wrap(
+            // length (as an int) : 4 bytes
+            0x00,
+            0x00,
+            0x00,
+            0x04,
+            // contents : only 2 bytes
+            0xca,
+            0xfe);
+    assertThatThrownBy(() -> codec.readBytes(source)).isInstanceOf(IndexOutOfBoundsException.class);
   }
 
   @Test

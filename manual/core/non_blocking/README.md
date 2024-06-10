@@ -1,3 +1,22 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Non-blocking programming
 
 ### Quick overview
@@ -11,7 +30,7 @@ such as [Vert.x] or [Reactor], along with tools for automatic detection of block
 [Reactor]: https://projectreactor.io
 [BlockHound]: https://github.com/reactor/BlockHound
 
-**In summary, when used properly, the DataStax Java driver offers non-blocking guarantees for most 
+**In summary, when used properly, the Java Driver offers non-blocking guarantees for most 
 of its operations, and during most of the session lifecycle.**
 
 These guarantees and their exceptions are detailed below. A final chapter explains how to use the 

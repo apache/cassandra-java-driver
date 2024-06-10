@@ -1,3 +1,22 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Changelog
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
@@ -631,6 +650,15 @@ changelog](https://docs.datastax.com/en/developer/java-driver-dse/latest/changel
 - [new feature] JAVA-1501: Reprepare on the fly when we get an UNPREPARED response
 - [bug] JAVA-1499: Wait for load balancing policy at cluster initialization
 - [new feature] JAVA-1495: Add prepared statements
+
+### 3.11.5
+- [improvement] JAVA-3114: Shade io.dropwizard.metrics:metrics-core in shaded driver
+- [improvement] JAVA-3115: SchemaChangeListener#onKeyspaceChanged can fire when keyspace has not changed if using SimpleStrategy replication
+
+### 3.11.4
+- [improvement] JAVA-3079: Upgrade Netty to 4.1.94, 3.x edition
+- [improvement] JAVA-3082: Fix maven build for Apple-silicon
+- [improvement] PR 1671: Fix LatencyAwarePolicy scale docstring
 
 ### 3.11.3
 

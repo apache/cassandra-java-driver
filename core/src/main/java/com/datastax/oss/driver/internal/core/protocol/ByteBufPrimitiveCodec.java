@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -114,8 +116,9 @@ public class ByteBufPrimitiveCodec implements PrimitiveCodec<ByteBuf> {
   public ByteBuffer readBytes(ByteBuf source) {
     int length = readInt(source);
     if (length < 0) return null;
-    ByteBuf slice = source.readSlice(length);
-    return ByteBuffer.wrap(readRawBytes(slice));
+    byte[] bytes = new byte[length];
+    source.readBytes(bytes);
+    return ByteBuffer.wrap(bytes);
   }
 
   @Override
@@ -218,22 +221,6 @@ public class ByteBufPrimitiveCodec implements PrimitiveCodec<ByteBuf> {
   public void writeShortBytes(byte[] bytes, ByteBuf dest) {
     writeUnsignedShort(bytes.length, dest);
     dest.writeBytes(bytes);
-  }
-
-  // Reads *all* readable bytes from a buffer and return them.
-  // If the buffer is backed by an array, this will return the underlying array directly, without
-  // copy.
-  private static byte[] readRawBytes(ByteBuf buffer) {
-    if (buffer.hasArray() && buffer.readableBytes() == buffer.array().length) {
-      // Move the readerIndex just so we consistently consume the input
-      buffer.readerIndex(buffer.writerIndex());
-      return buffer.array();
-    }
-
-    // Otherwise, just read the bytes in a new array
-    byte[] bytes = new byte[buffer.readableBytes()];
-    buffer.readBytes(bytes);
-    return bytes;
   }
 
   private static String readString(ByteBuf source, int length) {

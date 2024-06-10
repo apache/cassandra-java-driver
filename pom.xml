@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright DataStax, Inc.
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
+        http://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +27,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.scylladb</groupId>
   <artifactId>java-driver-parent</artifactId>
-  <version>4.17.0.2-SNAPSHOT</version>
+  <version>4.18.0</version>
   <packaging>pom</packaging>
   <name>Java Driver for Scylla and Apache Cassandra</name>
   <description>A driver for Scylla and Apache Cassandra(R) 2.1+ that works exclusively with the Cassandra Query Language version 3 (CQL3) and Cassandra's native protocol versions 3 and above.</description>
@@ -50,6 +52,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <config.version>1.4.1</config.version>
+    <!-- when changing version also update version in LICENSE_binary  -->
     <hdrhistogram.version>2.1.12</hdrhistogram.version>
     <metrics.version>4.1.18</metrics.version>
     <netty.version>4.1.109.Final</netty.version>
@@ -59,11 +62,13 @@
     manual/core/integration/README.md
     -->
     <tinkerpop.version>3.5.6</tinkerpop.version>
+    <!-- when changing version also update version in LICENSE_binary  -->
     <slf4j.version>1.7.26</slf4j.version>
+    <!-- when changing version also update version in LICENSE_binary  -->
     <reactive-streams.version>1.0.3</reactive-streams.version>
     <json.version>20230227</json.version>
-    <jackson.version>2.13.2</jackson.version>
-    <jackson-databind.version>2.13.2.2</jackson-databind.version>
+    <jackson.version>2.13.4</jackson.version>
+    <jackson-databind.version>2.13.4.2</jackson-databind.version>
     <legacy-jackson.version>1.9.12</legacy-jackson.version>
     <!-- optional dependencies -->
     <snappy.version>1.1.10.5</snappy.version>
@@ -74,8 +79,9 @@
     <junit.version>4.13.2</junit.version>
     <logback.version>1.2.3</logback.version>
     <osgi.version>6.0.0</osgi.version>
-    <felix.version>6.0.3</felix.version>
+    <felix.version>7.0.1</felix.version>
     <pax-exam.version>4.13.4</pax-exam.version>
+    <pax-url.version>2.6.4</pax-url.version>
     <simulacron.version>0.11.0</simulacron.version>
     <jsr353-api.version>1.1.4</jsr353-api.version>
     <jersey.version>2.31</jersey.version>
@@ -85,7 +91,7 @@
     <rxjava.version>2.2.2</rxjava.version>
     <awaitility.version>4.0.3</awaitility.version>
     <apacheds.version>2.0.0-M19</apacheds.version>
-    <surefire.version>2.22.2</surefire.version>
+    <surefire.version>3.0.0</surefire.version>
     <graalapi.version>22.0.0.2</graalapi.version>
     <skipTests>false</skipTests>
     <skipUnitTests>${skipTests}</skipUnitTests>
@@ -104,7 +110,7 @@
         <version>${netty.version}</version>
       </dependency>
       <dependency>
-        <!-- Only for integration tests, use the shaded JAR for production code. -->
+        <!-- Only for integration tests, use the shaded JAR for production code -->
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>25.1-jre</version>
@@ -137,6 +143,7 @@
       <dependency>
         <groupId>com.github.jnr</groupId>
         <artifactId>jnr-posix</artifactId>
+        <!-- when changing version also update jnr-* and asm versions in LICENSE_binary  -->
         <version>3.1.15</version>
       </dependency>
       <dependency>
@@ -275,12 +282,17 @@
       <dependency>
         <groupId>org.ops4j.pax.url</groupId>
         <artifactId>pax-url-wrap</artifactId>
-        <version>2.6.3</version>
+        <version>${pax-url.version}</version>
       </dependency>
       <dependency>
         <groupId>org.ops4j.pax.url</groupId>
         <artifactId>pax-url-reference</artifactId>
-        <version>2.6.2</version>
+        <version>${pax-url.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.ops4j.pax.tinybundles</groupId>
+        <artifactId>tinybundles</artifactId>
+        <version>3.0.0</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish</groupId>
@@ -597,6 +609,7 @@
             <compilerArg>-Xep:FutureReturnValueIgnored:OFF</compilerArg>
             <compilerArg>-Xep:PreferJavaTimeOverload:OFF</compilerArg>
             <compilerArg>-Xep:AnnotateFormatMethod:OFF</compilerArg>
+            <compilerArg>-Xep:WildcardImport:WARN</compilerArg>
             <compilerArg>-XepExcludedPaths:.*/target/(?:generated-sources|generated-test-sources)/.*</compilerArg>
           </compilerArgs>
           <showWarnings>true</showWarnings>
@@ -708,6 +721,12 @@
             <goals>
               <goal>jar-no-fork</goal>
             </goals>
+            <configuration>
+              <excludes>
+                <exclude>LICENSE_binary</exclude>
+                <exclude>NOTICE_binary.txt</exclude>
+              </excludes>
+            </configuration>
           </execution>
         </executions>
       </plugin>

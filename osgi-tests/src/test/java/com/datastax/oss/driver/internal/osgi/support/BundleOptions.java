@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -152,9 +154,10 @@ public class BundleOptions {
                 .overwriteManifest(WrappedUrlProvisionOption.OverwriteMode.FULL),
             // Note: the versions below are hard-coded because they shouldn't change very often,
             // but if the tests fail because of them, we should consider parameterizing them
-            mavenBundle("com.sun.mail", "mailapi", "1.6.4"),
+            mavenBundle("com.sun.activation", "jakarta.activation", "2.0.1"),
+            mavenBundle("com.sun.mail", "mailapi", "2.0.1"),
             mavenBundle("org.apache.commons", "commons-text", "1.8"),
-            mavenBundle("org.apache.commons", "commons-configuration2", "2.7"),
+            mavenBundle("org.apache.commons", "commons-configuration2", "2.9.0"),
             CoreOptions.wrappedBundle(mavenBundle("commons-logging", "commons-logging", "1.1.1"))
                 .exports("org.apache.commons.logging.*")
                 .bundleVersion("1.1.1")

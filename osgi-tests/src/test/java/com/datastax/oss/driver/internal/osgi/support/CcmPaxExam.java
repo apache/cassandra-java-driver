@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,13 +20,9 @@ package com.datastax.oss.driver.internal.osgi.support;
 import static com.datastax.oss.driver.internal.osgi.support.CcmStagedReactor.CCM_BRIDGE;
 
 import com.datastax.oss.driver.api.core.Version;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
-import com.datastax.oss.driver.api.testinfra.DseRequirement;
 import com.datastax.oss.driver.api.testinfra.ScyllaRequirement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
-import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
-import com.datastax.oss.driver.api.testinfra.requirement.VersionRequirement;
-import java.util.Collection;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirementRule;
 import java.util.Objects;
 import java.util.Optional;
 import org.junit.AssumptionViolatedException;
@@ -43,68 +41,6 @@ public class CcmPaxExam extends PaxExam {
   @Override
   public void run(RunNotifier notifier) {
     Description description = getDescription();
-    BackendType backend =
-        CCM_BRIDGE.getDseVersion().isPresent() ? BackendType.DSE : BackendType.CASSANDRA;
-    Version version = CCM_BRIDGE.getDseVersion().orElseGet(CCM_BRIDGE::getCassandraVersion);
-
-    Collection<VersionRequirement> requirements =
-        VersionRequirement.fromAnnotations(getDescription());
-    if (!VersionRequirement.meetsAny(requirements, backend, version)) {
-      // requirements not met, throw reasoning assumption to skip test
-      AssumptionViolatedException e =
-          new AssumptionViolatedException(
-              VersionRequirement.buildReasonString(requirements, backend, version));
-      notifier.fireTestAssumptionFailed(new Failure(description, e));
-    }
-
-    // Legacy skipping:
-    // TODO: use VersionRequirement
-
-    CassandraRequirement cassandraRequirement =
-        description.getAnnotation(CassandraRequirement.class);
-    if (cassandraRequirement != null) {
-      if (!cassandraRequirement.min().isEmpty()) {
-        Version minVersion = Objects.requireNonNull(Version.parse(cassandraRequirement.min()));
-        if (minVersion.compareTo(CCM_BRIDGE.getCassandraVersion()) > 0) {
-          fireRequirementsNotMet(notifier, description, cassandraRequirement.min(), false, false);
-          return;
-        }
-      }
-      if (!cassandraRequirement.max().isEmpty()) {
-        Version maxVersion = Objects.requireNonNull(Version.parse(cassandraRequirement.max()));
-        if (maxVersion.compareTo(CCM_BRIDGE.getCassandraVersion()) <= 0) {
-          fireRequirementsNotMet(notifier, description, cassandraRequirement.max(), true, false);
-          return;
-        }
-      }
-    }
-    DseRequirement dseRequirement = description.getAnnotation(DseRequirement.class);
-    if (dseRequirement != null) {
-      Optional<Version> dseVersionOption = CCM_BRIDGE.getDseVersion();
-      if (!dseVersionOption.isPresent()) {
-        notifier.fireTestAssumptionFailed(
-            new Failure(
-                description,
-                new AssumptionViolatedException("Test Requires DSE but C* is configured.")));
-        return;
-      } else {
-        Version dseVersion = dseVersionOption.get();
-        if (!dseRequirement.min().isEmpty()) {
-          Version minVersion = Objects.requireNonNull(Version.parse(dseRequirement.min()));
-          if (minVersion.compareTo(dseVersion) > 0) {
-            fireRequirementsNotMet(notifier, description, dseRequirement.min(), false, true);
-            return;
-          }
-        }
-        if (!dseRequirement.max().isEmpty()) {
-          Version maxVersion = Objects.requireNonNull(Version.parse(dseRequirement.max()));
-          if (maxVersion.compareTo(dseVersion) <= 0) {
-            fireRequirementsNotMet(notifier, description, dseRequirement.min(), true, true);
-            return;
-          }
-        }
-      }
-    }
     ScyllaRequirement scyllaRequirement = description.getAnnotation(ScyllaRequirement.class);
     if (scyllaRequirement != null) {
       Optional<Version> scyllaVersionOption = CCM_BRIDGE.getScyllaVersion();
@@ -152,7 +88,15 @@ public class CcmPaxExam extends PaxExam {
         }
       }
     }
-    super.run(notifier);
+
+    if (BackendRequirementRule.meetsDescriptionRequirements(description)) {
+      super.run(notifier);
+    } else {
+      // requirements not met, throw reasoning assumption to skip test
+      AssumptionViolatedException e =
+          new AssumptionViolatedException(BackendRequirementRule.buildReasonString(description));
+      notifier.fireTestAssumptionFailed(new Failure(description, e));
+    }
   }
 
   private void fireRequirementsNotMet(

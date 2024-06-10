@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,7 +42,6 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.type.DataTypes;
-import com.datastax.oss.driver.api.testinfra.CassandraRequirement;
 import com.datastax.oss.driver.api.testinfra.CassandraSkip;
 import com.datastax.oss.driver.api.testinfra.ScyllaRequirement;
 import com.datastax.oss.driver.api.testinfra.ScyllaSkip;
@@ -158,7 +159,7 @@ public class PreparedStatementIT {
   }
 
   @Test
-  @CassandraRequirement(min = "4.0")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "4.0")
   @ScyllaSkip(description = "@IntegrationTestDisabledScyllaFailure")
   public void should_update_metadata_when_schema_changed_across_executions() {
     // Given
@@ -188,7 +189,7 @@ public class PreparedStatementIT {
   }
 
   @Test
-  @CassandraRequirement(min = "4.0")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "4.0")
   @ScyllaSkip(description = "@IntegrationTestDisabledScyllaFailure")
   public void should_update_metadata_when_schema_changed_across_pages() {
     // Given
@@ -234,7 +235,7 @@ public class PreparedStatementIT {
   }
 
   @Test
-  @CassandraRequirement(min = "4.0")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "4.0")
   @ScyllaSkip(description = "@IntegrationTestDisabledScyllaFailure")
   public void should_update_metadata_when_schema_changed_across_sessions() {
     // Given
@@ -282,7 +283,7 @@ public class PreparedStatementIT {
   }
 
   @Test
-  @CassandraRequirement(min = "4.0")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "4.0")
   @ScyllaSkip(
       description =
           "@IntegrationTestDisabledScyllaFailure @IntegrationTestDisabledScyllaDifferentText")
@@ -304,14 +305,14 @@ public class PreparedStatementIT {
   }
 
   @Test
-  @CassandraRequirement(min = "4.0")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "4.0")
   @ScyllaSkip(description = "@IntegrationTestDisabledScyllaFailure")
   public void should_not_store_metadata_for_conditional_updates() {
     should_not_store_metadata_for_conditional_updates(sessionRule.session());
   }
 
   @Test
-  @CassandraRequirement(min = "2.2")
+  @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "2.2")
   @ScyllaSkip(description = "@IntegrationTestDisabledScyllaFailure")
   public void should_not_store_metadata_for_conditional_updates_in_legacy_protocol() {
     DriverConfigLoader loader =

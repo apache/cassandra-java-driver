@@ -6947,6 +6947,12 @@
         "old": "method <T> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(com.datastax.oss.driver.api.core.type.reflect.GenericType<T>)",
         "new": "method <T extends java.lang.Number> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(com.datastax.oss.driver.api.core.type.reflect.GenericType<T>)",
         "justification": "Refactorings in PR 1666"
+      },
+      {
+        "code": "java.method.returnTypeChangedCovariantly",
+        "old": "method java.lang.Throwable java.lang.Throwable::fillInStackTrace() @ com.fasterxml.jackson.databind.deser.UnresolvedForwardReference",
+        "new": "method com.fasterxml.jackson.databind.deser.UnresolvedForwardReference com.fasterxml.jackson.databind.deser.UnresolvedForwardReference::fillInStackTrace()",
+        "justification": "Upgrade jackson-databind to 2.13.4.1 to address CVEs, API change cause: https://github.com/FasterXML/jackson-databind/issues/3419"
       }
     ]
   }

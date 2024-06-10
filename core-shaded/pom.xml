@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright DataStax, Inc.
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
+        http://www.apache.org/licenses/LICENSE-2.0
 
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,7 +28,7 @@
   <parent>
     <groupId>com.scylladb</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.17.0.2-SNAPSHOT</version>
+    <version>4.18.0</version>
   </parent>
   <artifactId>java-driver-core-shaded</artifactId>
   <name>Java driver for Scylla and Apache Cassandra(R) - core with shaded deps</name>
@@ -115,10 +117,12 @@
     <dependency>
       <groupId>com.github.stephenc.jcip</groupId>
       <artifactId>jcip-annotations</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.github.spotbugs</groupId>
       <artifactId>spotbugs-annotations</artifactId>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
   <!--
@@ -129,6 +133,20 @@
   4) assembly plugin re-creates the shaded jar by packing target/classes + manifest + shaded pom
   -->
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>${project.basedir}/..</directory>
+        <includes>
+          <include>LICENSE</include>
+          <include>NOTICE_binary.txt</include>
+          <include>NOTICE.txt</include>
+        </includes>
+        <targetPath>META-INF</targetPath>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
@@ -171,7 +189,7 @@
               <filters>
                 <!-- Exclude everything under META-INF -->
                 <filter>
-                  <artifact>com.datastax.oss:*</artifact>
+                  <artifact>org.apache.cassandra:*</artifact>
                   <excludes>
                     <!-- Don't exclude META-INF/services and META-INF/native-image -->
                     <exclude>META-INF/MANIFEST.MF</exclude>
