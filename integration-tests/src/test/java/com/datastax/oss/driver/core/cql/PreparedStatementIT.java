@@ -512,6 +512,9 @@ public class PreparedStatementIT {
       maxExclusive = "4.0.0")
   @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "4.0.2")
   @Test
+  @ScyllaSkip(
+      description =
+          "It seems Scylla always will reprepare with different ID when reproducing CASSANDRA-15252 scenario")
   public void handle_id_changes_on_reprepare() {
     assertableReprepareAfterIdChange().doesNotThrowAnyException();
   }
