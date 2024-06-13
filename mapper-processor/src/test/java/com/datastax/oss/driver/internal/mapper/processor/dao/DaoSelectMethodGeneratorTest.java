@@ -107,13 +107,11 @@ public class DaoSelectMethodGeneratorTest extends DaoMethodGeneratorTest {
 
   @Test
   public void should_process_bypass_cache() {
-    System.out.println("aaa");
-    System.out.println(
-        MethodSpec.methodBuilder("select")
-            .addAnnotation(
-                AnnotationSpec.builder(Select.class).addMember("bypassCache", "true").build())
-            .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-            .returns(ParameterizedTypeName.get(CompletionStage.class, Integer.class))
-            .build());
+    MethodSpec.methodBuilder("select")
+        .addAnnotation(
+            AnnotationSpec.builder(Select.class).addMember("bypassCache", "true").build())
+        .addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+        .returns(ParameterizedTypeName.get(CompletionStage.class, Integer.class))
+        .build();
   }
 }

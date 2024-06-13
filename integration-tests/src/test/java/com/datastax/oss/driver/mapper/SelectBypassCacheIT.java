@@ -131,7 +131,6 @@ public class SelectBypassCacheIT {
     // BYPASS CACHE is transparent for the driver - this just checks for exceptions
     PagingIterable<Simple> result = dao.selectWithBypassCache(0, 0);
     assertThat(result.all()).hasSize(1).containsOnly(new Simple(0, 0, 1));
-    System.out.println(result.getExecutionInfo().getRequest());
   }
 
   @Mapper
