@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.testinfra.ScyllaSkip;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
@@ -47,6 +48,9 @@ import org.junit.rules.TestRule;
     type = BackendType.DSE,
     minInclusive = "7.0",
     description = "Feature not available in DSE yet")
+@ScyllaSkip(
+    description =
+        "Scylla keeps negotiating protocol version v4, but \"Can't use nowInSeconds with protocol V4\". Remove skip once Scylla supports protocol version v5.")
 public class NowInSecondsIT {
 
   private static final CcmRule CCM_RULE = CcmRule.getInstance();
