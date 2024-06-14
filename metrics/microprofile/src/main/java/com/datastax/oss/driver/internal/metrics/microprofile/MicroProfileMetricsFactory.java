@@ -26,7 +26,6 @@ import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metrics.MetricPaths;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
@@ -122,22 +121,16 @@ public class MicroProfileMetricsFactory implements MetricsFactory {
   }
 
   protected void processNodeStateEvent(NodeStateEvent event) {
-    DefaultNode node = event.getNode();
-    if (node == null) {
-      LOG.debug(
-          "[{}] NodeStateEvent received for removed node, ignoring: {}",
-          context.getSessionName(),
-          event);
-      return;
-    }
     if (event.newState == NodeState.DOWN
         || event.newState == NodeState.FORCED_DOWN
         || event.newState == null) {
       // node is DOWN or REMOVED
-      ((MicroProfileNodeMetricUpdater) node.getMetricUpdater()).startMetricsExpirationTimeout();
+      ((MicroProfileNodeMetricUpdater) event.node.getMetricUpdater())
+          .startMetricsExpirationTimeout();
     } else if (event.newState == NodeState.UP || event.newState == NodeState.UNKNOWN) {
       // node is UP or ADDED
-      ((MicroProfileNodeMetricUpdater) node.getMetricUpdater()).cancelMetricsExpirationTimeout();
+      ((MicroProfileNodeMetricUpdater) event.node.getMetricUpdater())
+          .cancelMetricsExpirationTimeout();
     }
   }
 }

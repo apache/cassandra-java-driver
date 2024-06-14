@@ -173,11 +173,7 @@ public class LoadBalancingPolicyWrapper implements AutoCloseable {
 
   // once it has gone through the filter
   private void processNodeStateEvent(NodeStateEvent event) {
-    DefaultNode node = event.getNode();
-    if (node == null) {
-      LOG.debug("[{}] Node for this event was removed, ignoring: {}", logPrefix, event);
-      return;
-    }
+    DefaultNode node = event.node;
     switch (stateRef.get()) {
       case BEFORE_INIT:
       case DURING_INIT:

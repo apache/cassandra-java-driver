@@ -31,7 +31,6 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
 import com.datastax.oss.driver.internal.core.channel.EventCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.DefaultTopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.DistanceEvent;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
@@ -535,34 +534,30 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
 
     private void onDistanceEvent(DistanceEvent event) {
       assert adminExecutor.inEventLoop();
-      DefaultNode node = event.getNode();
-      if (node == null) return;
-      this.lastDistanceEvents.put(node, event);
+      this.lastDistanceEvents.put(event.node, event);
       if (event.distance == NodeDistance.IGNORED
           && channel != null
           && !channel.closeFuture().isDone()
-          && node.getEndPoint().equals(channel.getEndPoint())) {
+          && event.node.getEndPoint().equals(channel.getEndPoint())) {
         LOG.debug(
             "[{}] Control node {} became IGNORED, reconnecting to a different node",
             logPrefix,
-            node);
+            event.node);
         reconnectNow();
       }
     }
 
     private void onStateEvent(NodeStateEvent event) {
       assert adminExecutor.inEventLoop();
-      DefaultNode node = event.getNode();
-      if (node == null) return;
-      this.lastStateEvents.put(node, event);
+      this.lastStateEvents.put(event.node, event);
       if ((event.newState == null /*(removed)*/ || event.newState == NodeState.FORCED_DOWN)
           && channel != null
           && !channel.closeFuture().isDone()
-          && node.getEndPoint().equals(channel.getEndPoint())) {
+          && event.node.getEndPoint().equals(channel.getEndPoint())) {
         LOG.debug(
             "[{}] Control node {} was removed or forced down, reconnecting to a different node",
             logPrefix,
-            node);
+            event.node);
         reconnectNow();
       }
     }

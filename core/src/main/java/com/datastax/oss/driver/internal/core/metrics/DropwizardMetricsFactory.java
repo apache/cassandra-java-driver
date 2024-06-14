@@ -27,7 +27,6 @@ import com.datastax.oss.driver.api.core.metrics.Metrics;
 import com.datastax.oss.driver.api.core.metrics.NodeMetric;
 import com.datastax.oss.driver.api.core.metrics.SessionMetric;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -119,16 +118,15 @@ public class DropwizardMetricsFactory implements MetricsFactory {
   }
 
   protected void processNodeStateEvent(NodeStateEvent event) {
-    DefaultNode node = event.getNode();
-    if (node == null) return;
     if (event.newState == NodeState.DOWN
         || event.newState == NodeState.FORCED_DOWN
         || event.newState == null) {
       // node is DOWN or REMOVED
-      ((DropwizardNodeMetricUpdater) node.getMetricUpdater()).startMetricsExpirationTimeout();
+      ((DropwizardNodeMetricUpdater) event.node.getMetricUpdater()).startMetricsExpirationTimeout();
     } else if (event.newState == NodeState.UP || event.newState == NodeState.UNKNOWN) {
       // node is UP or ADDED
-      ((DropwizardNodeMetricUpdater) node.getMetricUpdater()).cancelMetricsExpirationTimeout();
+      ((DropwizardNodeMetricUpdater) event.node.getMetricUpdater())
+          .cancelMetricsExpirationTimeout();
     }
   }
 }
