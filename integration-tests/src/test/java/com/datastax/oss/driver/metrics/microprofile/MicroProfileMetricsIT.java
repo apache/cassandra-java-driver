@@ -189,6 +189,12 @@ public class MicroProfileMetricsIT extends MetricsITBase {
   }
 
   @Override
+  protected void assertMetricsNotPresent(Object registry) {
+    MetricRegistry metricRegistry = (MetricRegistry) registry;
+    assertThat(metricRegistry.getMetrics()).isEmpty();
+  }
+
+  @Override
   protected void assertNodeMetricsEvicted(CqlSession session, Node node) {
     InternalDriverContext context = (InternalDriverContext) session.getContext();
     MetricRegistry registry = (MetricRegistry) context.getMetricRegistry();

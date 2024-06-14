@@ -28,6 +28,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -224,15 +225,17 @@ public class DescribeIT {
 
   private static void setupDatabase() {
     List<String> statements = STATEMENT_SPLITTER.splitToList(scriptContents);
-
-    // Skip the first statement (CREATE KEYSPACE), we already have a keyspace
-    for (int i = 1; i < statements.size(); i++) {
-      String statement = statements.get(i);
-      try {
-        SESSION_RULE.session().execute(statement);
-      } catch (Exception e) {
-        fail("Error executing statement %s (%s)", statement, e);
-      }
-    }
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          // Skip the first statement (CREATE KEYSPACE), we already have a keyspace
+          for (int i = 1; i < statements.size(); i++) {
+            String statement = statements.get(i);
+            try {
+              SESSION_RULE.session().execute(statement);
+            } catch (Exception e) {
+              fail("Error executing statement %s (%s)", statement, e);
+            }
+          }
+        });
   }
 }

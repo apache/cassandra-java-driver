@@ -30,6 +30,7 @@ import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.session.ProgrammaticArguments;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
@@ -305,12 +306,19 @@ public class PreparedStatementCachingIT {
 
   @Test
   public void should_invalidate_cache_entry_on_basic_udt_change_result_set() {
-    invalidationResultSetTest(setupCacheEntryTestBasic, ImmutableSet.of("test_type_2"));
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          invalidationResultSetTest(setupCacheEntryTestBasic, ImmutableSet.of("test_type_2"));
+        });
   }
 
   @Test
   public void should_invalidate_cache_entry_on_basic_udt_change_variable_defs() {
-    invalidationVariableDefsTest(setupCacheEntryTestBasic, false, ImmutableSet.of("test_type_2"));
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          invalidationVariableDefsTest(
+              setupCacheEntryTestBasic, false, ImmutableSet.of("test_type_2"));
+        });
   }
 
   Consumer<CqlSession> setupCacheEntryTestCollection =
@@ -325,13 +333,19 @@ public class PreparedStatementCachingIT {
 
   @Test
   public void should_invalidate_cache_entry_on_collection_udt_change_result_set() {
-    invalidationResultSetTest(setupCacheEntryTestCollection, ImmutableSet.of("test_type_2"));
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          invalidationResultSetTest(setupCacheEntryTestCollection, ImmutableSet.of("test_type_2"));
+        });
   }
 
   @Test
   public void should_invalidate_cache_entry_on_collection_udt_change_variable_defs() {
-    invalidationVariableDefsTest(
-        setupCacheEntryTestCollection, true, ImmutableSet.of("test_type_2"));
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          invalidationVariableDefsTest(
+              setupCacheEntryTestCollection, true, ImmutableSet.of("test_type_2"));
+        });
   }
 
   Consumer<CqlSession> setupCacheEntryTestTuple =
@@ -346,12 +360,19 @@ public class PreparedStatementCachingIT {
 
   @Test
   public void should_invalidate_cache_entry_on_tuple_udt_change_result_set() {
-    invalidationResultSetTest(setupCacheEntryTestTuple, ImmutableSet.of("test_type_2"));
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          invalidationResultSetTest(setupCacheEntryTestTuple, ImmutableSet.of("test_type_2"));
+        });
   }
 
   @Test
   public void should_invalidate_cache_entry_on_tuple_udt_change_variable_defs() {
-    invalidationVariableDefsTest(setupCacheEntryTestTuple, false, ImmutableSet.of("test_type_2"));
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          invalidationVariableDefsTest(
+              setupCacheEntryTestTuple, false, ImmutableSet.of("test_type_2"));
+        });
   }
 
   Consumer<CqlSession> setupCacheEntryTestNested =
@@ -366,14 +387,20 @@ public class PreparedStatementCachingIT {
 
   @Test
   public void should_invalidate_cache_entry_on_nested_udt_change_result_set() {
-    invalidationResultSetTest(
-        setupCacheEntryTestNested, ImmutableSet.of("test_type_2", "test_type_4"));
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          invalidationResultSetTest(
+              setupCacheEntryTestNested, ImmutableSet.of("test_type_2", "test_type_4"));
+        });
   }
 
   @Test
   public void should_invalidate_cache_entry_on_nested_udt_change_variable_defs() {
-    invalidationVariableDefsTest(
-        setupCacheEntryTestNested, false, ImmutableSet.of("test_type_2", "test_type_4"));
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          invalidationVariableDefsTest(
+              setupCacheEntryTestNested, false, ImmutableSet.of("test_type_2", "test_type_4"));
+        });
   }
 
   /* ========================= Infrastructure copied from PreparedStatementIT ========================= */

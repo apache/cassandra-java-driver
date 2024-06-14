@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
-import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
@@ -58,7 +58,7 @@ public abstract class InventoryITBase {
   protected static ProductSale MP3_DOWNLOAD_SALE_1 =
       new ProductSale(MP3_DOWNLOAD.getId(), DATE_3, 7, Uuids.startOf(915192000), 0.99, 12);
 
-  protected static List<String> createStatements(CcmRule ccmRule) {
+  protected static List<String> createStatements(BaseCcmRule ccmRule) {
     ImmutableList.Builder<String> builder =
         ImmutableList.<String>builder()
             .add(
@@ -92,13 +92,13 @@ public abstract class InventoryITBase {
   private static final Version MINIMUM_SASI_VERSION = Version.parse("3.4.0");
   private static final Version BROKEN_SASI_VERSION = Version.parse("6.8.0");
 
-  protected static boolean isSasiBroken(CcmRule ccmRule) {
+  protected static boolean isSasiBroken(BaseCcmRule ccmRule) {
     Optional<Version> dseVersion = ccmRule.getDseVersion();
     // creating SASI indexes is broken in DSE 6.8.0
     return dseVersion.isPresent() && dseVersion.get().compareTo(BROKEN_SASI_VERSION) == 0;
   }
 
-  protected static boolean supportsSASI(CcmRule ccmRule) {
+  protected static boolean supportsSASI(BaseCcmRule ccmRule) {
     return ccmRule.getCassandraVersion().compareTo(MINIMUM_SASI_VERSION) >= 0;
   }
 

@@ -61,12 +61,6 @@ def initializeEnvironment() {
     . ${JABBA_SHELL}
     jabba which 1.8''', returnStdout: true).trim()
 
-  env.TEST_JAVA_HOME = sh(label: 'Get TEST_JAVA_HOME',script: '''#!/bin/bash -le
-    . ${JABBA_SHELL}
-    jabba which ${JABBA_VERSION}''', returnStdout: true).trim()
-  env.TEST_JAVA_VERSION = sh(label: 'Get TEST_JAVA_VERSION',script: '''#!/bin/bash -le
-    echo "${JABBA_VERSION##*.}"''', returnStdout: true).trim()
-
   sh label: 'Download Apache CassandraⓇ or DataStax Enterprise',script: '''#!/bin/bash -le
     . ${JABBA_SHELL}
     jabba use 1.8
@@ -104,18 +98,25 @@ ENVIRONMENT_EOF
 }
 
 def buildDriver(jabbaVersion) {
-  withEnv(["BUILD_JABBA_VERSION=${jabbaVersion}"]) {
-    sh label: 'Build driver', script: '''#!/bin/bash -le
-      . ${JABBA_SHELL}
-      jabba use ${BUILD_JABBA_VERSION}
+  def buildDriverScript = '''#!/bin/bash -le
 
-      mvn -B -V install -DskipTests -Dmaven.javadoc.skip=true
-    '''
-  }
+    . ${JABBA_SHELL}
+    jabba use '''+jabbaVersion+'''
+
+    echo "Building with Java version '''+jabbaVersion+'''"
+
+    mvn -B -V install -DskipTests -Dmaven.javadoc.skip=true
+  '''
+  sh label: 'Build driver', script: buildDriverScript
 }
 
 def executeTests() {
-  sh label: 'Execute tests', script: '''#!/bin/bash -le
+  def testJavaHome = sh(label: 'Get TEST_JAVA_HOME',script: '''#!/bin/bash -le
+    . ${JABBA_SHELL}
+    jabba which ${JABBA_VERSION}''', returnStdout: true).trim()
+  def testJavaVersion = (JABBA_VERSION =~ /.*\.(\d+)/)[0][1]
+
+  def executeTestScript = '''#!/bin/bash -le
     # Load CCM environment variables
     set -o allexport
     . ${HOME}/environment.txt
@@ -137,8 +138,8 @@ def executeTests() {
     printenv | sort
 
     mvn -B -V ${INTEGRATION_TESTS_FILTER_ARGUMENT} -T 1 verify \
-      -Ptest-jdk-${TEST_JAVA_VERSION} \
-      -DtestJavaHome=${TEST_JAVA_HOME} \
+      -Ptest-jdk-'''+testJavaVersion+''' \
+      -DtestJavaHome='''+testJavaHome+''' \
       -DfailIfNoTests=false \
       -Dmaven.test.failure.ignore=true \
       -Dmaven.javadoc.skip=${SKIP_JAVADOCS} \
@@ -149,6 +150,8 @@ def executeTests() {
       ${ISOLATED_ITS_ARGUMENT} \
       ${PARALLELIZABLE_ITS_ARGUMENT}
   '''
+  echo "Invoking Maven with parameters test-jdk-${testJavaVersion} and testJavaHome = ${testJavaHome}"
+  sh label: 'Execute tests', script: executeTestScript
 }
 
 def executeCodeCoverage() {
@@ -255,8 +258,10 @@ pipeline {
       choices: ['2.1',       // Legacy Apache CassandraⓇ
                 '2.2',       // Legacy Apache CassandraⓇ
                 '3.0',       // Previous Apache CassandraⓇ
-                '3.11',      // Current Apache CassandraⓇ
-                '4.0',       // Development Apache CassandraⓇ
+                '3.11',      // Previous Apache CassandraⓇ
+                '4.0',       // Previous Apache CassandraⓇ
+                '4.1',       // Current Apache CassandraⓇ
+                '5.0-beta1',    // Development Apache CassandraⓇ
                 'dse-4.8.16',   // Previous EOSL DataStax Enterprise
                 'dse-5.0.15',   // Long Term Support DataStax Enterprise
                 'dse-5.1.35',   // Legacy DataStax Enterprise
@@ -290,7 +295,11 @@ pipeline {
                         </tr>
                         <tr>
                           <td><strong>4.0</strong></td>
-                          <td>Apache Cassandra&reg; v4.x (<b>CURRENTLY UNDER DEVELOPMENT</b>)</td>
+                          <td>Apache Cassandra&reg; v4.0.x</td>
+                        </tr>
+                        <tr>
+                          <td><strong>4.1</strong></td>
+                          <td>Apache Cassandra&reg; v4.1.x</td>
                         </tr>
                         <tr>
                           <td><strong>dse-4.8.16</strong></td>
@@ -402,14 +411,14 @@ pipeline {
   triggers {
     // schedules only run against release branches (i.e. 3.x, 4.x, 4.5.x, etc.)
     parameterizedCron(branchPatternCron().matcher(env.BRANCH_NAME).matches() ? """
-      # Every weeknight (Monday - Friday) around 2:00 AM
-      ### JDK8 tests against 2.1, 3.0, DSE 4.8, DSE 5.0, DSE 5.1, dse-6.0.18 and DSE 6.7
-      H 2 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=2.1 3.0 dse-4.8.16 dse-5.0.15 dse-5.1.35 dse-6.0.18 dse-6.7.17;CI_SCHEDULE_JABBA_VERSION=1.8
-      ### JDK11 tests against 3.11, 4.0 and DSE 6.8
-      H 2 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=3.11 4.0 dse-6.8.30;CI_SCHEDULE_JABBA_VERSION=openjdk@1.11
-      # Every weekend (Sunday) around 12:00 PM noon
-      ### JDK14 tests against 3.11, 4.0 and DSE 6.8
-      H 12 * * 0 %CI_SCHEDULE=WEEKENDS;CI_SCHEDULE_SERVER_VERSIONS=3.11 4.0 dse-6.8.30;CI_SCHEDULE_JABBA_VERSION=openjdk@1.14
+      # Every weekend (Saturday, Sunday) around 2:00 AM
+      ### JDK8 tests against 2.1, 3.0, 4.0, DSE 4.8, DSE 5.0, DSE 5.1, dse-6.0.18 and DSE 6.7
+      H 2 * * 0 %CI_SCHEDULE=WEEKENDS;CI_SCHEDULE_SERVER_VERSIONS=2.1 3.0 4.0 dse-4.8.16 dse-5.0.15 dse-5.1.35 dse-6.0.18 dse-6.7.17;CI_SCHEDULE_JABBA_VERSION=1.8
+      # Every weeknight (Monday - Friday) around 12:00 PM noon
+      ### JDK11 tests against 3.11, 4.1, 5.0-beta1 and DSE 6.8
+      H 12 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=3.11 4.1 5.0-beta1 dse-6.8.30;CI_SCHEDULE_JABBA_VERSION=openjdk@1.11
+      ### JDK17 tests against 3.11, 4.1, 5.0-beta1 and DSE 6.8
+      H 12 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=3.11 4.1 5.0-beta1 dse-6.8.30;CI_SCHEDULE_JABBA_VERSION=openjdk@1.17
     """ : "")
   }
 
@@ -443,8 +452,8 @@ pipeline {
         axes {
           axis {
             name 'SERVER_VERSION'
-            values '3.11',     // Latest stable Apache CassandraⓇ
-                   '4.0',      // Development Apache CassandraⓇ
+            values '3.11',      // Latest stable Apache CassandraⓇ
+                   '4.1',       // Development Apache CassandraⓇ
                    'dse-6.8.30' // Current DataStax Enterprise
           }
           axis {
@@ -477,7 +486,7 @@ pipeline {
           }
           stage('Build-Driver') {
             steps {
-              buildDriver('default')
+              buildDriver('1.8')
             }
           }
           stage('Execute-Tests') {
@@ -553,8 +562,10 @@ pipeline {
             name 'SERVER_VERSION'
             values '2.1',       // Legacy Apache CassandraⓇ
                    '3.0',       // Previous Apache CassandraⓇ
-                   '3.11',      // Current Apache CassandraⓇ
-                   '4.0',       // Development Apache CassandraⓇ
+                   '3.11',      // Previous Apache CassandraⓇ
+                   '4.0',       // Previous Apache CassandraⓇ
+                   '4.1',       // Current Apache CassandraⓇ
+                   '5.0-beta1',    // Development Apache CassandraⓇ
                    'dse-4.8.16',   // Previous EOSL DataStax Enterprise
                    'dse-5.0.15',   // Last EOSL DataStax Enterprise
                    'dse-5.1.35',   // Legacy DataStax Enterprise
@@ -591,8 +602,7 @@ pipeline {
           }
           stage('Build-Driver') {
             steps {
-              // Jabba default should be a JDK8 for now
-              buildDriver('default')
+              buildDriver('1.8')
             }
           }
           stage('Execute-Tests') {

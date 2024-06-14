@@ -83,7 +83,7 @@ public abstract class MicrometerMetricUpdater<MetricT> extends AbstractMetricUpd
   }
 
   @Override
-  protected void clearMetrics() {
+  public void clearMetrics() {
     for (Meter metric : metrics.values()) {
       registry.remove(metric);
     }
