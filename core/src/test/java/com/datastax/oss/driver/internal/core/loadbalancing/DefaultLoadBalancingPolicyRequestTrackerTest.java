@@ -68,8 +68,8 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     policy.onNodeSuccess(request, 0, profile, node1, logPrefix);
 
     // Then
-    assertThat(policy.responseTimes.asMap())
-        .hasEntrySatisfying(node1, value -> assertThat(value.times.get(0)).isEqualTo(123L))
+    assertThat(policy.responseTimes)
+        .hasEntrySatisfying(node1, value -> assertThat(value.oldest).isEqualTo(123L))
         .doesNotContainKeys(node2, node3);
     assertThat(policy.isResponseRateInsufficient(node1, nextNanoTime)).isTrue();
     assertThat(policy.isResponseRateInsufficient(node2, nextNanoTime)).isTrue();
@@ -86,13 +86,13 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     policy.onNodeSuccess(request, 0, profile, node1, logPrefix);
 
     // Then
-    assertThat(policy.responseTimes.asMap())
+    assertThat(policy.responseTimes)
         .hasEntrySatisfying(
             node1,
             value -> {
               // oldest value first
-              assertThat(value.times.get(0)).isEqualTo(123);
-              assertThat(value.times.get(1)).isEqualTo(456);
+              assertThat(value.oldest).isEqualTo(123);
+              assertThat(value.newest.getAsLong()).isEqualTo(456);
             })
         .doesNotContainKeys(node2, node3);
     assertThat(policy.isResponseRateInsufficient(node1, nextNanoTime)).isFalse();
@@ -111,15 +111,15 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     policy.onNodeSuccess(request, 0, profile, node2, logPrefix);
 
     // Then
-    assertThat(policy.responseTimes.asMap())
+    assertThat(policy.responseTimes)
         .hasEntrySatisfying(
             node1,
             value -> {
               // values should rotate left (bubble up)
-              assertThat(value.times.get(0)).isEqualTo(456);
-              assertThat(value.times.get(1)).isEqualTo(789);
+              assertThat(value.oldest).isEqualTo(456);
+              assertThat(value.newest.getAsLong()).isEqualTo(789);
             })
-        .hasEntrySatisfying(node2, value -> assertThat(value.times.get(0)).isEqualTo(789))
+        .hasEntrySatisfying(node2, value -> assertThat(value.oldest).isEqualTo(789))
         .doesNotContainKey(node3);
     assertThat(policy.isResponseRateInsufficient(node1, nextNanoTime)).isFalse();
     assertThat(policy.isResponseRateInsufficient(node2, nextNanoTime)).isTrue();
@@ -136,8 +136,8 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     policy.onNodeError(request, iae, 0, profile, node1, logPrefix);
 
     // Then
-    assertThat(policy.responseTimes.asMap())
-        .hasEntrySatisfying(node1, value -> assertThat(value.times.get(0)).isEqualTo(123L))
+    assertThat(policy.responseTimes)
+        .hasEntrySatisfying(node1, value -> assertThat(value.oldest).isEqualTo(123L))
         .doesNotContainKeys(node2, node3);
     assertThat(policy.isResponseRateInsufficient(node1, nextNanoTime)).isTrue();
     assertThat(policy.isResponseRateInsufficient(node2, nextNanoTime)).isTrue();
@@ -155,13 +155,13 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     policy.onNodeError(request, iae, 0, profile, node1, logPrefix);
 
     // Then
-    assertThat(policy.responseTimes.asMap())
+    assertThat(policy.responseTimes)
         .hasEntrySatisfying(
             node1,
             value -> {
               // oldest value first
-              assertThat(value.times.get(0)).isEqualTo(123);
-              assertThat(value.times.get(1)).isEqualTo(456);
+              assertThat(value.oldest).isEqualTo(123);
+              assertThat(value.newest.getAsLong()).isEqualTo(456);
             })
         .doesNotContainKeys(node2, node3);
     assertThat(policy.isResponseRateInsufficient(node1, nextNanoTime)).isFalse();
@@ -181,15 +181,15 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     policy.onNodeError(request, iae, 0, profile, node2, logPrefix);
 
     // Then
-    assertThat(policy.responseTimes.asMap())
+    assertThat(policy.responseTimes)
         .hasEntrySatisfying(
             node1,
             value -> {
               // values should rotate left (bubble up)
-              assertThat(value.times.get(0)).isEqualTo(456);
-              assertThat(value.times.get(1)).isEqualTo(789);
+              assertThat(value.oldest).isEqualTo(456);
+              assertThat(value.newest.getAsLong()).isEqualTo(789);
             })
-        .hasEntrySatisfying(node2, value -> assertThat(value.times.get(0)).isEqualTo(789))
+        .hasEntrySatisfying(node2, value -> assertThat(value.oldest).isEqualTo(789))
         .doesNotContainKey(node3);
     assertThat(policy.isResponseRateInsufficient(node1, nextNanoTime)).isFalse();
     assertThat(policy.isResponseRateInsufficient(node2, nextNanoTime)).isTrue();
