@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -288,6 +290,34 @@ public enum DseDriverOption implements DriverOption {
    * <p>Value-type: {@link java.time.Duration Duration}
    */
   METRICS_NODE_GRAPH_MESSAGES_SLO("advanced.metrics.node.graph-messages.slo"),
+  /**
+   * Optional list of percentiles to publish for graph-requests metric. Produces an additional time
+   * series for each requested percentile. This percentile is computed locally, and so can't be
+   * aggregated with percentiles computed across other dimensions (e.g. in a different instance).
+   *
+   * <p>Value type: {@link java.util.List List}&#60;{@link Double}&#62;
+   */
+  METRICS_SESSION_GRAPH_REQUESTS_PUBLISH_PERCENTILES(
+      "advanced.metrics.session.graph-requests.publish-percentiles"),
+  /**
+   * Optional list of percentiles to publish for node graph-messages metric. Produces an additional
+   * time series for each requested percentile. This percentile is computed locally, and so can't be
+   * aggregated with percentiles computed across other dimensions (e.g. in a different instance).
+   *
+   * <p>Value type: {@link java.util.List List}&#60;{@link Double}&#62;
+   */
+  METRICS_NODE_GRAPH_MESSAGES_PUBLISH_PERCENTILES(
+      "advanced.metrics.node.graph-messages.publish-percentiles"),
+  /**
+   * Optional list of percentiles to publish for continuous paging requests metric. Produces an
+   * additional time series for each requested percentile. This percentile is computed locally, and
+   * so can't be aggregated with percentiles computed across other dimensions (e.g. in a different
+   * instance).
+   *
+   * <p>Value type: {@link java.util.List List}&#60;{@link Double}&#62;
+   */
+  CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES(
+      "advanced.metrics.session.continuous-cql-requests.publish-percentiles"),
   ;
 
   private final String path;

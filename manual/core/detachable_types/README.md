@@ -1,3 +1,22 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Detachable types
 
 ### Quick overview
@@ -131,7 +150,7 @@ Even then, the defaults used by detached objects might be good enough for you:
 
 * the default codec registry works if you don't have any [custom codec](../custom_codecs/);
 * the binary encoding format is stable across modern protocol versions. The last changes were for
-  collection encoding from v2 to v3; Java driver 4 only supports v3 and above. When in doubt, check
+  collection encoding from v2 to v3; Java Driver 4 only supports v3 and above. When in doubt, check
   the "Changes" section of the [protocol specifications].
   
 Otherwise, just make sure you reattach objects any time you deserialize them or create them from

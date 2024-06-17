@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,11 +26,11 @@ package com.datastax.oss.driver.api.testinfra.ccm;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.Version;
-import com.datastax.oss.driver.api.testinfra.*;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
-import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
-import com.datastax.oss.driver.api.testinfra.requirement.VersionRequirement;
-import java.util.Collection;
+import com.datastax.oss.driver.api.testinfra.CassandraSkip;
+import com.datastax.oss.driver.api.testinfra.ScyllaRequirement;
+import com.datastax.oss.driver.api.testinfra.ScyllaSkip;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirementRule;
 import java.util.Objects;
 import java.util.Optional;
 import org.junit.AssumptionViolatedException;
@@ -88,24 +90,8 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
 
   @Override
   public Statement apply(Statement base, Description description) {
-    BackendType backend =
-        ccmBridge.getDseVersion().isPresent() ? BackendType.DSE : BackendType.CASSANDRA;
-    Version version = ccmBridge.getDseVersion().orElseGet(ccmBridge::getCassandraVersion);
-    Collection<VersionRequirement> requirements = VersionRequirement.fromAnnotations(description);
-
-    if (!VersionRequirement.meetsAny(requirements, backend, version)) {
-      // requirements not met, throw reasoning assumption to skip test
-      return new Statement() {
-        @Override
-        public void evaluate() {
-          throw new AssumptionViolatedException(
-              VersionRequirement.buildReasonString(requirements, backend, version));
-        }
-      };
-    }
 
     // Legacy skipping:
-    // TODO: Use only VersionRequirement
 
     // Scylla-specific annotations
     ScyllaSkip scyllaSkip = description.getAnnotation(ScyllaSkip.class);
@@ -135,60 +121,6 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
                     "Test skipped when running with Cassandra.  Description: %s", description));
           }
         };
-      }
-    }
-
-    // If test is annotated with CassandraRequirement or DseRequirement, ensure configured CCM
-    // cluster meets those requirements.
-    CassandraRequirement cassandraRequirement =
-        description.getAnnotation(CassandraRequirement.class);
-
-    if (cassandraRequirement != null) {
-      // if the configured cassandra cassandraRequirement exceeds the one being used skip this test.
-      if (!cassandraRequirement.min().isEmpty()) {
-        Version minVersion = Version.parse(cassandraRequirement.min());
-        if (minVersion.compareTo(ccmBridge.getCassandraVersion()) > 0) {
-          return buildErrorStatement(minVersion, cassandraRequirement.description(), false, false);
-        }
-      }
-
-      if (!cassandraRequirement.max().isEmpty()) {
-        // if the test version exceeds the maximum configured one, fail out.
-        Version maxVersion = Version.parse(cassandraRequirement.max());
-
-        if (maxVersion.compareTo(ccmBridge.getCassandraVersion()) <= 0) {
-          return buildErrorStatement(maxVersion, cassandraRequirement.description(), true, false);
-        }
-      }
-    }
-
-    DseRequirement dseRequirement = description.getAnnotation(DseRequirement.class);
-    if (dseRequirement != null) {
-      Optional<Version> dseVersionOption = ccmBridge.getDseVersion();
-      if (!dseVersionOption.isPresent()) {
-        return new Statement() {
-
-          @Override
-          public void evaluate() {
-            throw new AssumptionViolatedException("Test Requires DSE but C* is configured.");
-          }
-        };
-      } else {
-        Version dseVersion = dseVersionOption.get();
-        if (!dseRequirement.min().isEmpty()) {
-          Version minVersion = Version.parse(dseRequirement.min());
-          if (minVersion.compareTo(dseVersion) > 0) {
-            return buildErrorStatement(minVersion, dseRequirement.description(), false, true);
-          }
-        }
-
-        if (!dseRequirement.max().isEmpty()) {
-          Version maxVersion = Version.parse(dseRequirement.max());
-
-          if (maxVersion.compareTo(dseVersion) <= 0) {
-            return buildErrorStatement(maxVersion, dseRequirement.description(), true, true);
-          }
-        }
       }
     }
 
@@ -236,7 +168,18 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
       }
     }
 
-    return super.apply(base, description);
+    if (BackendRequirementRule.meetsDescriptionRequirements(description)) {
+      return super.apply(base, description);
+    } else {
+      // requirements not met, throw reasoning assumption to skip test
+      return new Statement() {
+        @Override
+        public void evaluate() {
+          throw new AssumptionViolatedException(
+              BackendRequirementRule.buildReasonString(description));
+        }
+      };
+    }
   }
 
   public Version getCassandraVersion() {

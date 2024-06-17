@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -100,6 +102,9 @@ public class VersionRequirement {
     CassandraRequirement cassandraRequirement =
         description.getAnnotation(CassandraRequirement.class);
     DseRequirement dseRequirement = description.getAnnotation(DseRequirement.class);
+    // matches methods/classes with one @BackendRequirement annotation
+    BackendRequirement backendRequirement = description.getAnnotation(BackendRequirement.class);
+    // matches methods/classes with two or more @BackendRequirement annotations
     BackendRequirements backendRequirements = description.getAnnotation(BackendRequirements.class);
 
     // build list of required versions
@@ -109,6 +114,9 @@ public class VersionRequirement {
     }
     if (dseRequirement != null) {
       requirements.add(VersionRequirement.fromDseRequirement(dseRequirement));
+    }
+    if (backendRequirement != null) {
+      requirements.add(VersionRequirement.fromBackendRequirement(backendRequirement));
     }
     if (backendRequirements != null) {
       Arrays.stream(backendRequirements.value())

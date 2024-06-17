@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +23,11 @@ import java.lang.annotation.RetentionPolicy;
 /**
  * Annotation for a Class or Method that defines a Cassandra Version requirement. If the cassandra
  * version in use does not meet the version requirement, the test is skipped.
+ *
+ * @deprecated Replaced by {@link
+ *     com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement}
  */
+@Deprecated
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CassandraRequirement {
 

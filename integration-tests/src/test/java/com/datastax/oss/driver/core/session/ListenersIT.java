@@ -1,11 +1,13 @@
 /*
- * Copyright DataStax, Inc.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +19,7 @@ package com.datastax.oss.driver.core.session;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -33,9 +36,12 @@ import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -94,6 +100,9 @@ public class ListenersIT {
                         .build())
                 .build()) {
 
+      // These NodeStateListeners are wrapped with SafeInitNodeStateListener which delays #onUp
+      // callbacks until #onSessionReady is called, these will all happen during session
+      // initialization
       InOrder inOrder1 = inOrder(nodeListener1);
       inOrder1.verify(nodeListener1).onSessionReady(session);
       inOrder1.verify(nodeListener1).onUp(nodeCaptor1.capture());
@@ -108,20 +117,29 @@ public class ListenersIT {
       assertThat(nodeCaptor2.getValue().getEndPoint())
           .isEqualTo(SIMULACRON_RULE.getContactPoints().iterator().next());
 
-      verify(schemaListener1).onSessionReady(session);
-      verify(schemaListener2).onSessionReady(session);
+      // SchemaChangeListener#onSessionReady is called asynchronously from AdminExecutor so we may
+      // have to wait a little
+      verify(schemaListener1, timeout(500).times(1)).onSessionReady(session);
+      verify(schemaListener2, timeout(500).times(1)).onSessionReady(session);
 
+      // Request tracker #onSessionReady is called synchronously during session initialization
       verify(requestTracker1).onSessionReady(session);
       verify(requestTracker2).onSessionReady(session);
 
       assertThat(MyNodeStateListener.onSessionReadyCalled).isTrue();
       assertThat(MyNodeStateListener.onUpCalled).isTrue();
 
-      assertThat(MySchemaChangeListener.onSessionReadyCalled).isTrue();
+      // SchemaChangeListener#onSessionReady is called asynchronously from AdminExecutor so we may
+      // have to wait a little
+      assertThat(
+              Uninterruptibles.awaitUninterruptibly(
+                  MySchemaChangeListener.onSessionReadyLatch, 500, TimeUnit.MILLISECONDS))
+          .isTrue();
 
       assertThat(MyRequestTracker.onSessionReadyCalled).isTrue();
     }
 
+    // CqlSession#close waits for all listener close methods to be called
     verify(nodeListener1).close();
     verify(nodeListener2).close();
 
@@ -167,14 +185,14 @@ public class ListenersIT {
 
   public static class MySchemaChangeListener extends SchemaChangeListenerBase {
 
-    private static volatile boolean onSessionReadyCalled = false;
+    private static CountDownLatch onSessionReadyLatch = new CountDownLatch(1);
     private static volatile boolean closeCalled = false;
 
     public MySchemaChangeListener(@SuppressWarnings("unused") DriverContext ignored) {}
 
     @Override
     public void onSessionReady(@NonNull Session session) {
-      onSessionReadyCalled = true;
+      onSessionReadyLatch.countDown();
     }
 
     @Override

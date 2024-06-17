@@ -85,7 +85,7 @@ The course also includes more advanced lessons that demonstrate working with pre
 
 ## License
 
-&copy; DataStax, Inc.
+&copy; The Apache Software Foundation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -101,9 +101,8 @@ limitations under the License.
 
 ----
 
-DataStax is a registered trademark of DataStax, Inc. and its subsidiaries in the United States 
-and/or other countries.
-
 Apache Cassandra, Apache, Tomcat, Lucene, Solr, Hadoop, Spark, TinkerPop, and Cassandra are 
 trademarks of the [Apache Software Foundation](http://www.apache.org/) or its subsidiaries in
 Canada, the United States and/or other countries. 
+
+Binary artifacts of this product bundle Java Native Runtime libraries, which is available under the Eclipse Public License version 2.0.

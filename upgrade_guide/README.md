@@ -1,14 +1,33 @@
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
 ## Upgrade guide
 
 ### 4.17.0
 
 #### Beta support for Java17
 
-With the completion of [JAVA-3042](https://datastax-oss.atlassian.net/browse/JAVA-3042) the driver now passes our automated test matrix for Java driver releases.
+With the completion of [JAVA-3042](https://datastax-oss.atlassian.net/browse/JAVA-3042) the driver now passes our automated test matrix for Java Driver releases.
 While all features function normally when run with Java 17 tests, we do not offer full support for this
 platform until we've received feedback from other users in the ecosystem.
 
-If you discover an issue with the Java driver running on Java 17, please let us know. We will triage and address Java 17 issues.
+If you discover an issue with the Java Driver running on Java 17, please let us know. We will triage and address Java 17 issues.
 
 #### Updated API for vector search
 
@@ -28,7 +47,7 @@ try (CqlSession session = new CqlSessionBuilder().withLocalDatacenter("datacente
     session.execute("DROP KEYSPACE IF EXISTS test");
     session.execute("CREATE KEYSPACE test WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
     session.execute("CREATE TABLE test.foo(i int primary key, j vector<float, 3>)");
-    session.execute("CREAT CUSTOM INDEX ann_index ON test.foo(j) USING 'StorageAttachedIndex'");
+    session.execute("CREATE CUSTOM INDEX ann_index ON test.foo(j) USING 'StorageAttachedIndex'");
     session.execute("INSERT INTO test.foo (i, j) VALUES (1, [8, 2.3, 58])");
     session.execute("INSERT INTO test.foo (i, j) VALUES (2, [1.2, 3.4, 5.6])");
     session.execute("INSERT INTO test.foo (i, j) VALUES (5, [23, 18, 3.9])");
@@ -106,7 +125,7 @@ request cannot be executed because all nodes tried were busy. Previously you wou
 
 #### Esri Geometry dependency now optional
 
-Previous versions of the Java driver defined a mandatory dependency on the Esri geometry library.
+Previous versions of the Java Driver defined a mandatory dependency on the Esri geometry library.
 This library offered support for primitive geometric types supported by DSE.  As of driver 4.14.0
 this dependency is now optional.
 
