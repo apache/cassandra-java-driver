@@ -280,7 +280,7 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
 
   protected boolean isResponseRateInsufficient(@NonNull Node node, long now) {
     NodeResponseRateSample sample = responseTimes.get(node);
-    return sample == null || !sample.hasSufficientResponses(now);
+    return !(sample == null || sample.hasSufficientResponses(now));
   }
 
   /**
@@ -303,7 +303,6 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
     return (pool == null) ? 0 : pool.getInFlight();
   }
 
-  // Exposed as protected for unit tests
   protected class NodeResponseRateSample {
 
     @VisibleForTesting protected final long oldest;
@@ -346,7 +345,7 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
     // the past interval delimited by RESPONSE_COUNT_RESET_INTERVAL_NANOS.
     private boolean hasSufficientResponses(long now) {
       // If we only have one sample it's an automatic failure
-      if (!this.newest.isPresent()) return false;
+      if (!this.newest.isPresent()) return true;
       long threshold = now - RESPONSE_COUNT_RESET_INTERVAL_NANOS;
       return this.oldest - threshold >= 0;
     }
