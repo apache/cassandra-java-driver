@@ -280,11 +280,7 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
 
   protected boolean isResponseRateInsufficient(@NonNull Node node, long now) {
     NodeResponseRateSample sample = responseTimes.get(node);
-    if (sample == null) {
-      return true;
-    } else {
-      return !sample.hasSufficientResponses(now);
-    }
+    return sample == null || !sample.hasSufficientResponses(now);
   }
 
   /**
