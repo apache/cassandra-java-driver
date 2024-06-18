@@ -1,0 +1,64 @@
+name: Release ScyllaDB Java Driver
+
+on:
+  workflow_dispatch:
+    inputs:
+      dryrun:
+        type: boolean
+        description: 'dryrun: run without pushing SCM changes to upstream'
+        default: true
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-22.04
+
+    permissions:
+      contents: write
+
+    env:
+      MVNCMD: mvn -B -X -ntp
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        java-version: '8'
+        distribution: 'adopt'
+        server-id: ossrh
+        gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+        server-username: OSSRH_USERNAME
+        server-password: OSSRH_PASSWORD
+
+    - name: Configure Git user
+      run: |
+        git config user.name "ScyllaDB Promoter"
+        git config user.email "github-promoter@scylladb.com"
+
+    - name: Clean project
+      run: $MVNCMD clean
+
+    - name: Clean release
+      run: $MVNCMD release:clean
+
+    - name: Prepare release
+      env:
+        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      run: $MVNCMD release:prepare -DpushChanges=false -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
+
+    - name: Perform release
+      env:
+        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+        OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+      if: ${{ github.event.inputs.dryrun == 'false' }}
+      run: $MVNCMD release:perform -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
+
+    - name: Push changes to SCM
+      if: ${{ github.event.inputs.dryrun == 'false' }}
+      run: |
+        git status && git log -3
+        git push origin --follow-tags -v
