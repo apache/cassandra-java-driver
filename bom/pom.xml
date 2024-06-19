@@ -28,7 +28,7 @@
   <parent>
     <groupId>com.scylladb</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.18.0.0-SNAPSHOT</version>
+    <version>4.18.0.0</version>
   </parent>
   <artifactId>java-driver-bom</artifactId>
   <packaging>pom</packaging>
@@ -38,42 +38,42 @@
       <dependency>
         <groupId>com.scylladb</groupId>
         <artifactId>java-driver-core</artifactId>
-        <version>4.18.0.0-SNAPSHOT</version>
+        <version>4.18.0.0</version>
       </dependency>
       <dependency>
         <groupId>com.scylladb</groupId>
         <artifactId>java-driver-core-shaded</artifactId>
-        <version>4.18.0.0-SNAPSHOT</version>
+        <version>4.18.0.0</version>
       </dependency>
       <dependency>
         <groupId>com.scylladb</groupId>
         <artifactId>java-driver-mapper-processor</artifactId>
-        <version>4.18.0.0-SNAPSHOT</version>
+        <version>4.18.0.0</version>
       </dependency>
       <dependency>
         <groupId>com.scylladb</groupId>
         <artifactId>java-driver-mapper-runtime</artifactId>
-        <version>4.18.0.0-SNAPSHOT</version>
+        <version>4.18.0.0</version>
       </dependency>
       <dependency>
         <groupId>com.scylladb</groupId>
         <artifactId>java-driver-query-builder</artifactId>
-        <version>4.18.0.0-SNAPSHOT</version>
+        <version>4.18.0.0</version>
       </dependency>
       <dependency>
         <groupId>com.scylladb</groupId>
         <artifactId>java-driver-test-infra</artifactId>
-        <version>4.18.0.0-SNAPSHOT</version>
+        <version>4.18.0.0</version>
       </dependency>
       <dependency>
         <groupId>com.scylladb</groupId>
         <artifactId>java-driver-metrics-micrometer</artifactId>
-        <version>4.18.0.0-SNAPSHOT</version>
+        <version>4.18.0.0</version>
       </dependency>
       <dependency>
         <groupId>com.scylladb</groupId>
         <artifactId>java-driver-metrics-microprofile</artifactId>
-        <version>4.18.0.0-SNAPSHOT</version>
+        <version>4.18.0.0</version>
       </dependency>
       <dependency>
         <groupId>com.datastax.oss</groupId>
