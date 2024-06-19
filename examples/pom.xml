@@ -28,7 +28,7 @@
   <parent>
     <artifactId>java-driver-parent</artifactId>
     <groupId>com.scylladb</groupId>
-    <version>4.18.0.0</version>
+    <version>4.18.0.1-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-examples</artifactId>
   <name>Java driver for Scylla and Apache Cassandra(R) - examples.</name>
