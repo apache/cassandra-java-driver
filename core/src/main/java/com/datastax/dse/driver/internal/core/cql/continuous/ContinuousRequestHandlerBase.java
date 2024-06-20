@@ -19,11 +19,13 @@ package com.datastax.dse.driver.internal.core.cql.continuous;
 
 import com.datastax.dse.driver.api.core.DseProtocolVersion;
 import com.datastax.dse.driver.api.core.cql.continuous.ContinuousAsyncResultSet;
+import com.datastax.dse.driver.api.core.graph.AsyncGraphResultSet;
 import com.datastax.dse.driver.internal.core.DseProtocolFeature;
 import com.datastax.dse.driver.internal.core.cql.DseConversions;
 import com.datastax.dse.protocol.internal.request.Revise;
 import com.datastax.dse.protocol.internal.response.result.DseRowsMetadata;
 import com.datastax.oss.driver.api.core.AllNodesFailedException;
+import com.datastax.oss.driver.api.core.AsyncPagingIterable;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.NodeUnavailableException;
@@ -626,7 +628,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
         Throwable error = future.cause();
         if (error instanceof EncoderException
             && error.getCause() instanceof FrameTooLongException) {
-          trackNodeError(node, error.getCause());
+          trackNodeError(node, error.getCause(), null);
           lock.lock();
           try {
             abort(error.getCause(), false);
@@ -643,7 +645,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
               .getMetricUpdater()
               .incrementCounter(DefaultNodeMetric.UNSENT_REQUESTS, executionProfile.getName());
           recordError(node, error);
-          trackNodeError(node, error.getCause());
+          trackNodeError(node, error.getCause(), null);
           sendRequest(statement, null, executionIndex, retryCount, scheduleSpeculativeExecution);
         }
       } else {
@@ -737,7 +739,8 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      * Invoked when a continuous paging response is received, either a successful or failed one.
      *
      * <p>Delegates further processing to appropriate methods: {@link #processResultResponse(Result,
-     * Frame)} if the response was successful, or {@link #processErrorResponse(Error)} if it wasn't.
+     * Frame)} if the response was successful, or {@link #processErrorResponse(Error, Frame)} if it
+     * wasn't.
      *
      * @param response the received {@link Frame}.
      */
@@ -758,15 +761,15 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
             processResultResponse((Result) responseMessage, response);
           } else if (responseMessage instanceof Error) {
             LOG.trace("[{}] Got error response", logPrefix);
-            processErrorResponse((Error) responseMessage);
+            processErrorResponse((Error) responseMessage, response);
           } else {
             IllegalStateException error =
                 new IllegalStateException("Unexpected response " + responseMessage);
-            trackNodeError(node, error);
+            trackNodeError(node, error, response);
             abort(error, false);
           }
         } catch (Throwable t) {
-          trackNodeError(node, t);
+          trackNodeError(node, t, response);
           abort(t, false);
         }
       } finally {
@@ -900,7 +903,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
      * @param errorMessage the error message received.
      */
     @SuppressWarnings("GuardedBy") // this method is only called with the lock held
-    private void processErrorResponse(@NonNull Error errorMessage) {
+    private void processErrorResponse(@NonNull Error errorMessage, @NonNull Frame frame) {
       assert lock.isHeldByCurrentThread();
       if (errorMessage instanceof Unprepared) {
         processUnprepared((Unprepared) errorMessage);
@@ -909,7 +912,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
         if (error instanceof BootstrappingException) {
           LOG.trace("[{}] {} is bootstrapping, trying next node", logPrefix, node);
           recordError(node, error);
-          trackNodeError(node, error);
+          trackNodeError(node, error, frame);
           sendRequest(statement, null, executionIndex, retryCount, false);
         } else if (error instanceof QueryValidationException
             || error instanceof FunctionFailureException
@@ -921,7 +924,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
           NodeMetricUpdater metricUpdater = ((DefaultNode) node).getMetricUpdater();
           metricUpdater.incrementCounter(
               DefaultNodeMetric.OTHER_ERRORS, executionProfile.getName());
-          trackNodeError(node, error);
+          trackNodeError(node, error, frame);
           abort(error, true);
         } else {
           try {
@@ -1060,7 +1063,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
                                     + "This usually happens when you run a 'USE...' query after "
                                     + "the statement was prepared.",
                                 Bytes.toHexString(idToReprepare), Bytes.toHexString(repreparedId)));
-                    trackNodeError(node, illegalStateException);
+                    trackNodeError(node, illegalStateException, null);
                     fatalError = illegalStateException;
                   } else {
                     LOG.trace(
@@ -1079,18 +1082,18 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
                           || prepareError instanceof FunctionFailureException
                           || prepareError instanceof ProtocolError) {
                         LOG.trace("[{}] Unrecoverable error on re-prepare, rethrowing", logPrefix);
-                        trackNodeError(node, prepareError);
+                        trackNodeError(node, prepareError, null);
                         fatalError = prepareError;
                       }
                     }
                   } else if (exception instanceof RequestThrottlingException) {
-                    trackNodeError(node, exception);
+                    trackNodeError(node, exception, null);
                     fatalError = exception;
                   }
                   if (fatalError == null) {
                     LOG.trace("[{}] Re-prepare failed, trying next node", logPrefix);
                     recordError(node, exception);
-                    trackNodeError(node, exception);
+                    trackNodeError(node, exception, null);
                     sendRequest(statement, null, executionIndex, retryCount, false);
                   }
                 }
@@ -1118,18 +1121,18 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       switch (verdict.getRetryDecision()) {
         case RETRY_SAME:
           recordError(node, error);
-          trackNodeError(node, error);
+          trackNodeError(node, error, null);
           sendRequest(
               verdict.getRetryRequest(statement), node, executionIndex, retryCount + 1, false);
           break;
         case RETRY_NEXT:
           recordError(node, error);
-          trackNodeError(node, error);
+          trackNodeError(node, error, null);
           sendRequest(
               verdict.getRetryRequest(statement), null, executionIndex, retryCount + 1, false);
           break;
         case RETHROW:
-          trackNodeError(node, error);
+          trackNodeError(node, error, null);
           abort(error, true);
           break;
         case IGNORE:
@@ -1442,12 +1445,20 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
 
     // ERROR HANDLING
 
-    private void trackNodeError(@NonNull Node node, @NonNull Throwable error) {
+    private void trackNodeError(
+        @NonNull Node node, @NonNull Throwable error, @Nullable Frame frame) {
       if (nodeErrorReported.compareAndSet(false, true)) {
         long latencyNanos = System.nanoTime() - this.messageStartTimeNanos;
         context
             .getRequestTracker()
-            .onNodeError(this.statement, error, latencyNanos, executionProfile, node, logPrefix);
+            .onNodeError(
+                this.statement,
+                error,
+                latencyNanos,
+                executionProfile,
+                node,
+                createExecutionInfo(frame),
+                logPrefix);
       }
     }
 
@@ -1561,21 +1572,32 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       if (resultSetClass.isInstance(pageOrError)) {
         if (future.complete(resultSetClass.cast(pageOrError))) {
           throttler.signalSuccess(ContinuousRequestHandlerBase.this);
+
+          ExecutionInfo executionInfo = null;
+          if (pageOrError instanceof AsyncPagingIterable) {
+            executionInfo = ((AsyncPagingIterable) pageOrError).getExecutionInfo();
+          } else if (pageOrError instanceof AsyncGraphResultSet) {
+            executionInfo = ((AsyncGraphResultSet) pageOrError).getRequestExecutionInfo();
+          }
+
           if (nodeSuccessReported.compareAndSet(false, true)) {
             context
                 .getRequestTracker()
-                .onNodeSuccess(statement, nodeLatencyNanos, executionProfile, node, logPrefix);
+                .onNodeSuccess(
+                    statement, nodeLatencyNanos, executionProfile, node, executionInfo, logPrefix);
           }
           context
               .getRequestTracker()
-              .onSuccess(statement, totalLatencyNanos, executionProfile, node, logPrefix);
+              .onSuccess(
+                  statement, totalLatencyNanos, executionProfile, node, executionInfo, logPrefix);
         }
       } else {
         Throwable error = (Throwable) pageOrError;
         if (future.completeExceptionally(error)) {
           context
               .getRequestTracker()
-              .onError(statement, error, totalLatencyNanos, executionProfile, node, logPrefix);
+              .onError(
+                  statement, error, totalLatencyNanos, executionProfile, node, null, logPrefix);
           if (error instanceof DriverTimeoutException) {
             throttler.signalTimeout(ContinuousRequestHandlerBase.this);
             session
@@ -1599,6 +1621,22 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
           executionIndex,
           errors,
           pagingState,
+          response,
+          true,
+          session,
+          context,
+          executionProfile);
+    }
+
+    @NonNull
+    private ExecutionInfo createExecutionInfo(@Nullable Frame response) {
+      return new DefaultExecutionInfo(
+          statement,
+          node,
+          startedSpeculativeExecutionsCount.get(),
+          executionIndex,
+          errors,
+          null,
           response,
           true,
           session,
