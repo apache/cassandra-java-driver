@@ -15,6 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * Copyright (C) 2024 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,6 +28,7 @@ import static org.mockito.Mockito.when;
 
 import com.datastax.dse.driver.api.core.metadata.DseNodeProperties;
 import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -33,6 +39,8 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -130,6 +138,8 @@ public class DefaultSchemaQueriesFactoryTest {
     when(mockConfig.getDefaultProfile()).thenReturn(mockProfile);
     final InternalDriverContext mockInternalCtx = mock(InternalDriverContext.class);
     when(mockInternalCtx.getConfig()).thenReturn(mockConfig);
+    when(mockProfile.getDuration(DefaultDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT))
+        .thenReturn(Duration.of(5, ChronoUnit.SECONDS));
 
     return new DefaultSchemaQueriesFactory(mockInternalCtx);
   }

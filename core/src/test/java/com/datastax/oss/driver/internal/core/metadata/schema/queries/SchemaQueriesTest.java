@@ -15,6 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * Copyright (C) 2024 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,7 +59,7 @@ public abstract class SchemaQueriesTest {
   public void setup() {
     // Whatever, not actually used because the requests are mocked
     when(config.getDuration(DefaultDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT))
-        .thenReturn(Duration.ZERO);
+        .thenReturn(Duration.ofSeconds(2));
     when(config.getInt(DefaultDriverOption.METADATA_SCHEMA_REQUEST_PAGE_SIZE)).thenReturn(5000);
 
     channel = new EmbeddedChannel();

@@ -15,6 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * Copyright (C) 2024 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
@@ -54,6 +59,7 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
   // The future we return from execute, completes when all the queries are done.
   private final CompletableFuture<SchemaRows> schemaRowsFuture = new CompletableFuture<>();
   private final long startTimeNs = System.nanoTime();
+  private final String usingTimeoutClause;
 
   // All non-final fields are accessed exclusively on adminExecutor
   private CassandraSchemaRows.Builder schemaRowsBuilder;
@@ -73,6 +79,10 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
             DefaultDriverOption.METADATA_SCHEMA_REFRESHED_KEYSPACES, Collections.emptyList());
     assert refreshedKeyspaces != null; // per the default value
     this.keyspaceFilter = KeyspaceFilter.newInstance(logPrefix, refreshedKeyspaces);
+    this.usingTimeoutClause =
+        " USING TIMEOUT "
+            + config.getDuration(DefaultDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT).toMillis()
+            + "ms";
   }
 
   protected abstract String selectKeyspacesQuery();
@@ -112,29 +122,47 @@ public abstract class CassandraSchemaQueries implements SchemaQueries {
 
     schemaRowsBuilder = new CassandraSchemaRows.Builder(node, keyspaceFilter, logPrefix);
     String whereClause = keyspaceFilter.getWhereClause();
+    String usingClause = shouldApplyUsingTimeout() ? usingTimeoutClause : "";
 
-    query(selectKeyspacesQuery() + whereClause, schemaRowsBuilder::withKeyspaces);
-    query(selectTypesQuery() + whereClause, schemaRowsBuilder::withTypes);
-    query(selectTablesQuery() + whereClause, schemaRowsBuilder::withTables);
-    query(selectColumnsQuery() + whereClause, schemaRowsBuilder::withColumns);
+    query(selectKeyspacesQuery() + whereClause + usingClause, schemaRowsBuilder::withKeyspaces);
+    query(selectTypesQuery() + whereClause + usingClause, schemaRowsBuilder::withTypes);
+    query(selectTablesQuery() + whereClause + usingClause, schemaRowsBuilder::withTables);
+    query(selectColumnsQuery() + whereClause + usingClause, schemaRowsBuilder::withColumns);
     selectIndexesQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withIndexes));
+        .ifPresent(
+            select -> query(select + whereClause + usingClause, schemaRowsBuilder::withIndexes));
     selectViewsQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withViews));
+        .ifPresent(
+            select -> query(select + whereClause + usingClause, schemaRowsBuilder::withViews));
     selectFunctionsQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withFunctions));
+        .ifPresent(
+            select -> query(select + whereClause + usingClause, schemaRowsBuilder::withFunctions));
     selectAggregatesQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withAggregates));
+        .ifPresent(
+            select -> query(select + whereClause + usingClause, schemaRowsBuilder::withAggregates));
     selectVirtualKeyspacesQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withVirtualKeyspaces));
+        .ifPresent(
+            select ->
+                query(select + whereClause + usingClause, schemaRowsBuilder::withVirtualKeyspaces));
     selectVirtualTablesQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withVirtualTables));
+        .ifPresent(
+            select ->
+                query(select + whereClause + usingClause, schemaRowsBuilder::withVirtualTables));
     selectVirtualColumnsQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withVirtualColumns));
+        .ifPresent(
+            select ->
+                query(select + whereClause + usingClause, schemaRowsBuilder::withVirtualColumns));
     selectEdgesQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withEdges));
+        .ifPresent(
+            select -> query(select + whereClause + usingClause, schemaRowsBuilder::withEdges));
     selectVerticiesQuery()
-        .ifPresent(select -> query(select + whereClause, schemaRowsBuilder::withVertices));
+        .ifPresent(
+            select -> query(select + whereClause + usingClause, schemaRowsBuilder::withVertices));
+  }
+
+  protected boolean shouldApplyUsingTimeout() {
+    // We use non-null sharding info as a proxy check for cluster being a ScyllaDB cluster
+    return (channel.getShardingInfo() != null);
   }
 
   private void query(

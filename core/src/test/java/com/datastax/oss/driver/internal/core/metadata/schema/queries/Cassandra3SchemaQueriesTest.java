@@ -15,6 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
+ * Copyright (C) 2024 ScyllaDB
+ *
+ * Modified by ScyllaDB
+ */
 package com.datastax.oss.driver.internal.core.metadata.schema.queries;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
@@ -28,6 +33,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Queue;
 import java.util.concurrent.CompletionStage;
@@ -63,52 +69,72 @@ public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
     should_query_with_where_clause(" WHERE keyspace_name IN ('ks1','ks2')");
   }
 
+  @Test
+  public void should_query_with_using_clause() {
+    when(config.getDuration(DefaultDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT))
+        .thenReturn(Duration.ofMillis(100));
+    should_query_with_clauses("", " USING TIMEOUT 100ms");
+  }
+
   private void should_query_with_where_clause(String whereClause) {
+    should_query_with_clauses(whereClause, "");
+  }
+
+  private void should_query_with_clauses(String whereClause, String usingClause) {
     SchemaQueriesWithMockedChannel queries =
-        new SchemaQueriesWithMockedChannel(driverChannel, node, config, "test");
+        new SchemaQueriesWithMockedChannel(
+            driverChannel, node, config, "test", !usingClause.equals(""));
     CompletionStage<SchemaRows> result = queries.execute();
 
     // Keyspace
     Call call = queries.calls.poll();
-    assertThat(call.query).isEqualTo("SELECT * FROM system_schema.keyspaces" + whereClause);
+    assertThat(call.query)
+        .isEqualTo("SELECT * FROM system_schema.keyspaces" + whereClause + usingClause);
     call.result.complete(
         mockResult(mockRow("keyspace_name", "ks1"), mockRow("keyspace_name", "ks2")));
 
     // Types
     call = queries.calls.poll();
-    assertThat(call.query).isEqualTo("SELECT * FROM system_schema.types" + whereClause);
+    assertThat(call.query)
+        .isEqualTo("SELECT * FROM system_schema.types" + whereClause + usingClause);
     call.result.complete(mockResult(mockRow("keyspace_name", "ks1", "type_name", "type")));
 
     // Tables
     call = queries.calls.poll();
-    assertThat(call.query).isEqualTo("SELECT * FROM system_schema.tables" + whereClause);
+    assertThat(call.query)
+        .isEqualTo("SELECT * FROM system_schema.tables" + whereClause + usingClause);
     call.result.complete(mockResult(mockRow("keyspace_name", "ks1", "table_name", "foo")));
 
     // Columns
     call = queries.calls.poll();
-    assertThat(call.query).isEqualTo("SELECT * FROM system_schema.columns" + whereClause);
+    assertThat(call.query)
+        .isEqualTo("SELECT * FROM system_schema.columns" + whereClause + usingClause);
     call.result.complete(
         mockResult(mockRow("keyspace_name", "ks1", "table_name", "foo", "column_name", "k")));
 
     // Indexes
     call = queries.calls.poll();
-    assertThat(call.query).isEqualTo("SELECT * FROM system_schema.indexes" + whereClause);
+    assertThat(call.query)
+        .isEqualTo("SELECT * FROM system_schema.indexes" + whereClause + usingClause);
     call.result.complete(
         mockResult(mockRow("keyspace_name", "ks1", "table_name", "foo", "index_name", "index")));
 
     // Views
     call = queries.calls.poll();
-    assertThat(call.query).isEqualTo("SELECT * FROM system_schema.views" + whereClause);
+    assertThat(call.query)
+        .isEqualTo("SELECT * FROM system_schema.views" + whereClause + usingClause);
     call.result.complete(mockResult(mockRow("keyspace_name", "ks2", "view_name", "foo")));
 
     // Functions
     call = queries.calls.poll();
-    assertThat(call.query).isEqualTo("SELECT * FROM system_schema.functions" + whereClause);
+    assertThat(call.query)
+        .isEqualTo("SELECT * FROM system_schema.functions" + whereClause + usingClause);
     call.result.complete(mockResult(mockRow("keyspace_name", "ks2", "function_name", "add")));
 
     // Aggregates
     call = queries.calls.poll();
-    assertThat(call.query).isEqualTo("SELECT * FROM system_schema.aggregates" + whereClause);
+    assertThat(call.query)
+        .isEqualTo("SELECT * FROM system_schema.aggregates" + whereClause + usingClause);
     call.result.complete(mockResult(mockRow("keyspace_name", "ks2", "aggregate_name", "add")));
 
     channel.runPendingTasks();
@@ -349,10 +375,26 @@ public class Cassandra3SchemaQueriesTest extends SchemaQueriesTest {
   static class SchemaQueriesWithMockedChannel extends Cassandra3SchemaQueries {
 
     final Queue<Call> calls = new LinkedBlockingDeque<>();
+    final boolean shouldApplyUsingTimeout;
 
     SchemaQueriesWithMockedChannel(
         DriverChannel channel, Node node, DriverExecutionProfile config, String logPrefix) {
+      this(channel, node, config, logPrefix, false);
+    }
+
+    SchemaQueriesWithMockedChannel(
+        DriverChannel channel,
+        Node node,
+        DriverExecutionProfile config,
+        String logPrefix,
+        boolean shouldApplyUsingTimeout) {
       super(channel, node, config, logPrefix);
+      this.shouldApplyUsingTimeout = shouldApplyUsingTimeout;
+    }
+
+    @Override
+    protected boolean shouldApplyUsingTimeout() {
+      return shouldApplyUsingTimeout;
     }
 
     @Override
