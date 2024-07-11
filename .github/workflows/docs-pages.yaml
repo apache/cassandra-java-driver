@@ -5,7 +5,7 @@ name: "Docs / Publish"
 on:
   push:
     branches:
-    - scylla-3.x
+    - scylla-4.x
     paths:
     - 'docs/**'
     - 'faq/**'
