@@ -100,7 +100,7 @@ scylladb_markdown_recommonmark_versions = [
     'scylla-4.14.1.x',
     'scylla-4.15.0.x',
 ]
-suppress_warnings = ["ref.any", "myst.header","myst.xref_missing"]
+suppress_warnings = ["ref.any", "myst.header","myst.xref_missing","autosectionlabel"]
 
 # -- Options for multiversion extension
 
