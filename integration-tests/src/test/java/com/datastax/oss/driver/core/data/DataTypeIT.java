@@ -32,6 +32,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.data.CqlDuration;
+import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.core.data.SettableByIndex;
 import com.datastax.oss.driver.api.core.data.SettableByName;
 import com.datastax.oss.driver.api.core.data.TupleValue;
@@ -53,6 +54,7 @@ import com.datastax.oss.driver.internal.core.type.DefaultMapType;
 import com.datastax.oss.driver.internal.core.type.DefaultSetType;
 import com.datastax.oss.driver.internal.core.type.DefaultTupleType;
 import com.datastax.oss.driver.internal.core.type.DefaultUserDefinedType;
+import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import com.tngtech.java.junit.dataprovider.DataProvider;
@@ -263,6 +265,11 @@ public class DataTypeIT {
               UdtValue udtValue2 = udt.newValue(1, o[1]);
               samples.add(new Object[] {udt, udtValue2});
 
+              if (o[0] == DataTypes.INT) {
+                CqlVector<Float> vector = CqlVector.newInstance(1.1f, 2.2f, 3.3f);
+                samples.add(new Object[]{DataTypes.vectorOf(DataTypes.FLOAT, 3),
+                        vector});
+              }
               return samples.stream();
             })
         .toArray(Object[][]::new);
