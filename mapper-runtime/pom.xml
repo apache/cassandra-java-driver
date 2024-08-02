@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.apache.cassandra</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.18.1-SNAPSHOT</version>
+    <version>4.18.2-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-mapper-runtime</artifactId>
   <packaging>bundle</packaging>

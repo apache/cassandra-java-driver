@@ -23,7 +23,7 @@
   <parent>
     <groupId>org.apache.cassandra</groupId>
     <artifactId>java-driver-parent</artifactId>
-    <version>4.18.1-SNAPSHOT</version>
+    <version>4.18.2-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-integration-tests</artifactId>
   <packaging>jar</packaging>
@@ -242,6 +242,8 @@
               <threadCountClasses>8</threadCountClasses>
               <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-parallelized.xml</summaryFile>
               <skipITs>${skipParallelizableITs}</skipITs>
+              <argLine>${blockhound.argline}</argLine>
+              <jvm>${testing.jvm}/bin/java</jvm>
             </configuration>
           </execution>
           <execution>
@@ -253,6 +255,7 @@
               <excludedGroups>com.datastax.oss.driver.categories.ParallelizableTests, com.datastax.oss.driver.categories.IsolatedTests</excludedGroups>
               <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-serial.xml</summaryFile>
               <skipITs>${skipSerialITs}</skipITs>
+              <argLine>${blockhound.argline}</argLine>
               <jvm>${testing.jvm}/bin/java</jvm>
             </configuration>
           </execution>
