@@ -79,7 +79,7 @@ public class DefaultVectorType implements VectorType {
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), subtype, dimensions);
+    return Objects.hash(DefaultVectorType.class, subtype, dimensions);
   }
 
   @Override
