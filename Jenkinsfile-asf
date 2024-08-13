@@ -1,0 +1,73 @@
+#!groovy
+
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+pipeline {
+    agent {
+        label 'cassandra-small'
+    }
+
+    triggers {
+        // schedules only run against release branches (i.e. 3.x, 4.x, 4.5.x, etc.)
+        cron(branchPatternCron().matcher(env.BRANCH_NAME).matches() ? "@weekly" : "")
+    }
+
+    stages {
+        stage('Matrix') {
+            matrix {
+                axes {
+                    axis {
+                        name 'TEST_JAVA_VERSION'
+                        values 'openjdk@1.8.0-292', 'openjdk@1.11.0-9'
+                    }
+                    axis {
+                        name 'SERVER_VERSION'
+                        values '2.1', '3.0', '3.11', '4.0'
+                    }
+                }
+                stages {
+                    stage('Tests') {
+                        agent {
+                            label 'cassandra-medium'
+                        }
+                        steps {
+                            script {
+                                executeTests()
+                                junit testResults: '**/target/surefire-reports/TEST-*.xml', allowEmptyResults: true
+                                junit testResults: '**/target/failsafe-reports/TEST-*.xml', allowEmptyResults: true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+def executeTests() {
+    sh "docker run -e TEST_JAVA_VERSION=${TEST_JAVA_VERSION} -e SERVER_VERSION=${SERVER_VERSION} -v \$(pwd):/home/docker/cassandra-java-driver apache.jfrog.io/cassan-docker/apache/cassandra-java-driver-testing-ubuntu2204 cassandra-java-driver/ci/run-tests.sh"
+}
+
+// branch pattern for cron
+// should match 3.x, 4.x, 4.5.x, etc
+def branchPatternCron() {
+    ~"((\\d+(\\.[\\dx]+)+))"
+}
+
