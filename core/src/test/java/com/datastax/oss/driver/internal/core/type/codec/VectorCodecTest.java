@@ -29,6 +29,7 @@ import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import java.util.Arrays;
 import org.junit.Test;
 
+/** Only for Float TODO: add others */
 public class VectorCodecTest extends CodecTestBase<CqlVector<Float>> {
 
   private static final Float[] VECTOR_ARGS = {1.0f, 2.5f};

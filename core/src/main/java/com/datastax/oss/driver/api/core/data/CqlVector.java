@@ -52,7 +52,7 @@ import java.util.stream.Stream;
  * where possible we've tried to make the API of this class similar to the equivalent methods on
  * {@link List}.
  */
-public class CqlVector<T extends Number> implements Iterable<T>, Serializable {
+public class CqlVector<T> implements Iterable<T>, Serializable {
 
   /**
    * Create a new CqlVector containing the specified values.
@@ -60,7 +60,7 @@ public class CqlVector<T extends Number> implements Iterable<T>, Serializable {
    * @param vals the collection of values to wrap.
    * @return a CqlVector wrapping those values
    */
-  public static <V extends Number> CqlVector<V> newInstance(V... vals) {
+  public static <V> CqlVector<V> newInstance(V... vals) {
 
     // Note that Array.asList() guarantees the return of an array which implements RandomAccess
     return new CqlVector(Arrays.asList(vals));
@@ -73,7 +73,7 @@ public class CqlVector<T extends Number> implements Iterable<T>, Serializable {
    * @param list the collection of values to wrap.
    * @return a CqlVector wrapping those values
    */
-  public static <V extends Number> CqlVector<V> newInstance(List<V> list) {
+  public static <V> CqlVector<V> newInstance(List<V> list) {
     Preconditions.checkArgument(list != null, "Input list should not be null");
     return new CqlVector(list);
   }
@@ -87,8 +87,7 @@ public class CqlVector<T extends Number> implements Iterable<T>, Serializable {
    * @param subtypeCodec
    * @return a new CqlVector built from the String representation
    */
-  public static <V extends Number> CqlVector<V> from(
-      @NonNull String str, @NonNull TypeCodec<V> subtypeCodec) {
+  public static <V> CqlVector<V> from(@NonNull String str, @NonNull TypeCodec<V> subtypeCodec) {
     Preconditions.checkArgument(str != null, "Cannot create CqlVector from null string");
     Preconditions.checkArgument(!str.isEmpty(), "Cannot create CqlVector from empty string");
     ArrayList<V> vals =
@@ -205,7 +204,7 @@ public class CqlVector<T extends Number> implements Iterable<T>, Serializable {
    *
    * @param <T> inner type of CqlVector, assume Number is always Serializable.
    */
-  private static class SerializationProxy<T extends Number> implements Serializable {
+  private static class SerializationProxy<T> implements Serializable {
 
     private static final long serialVersionUID = 1;
 

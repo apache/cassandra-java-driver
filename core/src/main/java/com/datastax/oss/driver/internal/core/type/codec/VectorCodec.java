@@ -33,7 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-public class VectorCodec<SubtypeT extends Number> implements TypeCodec<CqlVector<SubtypeT>> {
+public class VectorCodec<SubtypeT extends DataType> implements TypeCodec<CqlVector<SubtypeT>> {
 
   private final VectorType cqlType;
   private final GenericType<CqlVector<SubtypeT>> javaType;
