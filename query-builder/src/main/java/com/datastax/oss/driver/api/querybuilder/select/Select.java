@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.querybuilder.BindMarker;
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.relation.OngoingWhereClause;
+import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.core.CqlIdentifiers;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -136,6 +137,26 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    */
   @NonNull
   Select orderBy(@NonNull CqlIdentifier columnId, @NonNull ClusteringOrder order);
+
+  /**
+   * Adds the provided ORDER BY ANN clause to the query.
+   *
+   * <p>If an ordering was already defined for this identifier, it will be removed and the new
+   * clause will be appended at the end of the current list for this query.
+   */
+  @NonNull
+  Select orderBy(
+      @NonNull CqlIdentifier columnId, @NonNull Term vector, @NonNull ClusteringOrder order);
+
+  /**
+   * Shortcut for {@link #orderBy(CqlIdentifier, Term, ClusteringOrder)
+   * orderBy(CqlIdentifier.fromCql(columnName), order)}.
+   */
+  @NonNull
+  default Select orderBy(
+      @NonNull String columnName, @NonNull Term vector, @NonNull ClusteringOrder order) {
+    return orderBy(CqlIdentifier.fromCql(columnName), vector, order);
+  }
 
   /**
    * Shortcut for {@link #orderBy(CqlIdentifier, ClusteringOrder)

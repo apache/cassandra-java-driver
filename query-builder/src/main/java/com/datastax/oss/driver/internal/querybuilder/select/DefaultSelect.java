@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.datastax.oss.driver.api.querybuilder.select.SelectFrom;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
+import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
@@ -48,7 +49,7 @@ public class DefaultSelect implements SelectFrom, Select {
   private final ImmutableList<Selector> selectors;
   private final ImmutableList<Relation> relations;
   private final ImmutableList<Selector> groupByClauses;
-  private final ImmutableMap<CqlIdentifier, ClusteringOrder> orderings;
+  private final ImmutableMap<CqlIdentifier, OrderDirection> orderings;
   private final Object limit;
   private final Object perPartitionLimit;
   private final boolean allowsFiltering;
@@ -83,7 +84,7 @@ public class DefaultSelect implements SelectFrom, Select {
       @NonNull ImmutableList<Selector> selectors,
       @NonNull ImmutableList<Relation> relations,
       @NonNull ImmutableList<Selector> groupByClauses,
-      @NonNull ImmutableMap<CqlIdentifier, ClusteringOrder> orderings,
+      @NonNull ImmutableMap<CqlIdentifier, OrderDirection> orderings,
       @Nullable Object limit,
       @Nullable Object perPartitionLimit,
       boolean allowsFiltering) {
@@ -257,17 +258,28 @@ public class DefaultSelect implements SelectFrom, Select {
   @NonNull
   @Override
   public Select orderBy(@NonNull CqlIdentifier columnId, @NonNull ClusteringOrder order) {
-    return withOrderings(ImmutableCollections.append(orderings, columnId, order));
+    return withOrderings(
+        ImmutableCollections.append(orderings, columnId, new OrderDirection(order)));
+  }
+
+  @NonNull
+  @Override
+  public Select orderBy(
+      @NonNull CqlIdentifier columnId, @NonNull Term vector, @NonNull ClusteringOrder order) {
+    return withOrderings(
+        ImmutableCollections.append(orderings, columnId, new OrderDirection(order, vector)));
   }
 
   @NonNull
   @Override
   public Select orderByIds(@NonNull Map<CqlIdentifier, ClusteringOrder> newOrderings) {
-    return withOrderings(ImmutableCollections.concat(orderings, newOrderings));
+    ImmutableMap.Builder<CqlIdentifier, OrderDirection> builder = ImmutableMap.builder();
+    newOrderings.forEach((key, order) -> builder.put(key, new OrderDirection(order)));
+    return withOrderings(ImmutableCollections.concat(orderings, builder.build()));
   }
 
   @NonNull
-  public Select withOrderings(@NonNull ImmutableMap<CqlIdentifier, ClusteringOrder> newOrderings) {
+  public Select withOrderings(@NonNull ImmutableMap<CqlIdentifier, OrderDirection> newOrderings) {
     return new DefaultSelect(
         keyspace,
         table,
@@ -392,14 +404,15 @@ public class DefaultSelect implements SelectFrom, Select {
     CqlHelper.append(groupByClauses, builder, " GROUP BY ", ",", null);
 
     boolean first = true;
-    for (Map.Entry<CqlIdentifier, ClusteringOrder> entry : orderings.entrySet()) {
+    for (Map.Entry<CqlIdentifier, OrderDirection> entry : orderings.entrySet()) {
       if (first) {
         builder.append(" ORDER BY ");
         first = false;
       } else {
         builder.append(",");
       }
-      builder.append(entry.getKey().asCql(true)).append(" ").append(entry.getValue().name());
+      builder.append(entry.getKey().asCql(true));
+      entry.getValue().appendTo(builder);
     }
 
     if (limit != null) {
@@ -490,7 +503,7 @@ public class DefaultSelect implements SelectFrom, Select {
   }
 
   @NonNull
-  public ImmutableMap<CqlIdentifier, ClusteringOrder> getOrderings() {
+  public ImmutableMap<CqlIdentifier, OrderDirection> getOrderings() {
     return orderings;
   }
 

@@ -23,6 +23,11 @@ import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 
+import com.datastax.oss.driver.api.core.data.CqlVector;
+import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.api.core.type.VectorType;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import org.junit.Test;
@@ -44,6 +49,18 @@ public class SelectOrderingTest {
                 .where(Relation.column("k").isEqualTo(literal(1)))
                 .orderBy(ImmutableMap.of("c1", ASC, "c2", DESC)))
         .hasCql("SELECT * FROM foo WHERE k=1 ORDER BY c1 ASC,c2 DESC");
+  }
+
+  @Test
+  public void should_generate_vector_ordering_clauses() {
+    VectorType vectorType = DataTypes.vectorOf(DataTypes.FLOAT, 3);
+    TypeCodec<CqlVector<Float>> codec = TypeCodecs.vectorOf(vectorType, TypeCodecs.FLOAT);
+    assertThat(
+            selectFrom("foo")
+                .all()
+                .where(Relation.column("k").isEqualTo(literal(1)))
+                .orderBy("c1", literal(CqlVector.newInstance(1.01f, 2.5f, -3.0f), codec), ASC))
+        .hasCql("SELECT * FROM foo WHERE k=1 ORDER BY c1 ANN OF [1.01, 2.5, -3.0] ASC");
   }
 
   @Test(expected = IllegalArgumentException.class)
