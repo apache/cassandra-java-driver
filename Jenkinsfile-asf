@@ -41,7 +41,7 @@ def branchPatternCron() {
 
 pipeline {
     agent {
-	label 'cassandra-amd64-medium'
+	label 'cassandra-medium'
     }
 
   triggers {
