@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.data.UdtValue;
 import com.datastax.oss.driver.api.core.metadata.schema.AggregateMetadata;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.shaded.guava.common.base.Optional;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -234,4 +235,9 @@ public interface TypeCodec<JavaTypeT> {
    */
   @Nullable
   JavaTypeT parse(@Nullable String value);
+
+  @NonNull
+  default Optional<Integer> serializedSize() {
+    return Optional.absent();
+  }
 }

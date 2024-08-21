@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.Strings;
+import com.datastax.oss.driver.shaded.guava.common.base.Optional;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
@@ -152,4 +153,10 @@ public class DateCodec implements TypeCodec<LocalDate> {
 
   private static final long MAX_CQL_LONG_VALUE = ((1L << 32) - 1);
   private static final long EPOCH_AS_CQL_LONG = (1L << 31);
+
+  @NonNull
+  @Override
+  public Optional<Integer> serializedSize() {
+    return Optional.of(8);
+  }
 }

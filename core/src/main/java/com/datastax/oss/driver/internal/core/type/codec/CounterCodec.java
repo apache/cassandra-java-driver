@@ -19,6 +19,7 @@ package com.datastax.oss.driver.internal.core.type.codec;
 
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.shaded.guava.common.base.Optional;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.ThreadSafe;
 
@@ -28,5 +29,11 @@ public class CounterCodec extends BigIntCodec {
   @Override
   public DataType getCqlType() {
     return DataTypes.COUNTER;
+  }
+
+  @NonNull
+  @Override
+  public Optional<Integer> serializedSize() {
+    return Optional.absent();
   }
 }

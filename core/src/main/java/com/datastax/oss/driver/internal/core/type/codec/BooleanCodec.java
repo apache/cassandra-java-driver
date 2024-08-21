@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.PrimitiveBooleanCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.shaded.guava.common.base.Optional;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
@@ -97,5 +98,11 @@ public class BooleanCodec implements PrimitiveBooleanCodec {
       throw new IllegalArgumentException(
           String.format("Cannot parse boolean value from \"%s\"", value));
     }
+  }
+
+  @NonNull
+  @Override
+  public Optional<Integer> serializedSize() {
+    return Optional.of(1);
   }
 }

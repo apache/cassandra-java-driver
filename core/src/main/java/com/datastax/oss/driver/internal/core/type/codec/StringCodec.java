@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.util.Strings;
+import com.datastax.oss.driver.shaded.guava.common.base.Optional;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.util.concurrent.FastThreadLocal;
@@ -133,5 +134,11 @@ public class StringCodec implements TypeCodec<String> {
     } else {
       return Strings.unquote(value);
     }
+  }
+
+  @NonNull
+  @Override
+  public Optional<Integer> serializedSize() {
+    return Optional.absent();
   }
 }
