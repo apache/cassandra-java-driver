@@ -265,11 +265,10 @@ public class DataTypeIT {
               UdtValue udtValue2 = udt.newValue(1, o[1]);
               samples.add(new Object[] {udt, udtValue2});
 
-              // change the vector subtype into arbitrary type
-              if (o[0] == DataTypes.INT) {
-                CqlVector<Byte> vector = CqlVector.newInstance((byte) 1, (byte) 2, (byte) 3);
-                samples.add(new Object[] {DataTypes.vectorOf(DataTypes.TINYINT, 3), vector});
-              }
+              // vector of type
+              CqlVector<?> vector = CqlVector.newInstance(o[1]);
+              samples.add(new Object[] {DataTypes.vectorOf(dataType, 1), vector});
+
               return samples.stream();
             })
         .toArray(Object[][]::new);
