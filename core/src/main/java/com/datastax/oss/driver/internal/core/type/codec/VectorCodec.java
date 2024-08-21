@@ -40,7 +40,7 @@ public class VectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
   private final GenericType<CqlVector<SubtypeT>> javaType;
   protected final TypeCodec<SubtypeT> subtypeCodec;
 
-  private final VectorCodec<SubtypeT> proxyCodec;
+  private final VectorCodecProxy<SubtypeT> proxyCodec;
 
   public VectorCodec(@NonNull VectorType cqlType, @NonNull TypeCodec<SubtypeT> subtypeCodec) {
     this.cqlType = cqlType;
@@ -67,6 +67,16 @@ public class VectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
   @Override
   public DataType getCqlType() {
     return this.cqlType;
+  }
+
+  private interface VectorCodecProxy<SubtypeT> {
+    @Nullable
+    ByteBuffer encode(
+        @Nullable CqlVector<SubtypeT> value, @NonNull ProtocolVersion protocolVersion);
+
+    @Nullable
+    CqlVector<SubtypeT> decode(
+        @Nullable ByteBuffer bytes, @NonNull ProtocolVersion protocolVersion);
   }
 
   @Nullable
@@ -97,9 +107,13 @@ public class VectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
         : CqlVector.from(value, this.subtypeCodec);
   }
 
-  private static class FixedLength<SubtypeT> extends VectorCodec<SubtypeT> {
+  private static class FixedLength<SubtypeT> implements VectorCodecProxy<SubtypeT> {
+    private final VectorType cqlType;
+    private final TypeCodec<SubtypeT> subtypeCodec;
+
     private FixedLength(VectorType cqlType, TypeCodec<SubtypeT> subtypeCodec) {
-      super(cqlType, subtypeCodec);
+      this.cqlType = cqlType;
+      this.subtypeCodec = subtypeCodec;
     }
 
     @Override
@@ -178,9 +192,13 @@ public class VectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
     }
   }
 
-  private static class VariableLength<SubtypeT> extends VectorCodec<SubtypeT> {
+  private static class VariableLength<SubtypeT> implements VectorCodecProxy<SubtypeT> {
+    private final VectorType cqlType;
+    private final TypeCodec<SubtypeT> subtypeCodec;
+
     private VariableLength(VectorType cqlType, TypeCodec<SubtypeT> subtypeCodec) {
-      super(cqlType, subtypeCodec);
+      this.cqlType = cqlType;
+      this.subtypeCodec = subtypeCodec;
     }
 
     @Override
