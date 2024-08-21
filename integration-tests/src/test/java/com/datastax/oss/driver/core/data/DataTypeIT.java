@@ -46,6 +46,7 @@ import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -266,8 +267,8 @@ public class DataTypeIT {
 
               // change the vector subtype into arbitrary type
               if (o[0] == DataTypes.INT) {
-                CqlVector<Float> vector = CqlVector.newInstance(1.1f, 2.2f, 3.3f);
-                samples.add(new Object[] {DataTypes.vectorOf(DataTypes.FLOAT, 3), vector});
+                CqlVector<Byte> vector = CqlVector.newInstance((byte) 1, (byte) 2, (byte) 3);
+                samples.add(new Object[] {DataTypes.vectorOf(DataTypes.TINYINT, 3), vector});
               }
               return samples.stream();
             })

@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 public class VectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
 
@@ -95,8 +96,17 @@ public class VectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
 
   @NonNull
   @Override
-  public String format(@Nullable CqlVector<SubtypeT> value) {
-    return value == null ? "NULL" : Iterables.toString(value);
+  public String format(CqlVector<SubtypeT> value) {
+    if (value == null) return "NULL";
+
+    // if the subtype is a string, double quote
+    if (!value.isEmpty() && value.iterator().next() instanceof String)
+      return value.stream()
+              .map(s -> (String) s)
+              .map(s -> "\"" + s + "\"")
+              .collect(Collectors.joining(", ", "[", "]"));
+
+    return Iterables.toString(value);
   }
 
   @Nullable
