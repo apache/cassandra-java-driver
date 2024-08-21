@@ -118,6 +118,6 @@ public class TimeCodec implements TypeCodec<LocalTime> {
   @NonNull
   @Override
   public Optional<Integer> serializedSize() {
-    return Optional.of(8);
+    return Optional.absent();
   }
 }

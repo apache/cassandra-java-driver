@@ -265,9 +265,11 @@ public class DataTypeIT {
               UdtValue udtValue2 = udt.newValue(1, o[1]);
               samples.add(new Object[] {udt, udtValue2});
 
-              // vector of type
-              CqlVector<?> vector = CqlVector.newInstance(o[1]);
-              samples.add(new Object[] {DataTypes.vectorOf(dataType, 1), vector});
+              if (CCM_RULE.getCassandraVersion().compareTo(Version.parse("5.0")) >= 0){
+                // vector of type
+                CqlVector<?> vector = CqlVector.newInstance(o[1]);
+                samples.add(new Object[] {DataTypes.vectorOf(dataType, 1), vector});
+              }
 
               return samples.stream();
             })

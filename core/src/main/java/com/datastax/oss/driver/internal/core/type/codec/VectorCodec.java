@@ -28,7 +28,12 @@ import com.datastax.oss.driver.internal.core.type.util.VIntCoding;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -99,14 +104,9 @@ public class VectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
   public String format(CqlVector<SubtypeT> value) {
     if (value == null) return "NULL";
 
-    // if the subtype is a string, double quote
-    if (!value.isEmpty() && value.iterator().next() instanceof String)
-      return value.stream()
-              .map(s -> (String) s)
-              .map(s -> "\"" + s + "\"")
-              .collect(Collectors.joining(", ", "[", "]"));
-
-    return Iterables.toString(value);
+    return value.stream()
+            .map(subtypeCodec::format)
+            .collect(Collectors.joining(", ", "[", "]"));
   }
 
   @Nullable
