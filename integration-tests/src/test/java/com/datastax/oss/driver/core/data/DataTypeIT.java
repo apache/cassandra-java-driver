@@ -271,6 +271,11 @@ public class DataTypeIT {
                 samples.add(new Object[] {DataTypes.vectorOf(dataType, 1), vector});
               }
 
+              if (o[1].equals("ascii")){
+                // once
+                CqlVector<?> vector = CqlVector.newInstance(CqlVector.newInstance(1, 2));
+                samples.add(new Object[] {DataTypes.vectorOf(DataTypes.vectorOf(DataTypes.INT, 2), 1), vector});
+              }
               return samples.stream();
             })
         .toArray(Object[][]::new);

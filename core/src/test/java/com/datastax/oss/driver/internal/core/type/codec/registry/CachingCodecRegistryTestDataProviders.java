@@ -337,6 +337,11 @@ public class CachingCodecRegistryTestDataProviders {
         GenericType.vectorOf(BigInteger.class),
         CqlVector.newInstance(BigInteger.ONE)
       },
+//      // vector with arbitrary types
+//      {
+//        DataTypes.vectorOf(DataTypes.listOf(DataTypes.INT), 1),
+//
+//      }
     };
   }
 
