@@ -18,6 +18,7 @@
 package com.datastax.oss.driver.core.data;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.junit.Assert.fail;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
@@ -185,6 +186,7 @@ public class DataTypeIT {
     // 5) include map<type, int>
     // 6) include tuple<int, type>
     // 7) include udt<int, type>
+    // 8) include vector<type>
     return Arrays.stream(primitiveSamples)
         .flatMap(
             o -> {
@@ -281,6 +283,23 @@ public class DataTypeIT {
         .toArray(Object[][]::new);
   }
 
+  @DataProvider
+  public static Object[][] addVectors(){
+    Object[][] previousSamples = typeSamples();
+    if (CCM_RULE.getCassandraVersion().compareTo(Version.parse("5.0")) < 0) return previousSamples;
+    return Arrays.stream(previousSamples).flatMap(
+        o -> {
+          List<Object[]> samples = new ArrayList<>();
+          samples.add(o);
+          if (o[1] == null) return samples.stream();
+          DataType dataType = (DataType) o[0];
+          CqlVector<?> vector = CqlVector.newInstance(o[1]);
+          samples.add(new Object[] {DataTypes.vectorOf(dataType, 1), vector});
+          return samples.stream();
+        }).toArray(Object[][]::new);
+  }
+
+
   @BeforeClass
   public static void createTable() {
     // Create a table with all types being tested with.
@@ -291,7 +310,7 @@ public class DataTypeIT {
 
     List<String> columnData = new ArrayList<>();
 
-    for (Object[] sample : typeSamples()) {
+    for (Object[] sample : addVectors()) {
       DataType dataType = (DataType) sample[0];
 
       if (!typeToColumnName.containsKey(dataType)) {
@@ -321,7 +340,7 @@ public class DataTypeIT {
     return keyCounter.incrementAndGet();
   }
 
-  @UseDataProvider("typeSamples")
+  @UseDataProvider("addVectors")
   @Test
   public <K> void should_insert_non_primary_key_column_simple_statement_using_format(
       DataType dataType, K value, K expectedPrimitiveValue) {
@@ -348,7 +367,7 @@ public class DataTypeIT {
     readValue(select, dataType, value, expectedPrimitiveValue);
   }
 
-  @UseDataProvider("typeSamples")
+  @UseDataProvider("addVectors")
   @Test
   public <K> void should_insert_non_primary_key_column_simple_statement_positional_value(
       DataType dataType, K value, K expectedPrimitiveValue) {
@@ -371,7 +390,7 @@ public class DataTypeIT {
     readValue(select, dataType, value, expectedPrimitiveValue);
   }
 
-  @UseDataProvider("typeSamples")
+  @UseDataProvider("addVectors")
   @Test
   public <K> void should_insert_non_primary_key_column_simple_statement_named_value(
       DataType dataType, K value, K expectedPrimitiveValue) {
@@ -395,7 +414,7 @@ public class DataTypeIT {
     readValue(select, dataType, value, expectedPrimitiveValue);
   }
 
-  @UseDataProvider("typeSamples")
+  @UseDataProvider("addVectors")
   @Test
   public <K> void should_insert_non_primary_key_column_bound_statement_positional_value(
       DataType dataType, K value, K expectedPrimitiveValue) {
@@ -424,7 +443,7 @@ public class DataTypeIT {
     readValue(boundSelect, dataType, value, expectedPrimitiveValue);
   }
 
-  @UseDataProvider("typeSamples")
+  @UseDataProvider("addVectors")
   @Test
   public <K> void should_insert_non_primary_key_column_bound_statement_named_value(
       DataType dataType, K value, K expectedPrimitiveValue) {
