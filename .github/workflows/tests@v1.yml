@@ -105,16 +105,6 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Fetch Scylla and Cassandra versions
-        id: fetch-versions
-        run: |
-          pip3 install -r ci/requirements.txt
-          echo "scylla-integration-tests-versions=$(python3 ci/version_fetch.py scylla-oss-stable:2 scylla-oss-rc scylla-enterprise-stable:2 scylla-enterprise-rc)" >> $GITHUB_OUTPUT
-          echo "cassandra-integration-tests-versions=$(python3 ci/version_fetch.py cassandra3-stable:1 cassandra4-stable:1)" >> $GITHUB_OUTPUT
-    outputs:
-      scylla-integration-tests-versions: ${{ steps.fetch-versions.outputs.scylla-integration-tests-versions }}
-      cassandra-integration-tests-versions: ${{ steps.fetch-versions.outputs.cassandra-integration-tests-versions }}
-
   cassandra-integration-tests:
     name: Cassandra ITs
     runs-on: ubuntu-latest
@@ -124,7 +114,7 @@ jobs:
     strategy:
       matrix:
         java-version: [8]
-        cassandra-version: ${{ fromJson(needs.setup-integration-tests.outputs.cassandra-integration-tests-versions) }}
+        cassandra-version: [STABLE-3,STABLE-4]
       fail-fast: false
 
     steps:
@@ -146,15 +136,24 @@ jobs:
         run: |
           pip3 install https://github.com/scylladb/scylla-ccm/archive/a93125bc6ad7dd5c9694331e89dc1fb212431ffe.zip
 
-      - name: Run integration tests on Cassandra (${{ matrix.cassandra-version }})
-        run: mvn -B -e verify -Dccm.version=${{ matrix.cassandra-version }} -Dfmt.skip=true -Dclirr.skip=true -Danimal.sniffer.skip=true
+      - name: Get cassandra version
+        id: cassandra-version
+        run: |
+          if [ "${{ matrix.cassandra-version }} == "STABLE-3" ]; then \
+            echo "value=$(python3 ci/version_fetch.py cassandra3-stable:1)" >> $GITHUB_OUTPUT; \
+          else; \
+            echo "value=$(python3 ci/version_fetch.py cassandra4-stable:1)" >> $GITHUB_OUTPUT; \
+          fi
+
+      - name: Run integration tests on Cassandra (${{ steps.cassandra-version.outputs.value }})
+        run: mvn -B -e verify -Dccm.version=${{ steps.cassandra-version.outputs.value }} -Dfmt.skip=true -Dclirr.skip=true -Danimal.sniffer.skip=true
 
       - name: Copy test results
         if: success() || failure()
         run: |
           shopt -s globstar
-          mkdir cassandra-${{ matrix.cassandra-version }}
-          cp --parents ./**/target/*-reports/*.xml cassandra-${{ matrix.cassandra-version }}/
+          mkdir cassandra-${{ steps.cassandra-version.outputs.value }}
+          cp --parents ./**/target/*-reports/*.xml cassandra-${{ steps.cassandra-version.outputs.value }}/
       - name: Upload test results
         uses: actions/upload-artifact@v2
         if: success() || failure()
@@ -166,7 +165,7 @@ jobs:
         uses: actions/upload-artifact@v2
         if: ${{ failure() }}
         with:
-          name: ccm-logs-cassandra-${{ matrix.cassandra-version }}
+          name: ccm-logs-cassandra-${{ steps.cassandra-version.outputs.value }}
           path: /tmp/ccm*/ccm*/node*/logs/*
 
   scylla-integration-tests:
@@ -177,7 +176,7 @@ jobs:
 
     strategy:
       matrix:
-        scylla-version: ${{ fromJson(needs.setup-integration-tests.outputs.scylla-integration-tests-versions) }}
+        scylla-version: [ ENTERPRISE-RELEASE, ENTERPRISE-RC, OSS-RELEASE, OSS-RC ]
         java-version: [8]
       fail-fast: false
 
@@ -201,15 +200,31 @@ jobs:
           pip3 install https://github.com/scylladb/scylla-ccm/archive/a93125bc6ad7dd5c9694331e89dc1fb212431ffe.zip
           sudo sh -c "echo 2097152 > /proc/sys/fs/aio-max-nr"
 
-      - name: Run integration tests on Scylla (${{ matrix.scylla-version }})
-        run: mvn -B verify -Dccm.version=${{ matrix.scylla-version }} -Dccm.scylla=true -Dfmt.skip=true -Dclirr.skip=true -Danimal.sniffer.skip=true
+      - name: Get scylla version
+        id: scylla-version
+        run: |
+          if [ "${{ matrix.scylla-version }} == "ENTERPRISE-RELEASE" ]; then \
+            echo "value=$(python3 ci/version_fetch.py scylla-enterprise-stable:2)" >> $GITHUB_OUTPUT; \
+          elif [ "${{ matrix.scylla-version }} == "ENTERPRISE-RC" ]; then \
+            echo "value=$(python3 ci/version_fetch.py scylla-enterprise-rc)" >> $GITHUB_OUTPUT; \
+          elif [ "${{ matrix.scylla-version }} == "OSS-RELEASE" ];  \
+            echo "value=$(python3 ci/version_fetch.py scylla-oss-stable:2)" >> $GITHUB_OUTPUT; \
+          elif [ "${{ matrix.scylla-version }} == "OSS-RC" ]; \
+            echo "value=$(python3 ci/version_fetch.py scylla-oss-rc)" >> $GITHUB_OUTPUT; \
+          else
+            echo "Unknown scylla version name `${{ matrix.scylla-version }}`"
+            exit 1
+          fi
+
+      - name: Run integration tests on Scylla (${{ steps.scylla-version.outputs.value }})
+        run: mvn -B verify -Dccm.version=${{ steps.scylla-version.outputs.value }} -Dccm.scylla=true -Dfmt.skip=true -Dclirr.skip=true -Danimal.sniffer.skip=true
 
       - name: Copy test results
         if: success() || failure()
         run: |
           shopt -s globstar
-          mkdir scylla-${{ matrix.scylla-version }}
-          cp --parents ./**/target/*-reports/*.xml scylla-${{ matrix.scylla-version }}/
+          mkdir scylla-${{ steps.scylla-version.outputs.value }}
+          cp --parents ./**/target/*-reports/*.xml scylla-${{ steps.scylla-version.outputs.value }}/
 
       - name: Upload test results
         uses: actions/upload-artifact@v2
@@ -222,5 +237,5 @@ jobs:
         uses: actions/upload-artifact@v2
         if: ${{ failure() }}
         with:
-          name: ccm-logs-scylla-${{ matrix.scylla-version }}
+          name: ccm-logs-scylla-${{ steps.scylla-version.outputs.value }}
           path: /tmp/ccm*/ccm*/node*/logs/*
