@@ -60,6 +60,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
+    strategy:
+      matrix:
+        java-version: [8]
+      fail-fast: false
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v2
@@ -67,7 +72,7 @@ jobs:
       - name: Set up JDK 8
         uses: actions/setup-java@v2
         with:
-          java-version: '8'
+          java-version: ${{ matrix.java-version }}
           distribution: 'adopt'
 
       - name: Run unit tests
@@ -118,6 +123,7 @@ jobs:
 
     strategy:
       matrix:
+        java-version: [8]
         cassandra-version: ${{ fromJson(needs.setup-integration-tests.outputs.cassandra-integration-tests-versions) }}
       fail-fast: false
 
@@ -128,7 +134,7 @@ jobs:
       - name: Set up JDK 8
         uses: actions/setup-java@v2
         with:
-          java-version: '8'
+          java-version: ${{ matrix.java-version }}
           distribution: 'adopt'
 
       - name: Setup Python 3
@@ -139,6 +145,7 @@ jobs:
       - name: Setup environment
         run: |
           pip3 install https://github.com/scylladb/scylla-ccm/archive/a93125bc6ad7dd5c9694331e89dc1fb212431ffe.zip
+
       - name: Run integration tests on Cassandra (${{ matrix.cassandra-version }})
         run: mvn -B -e verify -Dccm.version=${{ matrix.cassandra-version }} -Dfmt.skip=true -Dclirr.skip=true -Danimal.sniffer.skip=true
 
@@ -171,6 +178,7 @@ jobs:
     strategy:
       matrix:
         scylla-version: ${{ fromJson(needs.setup-integration-tests.outputs.scylla-integration-tests-versions) }}
+        java-version: [8]
       fail-fast: false
 
     steps:
@@ -180,7 +188,7 @@ jobs:
       - name: Set up JDK 8
         uses: actions/setup-java@v2
         with:
-          java-version: '8'
+          java-version: ${{ matrix.java-version }}
           distribution: 'adopt'
 
       - name: Setup Python 3
@@ -192,6 +200,7 @@ jobs:
         run: |
           pip3 install https://github.com/scylladb/scylla-ccm/archive/a93125bc6ad7dd5c9694331e89dc1fb212431ffe.zip
           sudo sh -c "echo 2097152 > /proc/sys/fs/aio-max-nr"
+
       - name: Run integration tests on Scylla (${{ matrix.scylla-version }})
         run: mvn -B verify -Dccm.version=${{ matrix.scylla-version }} -Dccm.scylla=true -Dfmt.skip=true -Dclirr.skip=true -Danimal.sniffer.skip=true
 
@@ -201,6 +210,7 @@ jobs:
           shopt -s globstar
           mkdir scylla-${{ matrix.scylla-version }}
           cp --parents ./**/target/*-reports/*.xml scylla-${{ matrix.scylla-version }}/
+
       - name: Upload test results
         uses: actions/upload-artifact@v2
         if: success() || failure()
