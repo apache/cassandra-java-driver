@@ -42,9 +42,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Immutable
 public class DefaultBatchStatement implements BatchStatement {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultBatchStatement.class);
 
   private final BatchType batchType;
   private final List<BatchableStatement<?>> statements;
@@ -86,6 +89,18 @@ public class DefaultBatchStatement implements BatchStatement {
       Duration timeout,
       Node node,
       int nowInSeconds) {
+    for (BatchableStatement<?> statement : statements) {
+      if (statement != null
+          && (statement.getConsistencyLevel() != null
+              || statement.getSerialConsistencyLevel() != null)) {
+
+        LOG.warn(
+            "You have submitted statement with non-default [serial] consistency level to the DefaultBatchStatement. "
+                + "Be aware that [serial] consistency level of child statements is not preserved by the DefaultBatchStatement. "
+                + "Use DefaultBatchStatement.setConsistencyLevel()/DefaultBatchStatement.setSerialConsistencyLevel() instead.");
+        break;
+      }
+    }
     this.batchType = batchType;
     this.statements = ImmutableList.copyOf(statements);
     this.executionProfileName = executionProfileName;

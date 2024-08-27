@@ -25,7 +25,11 @@ package com.datastax.oss.driver.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
@@ -45,6 +49,8 @@ import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.cql.DefaultBatchStatement;
+import com.datastax.oss.driver.internal.core.util.LoggerTest;
 import java.util.Iterator;
 import java.util.List;
 import org.junit.Before;
@@ -85,6 +91,32 @@ public class BatchStatementIT {
           .execute(
               SimpleStatement.newInstance(schemaStatement)
                   .setExecutionProfile(sessionRule.slowProfile()));
+    }
+  }
+
+  @Test
+  public void should_issue_log_warn_if_batched_statement_have_consistency_level_set() {
+    SimpleStatement simpleStatement =
+        SimpleStatement.builder("INSERT INTO test (k0, k1, v) values ('123123', ?, ?)").build();
+
+    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
+      PreparedStatement prep = session.prepare(simpleStatement);
+      BatchStatementBuilder batch = BatchStatement.builder(DefaultBatchType.UNLOGGED);
+      batch.addStatement(prep.bind(1, 2).setConsistencyLevel(ConsistencyLevel.QUORUM));
+
+      LoggerTest.LoggerSetup logger =
+          LoggerTest.setupTestLogger(DefaultBatchStatement.class, Level.WARN);
+
+      batch.build();
+
+      verify(logger.appender).doAppend(logger.loggingEventCaptor.capture());
+      assertThat(
+              logger.loggingEventCaptor.getAllValues().stream()
+                  .map(ILoggingEvent::getFormattedMessage))
+          .contains(
+              "You have submitted statement with non-default [serial] consistency level to the DefaultBatchStatement. "
+                  + "Be aware that [serial] consistency level of child statements is not preserved by the DefaultBatchStatement. "
+                  + "Use DefaultBatchStatement.setConsistencyLevel()/DefaultBatchStatement.setSerialConsistencyLevel() instead.");
     }
   }
 
