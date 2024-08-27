@@ -13,30 +13,91 @@ tags API.
 """
 
 import requests
+import argparse
 import re
 import json
-from itertools import groupby, islice
 import sys
 
 DOCKER_HUB_TAGS_ENDPOINT = 'https://hub.docker.com/v2/namespaces/%s/repositories/%s/tags?page_size=1000'
 DOCKER_HUB_SCYLLA_NAMESPACE = 'scylladb'
 
 SCYLLA_OSS = (DOCKER_HUB_SCYLLA_NAMESPACE, 'scylla')
-SCYLLA_OSS_RELEASED_VERSION_REGEX = re.compile(r'(\d+)\.(\d+)\.(\d+)')
-SCYLLA_OSS_RC_VERSION_REGEX = re.compile(r'(\d+)\.(\d+)\.(?:0-)?rc(\d+)')
-
 SCYLLA_ENTERPRISE = (DOCKER_HUB_SCYLLA_NAMESPACE, 'scylla-enterprise')
-SCYLLA_ENTERPRISE_RELEASED_VERSION_REGEX = re.compile(r'(\d{4})\.(\d+)\.(\d+)')
-SCYLLA_ENTERPRISE_RC_VERSION_REGEX = re.compile(
-    r'(\d{4})\.(\d+)\.(?:0-)?rc(\d+)')
 
 CASSANDRA_ENDPOINT = 'https://dlcdn.apache.org/cassandra/'
+CASSANDRA_REGEX = re.compile(r'a href="([0-9])\.(\d+)\.(\d+)/"')
 
-CASSANDRA3_REGEX = re.compile(r'a href="(3)\.(\d+)\.(\d+)/"')
-CASSANDRA4_REGEX = re.compile(r'a href="(4)\.(\d+)\.(\d+)/"')
-
-COMMAND_LINE_ARGUMENT = re.compile(
+VERSION_DEFINITION_RE = re.compile(
     r'((?:(scylla-oss-stable):(\d+))|(?:(scylla-enterprise-stable):(\d+))|(?:(cassandra3-stable):(\d+))|(?:(cassandra4-stable):(\d+))|(?:(scylla-oss-rc))|(?:(scylla-enterprise-rc)))')
+ONLY_DIGITS_RE = re.compile("^[0-9]+")
+
+class Version:
+    raw = ""
+    invalid = False
+    major = 0
+    minor = 0
+    minor_raw = ""
+    minor_rest = ""
+    patch = 0
+    patch_raw = ""
+    patch_rest = ""
+    is_dev = False
+
+    def __init__(self, ver):
+        self.raw = ver
+        chunks = ver.split(".", maxsplit=3)
+        if len(chunks) < 3:
+            self.invalid = True
+            return
+
+        self.major, self.minor_raw, self.patch_raw = chunks
+
+        try:
+            self.major = int(self.major)
+        except Exception:
+            self.invalid = True
+            return
+
+        digits = ONLY_DIGITS_RE.match(self.minor_raw)
+        if digits:
+            try:
+                self.minor = int(self.minor_raw[digits.regs[0][0]:digits.regs[0][1]])
+                self.minor_rest = self.minor_raw[digits.regs[0][1]:]
+                if self.minor_rest:
+                    self.is_dev = True
+            except Exception:
+                self.invalid = True
+        else:
+            self.minor = 0
+
+        digits = ONLY_DIGITS_RE.match(self.patch_raw)
+        if digits:
+            try:
+                self.patch = int(self.patch_raw[digits.regs[0][0]:digits.regs[0][1]])
+                self.patch_rest = self.patch_raw[digits.regs[0][1]:]
+                if self.patch_rest:
+                    self.is_dev = True
+            except Exception:
+                self.invalid = True
+        else:
+            self.patch = 0
+
+    def __str__(self):
+        return self.raw
+
+    def __repr__(self):
+        return self.raw
+
+    def __lt__(self, other):
+        if self.major != other.major:
+            return self.major < other.major
+        if self.minor != other.minor:
+            return self.minor < other.minor
+        if self.patch != other.patch:
+            return self.patch < other.patch
+        if self.is_dev == other.is_dev:
+            return False
+        return self.is_dev
 
 
 def fetch_docker_hub_tags(namespace, repository):
@@ -57,195 +118,95 @@ def fetch_docker_hub_tags(namespace, repository):
         else:
             break
 
-    return tags
+    result = []
+    for tag in tags:
+        try:
+            ver = Version(tag)
+            if not ver.patch_raw or ver.invalid:
+                continue
+            result.append(ver)
+        except Exception:
+            continue
 
+    return reversed(sorted(result))
 
-def fetch_last_scylla_oss_minor_versions(count):
-    # Download Docker tags for repository
-    tags_data = fetch_docker_hub_tags(*SCYLLA_OSS)
+rc_only = lambda x: x.is_dev
+release_only = lambda x: not x.is_dev
+scylla_oss_only = lambda x: x.major < 2000
+scylla_enterprise_only = lambda x: x.major > 2000
+cassandra_3_only = lambda x: x.major == 3
+cassandra_4_only = lambda x: x.major == 4
 
-    # Parse only those tags which match 'NUM.NUM.NUM'
-    # into tuple (NUM, NUM, NUM)
-    tags_data = filter(SCYLLA_OSS_RELEASED_VERSION_REGEX.fullmatch, tags_data)
-    tags_data = map(lambda e: SCYLLA_OSS_RELEASED_VERSION_REGEX.match(
-        e).groups(), tags_data)
-    tags_data = map(lambda e: tuple(map(int, e)), tags_data)
+def filter_versions(all_versions, count, *filters):
+    result = []
+    for ver in filter(lambda ver: all(map(lambda ft: ft(ver), filters)), all_versions):
+        for existing_ver in result:
+            if ver.major == existing_ver.major and ver.minor == existing_ver.minor:
+                break
+        else:
+            if len(result) >= count:
+                return result
+            result.append(ver)
+    return result
 
-    # Group by (major, minor) and select latest patch version
-    tags_data = sorted(tags_data)
-    tags_data = groupby(tags_data, key=lambda e: (e[0], e[1]))
-    tags_data = ((e[0][0], e[0][1], max(e[1])[2])
-                 for e in tags_data)
-
-    # Return the latest ones
-    tags_data = list(tags_data)[-count:]
-    tags_data = [f'{e[0]}.{e[1]}.{e[2]}' for e in tags_data]
-    return tags_data
-
-
-def fetch_all_scylla_oss_rc_versions():
-    # Download Docker tags for repository
-    tags_data = fetch_docker_hub_tags(*SCYLLA_OSS)
-
-    # Parse only those tags which match 'NUM.NUM.rcNUM' or 'NUM.NUM.0-rcNUM'
-    # into tuple (NUM, NUM, NUM)
-    rc_tags_data = filter(SCYLLA_OSS_RC_VERSION_REGEX.fullmatch, tags_data)
-    rc_tags_data = map(lambda e: SCYLLA_OSS_RC_VERSION_REGEX.match(
-        e).groups(), rc_tags_data)
-    rc_tags_data = map(lambda e: tuple(map(int, e)), rc_tags_data)
-
-    # Parse only those tags which match 'NUM.NUM.NUM'
-    # into tuple (NUM, NUM)
-    stable_tags_data = filter(
-        SCYLLA_OSS_RELEASED_VERSION_REGEX.fullmatch, tags_data)
-    stable_tags_data = map(lambda e: SCYLLA_OSS_RELEASED_VERSION_REGEX.match(
-        e).groups(), stable_tags_data)
-    stable_tags_data = map(lambda e: tuple(map(int, e[0:2])), stable_tags_data)
-    stable_tags_data = set(stable_tags_data)
-
-    # Group by (major, minor) and select latest RC version
-    rc_tags_data = sorted(rc_tags_data)
-    rc_tags_data = groupby(rc_tags_data, key=lambda e: (e[0], e[1]))
-    rc_tags_data = ((e[0][0], e[0][1], max(e[1])[2])
-                    for e in rc_tags_data)
-
-    # Filter out those RCs that are obsoleted by released stable version
-    rc_tags_data = filter(lambda e: (
-        e[0], e[1]) not in stable_tags_data, rc_tags_data)
-    rc_tags_data = [
-        f'{e[0]}.{e[1]}.0-rc{e[2]}' if (e[0], e[1]) >= (5, 1) else
-        f'{e[0]}.{e[1]}.rc{e[2]}' for e in rc_tags_data]
-    return rc_tags_data
-
-
-def fetch_last_scylla_enterprise_minor_versions(count):
-    # Download Docker tags for repository
-    tags_data = fetch_docker_hub_tags(*SCYLLA_ENTERPRISE)
-
-    # Parse only those tags which match 'YEAR.NUM.NUM'
-    # into tuple (YEAR, NUM, NUM)
-    tags_data = filter(
-        SCYLLA_ENTERPRISE_RELEASED_VERSION_REGEX.fullmatch, tags_data)
-    tags_data = map(lambda e: SCYLLA_ENTERPRISE_RELEASED_VERSION_REGEX.match(
-        e).groups(), tags_data)
-    tags_data = map(lambda e: tuple(map(int, e)), tags_data)
-
-    # Group by (major, minor) and select latest patch version
-    tags_data = sorted(tags_data)
-    tags_data = groupby(tags_data, key=lambda e: (e[0], e[1]))
-    tags_data = ((e[0][0], e[0][1], max(e[1])[2])
-                 for e in tags_data)
-
-    # Return the latest ones
-    tags_data = list(tags_data)[-count:]
-    tags_data = [f'{e[0]}.{e[1]}.{e[2]}' for e in tags_data]
-    return tags_data
-
-
-def fetch_all_scylla_enterprise_rc_versions():
-    # Download Docker tags for repository
-    tags_data = fetch_docker_hub_tags(*SCYLLA_ENTERPRISE)
-
-    # Parse only those tags which match 'YEAR.NUM.rcNUM' or 'YEAR.NUM.0-rcNUM'
-    # into tuple (YEAR, NUM, NUM)
-    rc_tags_data = filter(
-        SCYLLA_ENTERPRISE_RC_VERSION_REGEX.fullmatch, tags_data)
-    rc_tags_data = map(lambda e: SCYLLA_ENTERPRISE_RC_VERSION_REGEX.match(
-        e).groups(), rc_tags_data)
-    rc_tags_data = map(lambda e: tuple(map(int, e)), rc_tags_data)
-
-    # Parse only those tags which match 'YEAR.NUM.NUM'
-    # into tuple (YEAR, NUM)
-    stable_tags_data = filter(
-        SCYLLA_ENTERPRISE_RELEASED_VERSION_REGEX.fullmatch, tags_data)
-    stable_tags_data = map(lambda e: SCYLLA_ENTERPRISE_RELEASED_VERSION_REGEX.match(
-        e).groups(), stable_tags_data)
-    stable_tags_data = map(lambda e: tuple(map(int, e[0:2])), stable_tags_data)
-    stable_tags_data = set(stable_tags_data)
-
-    # Group by (major, minor) and select latest RC version
-    rc_tags_data = sorted(rc_tags_data)
-    rc_tags_data = groupby(rc_tags_data, key=lambda e: (e[0], e[1]))
-    rc_tags_data = ((e[0][0], e[0][1], max(e[1])[2])
-                    for e in rc_tags_data)
-
-    # Filter out those RCs that are obsoleted by released stable version
-    rc_tags_data = filter(lambda e: (
-        e[0], e[1]) not in stable_tags_data, rc_tags_data)
-    rc_tags_data = [f'{e[0]}.{e[1]}.0-rc{e[2]}' if (e[0], e[1]) >=
-                    (2022, 2) else f'{e[0]}.{e[1]}.rc{e[2]}' for e in rc_tags_data]
-    return rc_tags_data
-
-
-def fetch_last_cassandra3_minor_versions(count):
+def fetch_all_cassandra_versions():
     # Download folder listing for Cassandra download site
     data = requests.get(CASSANDRA_ENDPOINT).text
 
     # Parse only those version numbers which match '3.NUM.NUM'
     # into tuple (3, NUM, NUM)
-    data = CASSANDRA3_REGEX.finditer(data)
+    data = CASSANDRA_REGEX.finditer(data)
     data = map(lambda e: e.groups(), data)
-    data = map(lambda e: tuple(map(int, e)), data)
-
-    # Group by (major, minor) and select latest patch version
-    data = sorted(data)
-    data = groupby(data, key=lambda e: (e[0], e[1]))
-    data = ((e[0][0], e[0][1], max(e[1])[2])
-            for e in data)
-
-    # Return the latest ones
-    data = list(data)[-count:]
-    data = [f'{e[0]}.{e[1]}.{e[2]}' for e in data]
-    return data
-
-def fetch_last_cassandra4_minor_versions(count):
-    # Download folder listing for Cassandra download site
-    data = requests.get(CASSANDRA_ENDPOINT).text
-
-    # Parse only those version numbers which match '4.NUM.NUM'
-    # into tuple (4, NUM, NUM)
-    data = CASSANDRA4_REGEX.finditer(data)
-    data = map(lambda e: e.groups(), data)
-    data = map(lambda e: tuple(map(int, e)), data)
-
-    # Group by (major, minor) and select latest patch version
-    data = sorted(data)
-    data = groupby(data, key=lambda e: (e[0], e[1]))
-    data = ((e[0][0], e[0][1], max(e[1])[2])
-            for e in data)
-
-    # Return the latest ones
-    data = list(data)[-count:]
-    data = [f'{e[0]}.{e[1]}.{e[2]}' for e in data]
-    return data
+    data = map(lambda e: Version(f"{e[0]}.{e[1]}.{e[2]}"), data)
+    return reversed(sorted(data))
 
 
 if __name__ == '__main__':
-    names = set()
+    total_result = []
 
-    for arg in sys.argv[1:]:
-        if not COMMAND_LINE_ARGUMENT.fullmatch(arg):
-            print("Usage:", sys.argv[0], "[scylla-oss-stable:COUNT] [scylla-oss-rc] [scylla-enterprise-stable:COUNT] [scylla-enterprise-rc] [cassandra3-stable:COUNT] [cassandra4-stable:COUNT]...", file=sys.stderr)
-            sys.exit(1)
+    def version_definition_type(arg):
+        if not VERSION_DEFINITION_RE.match(arg):
+            raise argparse.ArgumentTypeError(f"invalid version definition `{arg}`")
+        return arg
 
-        groups = COMMAND_LINE_ARGUMENT.match(arg).groups()
+    parser = argparse.ArgumentParser(description='Get scylla and cassandra versions.')
+    parser.add_argument('definitions', metavar='VERSION-DEFINITION', type=version_definition_type, nargs='+',
+                        help='A list of scylla and cassandra version definitions: scylla-oss-stable:<COUNT> | scylla-enterprise-stable:<COUNT> | cassandra3-stable:<COUNT> | cassandra4-stable:<COUNT> | scylla-oss-rc | scylla-enterprise-rc')
+
+    parser.add_argument('--version-index', dest='version_index', type=int, default=0, help='print single version only')
+
+    args = parser.parse_args()
+
+    for version_def in args.definitions:
+        groups = VERSION_DEFINITION_RE.match(version_def).groups()
         groups = [g for g in groups if g][1:]
 
         mode_name = groups[0]
-        if mode_name == 'scylla-oss-stable':
-            names.update(fetch_last_scylla_oss_minor_versions(int(groups[1])))
-        elif mode_name == 'scylla-enterprise-stable':
-            names.update(
-                fetch_last_scylla_enterprise_minor_versions(int(groups[1])))
-        elif mode_name == 'cassandra3-stable':
-            names.update(
-                fetch_last_cassandra3_minor_versions(int(groups[1])))
-        elif mode_name == 'cassandra4-stable':
-            names.update(
-                fetch_last_cassandra4_minor_versions(int(groups[1])))
-        elif mode_name == 'scylla-oss-rc':
-            names.update(fetch_all_scylla_oss_rc_versions())
-        elif mode_name == 'scylla-enterprise-rc':
-            names.update(fetch_all_scylla_enterprise_rc_versions())
+        versions_count = int(groups[1]) if len(groups) > 1 else 0
 
-    print(json.dumps(list(names)))
+        result = []
+        if mode_name == 'scylla-oss-stable':
+            result = filter_versions(fetch_docker_hub_tags(*SCYLLA_OSS), versions_count, scylla_oss_only, release_only)
+        elif mode_name == 'scylla-enterprise-stable':
+            result = filter_versions(fetch_docker_hub_tags(*SCYLLA_ENTERPRISE), versions_count, scylla_enterprise_only, release_only)
+        elif mode_name == 'cassandra3-stable':
+            result = filter_versions(fetch_all_cassandra_versions(), versions_count, cassandra_3_only)
+        elif mode_name == 'cassandra4-stable':
+            result = filter_versions(fetch_all_cassandra_versions(), versions_count, cassandra_4_only)
+        elif mode_name == 'scylla-oss-rc':
+            result = filter_versions(fetch_docker_hub_tags(*SCYLLA_OSS), versions_count, scylla_oss_only, rc_only)
+        elif mode_name == 'scylla-enterprise-rc':
+            result = filter_versions(fetch_docker_hub_tags(*SCYLLA_ENTERPRISE), versions_count, scylla_enterprise_only, rc_only)
+        
+        total_result += result
+
+    total_result = [str(k) for k in reversed(sorted(total_result))]
+
+    if args.version_index == 0:
+        print(json.dumps(list(total_result)))
+        sys.exit(0)
+    if len(total_result) < args.version_index:
+        print("No versions found", file=sys.stderr)
+        sys.exit(1)
+    print(json.dumps(total_result[args.version_index-1]))
+    sys.exit(0)
