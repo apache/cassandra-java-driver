@@ -822,7 +822,6 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
    */
   @NonNull
   public CompletionStage<SessionT> buildAsync() {
-    System.out.println("Using Scylla optimized driver!!!");
     LOG.info("Using Scylla optimized driver!!!");
     CompletionStage<CqlSession> buildStage = buildDefaultSessionAsync();
     CompletionStage<SessionT> wrapStage = buildStage.thenApply(this::wrap);
