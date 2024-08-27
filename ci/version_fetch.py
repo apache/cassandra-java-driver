@@ -28,7 +28,7 @@ CASSANDRA_ENDPOINT = 'https://dlcdn.apache.org/cassandra/'
 CASSANDRA_REGEX = re.compile(r'a href="([0-9])\.(\d+)\.(\d+)/"')
 
 VERSION_DEFINITION_RE = re.compile(
-    r'((?:(scylla-oss-stable):(\d+))|(?:(scylla-enterprise-stable):(\d+))|(?:(cassandra3-stable):(\d+))|(?:(cassandra4-stable):(\d+))|(?:(scylla-oss-rc))|(?:(scylla-enterprise-rc)))')
+    r'((?:(scylla-oss-stable):(\d+))|(?:(scylla-enterprise-stable)(:\d+)?)|(?:(cassandra3-stable)(:\d+)?)|(?:(cassandra4-stable)(:\d+)?)|(?:(scylla-oss-rc)(:\d+)?)|(?:(scylla-enterprise-rc)(:\d+)?))')
 ONLY_DIGITS_RE = re.compile("^[0-9]+")
 
 class Version:
@@ -96,7 +96,7 @@ class Version:
         if self.patch != other.patch:
             return self.patch < other.patch
         if self.is_dev == other.is_dev:
-            return False
+            return self.patch_rest < other.patch_rest
         return self.is_dev
 
 
@@ -171,7 +171,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Get scylla and cassandra versions.')
     parser.add_argument('definitions', metavar='VERSION-DEFINITION', type=version_definition_type, nargs='+',
-                        help='A list of scylla and cassandra version definitions: scylla-oss-stable:<COUNT> | scylla-enterprise-stable:<COUNT> | cassandra3-stable:<COUNT> | cassandra4-stable:<COUNT> | scylla-oss-rc | scylla-enterprise-rc')
+                        help='A list of scylla and cassandra version definitions: scylla-oss-stable[:COUNT] | scylla-enterprise-stable[:COUNT] | cassandra3-stable[:COUNT] | cassandra4-stable[:COUNT] | scylla-oss-rc[:COUNT] | scylla-enterprise-rc[:COUNT]')
 
     parser.add_argument('--version-index', dest='version_index', type=int, default=0, help='print single version only')
 
@@ -182,7 +182,7 @@ if __name__ == '__main__':
         groups = [g for g in groups if g][1:]
 
         mode_name = groups[0]
-        versions_count = int(groups[1]) if len(groups) > 1 else 0
+        versions_count = int(groups[1].replace(":","")) if len(groups) > 1 else 1
 
         result = []
         if mode_name == 'scylla-oss-stable':
