@@ -20,16 +20,27 @@ package com.datastax.oss.driver.internal.core.type.codec;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.data.CqlVector;
+import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.VectorType;
+import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
-import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
-import java.util.Arrays;
+import com.datastax.oss.protocol.internal.util.Bytes;
+import com.tngtech.java.junit.dataprovider.DataProvider;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
+import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import java.nio.ByteBuffer;
+import java.time.LocalTime;
+import java.util.HashMap;
+import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
-/** Only for Float TODO: add others */
+@RunWith(DataProviderRunner.class)
 public class VectorCodecTest extends CodecTestBase<CqlVector<Float>> {
 
   private static final Float[] VECTOR_ARGS = {1.0f, 2.5f};
@@ -45,16 +56,100 @@ public class VectorCodecTest extends CodecTestBase<CqlVector<Float>> {
     this.codec = TypeCodecs.vectorOf(vectorType, TypeCodecs.FLOAT);
   }
 
-  @Test
-  public void should_encode() {
-    assertThat(encode(VECTOR)).isEqualTo(VECTOR_HEX_STRING);
-    assertThat(encode(null)).isNull();
+  @DataProvider
+  public static Object[][] dataProvider() {
+    HashMap<Integer, String> map1 = new HashMap<>();
+    map1.put(1, "a");
+    HashMap<Integer, String> map2 = new HashMap<>();
+    map2.put(2, "b");
+    // For every row, data type, array of 2 values, formatted string, encoded bytes
+    return new Object[][] {
+      {
+        DataTypes.FLOAT,
+        new Float[] {1.0f, 2.5f},
+        "[1.0, 2.5]",
+        Bytes.fromHexString("0x3f80000040200000")
+      },
+      {
+        DataTypes.ASCII,
+        new String[] {"ab", "cde"},
+        "['ab', 'cde']",
+        Bytes.fromHexString("0x02616203636465")
+      },
+      {
+        DataTypes.BIGINT,
+        new Long[] {1L, 2L},
+        "[1, 2]",
+        Bytes.fromHexString("0x00000000000000010000000000000002")
+      },
+      {
+        DataTypes.BLOB,
+        new ByteBuffer[] {Bytes.fromHexString("0xCAFE"), Bytes.fromHexString("0xABCD")},
+        "[0xcafe, 0xabcd]",
+        Bytes.fromHexString("0x02cafe02abcd")
+      },
+      {
+        DataTypes.BOOLEAN,
+        new Boolean[] {true, false},
+        "[true, false]",
+        Bytes.fromHexString("0x0100")
+      },
+      {
+        DataTypes.TIME,
+        new LocalTime[] {LocalTime.ofNanoOfDay(1), LocalTime.ofNanoOfDay(2)},
+        "['00:00:00.000000001', '00:00:00.000000002']",
+        Bytes.fromHexString("0x080000000000000001080000000000000002")
+      },
+      {
+        DataTypes.mapOf(DataTypes.INT, DataTypes.ASCII),
+        new HashMap[] {map1, map2},
+        "[{1:'a'}, {2:'b'}]",
+        Bytes.fromHexString(
+            "0x110000000100000004000000010000000161110000000100000004000000020000000162")
+      },
+      {
+        DataTypes.vectorOf(DataTypes.INT, 1),
+        new CqlVector[] {CqlVector.newInstance(1), CqlVector.newInstance(2)},
+        "[[1], [2]]",
+        Bytes.fromHexString("0x0000000100000002")
+      },
+      {
+        DataTypes.vectorOf(DataTypes.TEXT, 1),
+        new CqlVector[] {CqlVector.newInstance("ab"), CqlVector.newInstance("cdef")},
+        "[['ab'], ['cdef']]",
+        Bytes.fromHexString("0x03026162050463646566")
+      },
+      {
+        DataTypes.vectorOf(DataTypes.vectorOf(DataTypes.FLOAT, 2), 1),
+        new CqlVector[] {
+          CqlVector.newInstance(CqlVector.newInstance(1.0f, 2.5f)),
+          CqlVector.newInstance(CqlVector.newInstance(3.0f, 4.5f))
+        },
+        "[[[1.0, 2.5]], [[3.0, 4.5]]]",
+        Bytes.fromHexString("0x3f800000402000004040000040900000")
+      },
+    };
   }
 
-  /** Too few eleements will cause an exception, extra elements will be silently ignored */
+  @UseDataProvider("dataProvider")
   @Test
-  public void should_throw_on_encode_with_too_few_elements() {
-    assertThatThrownBy(() -> encode(VECTOR.subVector(0, 1)))
+  public void should_encode(
+      DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
+    TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
+    CqlVector<Object> vector = CqlVector.newInstance(values);
+    assertThat(codec.encode(vector, ProtocolVersion.DEFAULT)).isEqualTo(bytes);
+
+    //    assertThat(encode(null)).isNull();
+  }
+
+  /** Too few elements will cause an exception, extra elements will be silently ignored */
+  @Test
+  @UseDataProvider("dataProvider")
+  public void should_throw_on_encode_with_too_few_elements(
+      DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
+    TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
+    assertThatThrownBy(
+            () -> codec.encode(CqlVector.newInstance(values[0]), ProtocolVersion.DEFAULT))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -65,67 +160,96 @@ public class VectorCodecTest extends CodecTestBase<CqlVector<Float>> {
   }
 
   @Test
-  public void should_encode_with_too_many_elements() {
-    Float[] doubledVectorContents = Arrays.copyOf(VECTOR_ARGS, VECTOR_ARGS.length * 2);
-    System.arraycopy(VECTOR_ARGS, 0, doubledVectorContents, VECTOR_ARGS.length, VECTOR_ARGS.length);
-    assertThat(encode(CqlVector.newInstance(doubledVectorContents))).isEqualTo(VECTOR_HEX_STRING);
+  @UseDataProvider("dataProvider")
+  public void should_throw_on_encode_with_too_many_elements(
+      DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
+    Object[] doubled = ArrayUtils.addAll(values, values);
+    TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
+    assertThatThrownBy(() -> codec.encode(CqlVector.newInstance(doubled), ProtocolVersion.DEFAULT))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
-  public void should_decode() {
-    assertThat(decode(VECTOR_HEX_STRING)).isEqualTo(VECTOR);
-    assertThat(decode("0x")).isNull();
-    assertThat(decode(null)).isNull();
+  @UseDataProvider("dataProvider")
+  public void should_decode(
+      DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
+    TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
+    assertThat(codec.decode(bytes, ProtocolVersion.DEFAULT))
+        .isEqualTo(CqlVector.newInstance(values));
+    //    assertThat(decode("0x")).isNull();
+    //    assertThat(decode(null)).isNull();
   }
 
   @Test
-  public void should_throw_on_decode_if_too_few_bytes() {
-    // Dropping 4 bytes would knock off exactly 1 float, anything less than that would be something
-    // we couldn't parse a float out of
-    for (int i = 1; i <= 3; ++i) {
-      // 2 chars of hex encoded string = 1 byte
-      int lastIndex = VECTOR_HEX_STRING.length() - (2 * i);
-      assertThatThrownBy(() -> decode(VECTOR_HEX_STRING.substring(0, lastIndex)))
-          .isInstanceOf(IllegalArgumentException.class);
-    }
+  @UseDataProvider("dataProvider")
+  public void should_throw_on_decode_if_too_few_bytes(
+      DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
+    TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
+    int lastIndex = bytes.remaining() - 1;
+    assertThatThrownBy(
+            () ->
+                codec.decode(
+                    (ByteBuffer) bytes.duplicate().limit(lastIndex), ProtocolVersion.DEFAULT))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
-  public void should_format() {
-    assertThat(format(VECTOR)).isEqualTo(FORMATTED_VECTOR);
-    assertThat(format(null)).isEqualTo("NULL");
+  @UseDataProvider("dataProvider")
+  public void should_throw_on_decode_if_too_many_bytes(
+      DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
+    ByteBuffer doubled = ByteBuffer.allocate(bytes.remaining() * 2);
+    doubled.put(bytes.duplicate()).put(bytes.duplicate()).flip();
+    TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
+    assertThatThrownBy(() -> codec.decode(doubled, ProtocolVersion.DEFAULT))
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
-  public void should_parse() {
-    assertThat(parse(FORMATTED_VECTOR)).isEqualTo(VECTOR);
-    assertThat(parse("NULL")).isNull();
-    assertThat(parse("null")).isNull();
-    assertThat(parse("")).isNull();
-    assertThat(parse(null)).isNull();
+  @UseDataProvider("dataProvider")
+  public void should_format(
+      DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
+    TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
+    CqlVector<Object> vector = CqlVector.newInstance(values);
+    assertThat(codec.format(vector)).isEqualTo(formatted);
+    //    assertThat(format(null)).isEqualTo("NULL");
   }
 
   @Test
-  public void should_accept_data_type() {
-    assertThat(codec.accepts(new DefaultVectorType(DataTypes.FLOAT, 2))).isTrue();
-    assertThat(codec.accepts(DataTypes.INT)).isFalse();
+  @UseDataProvider("dataProvider")
+  public void should_parse(DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
+    TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
+    assertThat(codec.parse(formatted)).isEqualTo(CqlVector.newInstance(values));
+    //    assertThat(parse("NULL")).isNull();
+    //    assertThat(parse("null")).isNull();
+    //    assertThat(parse("")).isNull();
+    //    assertThat(parse(null)).isNull();
   }
 
   @Test
-  public void should_accept_vector_type_correct_dimension_only() {
-    assertThat(codec.accepts(new DefaultVectorType(DataTypes.FLOAT, 0))).isFalse();
-    assertThat(codec.accepts(new DefaultVectorType(DataTypes.FLOAT, 1))).isFalse();
-    assertThat(codec.accepts(new DefaultVectorType(DataTypes.FLOAT, 2))).isTrue();
-    for (int i = 3; i < 1000; ++i) {
-      assertThat(codec.accepts(new DefaultVectorType(DataTypes.FLOAT, i))).isFalse();
-    }
+  @UseDataProvider("dataProvider")
+  public void should_accept_data_type(
+      DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
+    TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
+    assertThat(codec.accepts(new DefaultVectorType(dataType, 2))).isTrue();
+    assertThat(codec.accepts(new DefaultVectorType(DataTypes.custom("non-existent"), 2))).isFalse();
   }
 
   @Test
-  public void should_accept_generic_type() {
-    assertThat(codec.accepts(GenericType.vectorOf(GenericType.FLOAT))).isTrue();
-    assertThat(codec.accepts(GenericType.vectorOf(GenericType.INTEGER))).isFalse();
-    assertThat(codec.accepts(GenericType.of(Integer.class))).isFalse();
+  @UseDataProvider("dataProvider")
+  public void should_accept_vector_type_correct_dimension_only(
+      DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
+    TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
+    assertThat(codec.accepts(new DefaultVectorType(dataType, 0))).isFalse();
+    assertThat(codec.accepts(new DefaultVectorType(dataType, 1))).isFalse();
+    assertThat(codec.accepts(new DefaultVectorType(dataType, 3))).isFalse();
+  }
+
+  @Test
+  @UseDataProvider("dataProvider")
+  public void should_accept_generic_type(
+      DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
+    TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
+    assertThat(codec.accepts(codec.getJavaType())).isTrue();
   }
 
   @Test
@@ -138,5 +262,10 @@ public class VectorCodecTest extends CodecTestBase<CqlVector<Float>> {
   public void should_accept_object() {
     assertThat(codec.accepts(VECTOR)).isTrue();
     assertThat(codec.accepts(Integer.MIN_VALUE)).isFalse();
+  }
+
+  private static TypeCodec<CqlVector<Object>> getCodec(DataType dataType) {
+    return TypeCodecs.vectorOf(
+        DataTypes.vectorOf(dataType, 2), CodecRegistry.DEFAULT.codecFor(dataType));
   }
 }

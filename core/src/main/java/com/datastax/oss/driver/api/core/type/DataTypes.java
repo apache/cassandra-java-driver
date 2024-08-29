@@ -32,7 +32,6 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
-import java.util.List;
 
 /** Constants and factory methods to obtain data type instances. */
 public class DataTypes {
@@ -69,7 +68,8 @@ public class DataTypes {
 
     /* Vector support is currently implemented as a custom type but is also parameterized */
     if (className.startsWith(DefaultVectorType.VECTOR_CLASS_NAME)) {
-      String paramsString = className.substring(
+      String paramsString =
+          className.substring(
               DefaultVectorType.VECTOR_CLASS_NAME.length() + 1, className.length() - 1);
       int lastCommaIndex = paramsString.lastIndexOf(',');
       if (lastCommaIndex == -1) {

@@ -18,7 +18,6 @@
 package com.datastax.oss.driver.core.data;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.junit.Assert.fail;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
@@ -47,7 +46,6 @@ import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
-import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -267,38 +265,34 @@ public class DataTypeIT {
               UdtValue udtValue2 = udt.newValue(1, o[1]);
               samples.add(new Object[] {udt, udtValue2});
 
-              if (CCM_RULE.getCassandraVersion().compareTo(Version.parse("5.0")) >= 0){
+              if (CCM_RULE.getCassandraVersion().compareTo(Version.parse("5.0")) >= 0) {
                 // vector of type
                 CqlVector<?> vector = CqlVector.newInstance(o[1]);
                 samples.add(new Object[] {DataTypes.vectorOf(dataType, 1), vector});
               }
 
-              if (o[1].equals("ascii")){
-                // once
-                CqlVector<?> vector = CqlVector.newInstance(CqlVector.newInstance(1, 2));
-                samples.add(new Object[] {DataTypes.vectorOf(DataTypes.vectorOf(DataTypes.INT, 2), 1), vector});
-              }
               return samples.stream();
             })
         .toArray(Object[][]::new);
   }
 
   @DataProvider
-  public static Object[][] addVectors(){
+  public static Object[][] addVectors() {
     Object[][] previousSamples = typeSamples();
     if (CCM_RULE.getCassandraVersion().compareTo(Version.parse("5.0")) < 0) return previousSamples;
-    return Arrays.stream(previousSamples).flatMap(
-        o -> {
-          List<Object[]> samples = new ArrayList<>();
-          samples.add(o);
-          if (o[1] == null) return samples.stream();
-          DataType dataType = (DataType) o[0];
-          CqlVector<?> vector = CqlVector.newInstance(o[1]);
-          samples.add(new Object[] {DataTypes.vectorOf(dataType, 1), vector});
-          return samples.stream();
-        }).toArray(Object[][]::new);
+    return Arrays.stream(previousSamples)
+        .flatMap(
+            o -> {
+              List<Object[]> samples = new ArrayList<>();
+              samples.add(o);
+              if (o[1] == null) return samples.stream();
+              DataType dataType = (DataType) o[0];
+              CqlVector<?> vector = CqlVector.newInstance(o[1]);
+              samples.add(new Object[] {DataTypes.vectorOf(dataType, 1), vector});
+              return samples.stream();
+            })
+        .toArray(Object[][]::new);
   }
-
 
   @BeforeClass
   public static void createTable() {

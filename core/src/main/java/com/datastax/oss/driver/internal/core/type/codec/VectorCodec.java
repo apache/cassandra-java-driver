@@ -26,15 +26,9 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import com.datastax.oss.driver.internal.core.type.util.VIntCoding;
 import com.datastax.oss.driver.shaded.guava.common.base.Optional;
-import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-
-import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -71,8 +65,10 @@ public class VectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
   }
 
   @NonNull
-  public Optional<Integer> serializedSize(){
-    return subtypeCodec.serializedSize().isPresent() ? Optional.of(subtypeCodec.serializedSize().get() * cqlType.getDimensions()) : Optional.absent();
+  public Optional<Integer> serializedSize() {
+    return subtypeCodec.serializedSize().isPresent()
+        ? Optional.of(subtypeCodec.serializedSize().get() * cqlType.getDimensions())
+        : Optional.absent();
   }
 
   @NonNull
@@ -110,9 +106,7 @@ public class VectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
   public String format(CqlVector<SubtypeT> value) {
     if (value == null) return "NULL";
 
-    return value.stream()
-            .map(subtypeCodec::format)
-            .collect(Collectors.joining(", ", "[", "]"));
+    return value.stream().map(subtypeCodec::format).collect(Collectors.joining(", ", "[", "]"));
   }
 
   @Nullable
@@ -166,6 +160,13 @@ public class VectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
         valueBuff.rewind();
         valueBuffs[i] = valueBuff;
       }
+      // if too many elements, throw
+      if (values.hasNext()) {
+        throw new IllegalArgumentException(
+            String.format(
+                "Too many elements; must provide elements for %d dimensions",
+                cqlType.getDimensions()));
+      }
       /* Since we already did an early return for <= 0 dimensions above */
       assert valueBuffs.length > 0;
       ByteBuffer rv = ByteBuffer.allocate(allValueBuffsSize);
@@ -183,8 +184,8 @@ public class VectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
         return null;
       }
 
-      int elementSize = Math.floorDiv(bytes.remaining(), cqlType.getDimensions());
-      if (!(bytes.remaining() % cqlType.getDimensions() == 0)) {
+      int elementSize = subtypeCodec.serializedSize().get();
+      if (bytes.remaining() != cqlType.getDimensions() * elementSize) {
         throw new IllegalArgumentException(
             String.format(
                 "Expected elements of uniform size, observed %d elements with total bytes %d",
@@ -252,6 +253,15 @@ public class VectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
         valueBuff.rewind();
         valueBuffs[i] = valueBuff;
       }
+
+      // if too many elements, throw
+      if (values.hasNext()) {
+        throw new IllegalArgumentException(
+            String.format(
+                "Too many elements; must provide elements for %d dimensions",
+                cqlType.getDimensions()));
+      }
+
       /* Since we already did an early return for <= 0 dimensions above */
       assert valueBuffs.length > 0;
       ByteBuffer rv = ByteBuffer.allocate(allValueBuffsSize);
@@ -285,6 +295,13 @@ public class VectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
           input.position(input.position() + size);
         }
         rv.add(subtypeCodec.decode(value, protocolVersion));
+      }
+      // if too many elements, throw
+      if (input.hasRemaining()) {
+        throw new IllegalArgumentException(
+            String.format(
+                "Too many elements; must provide elements for %d dimensions",
+                cqlType.getDimensions()));
       }
 
       return CqlVector.newInstance(rv);

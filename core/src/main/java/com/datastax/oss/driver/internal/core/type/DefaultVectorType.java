@@ -61,7 +61,7 @@ public class DefaultVectorType implements VectorType {
   @Override
   public String asCql(boolean includeFrozen, boolean pretty) {
     return String.format(
-        "VECTOR<%s, %d>", this.subtype.asCql(includeFrozen, pretty).toUpperCase(), getDimensions());
+        "VECTOR<%s, %d>", this.subtype.asCql(includeFrozen, pretty).toLowerCase(), getDimensions());
   }
 
   /* ============== General class implementation ============== */

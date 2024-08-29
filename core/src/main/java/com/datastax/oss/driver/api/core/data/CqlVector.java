@@ -18,11 +18,10 @@
 package com.datastax.oss.driver.api.core.data;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.internal.core.type.codec.ParseUtils;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.base.Predicates;
-import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
-import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.InvalidObjectException;
@@ -35,7 +34,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -90,11 +88,48 @@ public class CqlVector<T> implements Iterable<T>, Serializable {
   public static <V> CqlVector<V> from(@NonNull String str, @NonNull TypeCodec<V> subtypeCodec) {
     Preconditions.checkArgument(str != null, "Cannot create CqlVector from null string");
     Preconditions.checkArgument(!str.isEmpty(), "Cannot create CqlVector from empty string");
-    ArrayList<V> vals =
-        Streams.stream(Splitter.on(", ").split(str.substring(1, str.length() - 1)))
-            .map(subtypeCodec::parse)
-            .collect(Collectors.toCollection(ArrayList::new));
-    return new CqlVector(vals);
+    if (str == null || str.isEmpty() || str.equalsIgnoreCase("NULL")) return null;
+
+    int idx = ParseUtils.skipSpaces(str, 0);
+    if (str.charAt(idx++) != '[')
+      throw new IllegalArgumentException(
+          String.format(
+              "Cannot parse list value from \"%s\", at character %d expecting '[' but got '%c'",
+              str, idx, str.charAt(idx)));
+
+    idx = ParseUtils.skipSpaces(str, idx);
+
+    if (str.charAt(idx) == ']') {
+      return null;
+    }
+
+    List<V> list = new ArrayList<>();
+    while (idx < str.length()) {
+      int n;
+      try {
+        n = ParseUtils.skipCQLValue(str, idx);
+      } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException(
+            String.format(
+                "Cannot parse list value from \"%s\", invalid CQL value at character %d", str, idx),
+            e);
+      }
+
+      list.add(subtypeCodec.parse(str.substring(idx, n)));
+      idx = n;
+
+      idx = ParseUtils.skipSpaces(str, idx);
+      if (str.charAt(idx) == ']') return new CqlVector<>(list);
+      if (str.charAt(idx++) != ',')
+        throw new IllegalArgumentException(
+            String.format(
+                "Cannot parse list value from \"%s\", at character %d expecting ',' but got '%c'",
+                str, idx, str.charAt(idx)));
+
+      idx = ParseUtils.skipSpaces(str, idx);
+    }
+    throw new IllegalArgumentException(
+        String.format("Malformed list value \"%s\", missing closing ']'", str));
   }
 
   private final List<T> list;
