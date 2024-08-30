@@ -21,58 +21,77 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 
+import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
+import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.SerializationHelper;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
+import java.time.LocalTime;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.tngtech.java.junit.dataprovider.DataProvider;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
+import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.assertj.core.util.Lists;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+@RunWith(DataProviderRunner.class)
 public class CqlVectorTest {
 
   private static final Float[] VECTOR_ARGS = {1.0f, 2.5f};
 
-  private void validate_built_vector(CqlVector<Float> vec) {
+  @DataProvider
+  public static Object[][] dataProvider() {
+    return new Object[][]{
+            {new Float[]{1.0f, 2.5f}},
+            {new LocalTime[]{LocalTime.of(1, 2), LocalTime.of(3, 4)}},
+            {new List[]{Arrays.asList(1, 2), Arrays.asList(3, 4)}},
+            {new CqlVector[]{CqlVector.newInstance("a", "bc"), CqlVector.newInstance("d", "ef")}}
+    };
+  }
 
+  private void validate_built_vector(CqlVector<?> vec, Object[] expectedVals) {
     assertThat(vec.size()).isEqualTo(2);
     assertThat(vec.isEmpty()).isFalse();
-    assertThat(vec.get(0)).isEqualTo(VECTOR_ARGS[0]);
-    assertThat(vec.get(1)).isEqualTo(VECTOR_ARGS[1]);
+    assertThat(vec.get(0)).isEqualTo(expectedVals[0]);
+    assertThat(vec.get(1)).isEqualTo(expectedVals[1]);
+  }
+
+  @UseDataProvider("dataProvider")
+  @Test
+  public void should_build_vector_from_elements(Object[] vals) {
+    validate_built_vector(CqlVector.newInstance(vals), vals);
   }
 
   @Test
-  public void should_build_vector_from_elements() {
-
-    validate_built_vector(CqlVector.newInstance(VECTOR_ARGS));
+  @UseDataProvider("dataProvider")
+  public void should_build_vector_from_list(Object[] vals) {
+    validate_built_vector(CqlVector.newInstance(Lists.newArrayList(vals)), vals);
   }
 
   @Test
-  public void should_build_vector_from_list() {
-
-    validate_built_vector(CqlVector.newInstance(Lists.newArrayList(VECTOR_ARGS)));
-  }
-
-  @Test
-  public void should_build_vector_from_tostring_output() {
-
-    CqlVector<Float> vector1 = CqlVector.newInstance(VECTOR_ARGS);
-    CqlVector<Float> vector2 = CqlVector.from(vector1.toString(), TypeCodecs.FLOAT);
+  @UseDataProvider("dataProvider")
+  public void should_build_vector_from_tostring_output(Object[] vals) {
+    CqlVector<?> vector1 = CqlVector.newInstance(vals);
+    TypeCodec<?> codec = CodecRegistry.DEFAULT.codecFor(vals[0]);
+    CqlVector<?> vector2 = CqlVector.from(vector1.toString(), codec);
     assertThat(vector2).isEqualTo(vector1);
   }
 
   @Test
   public void should_throw_from_null_string() {
-
     assertThatThrownBy(
             () -> {
               CqlVector.from(null, TypeCodecs.FLOAT);
@@ -123,94 +142,89 @@ public class CqlVectorTest {
   }
 
   @Test
-  public void should_behave_mostly_like_a_list() {
-
-    CqlVector<Float> vector = CqlVector.newInstance(VECTOR_ARGS);
-    assertThat(vector.get(0)).isEqualTo(VECTOR_ARGS[0]);
-    Float newVal = VECTOR_ARGS[0] * 2;
-    vector.set(0, newVal);
-    assertThat(vector.get(0)).isEqualTo(newVal);
+  @UseDataProvider("dataProvider")
+  public <T> void  should_behave_mostly_like_a_list(T[] vals) {
+    CqlVector<T> vector = CqlVector.newInstance(vals);
+    assertThat(vector.get(0)).isEqualTo(vals[0]);
+    vector.set(0, vals[1]);
+    assertThat(vector.get(0)).isEqualTo(vals[1]);
     assertThat(vector.isEmpty()).isFalse();
     assertThat(vector.size()).isEqualTo(2);
-    assertThat(Iterators.toArray(vector.iterator(), Float.class)).isEqualTo(VECTOR_ARGS);
+    Iterator<?> iterator = vector.iterator();
+    assertThat(iterator.next()).isEqualTo(vals[1]);
+    assertThat(iterator.next()).isEqualTo(vals[1]);
   }
 
   @Test
-  public void should_play_nicely_with_streams() {
-
-    CqlVector<Float> vector = CqlVector.newInstance(VECTOR_ARGS);
-    List<Float> results =
+  @UseDataProvider("dataProvider")
+  public <T> void should_play_nicely_with_streams(T[] vals) {
+    CqlVector<T> vector = CqlVector.newInstance(vals);
+    List<String> results =
         vector.stream()
-            .map((f) -> f * 2)
-            .collect(Collectors.toCollection(() -> new ArrayList<Float>()));
+            .map(Object::toString)
+            .collect(Collectors.toCollection(() -> new ArrayList<String>()));
     for (int i = 0; i < vector.size(); ++i) {
-      assertThat(results.get(i)).isEqualTo(vector.get(i) * 2);
+      assertThat(results.get(i)).isEqualTo(vector.get(i).toString());
     }
   }
 
   @Test
-  public void should_reflect_changes_to_mutable_list() {
+  @UseDataProvider("dataProvider")
+  public <T> void should_reflect_changes_to_mutable_list(T[] vals) {
+    List<T> theList = Lists.newArrayList(vals);
+    CqlVector<T> vector = CqlVector.newInstance(theList);
+    assertThat(vector.size()).isEqualTo(2);
+    assertThat(vector.get(1)).isEqualTo(vals[1]);
 
-    List<Float> theList = Lists.newArrayList(1.1f, 2.2f, 3.3f);
-    CqlVector<Float> vector = CqlVector.newInstance(theList);
-    assertThat(vector.size()).isEqualTo(3);
-    assertThat(vector.get(2)).isEqualTo(3.3f);
-
-    float newVal1 = 4.4f;
-    theList.set(2, newVal1);
-    assertThat(vector.size()).isEqualTo(3);
-    assertThat(vector.get(2)).isEqualTo(newVal1);
-
-    float newVal2 = 5.5f;
-    theList.add(newVal2);
-    assertThat(vector.size()).isEqualTo(4);
-    assertThat(vector.get(3)).isEqualTo(newVal2);
+    T newVal = vals[0];
+    theList.set(1, newVal);
+    assertThat(vector.size()).isEqualTo(2);
+    assertThat(vector.get(1)).isEqualTo(newVal);
   }
 
   @Test
-  public void should_reflect_changes_to_array() {
+  @UseDataProvider("dataProvider")
+  public <T> void should_reflect_changes_to_array(T[] theArray) {
+    CqlVector<T> vector = CqlVector.newInstance(theArray);
+    assertThat(vector.size()).isEqualTo(2);
+    assertThat(vector.get(1)).isEqualTo(theArray[1]);
 
-    Float[] theArray = new Float[] {1.1f, 2.2f, 3.3f};
-    CqlVector<Float> vector = CqlVector.newInstance(theArray);
-    assertThat(vector.size()).isEqualTo(3);
-    assertThat(vector.get(2)).isEqualTo(3.3f);
-
-    float newVal1 = 4.4f;
-    theArray[2] = newVal1;
-    assertThat(vector.size()).isEqualTo(3);
-    assertThat(vector.get(2)).isEqualTo(newVal1);
+    T newVal = theArray[0];
+    theArray[1] = newVal;
+    assertThat(vector.size()).isEqualTo(2);
+    assertThat(vector.get(1)).isEqualTo(newVal);
   }
 
   @Test
-  public void should_correctly_compare_vectors() {
-
-    Float[] args = VECTOR_ARGS.clone();
-    CqlVector<Float> vector1 = CqlVector.newInstance(args);
-    CqlVector<Float> vector2 = CqlVector.newInstance(args);
-    CqlVector<Float> vector3 = CqlVector.newInstance(Lists.newArrayList(args));
+  @UseDataProvider("dataProvider")
+  public <T> void should_correctly_compare_vectors(T[] vals) {
+    CqlVector<T> vector1 = CqlVector.newInstance(vals);
+    CqlVector<T> vector2 = CqlVector.newInstance(vals);
+    CqlVector<T> vector3 = CqlVector.newInstance(Lists.newArrayList(vals));
     assertThat(vector1).isNotSameAs(vector2);
     assertThat(vector1).isEqualTo(vector2);
     assertThat(vector1).isNotSameAs(vector3);
     assertThat(vector1).isEqualTo(vector3);
 
-    Float[] differentArgs = args.clone();
-    float newVal = differentArgs[0] * 2;
+    T[] differentArgs = Arrays.copyOf(vals, vals.length);
+    T newVal = differentArgs[1];
     differentArgs[0] = newVal;
-    CqlVector<Float> vector4 = CqlVector.newInstance(differentArgs);
+    CqlVector<T> vector4 = CqlVector.newInstance(differentArgs);
     assertThat(vector1).isNotSameAs(vector4);
     assertThat(vector1).isNotEqualTo(vector4);
 
-    Float[] biggerArgs = Arrays.copyOf(args, args.length + 1);
+    T[] biggerArgs = Arrays.copyOf(vals, vals.length + 1);
     biggerArgs[biggerArgs.length - 1] = newVal;
-    CqlVector<Float> vector5 = CqlVector.newInstance(biggerArgs);
+    CqlVector<T> vector5 = CqlVector.newInstance(biggerArgs);
     assertThat(vector1).isNotSameAs(vector5);
     assertThat(vector1).isNotEqualTo(vector5);
   }
 
   @Test
-  public void should_serialize_and_deserialize() throws Exception {
-    CqlVector<Float> initial = CqlVector.newInstance(VECTOR_ARGS);
-    CqlVector<Float> deserialized = SerializationHelper.serializeAndDeserialize(initial);
+  @UseDataProvider("dataProvider")
+  public <T> void should_serialize_and_deserialize(T[] vals) throws Exception {
+    CqlVector<T> initial = CqlVector.newInstance(vals);
+    CqlVector<T> deserialized = SerializationHelper.serializeAndDeserialize(initial);
     assertThat(deserialized).isEqualTo(initial);
   }
 

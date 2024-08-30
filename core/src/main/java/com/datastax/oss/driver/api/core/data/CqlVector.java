@@ -18,6 +18,7 @@
 package com.datastax.oss.driver.api.core.data;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.type.codec.ParseUtils;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.base.Predicates;
@@ -34,6 +35,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -230,7 +232,8 @@ public class CqlVector<T> implements Iterable<T>, Serializable {
 
   @Override
   public String toString() {
-    return Iterables.toString(this.list);
+    TypeCodec<T> subcodec = CodecRegistry.DEFAULT.codecFor(list.get(0));
+    return this.list.stream().map(subcodec::format).collect(Collectors.joining(", ", "[", "]"));
   }
 
   /**

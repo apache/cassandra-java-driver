@@ -33,6 +33,8 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
+
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.time.LocalTime;
 import java.util.HashMap;
@@ -41,20 +43,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DataProviderRunner.class)
-public class VectorCodecTest extends CodecTestBase<CqlVector<Float>> {
-
-  private static final Float[] VECTOR_ARGS = {1.0f, 2.5f};
-
-  private static final CqlVector<Float> VECTOR = CqlVector.newInstance(VECTOR_ARGS);
-
-  private static final String VECTOR_HEX_STRING = "0x" + "3f800000" + "40200000";
-
-  private static final String FORMATTED_VECTOR = "[1.0, 2.5]";
-
-  public VectorCodecTest() {
-    VectorType vectorType = DataTypes.vectorOf(DataTypes.FLOAT, 2);
-    this.codec = TypeCodecs.vectorOf(vectorType, TypeCodecs.FLOAT);
-  }
+public class VectorCodecTest  {
 
   @DataProvider
   public static Object[][] dataProvider() {
@@ -138,8 +127,6 @@ public class VectorCodecTest extends CodecTestBase<CqlVector<Float>> {
     TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
     CqlVector<Object> vector = CqlVector.newInstance(values);
     assertThat(codec.encode(vector, ProtocolVersion.DEFAULT)).isEqualTo(bytes);
-
-    //    assertThat(encode(null)).isNull();
   }
 
   /** Too few elements will cause an exception, extra elements will be silently ignored */
@@ -150,12 +137,6 @@ public class VectorCodecTest extends CodecTestBase<CqlVector<Float>> {
     TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
     assertThatThrownBy(
             () -> codec.encode(CqlVector.newInstance(values[0]), ProtocolVersion.DEFAULT))
-        .isInstanceOf(IllegalArgumentException.class);
-  }
-
-  @Test
-  public void should_throw_on_encode_with_empty_list() {
-    assertThatThrownBy(() -> encode(CqlVector.newInstance()))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
@@ -176,8 +157,6 @@ public class VectorCodecTest extends CodecTestBase<CqlVector<Float>> {
     TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
     assertThat(codec.decode(bytes, ProtocolVersion.DEFAULT))
         .isEqualTo(CqlVector.newInstance(values));
-    //    assertThat(decode("0x")).isNull();
-    //    assertThat(decode(null)).isNull();
   }
 
   @Test
@@ -211,7 +190,6 @@ public class VectorCodecTest extends CodecTestBase<CqlVector<Float>> {
     TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
     CqlVector<Object> vector = CqlVector.newInstance(values);
     assertThat(codec.format(vector)).isEqualTo(formatted);
-    //    assertThat(format(null)).isEqualTo("NULL");
   }
 
   @Test
@@ -219,10 +197,6 @@ public class VectorCodecTest extends CodecTestBase<CqlVector<Float>> {
   public void should_parse(DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
     TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
     assertThat(codec.parse(formatted)).isEqualTo(CqlVector.newInstance(values));
-    //    assertThat(parse("NULL")).isNull();
-    //    assertThat(parse("null")).isNull();
-    //    assertThat(parse("")).isNull();
-    //    assertThat(parse(null)).isNull();
   }
 
   @Test
@@ -253,17 +227,35 @@ public class VectorCodecTest extends CodecTestBase<CqlVector<Float>> {
   }
 
   @Test
-  public void should_accept_raw_type() {
+  @UseDataProvider("dataProvider")
+  public void should_accept_raw_type(DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
+    TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
     assertThat(codec.accepts(CqlVector.class)).isTrue();
     assertThat(codec.accepts(Integer.class)).isFalse();
   }
 
   @Test
-  public void should_accept_object() {
-    assertThat(codec.accepts(VECTOR)).isTrue();
+  @UseDataProvider("dataProvider")
+  public void should_accept_object(DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
+    TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
+    CqlVector<?> vector = CqlVector.newInstance(values);
+    assertThat(codec.accepts(vector)).isTrue();
     assertThat(codec.accepts(Integer.MIN_VALUE)).isFalse();
   }
 
+  @Test
+  public void should_handle_null_and_empty() {
+    TypeCodec<CqlVector<Object>> codec = getCodec(DataTypes.FLOAT);
+    assertThat(codec.encode(null, ProtocolVersion.DEFAULT)).isNull();
+    assertThat(codec.decode(Bytes.fromHexString("0x"), ProtocolVersion.DEFAULT)).isNull();
+    assertThat(codec.format(null)).isEqualTo("NULL");
+    assertThat(codec.parse("NULL")).isNull();
+    assertThat(codec.parse("null")).isNull();
+    assertThat(codec.parse("")).isNull();
+    assertThat(codec.parse(null)).isNull();
+    assertThatThrownBy(() -> codec.encode(CqlVector.newInstance(), ProtocolVersion.DEFAULT))
+            .isInstanceOf(IllegalArgumentException.class);
+  }
   private static TypeCodec<CqlVector<Object>> getCodec(DataType dataType) {
     return TypeCodecs.vectorOf(
         DataTypes.vectorOf(dataType, 2), CodecRegistry.DEFAULT.codecFor(dataType));

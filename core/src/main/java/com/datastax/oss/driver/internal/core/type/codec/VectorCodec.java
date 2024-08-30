@@ -105,7 +105,6 @@ public class VectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
   @Override
   public String format(CqlVector<SubtypeT> value) {
     if (value == null) return "NULL";
-
     return value.stream().map(subtypeCodec::format).collect(Collectors.joining(", ", "[", "]"));
   }
 
