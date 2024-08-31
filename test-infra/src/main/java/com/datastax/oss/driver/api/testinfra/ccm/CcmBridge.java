@@ -517,6 +517,10 @@ public class CcmBridge implements AutoCloseable {
     return f;
   }
 
+  public String getNodeIpAddress(int nodeId) {
+    return ipPrefix + nodeId;
+  }
+
   public static Builder builder() {
     return new Builder();
   }

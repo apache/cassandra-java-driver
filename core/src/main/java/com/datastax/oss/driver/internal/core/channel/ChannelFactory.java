@@ -42,6 +42,8 @@ import com.datastax.oss.driver.internal.core.metrics.NoopNodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.protocol.FrameDecoder;
 import com.datastax.oss.driver.internal.core.protocol.FrameEncoder;
+import com.datastax.oss.driver.internal.core.resolver.Resolver;
+import com.datastax.oss.driver.internal.core.resolver.ResolverProvider;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
@@ -67,6 +69,8 @@ import org.slf4j.LoggerFactory;
 public class ChannelFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(ChannelFactory.class);
+
+  private static Resolver RESOLVER = ResolverProvider.getResolver(ChannelFactory.class);
 
   /**
    * A value for {@link #productType} that indicates that we are connected to DataStax Cloud. This
@@ -204,7 +208,7 @@ public class ChannelFactory {
 
     nettyOptions.afterBootstrapInitialized(bootstrap);
 
-    ChannelFuture connectFuture = bootstrap.connect(endPoint.resolve());
+    ChannelFuture connectFuture = bootstrap.connect(RESOLVER.resolve(endPoint.resolve()));
 
     connectFuture.addListener(
         cf -> {

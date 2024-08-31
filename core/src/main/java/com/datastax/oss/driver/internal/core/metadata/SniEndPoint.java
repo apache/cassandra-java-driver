@@ -18,6 +18,8 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
+import com.datastax.oss.driver.internal.core.resolver.Resolver;
+import com.datastax.oss.driver.internal.core.resolver.ResolverProvider;
 import com.datastax.oss.driver.shaded.guava.common.primitives.UnsignedBytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
@@ -30,6 +32,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class SniEndPoint implements EndPoint {
   private static final AtomicLong OFFSET = new AtomicLong();
+  private static Resolver RESOLVER = ResolverProvider.getResolver(SniEndPoint.class);
 
   private final InetSocketAddress proxyAddress;
   private final String serverName;
@@ -55,7 +58,7 @@ public class SniEndPoint implements EndPoint {
   @Override
   public InetSocketAddress resolve() {
     try {
-      InetAddress[] aRecords = InetAddress.getAllByName(proxyAddress.getHostName());
+      InetAddress[] aRecords = RESOLVER.getAllByName(proxyAddress.getHostName());
       if (aRecords.length == 0) {
         // Probably never happens, but the JDK docs don't explicitly say so
         throw new IllegalArgumentException(

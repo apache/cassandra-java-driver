@@ -19,6 +19,8 @@ package com.datastax.oss.driver.internal.core.addresstranslation;
 
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
 import com.datastax.oss.driver.api.core.context.DriverContext;
+import com.datastax.oss.driver.internal.core.resolver.Resolver;
+import com.datastax.oss.driver.internal.core.resolver.ResolverProvider;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -57,6 +59,8 @@ import org.slf4j.LoggerFactory;
 public class Ec2MultiRegionAddressTranslator implements AddressTranslator {
 
   private static final Logger LOG = LoggerFactory.getLogger(Ec2MultiRegionAddressTranslator.class);
+  private static Resolver RESOLVER =
+      ResolverProvider.getResolver(Ec2MultiRegionAddressTranslator.class);
 
   private final DirContext ctx;
   private final String logPrefix;
@@ -94,7 +98,7 @@ public class Ec2MultiRegionAddressTranslator implements AddressTranslator {
         return socketAddress;
       }
 
-      InetAddress translatedAddress = InetAddress.getByName(domainName);
+      InetAddress translatedAddress = RESOLVER.getByName(domainName);
       LOG.debug("[{}] Resolved {} to {}", logPrefix, address, translatedAddress);
       return new InetSocketAddress(translatedAddress, socketAddress.getPort());
     } catch (Exception e) {

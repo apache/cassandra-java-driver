@@ -19,6 +19,8 @@ package com.datastax.oss.driver.internal.core;
 
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
+import com.datastax.oss.driver.internal.core.resolver.Resolver;
+import com.datastax.oss.driver.internal.core.resolver.ResolverProvider;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import java.net.InetAddress;
@@ -35,6 +37,7 @@ import org.slf4j.LoggerFactory;
 /** Utility class to handle the initial contact points passed to the driver. */
 public class ContactPoints {
   private static final Logger LOG = LoggerFactory.getLogger(ContactPoints.class);
+  private static Resolver RESOLVER = ResolverProvider.getResolver(ContactPoints.class);
 
   public static Set<EndPoint> merge(
       Set<EndPoint> programmaticContactPoints, List<String> configContactPoints, boolean resolve) {
@@ -72,7 +75,7 @@ public class ContactPoints {
       return ImmutableSet.of(InetSocketAddress.createUnresolved(host, port));
     } else {
       try {
-        InetAddress[] inetAddresses = InetAddress.getAllByName(host);
+        InetAddress[] inetAddresses = RESOLVER.getAllByName(host);
         if (inetAddresses.length > 1) {
           LOG.info(
               "Contact point {} resolves to multiple addresses, will use them all ({})",
