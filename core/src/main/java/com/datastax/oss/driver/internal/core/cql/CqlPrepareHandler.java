@@ -124,6 +124,7 @@ public class CqlPrepareHandler implements Throttled {
           try {
             if (t instanceof CancellationException) {
               cancelTimeout();
+              context.getRequestThrottler().signalCancel(this);
             }
           } catch (Throwable t2) {
             Loggers.warnWithException(LOG, "[{}] Uncaught exception", logPrefix, t2);

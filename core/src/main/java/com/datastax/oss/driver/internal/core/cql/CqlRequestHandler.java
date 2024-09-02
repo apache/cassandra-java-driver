@@ -152,6 +152,7 @@ public class CqlRequestHandler implements Throttled {
           try {
             if (t instanceof CancellationException) {
               cancelScheduledTasks();
+              context.getRequestThrottler().signalCancel(this);
             }
           } catch (Throwable t2) {
             Loggers.warnWithException(LOG, "[{}] Uncaught exception", logPrefix, t2);

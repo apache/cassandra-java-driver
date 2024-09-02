@@ -56,4 +56,12 @@ public interface RequestThrottler extends Closeable {
    * perform time-based eviction on pending requests.
    */
   void signalTimeout(@NonNull Throttled request);
+
+  /**
+   * Signals that a request has been cancelled. This indicates to the throttler that another request
+   * might be started.
+   */
+  default void signalCancel(@NonNull Throttled request) {
+    // no-op for backward compatibility purposes
+  }
 }

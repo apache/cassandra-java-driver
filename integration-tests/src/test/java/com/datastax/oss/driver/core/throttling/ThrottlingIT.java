@@ -24,13 +24,16 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.session.throttling.ConcurrencyLimitingRequestThrottler;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.common.stubbing.PrimeDsl;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -39,21 +42,20 @@ import org.junit.experimental.categories.Category;
 public class ThrottlingIT {
 
   private static final String QUERY = "select * from foo";
+  private static final int maxConcurrentRequests = 10;
+  private static final int maxQueueSize = 10;
 
   @Rule public SimulacronRule simulacron = new SimulacronRule(ClusterSpec.builder().withNodes(1));
 
-  @Test
-  public void should_reject_request_when_throttling_by_concurrency() {
+  private DriverConfigLoader loader = null;
 
+  @Before
+  public void setUp() {
     // Add a delay so that requests don't complete during the test
     simulacron
         .cluster()
         .prime(PrimeDsl.when(QUERY).then(PrimeDsl.noRows()).delay(5, TimeUnit.SECONDS));
-
-    int maxConcurrentRequests = 10;
-    int maxQueueSize = 10;
-
-    DriverConfigLoader loader =
+    loader =
         SessionUtils.configLoaderBuilder()
             .withClass(
                 DefaultDriverOption.REQUEST_THROTTLER_CLASS,
@@ -63,7 +65,10 @@ public class ThrottlingIT {
                 maxConcurrentRequests)
             .withInt(DefaultDriverOption.REQUEST_THROTTLER_MAX_QUEUE_SIZE, maxQueueSize)
             .build();
+  }
 
+  @Test
+  public void should_reject_request_when_throttling_by_concurrency() {
     try (CqlSession session = SessionUtils.newSession(simulacron, loader)) {
 
       // Saturate the session and fill the queue
@@ -79,6 +84,21 @@ public class ThrottlingIT {
           .hasMessage(
               "The session has reached its maximum capacity "
                   + "(concurrent requests: 10, queue size: 10)");
+    }
+  }
+
+  @Test
+  public void should_propagate_cancel_to_throttler() {
+    try (CqlSession session = SessionUtils.newSession(simulacron, loader)) {
+
+      // Try to saturate the session and fill the queue
+      for (int i = 0; i < maxConcurrentRequests + maxQueueSize; i++) {
+        CompletionStage<AsyncResultSet> future = session.executeAsync(QUERY);
+        future.toCompletableFuture().cancel(true);
+      }
+
+      // The next query should be successful, because the previous queries were cancelled
+      session.execute(QUERY);
     }
   }
 }
