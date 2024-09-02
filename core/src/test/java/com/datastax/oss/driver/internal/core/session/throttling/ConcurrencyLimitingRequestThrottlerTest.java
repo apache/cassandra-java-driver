@@ -88,6 +88,11 @@ public class ConcurrencyLimitingRequestThrottlerTest {
     should_allow_new_request_when_active_one_completes(throttler::signalTimeout);
   }
 
+  @Test
+  public void should_allow_new_request_when_active_one_canceled() {
+    should_allow_new_request_when_active_one_completes(throttler::signalCancel);
+  }
+
   private void should_allow_new_request_when_active_one_completes(
       Consumer<Throttled> completeCallback) {
     // Given

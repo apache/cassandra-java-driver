@@ -145,6 +145,22 @@ public class ConcurrencyLimitingRequestThrottler implements RequestThrottler {
     }
   }
 
+  @Override
+  public void signalCancel(@NonNull Throttled request) {
+    lock.lock();
+    try {
+      if (!closed) {
+        if (queue.remove(request)) { // The request has been cancelled before it was active
+          LOG.trace("[{}] Removing cancelled request from the queue", logPrefix);
+        } else {
+          onRequestDone();
+        }
+      }
+    } finally {
+      lock.unlock();
+    }
+  }
+
   @SuppressWarnings("GuardedBy") // this method is only called with the lock held
   private void onRequestDone() {
     assert lock.isHeldByCurrentThread();

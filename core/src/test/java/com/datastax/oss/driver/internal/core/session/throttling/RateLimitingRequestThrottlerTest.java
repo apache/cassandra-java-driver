@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
@@ -33,6 +34,7 @@ import io.netty.channel.EventLoopGroup;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -164,6 +166,15 @@ public class RateLimitingRequestThrottlerTest {
 
   @Test
   public void should_remove_timed_out_request_from_queue() {
+    testRemoveInvalidEventFromQueue(throttler::signalTimeout);
+  }
+
+  @Test
+  public void should_remove_cancel_request_from_queue() {
+    testRemoveInvalidEventFromQueue(throttler::signalCancel);
+  }
+
+  private void testRemoveInvalidEventFromQueue(Consumer<Throttled> completeCallback) {
     // Given
     for (int i = 0; i < 5; i++) {
       throttler.register(new MockThrottled());
@@ -174,7 +185,7 @@ public class RateLimitingRequestThrottlerTest {
     throttler.register(queued2);
 
     // When
-    throttler.signalTimeout(queued1);
+    completeCallback.accept(queued1);
 
     // Then
     assertThatStage(queued2.started).isNotDone();

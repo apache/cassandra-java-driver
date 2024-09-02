@@ -70,6 +70,11 @@ public class PassThroughRequestThrottler implements RequestThrottler {
   }
 
   @Override
+  public void signalCancel(@NonNull Throttled request) {
+    // nothing to do
+  }
+
+  @Override
   public void close() throws IOException {
     // nothing to do
   }

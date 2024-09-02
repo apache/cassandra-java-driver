@@ -410,6 +410,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
 
     cancelScheduledTasks(null);
     cancelGlobalTimeout();
+    throttler.signalCancel(this);
   }
 
   private void cancelGlobalTimeout() {
