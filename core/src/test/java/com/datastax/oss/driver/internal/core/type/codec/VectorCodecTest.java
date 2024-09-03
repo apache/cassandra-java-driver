@@ -24,7 +24,6 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
-import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
@@ -33,8 +32,6 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
-
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.time.LocalTime;
 import java.util.HashMap;
@@ -43,7 +40,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DataProviderRunner.class)
-public class VectorCodecTest  {
+public class VectorCodecTest {
 
   @DataProvider
   public static Object[][] dataProvider() {
@@ -228,7 +225,8 @@ public class VectorCodecTest  {
 
   @Test
   @UseDataProvider("dataProvider")
-  public void should_accept_raw_type(DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
+  public void should_accept_raw_type(
+      DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
     TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
     assertThat(codec.accepts(CqlVector.class)).isTrue();
     assertThat(codec.accepts(Integer.class)).isFalse();
@@ -236,7 +234,8 @@ public class VectorCodecTest  {
 
   @Test
   @UseDataProvider("dataProvider")
-  public void should_accept_object(DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
+  public void should_accept_object(
+      DataType dataType, Object[] values, String formatted, ByteBuffer bytes) {
     TypeCodec<CqlVector<Object>> codec = getCodec(dataType);
     CqlVector<?> vector = CqlVector.newInstance(values);
     assertThat(codec.accepts(vector)).isTrue();
@@ -254,8 +253,9 @@ public class VectorCodecTest  {
     assertThat(codec.parse("")).isNull();
     assertThat(codec.parse(null)).isNull();
     assertThatThrownBy(() -> codec.encode(CqlVector.newInstance(), ProtocolVersion.DEFAULT))
-            .isInstanceOf(IllegalArgumentException.class);
+        .isInstanceOf(IllegalArgumentException.class);
   }
+
   private static TypeCodec<CqlVector<Object>> getCodec(DataType dataType) {
     return TypeCodecs.vectorOf(
         DataTypes.vectorOf(dataType, 2), CodecRegistry.DEFAULT.codecFor(dataType));

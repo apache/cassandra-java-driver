@@ -96,7 +96,7 @@ public class CqlVector<T> implements Iterable<T>, Serializable {
     if (str.charAt(idx++) != '[')
       throw new IllegalArgumentException(
           String.format(
-              "Cannot parse list value from \"%s\", at character %d expecting '[' but got '%c'",
+              "Cannot parse vector value from \"%s\", at character %d expecting '[' but got '%c'",
               str, idx, str.charAt(idx)));
 
     idx = ParseUtils.skipSpaces(str, idx);
@@ -113,7 +113,8 @@ public class CqlVector<T> implements Iterable<T>, Serializable {
       } catch (IllegalArgumentException e) {
         throw new IllegalArgumentException(
             String.format(
-                "Cannot parse list value from \"%s\", invalid CQL value at character %d", str, idx),
+                "Cannot parse vector value from \"%s\", invalid CQL value at character %d",
+                str, idx),
             e);
       }
 
@@ -125,13 +126,13 @@ public class CqlVector<T> implements Iterable<T>, Serializable {
       if (str.charAt(idx++) != ',')
         throw new IllegalArgumentException(
             String.format(
-                "Cannot parse list value from \"%s\", at character %d expecting ',' but got '%c'",
+                "Cannot parse vector value from \"%s\", at character %d expecting ',' but got '%c'",
                 str, idx, str.charAt(idx)));
 
       idx = ParseUtils.skipSpaces(str, idx);
     }
     throw new IllegalArgumentException(
-        String.format("Malformed list value \"%s\", missing closing ']'", str));
+        String.format("Malformed vector value \"%s\", missing closing ']'", str));
   }
 
   private final List<T> list;

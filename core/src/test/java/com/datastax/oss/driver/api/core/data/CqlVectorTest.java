@@ -25,7 +25,9 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.SerializationHelper;
-import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
+import com.tngtech.java.junit.dataprovider.DataProvider;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
+import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;
@@ -37,10 +39,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import com.tngtech.java.junit.dataprovider.DataProvider;
-import com.tngtech.java.junit.dataprovider.DataProviderRunner;
-import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.assertj.core.util.Lists;
@@ -54,11 +52,11 @@ public class CqlVectorTest {
 
   @DataProvider
   public static Object[][] dataProvider() {
-    return new Object[][]{
-            {new Float[]{1.0f, 2.5f}},
-            {new LocalTime[]{LocalTime.of(1, 2), LocalTime.of(3, 4)}},
-            {new List[]{Arrays.asList(1, 2), Arrays.asList(3, 4)}},
-            {new CqlVector[]{CqlVector.newInstance("a", "bc"), CqlVector.newInstance("d", "ef")}}
+    return new Object[][] {
+      {new Float[] {1.0f, 2.5f}},
+      {new LocalTime[] {LocalTime.of(1, 2), LocalTime.of(3, 4)}},
+      {new List[] {Arrays.asList(1, 2), Arrays.asList(3, 4)}},
+      {new CqlVector[] {CqlVector.newInstance("a", "bc"), CqlVector.newInstance("d", "ef")}}
     };
   }
 
@@ -143,7 +141,7 @@ public class CqlVectorTest {
 
   @Test
   @UseDataProvider("dataProvider")
-  public <T> void  should_behave_mostly_like_a_list(T[] vals) {
+  public <T> void should_behave_mostly_like_a_list(T[] vals) {
     CqlVector<T> vector = CqlVector.newInstance(vals);
     assertThat(vector.get(0)).isEqualTo(vals[0]);
     vector.set(0, vals[1]);
