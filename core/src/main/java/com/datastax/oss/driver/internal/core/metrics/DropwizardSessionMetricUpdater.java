@@ -54,6 +54,12 @@ public class DropwizardSessionMetricUpdater extends DropwizardMetricUpdater<Sess
         DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_DIGITS,
         DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_INTERVAL);
     initializeHdrTimer(
+        DefaultSessionMetric.SEND_LATENCY,
+        profile,
+        DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_HIGHEST,
+        DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_DIGITS,
+        DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_INTERVAL);
+    initializeHdrTimer(
         DefaultSessionMetric.THROTTLING_DELAY,
         profile,
         DefaultDriverOption.METRICS_SESSION_THROTTLING_HIGHEST,

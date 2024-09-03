@@ -902,6 +902,37 @@ public class TypedDriverOption<ValueT> {
               DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_PREFERRED_REMOTE_DCS,
               GenericType.listOf(String.class));
 
+  /** The largest latency that we expect to record for requests. */
+  public static final TypedDriverOption<Duration> METRICS_SESSION_SEND_LATENCY_HIGHEST =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_HIGHEST, GenericType.DURATION);
+  /** The shortest latency that we expect to record for requests. */
+  public static final TypedDriverOption<Duration> METRICS_SESSION_SEND_LATENCY_LOWEST =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_LOWEST, GenericType.DURATION);
+  /** Optional service-level objectives to meet, as a list of latencies to track. */
+  public static final TypedDriverOption<List<Duration>> METRICS_SESSION_SEND_LATENCY_SLO =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_SLO,
+          GenericType.listOf(GenericType.DURATION));
+  /** Optional pre-defined percentile of send-latency to publish, as a list of percentiles . */
+  public static final TypedDriverOption<List<Double>>
+      METRICS_SESSION_SEND_LATENCY_PUBLISH_PERCENTILES =
+          new TypedDriverOption<>(
+              DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_PUBLISH_PERCENTILES,
+              GenericType.listOf(GenericType.DOUBLE));
+  /**
+   * The number of significant decimal digits to which internal structures will maintain for
+   * requests.
+   */
+  public static final TypedDriverOption<Integer> METRICS_SESSION_SEND_LATENCY_DIGITS =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_DIGITS, GenericType.INTEGER);
+  /** The interval at which percentile data is refreshed for requests. */
+  public static final TypedDriverOption<Duration> METRICS_SESSION_SEND_LATENCY_INTERVAL =
+      new TypedDriverOption<>(
+          DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_INTERVAL, GenericType.DURATION);
+
   private static Iterable<TypedDriverOption<?>> introspectBuiltInValues() {
     try {
       ImmutableList.Builder<TypedDriverOption<?>> result = ImmutableList.builder();

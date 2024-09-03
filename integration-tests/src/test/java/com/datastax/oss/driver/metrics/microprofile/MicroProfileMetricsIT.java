@@ -33,6 +33,7 @@ import com.datastax.oss.driver.internal.core.metrics.MetricIdGenerator;
 import com.datastax.oss.driver.internal.metrics.microprofile.MicroProfileTags;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import io.smallrye.metrics.MetricsRegistryImpl;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.microprofile.metrics.Counter;
@@ -81,6 +82,9 @@ public class MicroProfileMetricsIT extends MetricsITBase {
     MetricIdGenerator metricIdGenerator =
         ((InternalDriverContext) session.getContext()).getMetricIdGenerator();
 
+    Duration cqlRequestsDuration = null;
+    Duration sendLatencyDuration = null;
+
     for (DefaultSessionMetric metric : ENABLED_SESSION_METRICS) {
       MetricId metricId = metricIdGenerator.sessionMetricId(metric);
       Tag[] tags = MicroProfileTags.toMicroProfileTags(metricId.getTags());
@@ -94,7 +98,15 @@ public class MicroProfileMetricsIT extends MetricsITBase {
           break;
         case CQL_REQUESTS:
           assertThat(m).isInstanceOf(Timer.class);
-          await().untilAsserted(() -> assertThat(((Timer) m).getCount()).isEqualTo(30));
+          Timer tr = (Timer) m;
+          await().untilAsserted(() -> assertThat(tr.getCount()).isEqualTo(30));
+          cqlRequestsDuration = tr.getElapsedTime();
+          break;
+        case SEND_LATENCY:
+          assertThat(m).isInstanceOf(Timer.class);
+          Timer tl = (Timer) m;
+          await().untilAsserted(() -> assertThat(tl.getCount()).isEqualTo(30));
+          sendLatencyDuration = tl.getElapsedTime();
           break;
         case CQL_PREPARED_CACHE_SIZE:
           assertThat(m).isInstanceOf(Gauge.class);
@@ -120,6 +132,10 @@ public class MicroProfileMetricsIT extends MetricsITBase {
           break;
       }
     }
+
+    assertThat(sendLatencyDuration).isNotNull();
+    assertThat(cqlRequestsDuration).isNotNull();
+    assertThat(sendLatencyDuration.toNanos()).isLessThanOrEqualTo(cqlRequestsDuration.toNanos());
 
     for (Node node : session.getMetadata().getNodes().values()) {
 

@@ -97,6 +97,7 @@ public class DropwizardMetricsIT extends MetricsITBase {
           assertThat((Integer) ((Gauge<?>) m).getValue()).isEqualTo(3);
           break;
         case CQL_REQUESTS:
+        case SEND_LATENCY:
           assertThat(m).isInstanceOf(Timer.class);
           await().untilAsserted(() -> assertThat(((Timer) m).getCount()).isEqualTo(30));
           break;

@@ -49,6 +49,7 @@ public class MicroProfileSessionMetricUpdater extends MicroProfileMetricUpdater<
 
     initializeTimer(DefaultSessionMetric.CQL_REQUESTS, profile);
     initializeTimer(DefaultSessionMetric.THROTTLING_DELAY, profile);
+    initializeTimer(DefaultSessionMetric.SEND_LATENCY, profile);
     initializeTimer(DseSessionMetric.CONTINUOUS_CQL_REQUESTS, profile);
     initializeTimer(DseSessionMetric.GRAPH_REQUESTS, profile);
   }

@@ -49,6 +49,18 @@ public interface ResponseCallback {
   void onFailure(Throwable error);
 
   /**
+   * Reports the request frame to be sent on the current connection.
+   *
+   * <p>This is called every time just before the request is written to a connection (and therefore
+   * might multiple times in case of retries).
+   *
+   * <p>The default implementation does nothing.
+   */
+  default void onRequestSent(Frame frame) {
+    // nothing to do
+  }
+
+  /**
    * Reports the stream id used for the request on the current connection.
    *
    * <p>This is called every time the request is written successfully to a connection (and therefore
