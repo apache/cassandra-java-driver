@@ -835,7 +835,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       assert lock.isHeldByCurrentThread();
       try {
         ExecutionInfo executionInfo =
-            createExecutionInfo().withServerResponse(result, frame).build();
+            createExecutionInfo(null).withServerResponse(result, frame).build();
         if (result instanceof Rows) {
           DseRowsMetadata rowsMetadata = (DseRowsMetadata) ((Rows) result).getMetadata();
           if (columnDefinitions == null) {
@@ -1460,7 +1460,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
                 latencyNanos,
                 executionProfile,
                 node,
-                createExecutionInfo().withServerResponse(frame).build(),
+                createExecutionInfo(error).withServerResponse(frame).build(),
                 logPrefix);
       }
     }
@@ -1614,12 +1614,13 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
     }
 
     @NonNull
-    private DefaultExecutionInfo.Builder createExecutionInfo() {
+    private DefaultExecutionInfo.Builder createExecutionInfo(Throwable error) {
       return DefaultExecutionInfo.builder(
           statement,
           node,
           startedSpeculativeExecutionsCount.get(),
           executionIndex,
+          error,
           errors,
           session,
           context,

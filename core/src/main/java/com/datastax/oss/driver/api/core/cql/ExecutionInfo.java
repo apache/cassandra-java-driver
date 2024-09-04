@@ -120,6 +120,11 @@ public interface ExecutionInfo {
   @NonNull
   List<Map.Entry<Node, Throwable>> getErrors();
 
+  @Nullable
+  default Throwable getDriverError() {
+    return null;
+  }
+
   /**
    * The paging state of the query, in its raw form.
    *

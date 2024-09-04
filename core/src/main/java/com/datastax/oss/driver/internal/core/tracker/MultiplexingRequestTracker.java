@@ -78,6 +78,30 @@ public class MultiplexingRequestTracker implements RequestTracker {
   }
 
   @Override
+  public void onRequestCreated(
+      @NonNull Request request,
+      @NonNull DriverExecutionProfile executionProfile,
+      @NonNull String requestLogPrefix) {
+    invokeTrackers(
+        tracker -> tracker.onRequestCreated(request, executionProfile, requestLogPrefix),
+        requestLogPrefix,
+        "onRequestStart");
+  }
+
+  @Override
+  public void onRequestCreatedForNode(
+      @NonNull Request request,
+      @NonNull DriverExecutionProfile executionProfile,
+      @NonNull Node node,
+      @NonNull String requestLogPrefix) {
+    invokeTrackers(
+        tracker ->
+            tracker.onRequestCreatedForNode(request, executionProfile, node, requestLogPrefix),
+        requestLogPrefix,
+        "onRequestNodeStart");
+  }
+
+  @Override
   public void onSuccess(
       @NonNull Request request,
       long latencyNanos,
@@ -133,7 +157,7 @@ public class MultiplexingRequestTracker implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      ExecutionInfo executionInfo,
+      @Nullable ExecutionInfo executionInfo,
       @NonNull String logPrefix) {
     invokeTrackers(
         tracker ->
