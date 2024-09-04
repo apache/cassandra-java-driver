@@ -27,7 +27,6 @@ import com.datastax.oss.driver.internal.core.type.DefaultSetType;
 import com.datastax.oss.driver.internal.core.type.DefaultTupleType;
 import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import com.datastax.oss.driver.internal.core.type.PrimitiveType;
-import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -58,7 +57,6 @@ public class DataTypes {
   public static final DataType DURATION = new PrimitiveType(ProtocolConstants.DataType.DURATION);
 
   private static final DataTypeClassNameParser classNameParser = new DataTypeClassNameParser();
-  private static final Splitter paramSplitter = Splitter.on(',').trimResults();
 
   @NonNull
   public static DataType custom(@NonNull String className) {

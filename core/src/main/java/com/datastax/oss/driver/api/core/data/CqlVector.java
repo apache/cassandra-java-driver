@@ -233,6 +233,7 @@ public class CqlVector<T> implements Iterable<T>, Serializable {
 
   @Override
   public String toString() {
+    if (this.list.isEmpty()) return "[]";
     TypeCodec<T> subcodec = CodecRegistry.DEFAULT.codecFor(list.get(0));
     return this.list.stream().map(subcodec::format).collect(Collectors.joining(", ", "[", "]"));
   }

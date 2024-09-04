@@ -65,6 +65,7 @@ public class VectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
   }
 
   @NonNull
+  @Override
   public Optional<Integer> serializedSize() {
     return subtypeCodec.serializedSize().isPresent()
         ? Optional.of(subtypeCodec.serializedSize().get() * cqlType.getDimensions())
