@@ -479,7 +479,8 @@ public class CcmBridge implements AutoCloseable {
       return Optional.empty();
     }
 
-    if (getDseVersion().get().compareTo(Version.parse("6.8.19")) < 0) {
+    if (getDseVersion().get().compareTo(Version.V6_9_0) >= 0) {
+      // DSE 6.9.0 supports only JVM 11 onwards (also with graph workload)
       return Optional.empty();
     }
 
