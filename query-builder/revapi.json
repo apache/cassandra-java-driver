@@ -2772,6 +2772,11 @@
         "code": "java.method.addedToInterface",
         "new": "method com.datastax.oss.driver.api.querybuilder.update.UpdateStart com.datastax.oss.driver.api.querybuilder.update.UpdateStart::usingTtl(int)",
         "justification": "JAVA-2210: Add ability to set TTL for modification queries"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method com.datastax.oss.driver.api.querybuilder.select.Select com.datastax.oss.driver.api.querybuilder.select.Select::orderBy(com.datastax.oss.driver.api.querybuilder.select.Ann)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
       }
     ]
   }
