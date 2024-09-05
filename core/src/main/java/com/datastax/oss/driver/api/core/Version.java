@@ -56,6 +56,7 @@ public class Version implements Comparable<Version>, Serializable {
   @NonNull public static final Version V5_0_0 = Objects.requireNonNull(parse("5.0.0"));
   @NonNull public static final Version V6_7_0 = Objects.requireNonNull(parse("6.7.0"));
   @NonNull public static final Version V6_8_0 = Objects.requireNonNull(parse("6.8.0"));
+  @NonNull public static final Version V6_9_0 = Objects.requireNonNull(parse("6.9.0"));
 
   private final int major;
   private final int minor;
