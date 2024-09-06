@@ -46,7 +46,7 @@ pipeline {
                 axes {
                     axis {
                         name 'TEST_JAVA_VERSION'
-                        values 'openjdk@1.8.0', 'openjdk@1.11.0'
+                        values 'openjdk@1.8.0-292', 'openjdk@1.11.0-9'
                     }
                     axis {
                         name 'SERVER_VERSION'
