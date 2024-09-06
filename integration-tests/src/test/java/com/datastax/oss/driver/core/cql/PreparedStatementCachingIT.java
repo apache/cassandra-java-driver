@@ -73,9 +73,9 @@ import org.slf4j.LoggerFactory;
 @Category(IsolatedTests.class)
 public class PreparedStatementCachingIT {
 
-  private CustomCcmRule ccmRule = CustomCcmRule.builder().build();
+  private static final CustomCcmRule ccmRule = CustomCcmRule.builder().build();
 
-  private SessionRule<CqlSession> sessionRule =
+  private static final SessionRule<CqlSession> sessionRule =
       SessionRule.builder(ccmRule)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
