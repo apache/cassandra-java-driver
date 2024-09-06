@@ -117,6 +117,6 @@ public class AlterTableTest {
                     "v",
                     DataTypes.custom(
                         "org.apache.cassandra.db.marshal.VectorType(org.apache.cassandra.db.marshal.FloatType,3)")))
-        .hasCql("ALTER TABLE bar ALTER v TYPE VECTOR<FLOAT, 3>");
+        .hasCql("ALTER TABLE bar ALTER v TYPE vector<float, 3>");
   }
 }

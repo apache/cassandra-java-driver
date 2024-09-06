@@ -315,6 +315,6 @@ public class CreateTableTest {
             createTable("foo")
                 .withPartitionKey("k", DataTypes.INT)
                 .withColumn("v", new DefaultVectorType(DataTypes.FLOAT, 3)))
-        .hasCql("CREATE TABLE foo (k int PRIMARY KEY,v VECTOR<FLOAT, 3>)");
+        .hasCql("CREATE TABLE foo (k int PRIMARY KEY,v vector<float, 3>)");
   }
 }

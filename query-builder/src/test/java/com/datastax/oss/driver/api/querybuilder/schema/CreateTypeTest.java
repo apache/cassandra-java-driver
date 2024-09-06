@@ -91,6 +91,6 @@ public class CreateTypeTest {
             createType("ks1", "type")
                 .withField("c1", DataTypes.INT)
                 .withField("vec", new DefaultVectorType(DataTypes.FLOAT, 3)))
-        .hasCql("CREATE TYPE ks1.type (c1 int,vec VECTOR<FLOAT, 3>)");
+        .hasCql("CREATE TYPE ks1.type (c1 int,vec vector<float, 3>)");
   }
 }

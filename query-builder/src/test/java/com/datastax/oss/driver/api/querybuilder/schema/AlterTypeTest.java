@@ -58,6 +58,6 @@ public class AlterTypeTest {
   @Test
   public void should_generate_alter_type_with_vector() {
     assertThat(alterType("foo", "bar").alterField("vec", new DefaultVectorType(DataTypes.FLOAT, 3)))
-        .hasCql("ALTER TYPE foo.bar ALTER vec TYPE VECTOR<FLOAT, 3>");
+        .hasCql("ALTER TYPE foo.bar ALTER vec TYPE vector<float, 3>");
   }
 }

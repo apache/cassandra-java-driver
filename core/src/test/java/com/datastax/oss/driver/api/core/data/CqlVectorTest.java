@@ -133,7 +133,6 @@ public class CqlVectorTest {
 
   @Test
   public void should_build_empty_vector() {
-
     CqlVector<Float> vector = CqlVector.newInstance();
     assertThat(vector.isEmpty()).isTrue();
     assertThat(vector.size()).isEqualTo(0);
@@ -142,15 +141,16 @@ public class CqlVectorTest {
   @Test
   @UseDataProvider("dataProvider")
   public <T> void should_behave_mostly_like_a_list(T[] vals) {
-    CqlVector<T> vector = CqlVector.newInstance(vals);
-    assertThat(vector.get(0)).isEqualTo(vals[0]);
-    vector.set(0, vals[1]);
-    assertThat(vector.get(0)).isEqualTo(vals[1]);
+    T[] theArray = Arrays.copyOf(vals, vals.length);
+    CqlVector<T> vector = CqlVector.newInstance(theArray);
+    assertThat(vector.get(0)).isEqualTo(theArray[0]);
+    vector.set(0, theArray[1]);
+    assertThat(vector.get(0)).isEqualTo(theArray[1]);
     assertThat(vector.isEmpty()).isFalse();
     assertThat(vector.size()).isEqualTo(2);
     Iterator<?> iterator = vector.iterator();
-    assertThat(iterator.next()).isEqualTo(vals[1]);
-    assertThat(iterator.next()).isEqualTo(vals[1]);
+    assertThat(iterator.next()).isEqualTo(theArray[1]);
+    assertThat(iterator.next()).isEqualTo(theArray[1]);
   }
 
   @Test
@@ -182,7 +182,8 @@ public class CqlVectorTest {
 
   @Test
   @UseDataProvider("dataProvider")
-  public <T> void should_reflect_changes_to_array(T[] theArray) {
+  public <T> void should_reflect_changes_to_array(T[] vals) {
+    T[] theArray = Arrays.copyOf(vals, vals.length);
     CqlVector<T> vector = CqlVector.newInstance(theArray);
     assertThat(vector.size()).isEqualTo(2);
     assertThat(vector.get(1)).isEqualTo(theArray[1]);
