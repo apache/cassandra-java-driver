@@ -57,9 +57,6 @@ pipeline {
                     stage('Tests') {
                         agent {
                             label 'cassandra-medium'
-//                            docker {
-//                                image 'janehe/cassandra-java-driver-dev-env'
-//                            }
                         }
                         steps {
                             script {
