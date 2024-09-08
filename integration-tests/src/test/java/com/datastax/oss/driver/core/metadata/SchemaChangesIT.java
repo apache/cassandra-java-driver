@@ -33,6 +33,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.google.common.collect.ImmutableList;
@@ -54,8 +55,8 @@ public class SchemaChangesIT {
 
   static {
     CustomCcmRule.Builder builder = CustomCcmRule.builder();
-    if (!CcmBridge.DSE_ENABLEMENT
-        && CcmBridge.VERSION.nextStable().compareTo(Version.V4_0_0) >= 0) {
+    if (!CcmBridge.isDistributionOf(BackendType.DSE)
+        && CcmBridge.getCassandraVersion().nextStable().compareTo(Version.V4_0_0) >= 0) {
       builder.withCassandraConfiguration("enable_materialized_views", true);
     }
     CCM_RULE = builder.build();

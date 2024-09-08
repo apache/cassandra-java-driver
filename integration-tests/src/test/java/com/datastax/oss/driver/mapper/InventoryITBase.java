@@ -23,10 +23,10 @@ import com.datastax.oss.driver.api.mapper.annotations.ClusteringColumn;
 import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 
 /** Factors common code for mapper tests that rely on a simple inventory model. */
@@ -93,9 +93,9 @@ public abstract class InventoryITBase {
   private static final Version BROKEN_SASI_VERSION = Version.parse("6.8.0");
 
   protected static boolean isSasiBroken(BaseCcmRule ccmRule) {
-    Optional<Version> dseVersion = ccmRule.getDseVersion();
     // creating SASI indexes is broken in DSE 6.8.0
-    return dseVersion.isPresent() && dseVersion.get().compareTo(BROKEN_SASI_VERSION) == 0;
+    return ccmRule.isDistributionOf(BackendType.DSE)
+        && ccmRule.getDistributionVersion().compareTo(BROKEN_SASI_VERSION) == 0;
   }
 
   protected static boolean supportsSASI(BaseCcmRule ccmRule) {

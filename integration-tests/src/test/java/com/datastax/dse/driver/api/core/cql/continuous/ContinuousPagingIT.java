@@ -281,10 +281,8 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
       // dropped.
       Row row = it.next();
       assertThat(row.getString("k")).isNotNull();
-      if (ccmRule
-              .getDseVersion()
-              .orElseThrow(IllegalStateException::new)
-              .compareTo(Objects.requireNonNull(Version.parse("6.0.0")))
+      assertThat(ccmRule.isDistributionOf(BackendType.DSE)).isTrue();
+      if (ccmRule.getDistributionVersion().compareTo(Objects.requireNonNull(Version.parse("6.0.0")))
           >= 0) {
         // DSE 6 only, v should be null here since dropped.
         // Not reliable for 5.1 since we may have gotten page queued before schema changed.

@@ -41,7 +41,7 @@ public class BackendRequirementRule extends ExternalResource {
   }
 
   protected static BackendType getBackendType() {
-    return CcmBridge.DSE_ENABLEMENT ? BackendType.DSE : BackendType.CASSANDRA;
+    return CcmBridge.distribution;
   }
 
   protected static Version getVersion() {

@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -37,12 +38,14 @@ import com.datastax.oss.driver.internal.core.metadata.schema.DefaultKeyspaceMeta
 import com.datastax.oss.driver.internal.core.metadata.schema.DefaultTableMetadata;
 import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import org.junit.BeforeClass;
@@ -79,17 +82,23 @@ public class DescribeIT {
       Splitter.on(Pattern.compile(";\n")).omitEmptyStrings();
 
   private static Version serverVersion;
-  private static boolean isDse;
+
+  private static final Map<BackendType, String> scriptFileForBackend =
+      ImmutableMap.<BackendType, String>builder()
+          .put(BackendType.CASSANDRA, "DescribeIT/oss")
+          .put(BackendType.DSE, "DescribeIT/dse")
+          .put(BackendType.HCD, "DescribeIT/hcd")
+          .build();
 
   private static File scriptFile;
   private static String scriptContents;
 
   @BeforeClass
   public static void setup() {
-    Optional<Version> dseVersion = CCM_RULE.getDseVersion();
-    isDse = dseVersion.isPresent();
     serverVersion =
-        isDse ? dseVersion.get().nextStable() : CCM_RULE.getCassandraVersion().nextStable();
+        CCM_RULE.isDistributionOf(BackendType.CASSANDRA)
+            ? CCM_RULE.getCassandraVersion().nextStable()
+            : CCM_RULE.getDistributionVersion().nextStable();
 
     scriptFile = getScriptFile();
     assertThat(scriptFile).exists();
@@ -114,12 +123,12 @@ public class DescribeIT {
             "Describe output doesn't match create statements, "
                 + "maybe you need to add a new script in integration-tests/src/test/resources. "
                 + "Server version = %s %s, used script = %s",
-            isDse ? "DSE" : "Cassandra", serverVersion, scriptFile)
+            CCM_RULE.getDistribution(), serverVersion, scriptFile)
         .isEqualTo(scriptContents);
   }
 
   private boolean atLeastVersion(Version dseVersion, Version ossVersion) {
-    Version comparison = isDse ? dseVersion : ossVersion;
+    Version comparison = CCM_RULE.isDistributionOf(BackendType.DSE) ? dseVersion : ossVersion;
     return serverVersion.compareTo(comparison) >= 0;
   }
 
@@ -138,11 +147,9 @@ public class DescribeIT {
     assertThat(ks.getUserDefinedTypes()).isNotEmpty();
     assertThat(ks.getTables()).isNotEmpty();
     if (atLeastVersion(Version.V5_0_0, Version.V3_0_0)) {
-
       assertThat(ks.getViews()).isNotEmpty();
     }
     if (atLeastVersion(Version.V5_0_0, Version.V2_2_0)) {
-
       assertThat(ks.getFunctions()).isNotEmpty();
       assertThat(ks.getAggregates()).isNotEmpty();
     }
@@ -177,7 +184,7 @@ public class DescribeIT {
           logbackTestUrl);
     }
     File resourcesDir = new File(logbackTestUrl.getFile()).getParentFile();
-    File scriptsDir = new File(resourcesDir, isDse ? "DescribeIT/dse" : "DescribeIT/oss");
+    File scriptsDir = new File(resourcesDir, scriptFileForBackend.get(CCM_RULE.getDistribution()));
     LOG.debug("Looking for a matching script in directory {}", scriptsDir);
 
     File[] candidates = scriptsDir.listFiles();
@@ -204,8 +211,7 @@ public class DescribeIT {
         .as("Could not find create script with version <= %s in %s", serverVersion, scriptsDir)
         .isNotNull();
 
-    LOG.info(
-        "Using {} to test against {} {}", bestFile, isDse ? "DSE" : "Cassandra", serverVersion);
+    LOG.info("Using {} to test against {} {}", bestFile, CCM_RULE.getDistribution(), serverVersion);
     return bestFile;
   }
 

@@ -37,6 +37,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import io.reactivex.Flowable;
 import java.util.UUID;
@@ -57,8 +58,8 @@ public class DeleteReactiveIT extends InventoryITBase {
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   private static CustomCcmRule.Builder configureCcm(CustomCcmRule.Builder builder) {
-    if (!CcmBridge.DSE_ENABLEMENT
-        && CcmBridge.VERSION.nextStable().compareTo(Version.V4_0_0) >= 0) {
+    if (!CcmBridge.isDistributionOf(BackendType.DSE)
+        && CcmBridge.getCassandraVersion().nextStable().compareTo(Version.V4_0_0) >= 0) {
       builder.withCassandraConfiguration("enable_sasi_indexes", true);
     }
     return builder;

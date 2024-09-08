@@ -106,9 +106,9 @@ public class DseAggregateMetadataIT extends AbstractMetadataIT {
   }
 
   private static boolean isDse6OrHigher() {
-    assumeThat(CCM_RULE.getDseVersion())
+    assumeThat(CCM_RULE.isDistributionOf(BackendType.DSE))
         .describedAs("DSE required for DseFunctionMetadata tests")
-        .isPresent();
-    return CCM_RULE.getDseVersion().get().compareTo(DSE_6_0_0) >= 0;
+        .isTrue();
+    return CCM_RULE.getDistributionVersion().compareTo(DSE_6_0_0) >= 0;
   }
 }
