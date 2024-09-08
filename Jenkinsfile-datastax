@@ -61,7 +61,7 @@ def initializeEnvironment() {
     . ${JABBA_SHELL}
     jabba which 1.8''', returnStdout: true).trim()
 
-  sh label: 'Download Apache CassandraⓇ or DataStax Enterprise',script: '''#!/bin/bash -le
+  sh label: 'Download Apache CassandraⓇ, DataStax Enterprise or DataStax HCD ',script: '''#!/bin/bash -le
     . ${JABBA_SHELL}
     jabba use 1.8
     . ${CCM_ENVIRONMENT_SHELL} ${SERVER_VERSION}
@@ -75,9 +75,22 @@ CCM_CASSANDRA_VERSION=${DSE_FIXED_VERSION} # maintain for backwards compatibilit
 CCM_VERSION=${DSE_FIXED_VERSION}
 CCM_SERVER_TYPE=dse
 DSE_VERSION=${DSE_FIXED_VERSION}
-CCM_IS_DSE=true
 CCM_BRANCH=${DSE_FIXED_VERSION}
 DSE_BRANCH=${DSE_FIXED_VERSION}
+ENVIRONMENT_EOF
+      '''
+  }
+
+  if (env.SERVER_VERSION.split('-')[0] == 'hcd') {
+    env.HCD_FIXED_VERSION = env.SERVER_VERSION.split('-')[1]
+    sh label: 'Update environment for DataStax HCD', script: '''#!/bin/bash -le
+        cat >> ${HOME}/environment.txt << ENVIRONMENT_EOF
+CCM_CASSANDRA_VERSION=${HCD_FIXED_VERSION} # maintain for backwards compatibility
+CCM_VERSION=${HCD_FIXED_VERSION}
+CCM_SERVER_TYPE=hcd
+HCD_VERSION=${HCD_FIXED_VERSION}
+CCM_BRANCH=${HCD_FIXED_VERSION}
+HCD_BRANCH=${HCD_FIXED_VERSION}
 ENVIRONMENT_EOF
       '''
   }
@@ -144,7 +157,7 @@ def executeTests() {
       -Dmaven.test.failure.ignore=true \
       -Dmaven.javadoc.skip=${SKIP_JAVADOCS} \
       -Dccm.version=${CCM_CASSANDRA_VERSION} \
-      -Dccm.dse=${CCM_IS_DSE} \
+      -Dccm.distribution=${CCM_SERVER_TYPE:cassandra} \
       -Dproxy.path=${HOME}/proxy \
       ${SERIAL_ITS_ARGUMENT} \
       ${ISOLATED_ITS_ARGUMENT} \
@@ -269,6 +282,7 @@ pipeline {
                 'dse-6.7.17',   // Previous DataStax Enterprise
                 'dse-6.8.30',   // Current DataStax Enterprise
                 'dse-6.9.0',    // Current DataStax Enterprise
+                'hcd-1.0.0',    // Current DataStax HCD
                 'ALL'],
       description: '''Apache Cassandra&reg; and DataStax Enterprise server version to use for adhoc <b>BUILD-AND-EXECUTE-TESTS</b> builds
                       <table style="width:100%">
@@ -329,6 +343,10 @@ pipeline {
                         <tr>
                           <td><strong>dse-6.9.0</strong></td>
                           <td>DataStax Enterprise v6.9.x</td>
+                        </tr>
+                        <tr>
+                          <td><strong>hcd-1.0.0</strong></td>
+                          <td>DataStax HCD v1.0.x</td>
                         </tr>
                       </table>''')
     choice(
@@ -421,9 +439,9 @@ pipeline {
       H 2 * * 0 %CI_SCHEDULE=WEEKENDS;CI_SCHEDULE_SERVER_VERSIONS=2.1 3.0 4.0 dse-4.8.16 dse-5.0.15 dse-5.1.35 dse-6.0.18 dse-6.7.17;CI_SCHEDULE_JABBA_VERSION=1.8
       # Every weeknight (Monday - Friday) around 12:00 PM noon
       ### JDK11 tests against 3.11, 4.1, 5.0-beta1 and DSE 6.8
-      H 12 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=3.11 4.1 5.0-beta1 dse-6.8.30 dse-6.9.0;CI_SCHEDULE_JABBA_VERSION=openjdk@1.11
+      H 12 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=3.11 4.1 5.0-beta1 dse-6.8.30 dse-6.9.0 hcd-1.0.0;CI_SCHEDULE_JABBA_VERSION=openjdk@1.11
       ### JDK17 tests against 3.11, 4.1, 5.0-beta1 and DSE 6.8
-      H 12 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=3.11 4.1 5.0-beta1 dse-6.8.30 dse-6.9.0;CI_SCHEDULE_JABBA_VERSION=openjdk@1.17
+      H 12 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=3.11 4.1 5.0-beta1 dse-6.8.30 dse-6.9.0 hcd-1.0.0;CI_SCHEDULE_JABBA_VERSION=openjdk@1.17
     """ : "")
   }
 
@@ -460,7 +478,8 @@ pipeline {
             values '3.11',       // Latest stable Apache CassandraⓇ
                    '4.1',        // Development Apache CassandraⓇ
                    'dse-6.8.30', // Current DataStax Enterprise
-                   'dse-6.9.0'   // Current DataStax Enterprise
+                   'dse-6.9.0',  // Current DataStax Enterprise
+                   'hcd-1.0.0'   // Current DataStax HCD
           }
           axis {
             name 'JABBA_VERSION'
@@ -578,7 +597,8 @@ pipeline {
                    'dse-6.0.18',   // Previous DataStax Enterprise
                    'dse-6.7.17',   // Previous DataStax Enterprise
                    'dse-6.8.30',   // Current DataStax Enterprise
-                   'dse-6.9.0'     // Current DataStax Enterprise
+                   'dse-6.9.0',    // Current DataStax Enterprise
+                   'hcd-1.0.0'     // Current DataStax HCD
           }
         }
         when {

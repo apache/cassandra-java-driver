@@ -29,10 +29,11 @@ import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import java.util.Objects;
-import java.util.Optional;
 import org.junit.rules.ExternalResource;
 
 /**
@@ -154,14 +155,12 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
           Statement.SYNC);
     }
     if (graphName != null) {
-      Optional<Version> dseVersion =
-          (cassandraResource instanceof BaseCcmRule)
-              ? ((BaseCcmRule) cassandraResource).getDseVersion()
-              : Optional.empty();
-      if (!dseVersion.isPresent()) {
+      BaseCcmRule rule =
+          (cassandraResource instanceof BaseCcmRule) ? ((BaseCcmRule) cassandraResource) : null;
+      if (rule == null || !CcmBridge.isDistributionOf(BackendType.DSE)) {
         throw new IllegalArgumentException("DseSessionRule should work with DSE.");
       }
-      if (dseVersion.get().compareTo(V6_8_0) >= 0) {
+      if (rule.getDistributionVersion().compareTo(V6_8_0) >= 0) {
         session()
             .execute(
                 ScriptGraphStatement.newInstance(

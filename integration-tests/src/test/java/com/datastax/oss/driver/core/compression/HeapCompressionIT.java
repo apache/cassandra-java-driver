@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
@@ -79,7 +80,7 @@ public class HeapCompressionIT {
   public void should_execute_queries_with_snappy_compression() throws Exception {
     Assume.assumeTrue(
         "Snappy is not supported in OSS C* 4.0+ with protocol v5",
-        CCM_RULE.getDseVersion().isPresent()
+        CCM_RULE.isDistributionOf(BackendType.DSE)
             || CCM_RULE.getCassandraVersion().nextStable().compareTo(Version.V4_0_0) < 0);
     createAndCheckCluster("snappy");
   }

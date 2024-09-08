@@ -18,6 +18,7 @@
 package com.datastax.oss.driver.api.testinfra.ccm;
 
 import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
 import com.datastax.oss.driver.shaded.guava.common.io.Resources;
 import java.io.File;
@@ -54,14 +55,15 @@ public class CcmBridge implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(CcmBridge.class);
 
+  public static BackendType DISTRIBUTION =
+      BackendType.valueOf(
+          System.getProperty("ccm.distribution", BackendType.CASSANDRA.name()).toUpperCase());
   public static final Version VERSION =
       Objects.requireNonNull(Version.parse(System.getProperty("ccm.version", "4.0.0")));
 
   public static final String INSTALL_DIRECTORY = System.getProperty("ccm.directory");
 
   public static final String BRANCH = System.getProperty("ccm.branch");
-
-  public static final Boolean DSE_ENABLEMENT = Boolean.getBoolean("ccm.dse");
 
   public static final String CLUSTER_NAME = "ccm_1";
 
@@ -101,22 +103,21 @@ public class CcmBridge implements AutoCloseable {
       createTempStore(DEFAULT_SERVER_LOCALHOST_KEYSTORE_PATH);
 
   // major DSE versions
-  private static final Version V6_0_0 = Version.parse("6.0.0");
-  private static final Version V5_1_0 = Version.parse("5.1.0");
-  private static final Version V5_0_0 = Version.parse("5.0.0");
+  public static final Version V6_0_0 = Version.parse("6.0.0");
+  public static final Version V5_1_0 = Version.parse("5.1.0");
+  public static final Version V5_0_0 = Version.parse("5.0.0");
 
   // mapped C* versions from DSE versions
-  private static final Version V4_0_0 = Version.parse("4.0.0");
-  private static final Version V3_10 = Version.parse("3.10");
-  private static final Version V3_0_15 = Version.parse("3.0.15");
-  private static final Version V2_1_19 = Version.parse("2.1.19");
+  public static final Version V4_0_0 = Version.parse("4.0.0");
+  public static final Version V3_10 = Version.parse("3.10");
+  public static final Version V3_0_15 = Version.parse("3.0.15");
+  public static final Version V2_1_19 = Version.parse("2.1.19");
+
+  // mapped C* versions from HCD versions
+  public static final Version V4_0_11 = Version.parse("4.0.11");
 
   static {
-    if (DSE_ENABLEMENT) {
-      LOG.info("CCM Bridge configured with DSE version {}", VERSION);
-    } else {
-      LOG.info("CCM Bridge configured with Apache Cassandra version {}", VERSION);
-    }
+    LOG.info("CCM Bridge configured with {} version {}", DISTRIBUTION.getFriendlyName(), VERSION);
   }
 
   private final int[] nodes;
@@ -175,25 +176,24 @@ public class CcmBridge implements AutoCloseable {
     return System.getProperty("os.name", "").toLowerCase(Locale.US).contains("win");
   }
 
-  public Optional<Version> getDseVersion() {
-    return DSE_ENABLEMENT ? Optional.of(VERSION) : Optional.empty();
+  public static boolean isDistributionOf(BackendType type) {
+    return DISTRIBUTION == type;
   }
 
-  public Version getCassandraVersion() {
-    if (!DSE_ENABLEMENT) {
+  public static boolean isDistributionOf(BackendType type, VersionComparator comparator) {
+    return isDistributionOf(type)
+        && comparator.accept(getDistributionVersion(), getCassandraVersion());
+  }
+
+  public static Version getDistributionVersion() {
+    return VERSION;
+  }
+
+  public static Version getCassandraVersion() {
+    if (isDistributionOf(BackendType.CASSANDRA)) {
       return VERSION;
-    } else {
-      Version stableVersion = VERSION.nextStable();
-      if (stableVersion.compareTo(V6_0_0) >= 0) {
-        return V4_0_0;
-      } else if (stableVersion.compareTo(V5_1_0) >= 0) {
-        return V3_10;
-      } else if (stableVersion.compareTo(V5_0_0) >= 0) {
-        return V3_0_15;
-      } else {
-        return V2_1_19;
-      }
     }
+    return DistributionCassandraVersions.getCassandraVersion(DISTRIBUTION, VERSION);
   }
 
   private String getCcmVersionString(Version version) {
@@ -225,9 +225,7 @@ public class CcmBridge implements AutoCloseable {
       } else {
         createOptions.add("-v " + getCcmVersionString(VERSION));
       }
-      if (DSE_ENABLEMENT) {
-        createOptions.add("--dse");
-      }
+      createOptions.addAll(Arrays.asList(DISTRIBUTION.getCcmOptions()));
       execute(
           "create",
           CLUSTER_NAME,
@@ -252,7 +250,7 @@ public class CcmBridge implements AutoCloseable {
       // If we're dealing with anything more recent than 2.2 explicitly enable UDF... but run it
       // through our conversion process to make
       // sure more recent versions don't have a problem.
-      if (cassandraVersion.compareTo(Version.V2_2_0) >= 0) {
+      if (cassandraVersion.compareTo(Version.V2_2_0) >= 0 || isDistributionOf(BackendType.HCD)) {
         String originalKey = "enable_user_defined_functions";
         Object originalValue = "true";
         execute(
@@ -264,7 +262,7 @@ public class CcmBridge implements AutoCloseable {
       }
 
       // Note that we aren't performing any substitution on DSE key/value props (at least for now)
-      if (DSE_ENABLEMENT) {
+      if (isDistributionOf(BackendType.DSE)) {
         for (Map.Entry<String, Object> conf : dseConfiguration.entrySet()) {
           execute("updatedseconf", String.format("%s:%s", conf.getKey(), conf.getValue()));
         }
@@ -338,11 +336,10 @@ public class CcmBridge implements AutoCloseable {
   }
 
   public void add(int n, String dc) {
-    if (getDseVersion().isPresent()) {
-      execute("add", "-i", ipPrefix + n, "-d", dc, "node" + n, "--dse");
-    } else {
-      execute("add", "-i", ipPrefix + n, "-d", dc, "node" + n);
-    }
+    List<String> addOptions = new ArrayList<>();
+    addOptions.addAll(Arrays.asList("add", "-i", ipPrefix + n, "-d", dc, "node" + n));
+    addOptions.addAll(Arrays.asList(DISTRIBUTION.getCcmOptions()));
+    execute(addOptions.toArray(new String[0]));
     start(n);
   }
 
@@ -475,11 +472,11 @@ public class CcmBridge implements AutoCloseable {
       return Optional.empty();
     }
 
-    if (!DSE_ENABLEMENT || !getDseVersion().isPresent()) {
+    if (!isDistributionOf(BackendType.DSE)) {
       return Optional.empty();
     }
 
-    if (getDseVersion().get().compareTo(Version.V6_9_0) >= 0) {
+    if (getDistributionVersion().compareTo(Version.V6_9_0) >= 0) {
       // DSE 6.9.0 supports only JVM 11 onwards (also with graph workload)
       return Optional.empty();
     }
@@ -640,5 +637,9 @@ public class CcmBridge implements AutoCloseable {
           jvmArgs,
           dseWorkloads);
     }
+  }
+
+  public interface VersionComparator {
+    boolean accept(Version distribution, Version cassandra);
   }
 }

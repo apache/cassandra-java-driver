@@ -171,6 +171,27 @@
         "code": "java.method.removed",
         "old": "method void com.datastax.oss.driver.api.testinfra.ccm.CcmRule::reloadCore(int, java.lang.String, java.lang.String, boolean)",
         "justification": "Modifying the state of a globally shared CCM instance is dangerous"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method java.util.Optional<com.datastax.oss.driver.api.core.Version> com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule::getDseVersion()",
+        "justification": "Method has been replaced with more generic isDistributionOf(BackendType) and getDistributionVersion()"
+      },
+      {
+        "code": "java.field.removed",
+        "old": "field com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.DSE_ENABLEMENT",
+        "justification": "Method has been replaced with more generic isDistributionOf(BackendType) and getDistributionVersion()"
+      },
+      {
+        "code": "java.method.nowStatic",
+        "old": "method com.datastax.oss.driver.api.core.Version com.datastax.oss.driver.api.testinfra.ccm.CcmBridge::getCassandraVersion()",
+        "new": "method com.datastax.oss.driver.api.core.Version com.datastax.oss.driver.api.testinfra.ccm.CcmBridge::getCassandraVersion()",
+        "justification": "Previous and current implemntation do not relay on non-static fields"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method java.util.Optional<com.datastax.oss.driver.api.core.Version> com.datastax.oss.driver.api.testinfra.ccm.CcmBridge::getDseVersion()",
+        "justification": "Method has been replaced with more generic isDistributionOf(BackendType) and getDistributionVersion()"
       }
     ]
   }

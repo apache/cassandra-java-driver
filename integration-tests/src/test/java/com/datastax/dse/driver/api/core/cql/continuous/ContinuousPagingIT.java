@@ -46,7 +46,6 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -281,11 +280,8 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
       // dropped.
       Row row = it.next();
       assertThat(row.getString("k")).isNotNull();
-      if (ccmRule
-              .getDseVersion()
-              .orElseThrow(IllegalStateException::new)
-              .compareTo(Objects.requireNonNull(Version.parse("6.0.0")))
-          >= 0) {
+      if (ccmRule.isDistributionOf(
+          BackendType.DSE, (dist, cass) -> dist.compareTo(Version.parse("6.0.0")) >= 0)) {
         // DSE 6 only, v should be null here since dropped.
         // Not reliable for 5.1 since we may have gotten page queued before schema changed.
         assertThat(row.isNull("v")).isTrue();

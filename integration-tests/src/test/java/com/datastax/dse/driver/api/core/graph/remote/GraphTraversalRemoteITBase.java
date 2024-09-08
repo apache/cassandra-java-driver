@@ -30,6 +30,7 @@ import com.datastax.dse.driver.api.core.graph.__;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
@@ -643,9 +644,9 @@ public abstract class GraphTraversalRemoteITBase {
    */
   @Test
   public void should_return_correct_results_when_bulked() {
-    Optional<Version> dseVersion = ccmRule().getCcmBridge().getDseVersion();
     Assumptions.assumeThat(
-            dseVersion.isPresent() && dseVersion.get().compareTo(Version.parse("5.1.2")) > 0)
+            CcmBridge.isDistributionOf(
+                BackendType.DSE, (dist, cass) -> dist.compareTo(Version.parse("5.1.2")) > 0))
         .isTrue();
 
     List<String> results = graphTraversalSource().E().label().barrier().toList();
