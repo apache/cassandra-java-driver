@@ -127,7 +127,7 @@
 
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>${netty-tcnative.artifact}</artifactId>
+            <artifactId>netty-tcnative-boringssl-static</artifactId>
             <classifier>${os.detected.classifier}</classifier>
             <scope>test</scope>
         </dependency>
