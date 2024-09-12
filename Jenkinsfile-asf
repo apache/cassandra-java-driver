@@ -62,7 +62,14 @@ pipeline {
 }
 
 def executeTests() {
-    sh "docker run -e TEST_JAVA_VERSION=${TEST_JAVA_VERSION} -e SERVER_VERSION=${SERVER_VERSION} -v \$(pwd):/home/docker/cassandra-java-driver apache.jfrog.io/cassan-docker/apache/cassandra-java-driver-testing-ubuntu2204 cassandra-java-driver/ci/run-tests.sh"
+    sh "ls -al */"
+    sh "mkdir -p driver-core/target/classes"
+    try {
+        sh "docker run -e TEST_JAVA_VERSION=${TEST_JAVA_VERSION} -e SERVER_VERSION=${SERVER_VERSION} -v \$(pwd):/home/docker/cassandra-java-driver apache.jfrog.io/cassan-docker/apache/cassandra-java-driver-testing-ubuntu2204 cassandra-java-driver/ci/run-tests.sh"
+
+    } finally {
+        sh "ls -al */"
+    }
 }
 
 // branch pattern for cron
