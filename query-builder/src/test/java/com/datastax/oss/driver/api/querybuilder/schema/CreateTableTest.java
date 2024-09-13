@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder.RowsPerPartition;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.TimeWindowCompactionStrategy.CompactionWindowUnit;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.TimeWindowCompactionStrategy.TimestampResolution;
+import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import org.junit.Test;
 
@@ -306,5 +307,14 @@ public class CreateTableTest {
                         .withUnsafeAggressiveSSTableExpiration(false)))
         .hasCql(
             "CREATE TABLE bar (k int PRIMARY KEY,v text) WITH compaction={'class':'TimeWindowCompactionStrategy','compaction_window_size':10,'compaction_window_unit':'DAYS','timestamp_resolution':'MICROSECONDS','unsafe_aggressive_sstable_expiration':false}");
+  }
+
+  @Test
+  public void should_generate_vector_column() {
+    assertThat(
+            createTable("foo")
+                .withPartitionKey("k", DataTypes.INT)
+                .withColumn("v", new DefaultVectorType(DataTypes.FLOAT, 3)))
+        .hasCql("CREATE TABLE foo (k int PRIMARY KEY,v vector<float, 3>)");
   }
 }

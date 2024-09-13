@@ -6956,6 +6956,303 @@
         "old": "method java.lang.Throwable java.lang.Throwable::fillInStackTrace() @ com.fasterxml.jackson.databind.deser.UnresolvedForwardReference",
         "new": "method com.fasterxml.jackson.databind.deser.UnresolvedForwardReference com.fasterxml.jackson.databind.deser.UnresolvedForwardReference::fillInStackTrace()",
         "justification": "Upgrade jackson-databind to 2.13.4.1 to address CVEs, API change cause: https://github.com/FasterXML/jackson-databind/issues/3419"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter <V extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>::from(java.lang.String, ===com.datastax.oss.driver.api.core.type.codec.TypeCodec<V>===)",
+        "new": "parameter <V> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T>::from(java.lang.String, ===com.datastax.oss.driver.api.core.type.codec.TypeCodec<V>===)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method <V extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>::from(java.lang.String, com.datastax.oss.driver.api.core.type.codec.TypeCodec<V>)",
+        "new": "method <V> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T>::from(java.lang.String, com.datastax.oss.driver.api.core.type.codec.TypeCodec<V>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <V extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>::from(java.lang.String, com.datastax.oss.driver.api.core.type.codec.TypeCodec<V>)",
+        "new": "method <V> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T>::from(java.lang.String, com.datastax.oss.driver.api.core.type.codec.TypeCodec<V>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.returnTypeChanged",
+        "old": "method T com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>::get(int)",
+        "new": "method T com.datastax.oss.driver.api.core.data.CqlVector<T>::get(int)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Iterator<T> com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>::iterator()",
+        "new": "method java.util.Iterator<T> com.datastax.oss.driver.api.core.data.CqlVector<T>::iterator()",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter <V extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>::newInstance(===V[]===)",
+        "new": "parameter <V> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T>::newInstance(===V[]===)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method <V extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>::newInstance(V[])",
+        "new": "method <V> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T>::newInstance(V[])",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <V extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>::newInstance(V[])",
+        "new": "method <V> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T>::newInstance(V[])",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter <V extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>::newInstance(===java.util.List<V>===)",
+        "new": "parameter <V> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T>::newInstance(===java.util.List<V>===)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method <V extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>::newInstance(java.util.List<V>)",
+        "new": "method <V> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T>::newInstance(java.util.List<V>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <V extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>::newInstance(java.util.List<V>)",
+        "new": "method <V> com.datastax.oss.driver.api.core.data.CqlVector<V> com.datastax.oss.driver.api.core.data.CqlVector<T>::newInstance(java.util.List<V>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.parameterTypeChanged",
+        "old": "parameter T com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>::set(int, ===T===)",
+        "new": "parameter T com.datastax.oss.driver.api.core.data.CqlVector<T>::set(int, ===T===)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.returnTypeChanged",
+        "old": "method T com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>::set(int, T)",
+        "new": "method T com.datastax.oss.driver.api.core.data.CqlVector<T>::set(int, T)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.Spliterator<T> java.lang.Iterable<T>::spliterator() @ com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>",
+        "new": "method java.util.Spliterator<T> java.lang.Iterable<T>::spliterator() @ com.datastax.oss.driver.api.core.data.CqlVector<T>",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method java.util.stream.Stream<T> com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>::stream()",
+        "new": "method java.util.stream.Stream<T> com.datastax.oss.driver.api.core.data.CqlVector<T>::stream()",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method com.datastax.oss.driver.api.core.data.CqlVector<T> com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>::subVector(int, int)",
+        "new": "method com.datastax.oss.driver.api.core.data.CqlVector<T> com.datastax.oss.driver.api.core.data.CqlVector<T>::subVector(int, int)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.class.noLongerImplementsInterface",
+        "old": "class com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>",
+        "new": "class com.datastax.oss.driver.api.core.data.CqlVector<T>",
+        "interface": "java.lang.Iterable<T extends java.lang.Number>",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "class com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>",
+        "new": "class com.datastax.oss.driver.api.core.data.CqlVector<T>",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.class.superTypeTypeParametersChanged",
+        "old": "class com.datastax.oss.driver.api.core.data.CqlVector<T extends java.lang.Number>",
+        "new": "class com.datastax.oss.driver.api.core.data.CqlVector<T>",
+        "oldSuperType": "java.lang.Iterable<T extends java.lang.Number>",
+        "newSuperType": "java.lang.Iterable<T>",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter <ElementT extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableById::getVector(com.datastax.oss.driver.api.core.CqlIdentifier, ===java.lang.Class<ElementT>===)",
+        "new": "parameter <ElementT> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableById::getVector(com.datastax.oss.driver.api.core.CqlIdentifier, ===java.lang.Class<ElementT>===)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method <ElementT extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableById::getVector(com.datastax.oss.driver.api.core.CqlIdentifier, java.lang.Class<ElementT>)",
+        "new": "method <ElementT> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableById::getVector(com.datastax.oss.driver.api.core.CqlIdentifier, java.lang.Class<ElementT>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <ElementT extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableById::getVector(com.datastax.oss.driver.api.core.CqlIdentifier, java.lang.Class<ElementT>)",
+        "new": "method <ElementT> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableById::getVector(com.datastax.oss.driver.api.core.CqlIdentifier, java.lang.Class<ElementT>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter <ElementT extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableByIndex::getVector(int, ===java.lang.Class<ElementT>===)",
+        "new": "parameter <ElementT> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableByIndex::getVector(int, ===java.lang.Class<ElementT>===)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method <ElementT extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableByIndex::getVector(int, java.lang.Class<ElementT>)",
+        "new": "method <ElementT> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableByIndex::getVector(int, java.lang.Class<ElementT>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <ElementT extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableByIndex::getVector(int, java.lang.Class<ElementT>)",
+        "new": "method <ElementT> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableByIndex::getVector(int, java.lang.Class<ElementT>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter <ElementT extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableByName::getVector(java.lang.String, ===java.lang.Class<ElementT>===)",
+        "new": "parameter <ElementT> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableByName::getVector(java.lang.String, ===java.lang.Class<ElementT>===)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method <ElementT extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableByName::getVector(java.lang.String, java.lang.Class<ElementT>)",
+        "new": "method <ElementT> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableByName::getVector(java.lang.String, java.lang.Class<ElementT>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <ElementT extends java.lang.Number> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableByName::getVector(java.lang.String, java.lang.Class<ElementT>)",
+        "new": "method <ElementT> com.datastax.oss.driver.api.core.data.CqlVector<ElementT> com.datastax.oss.driver.api.core.data.GettableByName::getVector(java.lang.String, java.lang.Class<ElementT>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter <ElementT extends java.lang.Number> SelfT com.datastax.oss.driver.api.core.data.SettableById<SelfT extends com.datastax.oss.driver.api.core.data.SettableById<SelfT>>::setVector(com.datastax.oss.driver.api.core.CqlIdentifier, ===com.datastax.oss.driver.api.core.data.CqlVector<ElementT>===, java.lang.Class<ElementT>)",
+        "new": "parameter <ElementT> SelfT com.datastax.oss.driver.api.core.data.SettableById<SelfT extends com.datastax.oss.driver.api.core.data.SettableById<SelfT>>::setVector(com.datastax.oss.driver.api.core.CqlIdentifier, ===com.datastax.oss.driver.api.core.data.CqlVector<ElementT>===, java.lang.Class<ElementT>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter <ElementT extends java.lang.Number> SelfT com.datastax.oss.driver.api.core.data.SettableById<SelfT extends com.datastax.oss.driver.api.core.data.SettableById<SelfT>>::setVector(com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.data.CqlVector<ElementT>, ===java.lang.Class<ElementT>===)",
+        "new": "parameter <ElementT> SelfT com.datastax.oss.driver.api.core.data.SettableById<SelfT extends com.datastax.oss.driver.api.core.data.SettableById<SelfT>>::setVector(com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.data.CqlVector<ElementT>, ===java.lang.Class<ElementT>===)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <ElementT extends java.lang.Number> SelfT com.datastax.oss.driver.api.core.data.SettableById<SelfT extends com.datastax.oss.driver.api.core.data.SettableById<SelfT>>::setVector(com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.data.CqlVector<ElementT>, java.lang.Class<ElementT>)",
+        "new": "method <ElementT> SelfT com.datastax.oss.driver.api.core.data.SettableById<SelfT extends com.datastax.oss.driver.api.core.data.SettableById<SelfT>>::setVector(com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.data.CqlVector<ElementT>, java.lang.Class<ElementT>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter <ElementT extends java.lang.Number> SelfT com.datastax.oss.driver.api.core.data.SettableByIndex<SelfT extends com.datastax.oss.driver.api.core.data.SettableByIndex<SelfT>>::setVector(int, ===com.datastax.oss.driver.api.core.data.CqlVector<ElementT>===, java.lang.Class<ElementT>)",
+        "new": "parameter <ElementT> SelfT com.datastax.oss.driver.api.core.data.SettableByIndex<SelfT extends com.datastax.oss.driver.api.core.data.SettableByIndex<SelfT>>::setVector(int, ===com.datastax.oss.driver.api.core.data.CqlVector<ElementT>===, java.lang.Class<ElementT>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter <ElementT extends java.lang.Number> SelfT com.datastax.oss.driver.api.core.data.SettableByIndex<SelfT extends com.datastax.oss.driver.api.core.data.SettableByIndex<SelfT>>::setVector(int, com.datastax.oss.driver.api.core.data.CqlVector<ElementT>, ===java.lang.Class<ElementT>===)",
+        "new": "parameter <ElementT> SelfT com.datastax.oss.driver.api.core.data.SettableByIndex<SelfT extends com.datastax.oss.driver.api.core.data.SettableByIndex<SelfT>>::setVector(int, com.datastax.oss.driver.api.core.data.CqlVector<ElementT>, ===java.lang.Class<ElementT>===)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <ElementT extends java.lang.Number> SelfT com.datastax.oss.driver.api.core.data.SettableByIndex<SelfT extends com.datastax.oss.driver.api.core.data.SettableByIndex<SelfT>>::setVector(int, com.datastax.oss.driver.api.core.data.CqlVector<ElementT>, java.lang.Class<ElementT>)",
+        "new": "method <ElementT> SelfT com.datastax.oss.driver.api.core.data.SettableByIndex<SelfT extends com.datastax.oss.driver.api.core.data.SettableByIndex<SelfT>>::setVector(int, com.datastax.oss.driver.api.core.data.CqlVector<ElementT>, java.lang.Class<ElementT>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter <ElementT extends java.lang.Number> SelfT com.datastax.oss.driver.api.core.data.SettableByName<SelfT extends com.datastax.oss.driver.api.core.data.SettableByName<SelfT>>::setVector(java.lang.String, ===com.datastax.oss.driver.api.core.data.CqlVector<ElementT>===, java.lang.Class<ElementT>)",
+        "new": "parameter <ElementT> SelfT com.datastax.oss.driver.api.core.data.SettableByName<SelfT extends com.datastax.oss.driver.api.core.data.SettableByName<SelfT>>::setVector(java.lang.String, ===com.datastax.oss.driver.api.core.data.CqlVector<ElementT>===, java.lang.Class<ElementT>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter <ElementT extends java.lang.Number> SelfT com.datastax.oss.driver.api.core.data.SettableByName<SelfT extends com.datastax.oss.driver.api.core.data.SettableByName<SelfT>>::setVector(java.lang.String, com.datastax.oss.driver.api.core.data.CqlVector<ElementT>, ===java.lang.Class<ElementT>===)",
+        "new": "parameter <ElementT> SelfT com.datastax.oss.driver.api.core.data.SettableByName<SelfT extends com.datastax.oss.driver.api.core.data.SettableByName<SelfT>>::setVector(java.lang.String, com.datastax.oss.driver.api.core.data.CqlVector<ElementT>, ===java.lang.Class<ElementT>===)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <ElementT extends java.lang.Number> SelfT com.datastax.oss.driver.api.core.data.SettableByName<SelfT extends com.datastax.oss.driver.api.core.data.SettableByName<SelfT>>::setVector(java.lang.String, com.datastax.oss.driver.api.core.data.CqlVector<ElementT>, java.lang.Class<ElementT>)",
+        "new": "method <ElementT> SelfT com.datastax.oss.driver.api.core.data.SettableByName<SelfT extends com.datastax.oss.driver.api.core.data.SettableByName<SelfT>>::setVector(java.lang.String, com.datastax.oss.driver.api.core.data.CqlVector<ElementT>, java.lang.Class<ElementT>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter <SubtypeT extends java.lang.Number> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(com.datastax.oss.driver.api.core.type.VectorType, ===com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>===)",
+        "new": "parameter <SubtypeT> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(com.datastax.oss.driver.api.core.type.VectorType, ===com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>===)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method <SubtypeT extends java.lang.Number> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(com.datastax.oss.driver.api.core.type.VectorType, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+        "new": "method <SubtypeT> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(com.datastax.oss.driver.api.core.type.VectorType, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <SubtypeT extends java.lang.Number> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(com.datastax.oss.driver.api.core.type.VectorType, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+        "new": "method <SubtypeT> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(com.datastax.oss.driver.api.core.type.VectorType, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter <SubtypeT extends java.lang.Number> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(int, ===com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>===)",
+        "new": "parameter <SubtypeT> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(int, ===com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>===)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method <SubtypeT extends java.lang.Number> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(int, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+        "new": "method <SubtypeT> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(int, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <SubtypeT extends java.lang.Number> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(int, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+        "new": "method <SubtypeT> com.datastax.oss.driver.api.core.type.codec.TypeCodec<com.datastax.oss.driver.api.core.data.CqlVector<SubtypeT>> com.datastax.oss.driver.api.core.type.codec.TypeCodecs::vectorOf(int, com.datastax.oss.driver.api.core.type.codec.TypeCodec<SubtypeT>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter <T extends java.lang.Number> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(===com.datastax.oss.driver.api.core.type.reflect.GenericType<T>===)",
+        "new": "parameter <T> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(===com.datastax.oss.driver.api.core.type.reflect.GenericType<T>===)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method <T extends java.lang.Number> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(com.datastax.oss.driver.api.core.type.reflect.GenericType<T>)",
+        "new": "method <T> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(com.datastax.oss.driver.api.core.type.reflect.GenericType<T>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <T extends java.lang.Number> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(com.datastax.oss.driver.api.core.type.reflect.GenericType<T>)",
+        "new": "method <T> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(com.datastax.oss.driver.api.core.type.reflect.GenericType<T>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.parameterTypeParameterChanged",
+        "old": "parameter <T extends java.lang.Number> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(===java.lang.Class<T>===)",
+        "new": "parameter <T> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(===java.lang.Class<T>===)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.method.returnTypeTypeParametersChanged",
+        "old": "method <T extends java.lang.Number> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(java.lang.Class<T>)",
+        "new": "method <T> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(java.lang.Class<T>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
+      },
+      {
+        "code": "java.generics.formalTypeParameterChanged",
+        "old": "method <T extends java.lang.Number> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(java.lang.Class<T>)",
+        "new": "method <T> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(java.lang.Class<T>)",
+        "justification": "Extend driver vector support to arbitrary subtypes for JAVA-3143"
       }
     ]
   }

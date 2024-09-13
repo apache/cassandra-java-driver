@@ -15,25 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.core.type.codec;
+package com.datastax.oss.driver.api.querybuilder.select;
 
-import com.datastax.oss.driver.api.core.type.DataType;
-import com.datastax.oss.driver.api.core.type.DataTypes;
-import com.datastax.oss.driver.shaded.guava.common.base.Optional;
-import edu.umd.cs.findbugs.annotations.NonNull;
-import net.jcip.annotations.ThreadSafe;
+import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 
-@ThreadSafe
-public class CounterCodec extends BigIntCodec {
-  @NonNull
-  @Override
-  public DataType getCqlType() {
-    return DataTypes.COUNTER;
-  }
-
-  @NonNull
-  @Override
-  public Optional<Integer> serializedSize() {
-    return Optional.absent();
-  }
-}
+public interface Ann extends BuildableQuery {}

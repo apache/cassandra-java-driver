@@ -27,12 +27,10 @@ import com.datastax.oss.driver.internal.core.type.DefaultSetType;
 import com.datastax.oss.driver.internal.core.type.DefaultTupleType;
 import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import com.datastax.oss.driver.internal.core.type.PrimitiveType;
-import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
-import java.util.List;
 
 /** Constants and factory methods to obtain data type instances. */
 public class DataTypes {
@@ -59,7 +57,6 @@ public class DataTypes {
   public static final DataType DURATION = new PrimitiveType(ProtocolConstants.DataType.DURATION);
 
   private static final DataTypeClassNameParser classNameParser = new DataTypeClassNameParser();
-  private static final Splitter paramSplitter = Splitter.on(',').trimResults();
 
   @NonNull
   public static DataType custom(@NonNull String className) {
@@ -69,12 +66,21 @@ public class DataTypes {
 
     /* Vector support is currently implemented as a custom type but is also parameterized */
     if (className.startsWith(DefaultVectorType.VECTOR_CLASS_NAME)) {
-      List<String> params =
-          paramSplitter.splitToList(
-              className.substring(
-                  DefaultVectorType.VECTOR_CLASS_NAME.length() + 1, className.length() - 1));
-      DataType subType = classNameParser.parse(params.get(0), AttachmentPoint.NONE);
-      int dimensions = Integer.parseInt(params.get(1));
+      String paramsString =
+          className.substring(
+              DefaultVectorType.VECTOR_CLASS_NAME.length() + 1, className.length() - 1);
+      int lastCommaIndex = paramsString.lastIndexOf(',');
+      if (lastCommaIndex == -1) {
+        throw new IllegalArgumentException(
+            String.format(
+                "Invalid vector type %s, expected format is %s<subtype, dimensions>",
+                className, DefaultVectorType.VECTOR_CLASS_NAME));
+      }
+      String subTypeString = paramsString.substring(0, lastCommaIndex).trim();
+      String dimensionsString = paramsString.substring(lastCommaIndex + 1).trim();
+
+      DataType subType = classNameParser.parse(subTypeString, AttachmentPoint.NONE);
+      int dimensions = Integer.parseInt(dimensionsString);
       if (dimensions <= 0) {
         throw new IllegalArgumentException(
             String.format(

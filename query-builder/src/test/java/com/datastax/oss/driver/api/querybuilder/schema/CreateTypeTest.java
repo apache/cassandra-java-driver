@@ -22,6 +22,7 @@ import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createType;
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.udt;
 
 import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import org.junit.Test;
 
 public class CreateTypeTest {
@@ -82,5 +83,14 @@ public class CreateTypeTest {
             createType("ks1", "type")
                 .withField("map", DataTypes.mapOf(DataTypes.INT, DataTypes.TEXT)))
         .hasCql("CREATE TYPE ks1.type (map map<int, text>)");
+  }
+
+  @Test
+  public void should_create_type_with_vector() {
+    assertThat(
+            createType("ks1", "type")
+                .withField("c1", DataTypes.INT)
+                .withField("vec", new DefaultVectorType(DataTypes.FLOAT, 3)))
+        .hasCql("CREATE TYPE ks1.type (c1 int,vec vector<float, 3>)");
   }
 }

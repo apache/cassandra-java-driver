@@ -21,6 +21,7 @@ import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.alterType;
 
 import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import org.junit.Test;
 
 public class AlterTypeTest {
@@ -52,5 +53,11 @@ public class AlterTypeTest {
   public void should_generate_alter_table_with_rename_three_columns() {
     assertThat(alterType("bar").renameField("x", "y").renameField("u", "v").renameField("b", "a"))
         .hasCql("ALTER TYPE bar RENAME x TO y AND u TO v AND b TO a");
+  }
+
+  @Test
+  public void should_generate_alter_type_with_vector() {
+    assertThat(alterType("foo", "bar").alterField("vec", new DefaultVectorType(DataTypes.FLOAT, 3)))
+        .hasCql("ALTER TYPE foo.bar ALTER vec TYPE vector<float, 3>");
   }
 }

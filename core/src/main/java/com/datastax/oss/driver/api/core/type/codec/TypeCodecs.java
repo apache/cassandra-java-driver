@@ -210,13 +210,13 @@ public class TypeCodecs {
     return new TupleCodec(cqlType);
   }
 
-  public static <SubtypeT extends Number> TypeCodec<CqlVector<SubtypeT>> vectorOf(
+  public static <SubtypeT> TypeCodec<CqlVector<SubtypeT>> vectorOf(
       @NonNull VectorType type, @NonNull TypeCodec<SubtypeT> subtypeCodec) {
     return new VectorCodec(
         DataTypes.vectorOf(subtypeCodec.getCqlType(), type.getDimensions()), subtypeCodec);
   }
 
-  public static <SubtypeT extends Number> TypeCodec<CqlVector<SubtypeT>> vectorOf(
+  public static <SubtypeT> TypeCodec<CqlVector<SubtypeT>> vectorOf(
       int dimensions, @NonNull TypeCodec<SubtypeT> subtypeCodec) {
     return new VectorCodec(DataTypes.vectorOf(subtypeCodec.getCqlType(), dimensions), subtypeCodec);
   }

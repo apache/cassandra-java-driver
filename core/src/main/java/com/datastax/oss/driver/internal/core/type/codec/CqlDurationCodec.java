@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.util.VIntCoding;
+import com.datastax.oss.driver.shaded.guava.common.base.Optional;
 import com.datastax.oss.driver.shaded.guava.common.io.ByteArrayDataOutput;
 import com.datastax.oss.driver.shaded.guava.common.io.ByteStreams;
 import com.datastax.oss.protocol.internal.util.Bytes;
@@ -114,5 +115,11 @@ public class CqlDurationCodec implements TypeCodec<CqlDuration> {
     return (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL"))
         ? null
         : CqlDuration.from(value);
+  }
+
+  @NonNull
+  @Override
+  public Optional<Integer> serializedSize() {
+    return Optional.absent();
   }
 }

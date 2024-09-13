@@ -337,6 +337,26 @@ public class CachingCodecRegistryTestDataProviders {
         GenericType.vectorOf(BigInteger.class),
         CqlVector.newInstance(BigInteger.ONE)
       },
+      // vector with arbitrary types
+      {
+        DataTypes.vectorOf(DataTypes.TEXT, 2),
+        GenericType.vectorOf(String.class),
+        GenericType.vectorOf(String.class),
+        CqlVector.newInstance("abc", "de")
+      },
+      {
+        DataTypes.vectorOf(DataTypes.TIME, 2),
+        GenericType.vectorOf(LocalTime.class),
+        GenericType.vectorOf(LocalTime.class),
+        CqlVector.newInstance(LocalTime.MIDNIGHT, LocalTime.NOON)
+      },
+      {
+        DataTypes.vectorOf(DataTypes.vectorOf(DataTypes.TINYINT, 2), 2),
+        GenericType.vectorOf(GenericType.vectorOf(Byte.class)),
+        GenericType.vectorOf(GenericType.vectorOf(Byte.class)),
+        CqlVector.newInstance(
+            CqlVector.newInstance((byte) 1, (byte) 2), CqlVector.newInstance((byte) 3, (byte) 4))
+      },
     };
   }
 

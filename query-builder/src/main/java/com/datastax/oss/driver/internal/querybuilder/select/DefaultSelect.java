@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
+import com.datastax.oss.driver.api.querybuilder.select.Ann;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.datastax.oss.driver.api.querybuilder.select.SelectFrom;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
@@ -49,6 +50,7 @@ public class DefaultSelect implements SelectFrom, Select {
   private final ImmutableList<Relation> relations;
   private final ImmutableList<Selector> groupByClauses;
   private final ImmutableMap<CqlIdentifier, ClusteringOrder> orderings;
+  private final Ann ann;
   private final Object limit;
   private final Object perPartitionLimit;
   private final boolean allowsFiltering;
@@ -65,6 +67,7 @@ public class DefaultSelect implements SelectFrom, Select {
         ImmutableMap.of(),
         null,
         null,
+        null,
         false);
   }
 
@@ -74,6 +77,8 @@ public class DefaultSelect implements SelectFrom, Select {
    * @param selectors if it contains {@link AllSelector#INSTANCE}, that must be the only element.
    *     This isn't re-checked because methods that call this constructor internally already do it,
    *     make sure you do it yourself.
+   * @param ann Approximate nearest neighbor. ANN ordering does not support secondary ordering or
+   *     ASC order.
    */
   public DefaultSelect(
       @Nullable CqlIdentifier keyspace,
@@ -84,6 +89,7 @@ public class DefaultSelect implements SelectFrom, Select {
       @NonNull ImmutableList<Relation> relations,
       @NonNull ImmutableList<Selector> groupByClauses,
       @NonNull ImmutableMap<CqlIdentifier, ClusteringOrder> orderings,
+      @Nullable Ann ann,
       @Nullable Object limit,
       @Nullable Object perPartitionLimit,
       boolean allowsFiltering) {
@@ -94,6 +100,9 @@ public class DefaultSelect implements SelectFrom, Select {
             || (limit instanceof Integer && (Integer) limit > 0)
             || limit instanceof BindMarker,
         "limit must be a strictly positive integer or a bind marker");
+    Preconditions.checkArgument(
+        orderings.isEmpty() || ann == null, "ANN ordering does not support secondary ordering");
+    this.ann = ann;
     this.keyspace = keyspace;
     this.table = table;
     this.isJson = isJson;
@@ -117,6 +126,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         orderings,
+        null,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -134,6 +144,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         orderings,
+        null,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -193,6 +204,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         orderings,
+        null,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -221,6 +233,7 @@ public class DefaultSelect implements SelectFrom, Select {
         newRelations,
         groupByClauses,
         orderings,
+        null,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -249,6 +262,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         newGroupByClauses,
         orderings,
+        null,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -267,6 +281,12 @@ public class DefaultSelect implements SelectFrom, Select {
   }
 
   @NonNull
+  @Override
+  public Select orderBy(@NonNull Ann ann) {
+    return withAnn(ann);
+  }
+
+  @NonNull
   public Select withOrderings(@NonNull ImmutableMap<CqlIdentifier, ClusteringOrder> newOrderings) {
     return new DefaultSelect(
         keyspace,
@@ -277,6 +297,24 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         newOrderings,
+        null,
+        limit,
+        perPartitionLimit,
+        allowsFiltering);
+  }
+
+  @NonNull
+  Select withAnn(@NonNull Ann ann) {
+    return new DefaultSelect(
+        keyspace,
+        table,
+        isJson,
+        isDistinct,
+        selectors,
+        relations,
+        groupByClauses,
+        orderings,
+        ann,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -295,6 +333,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         orderings,
+        null,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -312,6 +351,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         orderings,
+        null,
         bindMarker,
         perPartitionLimit,
         allowsFiltering);
@@ -331,6 +371,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         orderings,
+        null,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -348,6 +389,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         orderings,
+        null,
         limit,
         bindMarker,
         allowsFiltering);
@@ -365,6 +407,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         orderings,
+        null,
         limit,
         perPartitionLimit,
         true);
@@ -391,15 +434,19 @@ public class DefaultSelect implements SelectFrom, Select {
     CqlHelper.append(relations, builder, " WHERE ", " AND ", null);
     CqlHelper.append(groupByClauses, builder, " GROUP BY ", ",", null);
 
-    boolean first = true;
-    for (Map.Entry<CqlIdentifier, ClusteringOrder> entry : orderings.entrySet()) {
-      if (first) {
-        builder.append(" ORDER BY ");
-        first = false;
-      } else {
-        builder.append(",");
+    if (ann != null) {
+      builder.append(" ").append(this.ann.asCql());
+    } else {
+      boolean first = true;
+      for (Map.Entry<CqlIdentifier, ClusteringOrder> entry : orderings.entrySet()) {
+        if (first) {
+          builder.append(" ORDER BY ");
+          first = false;
+        } else {
+          builder.append(",");
+        }
+        builder.append(entry.getKey().asCql(true)).append(" ").append(entry.getValue().name());
       }
-      builder.append(entry.getKey().asCql(true)).append(" ").append(entry.getValue().name());
     }
 
     if (limit != null) {
