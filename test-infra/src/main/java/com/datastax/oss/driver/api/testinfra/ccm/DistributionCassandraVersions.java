@@ -19,34 +19,36 @@ package com.datastax.oss.driver.api.testinfra.ccm;
 
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSortedMap;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 /** Defines mapping of various distributions to shipped Apache Cassandra version. */
 public abstract class DistributionCassandraVersions {
-  private static final Map<BackendType, TreeMap<Version, Version>> mappings = new HashMap<>();
+  private static final Map<BackendType, ImmutableSortedMap<Version, Version>> mappings =
+      new HashMap<>();
 
   static {
     {
       // DSE
-      TreeMap<Version, Version> dse = new TreeMap<>();
-      dse.put(Version.V1_0_0, CcmBridge.V2_1_19);
-      dse.put(Version.V5_0_0, CcmBridge.V3_0_15);
-      dse.put(CcmBridge.V5_1_0, CcmBridge.V3_10);
-      dse.put(CcmBridge.V6_0_0, CcmBridge.V4_0_0);
+      ImmutableSortedMap<Version, Version> dse =
+          ImmutableSortedMap.of(
+              Version.V1_0_0, CcmBridge.V2_1_19,
+              Version.V5_0_0, CcmBridge.V3_0_15,
+              CcmBridge.V5_1_0, CcmBridge.V3_10,
+              CcmBridge.V6_0_0, CcmBridge.V4_0_0);
       mappings.put(BackendType.DSE, dse);
     }
     {
       // HCD
-      TreeMap<Version, Version> hcd = new TreeMap<>();
-      hcd.put(Version.V1_0_0, CcmBridge.V4_0_11);
+      ImmutableSortedMap<Version, Version> hcd =
+          ImmutableSortedMap.of(Version.V1_0_0, CcmBridge.V4_0_11);
       mappings.put(BackendType.HCD, hcd);
     }
   }
 
   public static Version getCassandraVersion(BackendType type, Version version) {
-    TreeMap<Version, Version> mapping = mappings.get(type);
+    ImmutableSortedMap<Version, Version> mapping = mappings.get(type);
     if (mapping == null) {
       return null;
     }

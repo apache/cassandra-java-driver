@@ -41,7 +41,7 @@ public class BackendRequirementRule extends ExternalResource {
   }
 
   protected static BackendType getBackendType() {
-    return CcmBridge.distribution;
+    return CcmBridge.DISTRIBUTION;
   }
 
   protected static Version getVersion() {

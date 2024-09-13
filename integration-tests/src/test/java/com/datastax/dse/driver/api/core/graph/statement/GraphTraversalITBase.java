@@ -36,7 +36,9 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import java.util.List;
@@ -598,7 +600,8 @@ public abstract class GraphTraversalITBase {
   @Test
   public void should_return_correct_results_when_bulked() {
     Assumptions.assumeThat(
-            ccmRule().getCcmBridge().getDistributionVersion().compareTo(Version.parse("5.1.2")) > 0)
+            CcmBridge.isDistributionOf(BackendType.DSE)
+                && CcmBridge.getDistributionVersion().compareTo(Version.parse("5.1.2")) > 0)
         .isTrue();
 
     GraphResultSet rs =

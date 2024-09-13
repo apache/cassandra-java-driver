@@ -73,11 +73,19 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
   }
 
   public BackendType getDistribution() {
-    return CcmBridge.distribution;
+    return CcmBridge.DISTRIBUTION;
   }
 
   public boolean isDistributionOf(BackendType type) {
     return CcmBridge.isDistributionOf(type);
+  }
+
+  public boolean isDistributionAtVersion(BackendType type, Version version) {
+    return CcmBridge.isDistributionAtVersion(type, version);
+  }
+
+  public boolean isDistributionAtMinimalVersion(BackendType type, Version version) {
+    return CcmBridge.isDistributionAtMinimalVersion(type, version);
   }
 
   public Version getDistributionVersion() {

@@ -55,14 +55,15 @@ public class CcmBridge implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(CcmBridge.class);
 
+  public static BackendType DISTRIBUTION =
+      BackendType.valueOf(
+          System.getProperty("ccm.distribution", BackendType.CASSANDRA.name()).toUpperCase());
   public static final Version VERSION =
       Objects.requireNonNull(Version.parse(System.getProperty("ccm.version", "4.0.0")));
 
   public static final String INSTALL_DIRECTORY = System.getProperty("ccm.directory");
 
   public static final String BRANCH = System.getProperty("ccm.branch");
-
-  public static BackendType distribution = null;
 
   public static final String CLUSTER_NAME = "ccm_1";
 
@@ -116,16 +117,7 @@ public class CcmBridge implements AutoCloseable {
   public static final Version V4_0_11 = Version.parse("4.0.11");
 
   static {
-    distribution = BackendType.CASSANDRA; // default distribution
-    for (BackendType backendType : BackendType.values()) {
-      String enableFlag = "ccm." + backendType.name().toLowerCase();
-      // look for system properties like 'ccm.dse', 'ccm.hcd' etc.
-      if (Boolean.parseBoolean(System.getProperty(enableFlag, "false"))) {
-        distribution = backendType;
-        break;
-      }
-    }
-    LOG.info("CCM Bridge configured with {} version {}", distribution.getFriendlyName(), VERSION);
+    LOG.info("CCM Bridge configured with {} version {}", DISTRIBUTION.getFriendlyName(), VERSION);
   }
 
   private final int[] nodes;
@@ -185,7 +177,15 @@ public class CcmBridge implements AutoCloseable {
   }
 
   public static boolean isDistributionOf(BackendType type) {
-    return distribution == type;
+    return DISTRIBUTION == type;
+  }
+
+  public static boolean isDistributionAtVersion(BackendType type, Version version) {
+    return isDistributionOf(type) && getDistributionVersion().compareTo(version) == 0;
+  }
+
+  public static boolean isDistributionAtMinimalVersion(BackendType type, Version version) {
+    return isDistributionOf(type) && getDistributionVersion().compareTo(version) >= 0;
   }
 
   public static Version getDistributionVersion() {
@@ -196,7 +196,7 @@ public class CcmBridge implements AutoCloseable {
     if (isDistributionOf(BackendType.CASSANDRA)) {
       return VERSION;
     }
-    return DistributionCassandraVersions.getCassandraVersion(distribution, VERSION);
+    return DistributionCassandraVersions.getCassandraVersion(DISTRIBUTION, VERSION);
   }
 
   private String getCcmVersionString(Version version) {
@@ -228,7 +228,7 @@ public class CcmBridge implements AutoCloseable {
       } else {
         createOptions.add("-v " + getCcmVersionString(VERSION));
       }
-      createOptions.addAll(Arrays.asList(distribution.getCcmOptions()));
+      createOptions.addAll(Arrays.asList(DISTRIBUTION.getCcmOptions()));
       execute(
           "create",
           CLUSTER_NAME,
@@ -341,7 +341,7 @@ public class CcmBridge implements AutoCloseable {
   public void add(int n, String dc) {
     List<String> addOptions = new ArrayList<>();
     addOptions.addAll(Arrays.asList("add", "-i", ipPrefix + n, "-d", dc, "node" + n));
-    addOptions.addAll(Arrays.asList(distribution.getCcmOptions()));
+    addOptions.addAll(Arrays.asList(DISTRIBUTION.getCcmOptions()));
     execute(addOptions.toArray(new String[0]));
     start(n);
   }

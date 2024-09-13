@@ -157,7 +157,7 @@ def executeTests() {
       -Dmaven.test.failure.ignore=true \
       -Dmaven.javadoc.skip=${SKIP_JAVADOCS} \
       -Dccm.version=${CCM_CASSANDRA_VERSION} \
-      -Dccm.${CCM_SERVER_TYPE:cassandra}=true \
+      -Dccm.distribution=${CCM_SERVER_TYPE:cassandra} \
       -Dproxy.path=${HOME}/proxy \
       ${SERIAL_ITS_ARGUMENT} \
       ${ISOLATED_ITS_ARGUMENT} \

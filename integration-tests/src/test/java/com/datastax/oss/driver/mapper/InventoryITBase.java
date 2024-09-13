@@ -94,8 +94,7 @@ public abstract class InventoryITBase {
 
   protected static boolean isSasiBroken(BaseCcmRule ccmRule) {
     // creating SASI indexes is broken in DSE 6.8.0
-    return ccmRule.isDistributionOf(BackendType.DSE)
-        && ccmRule.getDistributionVersion().compareTo(BROKEN_SASI_VERSION) == 0;
+    return ccmRule.isDistributionAtVersion(BackendType.DSE, BROKEN_SASI_VERSION);
   }
 
   protected static boolean supportsSASI(BaseCcmRule ccmRule) {

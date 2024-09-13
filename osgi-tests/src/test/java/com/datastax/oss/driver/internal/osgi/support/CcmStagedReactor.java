@@ -39,7 +39,7 @@ public class CcmStagedReactor extends AllConfinedStagedReactor {
 
   static {
     CcmBridge.Builder builder = CcmBridge.builder().withNodes(1);
-    if (CcmBridge.isDistributionOf(BackendType.DSE) && CcmBridge.VERSION.compareTo(DSE_5_0) >= 0) {
+    if (CcmBridge.isDistributionAtMinimalVersion(BackendType.DSE, DSE_5_0)) {
       builder.withDseWorkloads("graph");
     }
     CCM_BRIDGE = builder.build();
@@ -57,7 +57,7 @@ public class CcmStagedReactor extends AllConfinedStagedReactor {
     if (!running) {
       LOGGER.info(
           "Starting CCM, running {} version {}",
-          CcmBridge.distribution,
+          CcmBridge.DISTRIBUTION,
           CcmBridge.getDistributionVersion());
       CCM_BRIDGE.create();
       CCM_BRIDGE.start();
