@@ -53,6 +53,7 @@ public class CustomCcmRule extends BaseCcmRule {
           after();
         } catch (Exception e1) {
           LOG.warn("Error cleaning up CustomCcmRule before() failure", e1);
+          e.addSuppressed(e1);
         }
         throw e;
       }
@@ -64,8 +65,11 @@ public class CustomCcmRule extends BaseCcmRule {
 
   @Override
   protected void after() {
-    super.after();
-    CURRENT.compareAndSet(this, null);
+    try {
+      super.after();
+    } finally {
+      CURRENT.compareAndSet(this, null);
+    }
   }
 
   public CcmBridge getCcmBridge() {
