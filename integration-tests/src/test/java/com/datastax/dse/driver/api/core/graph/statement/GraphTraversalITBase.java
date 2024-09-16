@@ -599,8 +599,9 @@ public abstract class GraphTraversalITBase {
    */
   @Test
   public void should_return_correct_results_when_bulked() {
-    Assumptions.assumeThat(CcmBridge.isDistributionOf(BackendType.DSE,
-            (dist, cass) -> dist.compareTo(Version.parse("5.1.2")) > 0))
+    Assumptions.assumeThat(
+            CcmBridge.isDistributionOf(
+                BackendType.DSE, (dist, cass) -> dist.compareTo(Version.parse("5.1.2")) > 0))
         .isTrue();
 
     GraphResultSet rs =

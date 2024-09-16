@@ -181,7 +181,8 @@ public class CcmBridge implements AutoCloseable {
   }
 
   public static boolean isDistributionOf(BackendType type, VersionComparator comparator) {
-    return isDistributionOf(type) && comparator.accept(getDistributionVersion(), getCassandraVersion());
+    return isDistributionOf(type)
+        && comparator.accept(getDistributionVersion(), getCassandraVersion());
   }
 
   public static Version getDistributionVersion() {
