@@ -19,7 +19,7 @@ under the License.
 
 ## Upgrade guide
 
-### NEW VERSION PLACEHOLDER
+### 4.18.1
 
 #### Keystore reloading in DefaultSslEngineFactory
 
@@ -32,12 +32,9 @@ This feature is disabled by default for compatibility. To enable, see `keystore-
 
 ### 4.17.0
 
-#### Beta support for Java17
+#### Support for Java17
 
 With the completion of [JAVA-3042](https://datastax-oss.atlassian.net/browse/JAVA-3042) the driver now passes our automated test matrix for Java Driver releases.
-While all features function normally when run with Java 17 tests, we do not offer full support for this
-platform until we've received feedback from other users in the ecosystem.
-
 If you discover an issue with the Java Driver running on Java 17, please let us know. We will triage and address Java 17 issues.
 
 #### Updated API for vector search
