@@ -39,7 +39,7 @@ public class CcmStagedReactor extends AllConfinedStagedReactor {
 
   static {
     CcmBridge.Builder builder = CcmBridge.builder().withNodes(1);
-    if (CcmBridge.isDistributionAtMinimalVersion(BackendType.DSE, DSE_5_0)) {
+    if (CcmBridge.isDistributionOf(BackendType.DSE, (dist, cass) -> dist.compareTo(DSE_5_0) >= 0)) {
       builder.withDseWorkloads("graph");
     }
     CCM_BRIDGE = builder.build();

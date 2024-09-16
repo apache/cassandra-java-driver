@@ -58,8 +58,8 @@ public class DeleteReactiveIT extends InventoryITBase {
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   private static CustomCcmRule.Builder configureCcm(CustomCcmRule.Builder builder) {
-    if (!CcmBridge.isDistributionOf(BackendType.DSE)
-        && CcmBridge.getCassandraVersion().nextStable().compareTo(Version.V4_0_0) >= 0) {
+    if (!CcmBridge.isDistributionOf(BackendType.DSE,
+            (dist, cass) -> cass.nextStable().compareTo(Version.V4_0_0) >= 0)) {
       builder.withCassandraConfiguration("enable_sasi_indexes", true);
     }
     return builder;

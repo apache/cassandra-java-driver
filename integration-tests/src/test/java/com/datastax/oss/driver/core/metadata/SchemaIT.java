@@ -335,7 +335,7 @@ public class SchemaIT {
 
   private void skipIfDse60() {
     // Special case: DSE 6.0 reports C* 4.0 but does not support virtual tables
-    if (!ccmRule.isDistributionAtMinimalVersion(BackendType.DSE, DSE_MIN_VIRTUAL_TABLES)) {
+    if (!ccmRule.isDistributionOf(BackendType.DSE, (dist, cass) -> dist.compareTo(DSE_MIN_VIRTUAL_TABLES) >= 0)) {
       throw new AssumptionViolatedException("DSE 6.0 does not support virtual tables");
     }
   }

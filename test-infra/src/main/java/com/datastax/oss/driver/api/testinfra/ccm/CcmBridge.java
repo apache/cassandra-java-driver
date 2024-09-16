@@ -180,12 +180,8 @@ public class CcmBridge implements AutoCloseable {
     return DISTRIBUTION == type;
   }
 
-  public static boolean isDistributionAtVersion(BackendType type, Version version) {
-    return isDistributionOf(type) && getDistributionVersion().compareTo(version) == 0;
-  }
-
-  public static boolean isDistributionAtMinimalVersion(BackendType type, Version version) {
-    return isDistributionOf(type) && getDistributionVersion().compareTo(version) >= 0;
+  public static boolean isDistributionOf(BackendType type, VersionComparator comparator) {
+    return isDistributionOf(type) && comparator.accept(getDistributionVersion(), getCassandraVersion());
   }
 
   public static Version getDistributionVersion() {
@@ -640,5 +636,9 @@ public class CcmBridge implements AutoCloseable {
           jvmArgs,
           dseWorkloads);
     }
+  }
+
+  public interface VersionComparator {
+    boolean accept(Version distribution, Version cassandra);
   }
 }

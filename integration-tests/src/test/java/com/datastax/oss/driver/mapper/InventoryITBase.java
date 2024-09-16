@@ -89,12 +89,12 @@ public abstract class InventoryITBase {
     return builder.build();
   }
 
-  private static final Version MINIMUM_SASI_VERSION = Version.parse("3.4.0");
-  private static final Version BROKEN_SASI_VERSION = Version.parse("6.8.0");
+  private static final Version MINIMUM_SASI_VERSION = Objects.requireNonNull(Version.parse("3.4.0"));
+  private static final Version BROKEN_SASI_VERSION = Objects.requireNonNull(Version.parse("6.8.0"));
 
   protected static boolean isSasiBroken(BaseCcmRule ccmRule) {
     // creating SASI indexes is broken in DSE 6.8.0
-    return ccmRule.isDistributionAtVersion(BackendType.DSE, BROKEN_SASI_VERSION);
+    return ccmRule.isDistributionOf(BackendType.DSE, (dist, cass) -> dist.compareTo(BROKEN_SASI_VERSION) == 0);
   }
 
   protected static boolean supportsSASI(BaseCcmRule ccmRule) {
