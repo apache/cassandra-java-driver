@@ -54,7 +54,6 @@ fi
 # sudo priviledges
 echo "${username} ALL=(root) NOPASSWD:ALL" > /etc/sudoers.d/${username}
 chmod 0440 /etc/sudoers.d/${username}
-mkdir -p ${BUILD_HOME}/.ssh
 
 # we need to make SSH less strict to prevent various dtests from failing when they attempt to
 # git clone a given commit/tag/etc
@@ -63,4 +62,3 @@ echo 'Host *\n UserKnownHostsFile /dev/null\n StrictHostKeyChecking no' > ${BUIL
 # proper permissions
 chown -R ${username}:${username} /home/docker
 chmod og+wx ${BUILD_HOME}
-chmod 600 ${BUILD_HOME}/.ssh/config
