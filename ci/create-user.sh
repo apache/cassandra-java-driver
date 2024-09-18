@@ -39,7 +39,11 @@ BUILD_HOME=$4
 #
 ################################
 
+# disable git directory ownership checks
+su ${username} -c "git config --global safe.directory '*'"
+
 if grep "^ID=" /etc/os-release | grep -q 'debian\|ubuntu' ; then
+   deluser docker
    adduser --quiet --disabled-login --no-create-home --uid $uid --gecos ${username} ${username}
    groupmod --non-unique -g $gid $username
    gpasswd -a ${username} sudo >/dev/null
@@ -57,9 +61,6 @@ mkdir -p ${BUILD_HOME}/.ssh
 echo 'Host *\n UserKnownHostsFile /dev/null\n StrictHostKeyChecking no' > ${BUILD_HOME}/.ssh/config
 
 # proper permissions
-chown -R ${username}:${username} ${BUILD_HOME} 
+chown -R ${username}:${username} /home/docker
 chmod og+wx ${BUILD_HOME}
 chmod 600 ${BUILD_HOME}/.ssh/config
-
-# disable git directory ownership checks
-su ${username} -c "git config --global safe.directory '*'"
