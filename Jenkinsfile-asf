@@ -19,7 +19,6 @@
  * under the License.
  */
 
-// again
 pipeline {
     agent {
         label 'cassandra-small'
