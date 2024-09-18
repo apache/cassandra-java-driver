@@ -62,9 +62,12 @@ pipeline {
 }
 
 def executeTests() {
-    def container_id = sh(script: "docker run -td -e TEST_JAVA_VERSION=${TEST_JAVA_VERSION} -e SERVER_VERSION=${SERVER_VERSION} -v \$(pwd):/home/docker/cassandra-java-driver apache.jfrog.io/cassan-docker/apache/cassandra-java-driver-testing-ubuntu2204 'sleep 2h'", returnStdout: true).trim()
-    sh "docker exec --user root $container_id bash -c \"sudo bash /home/docker/cassandra-java-driver/ci/create-user.sh docker \$(id -u) \$(id -g) /home/docker/cassandra-java-driver\""
-    sh "docker exec --user docker $container_id './cassandra-java-driver/ci/run-tests.sh'"
+    sh """
+        container_id=\$(docker run -td -e TEST_JAVA_VERSION=${TEST_JAVA_VERSION} -e SERVER_VERSION=${SERVER_VERSION} -v \$(pwd):/home/docker/cassandra-java-driver apache.jfrog.io/cassan-docker/apache/cassandra-java-driver-testing-ubuntu2204 'sleep 2h')
+        docker exec --user root \$container_id bash -c \"sudo bash /home/docker/cassandra-java-driver/ci/create-user.sh docker \$(id -u) \$(id -g) /home/docker/cassandra-java-driver\"
+        docker exec --user docker \$container_id './cassandra-java-driver/ci/run-tests.sh'
+        ( nohup docker stop \$container_id >/dev/null 2>/dev/null & )
+    """
 }
 
 // branch pattern for cron
