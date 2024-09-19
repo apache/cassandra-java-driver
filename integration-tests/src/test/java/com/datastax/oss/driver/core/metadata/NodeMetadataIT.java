@@ -62,8 +62,9 @@ public class NodeMetadataIT {
       assertThat(node.getListenAddress().get().getAddress()).isEqualTo(connectAddress.getAddress());
       assertThat(node.getDatacenter()).isEqualTo("dc1");
       assertThat(node.getRack()).isEqualTo("r1");
-      if (!CcmBridge.DSE_ENABLEMENT) {
-        // CcmBridge does not report accurate C* versions for DSE, only approximated values
+      if (CcmBridge.isDistributionOf(BackendType.CASSANDRA)) {
+        // CcmBridge does not report accurate C* versions for other distributions (e.g. DSE), only
+        // approximated values
         assertThat(node.getCassandraVersion()).isEqualTo(ccmRule.getCassandraVersion());
       }
       assertThat(node.getState()).isSameAs(NodeState.UP);
@@ -106,7 +107,7 @@ public class NodeMetadataIT {
               DseNodeProperties.DSE_WORKLOADS,
               DseNodeProperties.SERVER_ID);
       assertThat(node.getExtras().get(DseNodeProperties.DSE_VERSION))
-          .isEqualTo(ccmRule.getDseVersion().get());
+          .isEqualTo(ccmRule.getDistributionVersion());
       assertThat(node.getExtras().get(DseNodeProperties.SERVER_ID)).isInstanceOf(String.class);
       assertThat(node.getExtras().get(DseNodeProperties.DSE_WORKLOADS)).isInstanceOf(Set.class);
     }

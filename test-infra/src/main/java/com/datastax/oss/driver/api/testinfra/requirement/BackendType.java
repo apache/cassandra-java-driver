@@ -18,9 +18,9 @@
 package com.datastax.oss.driver.api.testinfra.requirement;
 
 public enum BackendType {
-  CASSANDRA("C*"),
-  DSE("Dse"),
-  ;
+  CASSANDRA("Apache Cassandra"),
+  DSE("DSE"),
+  HCD("HCD");
 
   final String friendlyName;
 
@@ -30,5 +30,12 @@ public enum BackendType {
 
   public String getFriendlyName() {
     return friendlyName;
+  }
+
+  public String[] getCcmOptions() {
+    if (this == CASSANDRA) {
+      return new String[0];
+    }
+    return new String[] {"--" + name().toLowerCase()};
   }
 }

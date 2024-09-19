@@ -18,18 +18,20 @@
 package com.datastax.oss.driver.api.testinfra.ccm;
 
 import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 
 /** @see CcmRule */
 @SuppressWarnings("unused")
 public class DefaultCcmBridgeBuilderCustomizer {
 
   public static CcmBridge.Builder configureBuilder(CcmBridge.Builder builder) {
-    if (!CcmBridge.DSE_ENABLEMENT
-        && CcmBridge.VERSION.nextStable().compareTo(Version.V4_0_0) >= 0) {
+    if (!CcmBridge.isDistributionOf(
+            BackendType.DSE, (dist, cass) -> dist.nextStable().compareTo(Version.V4_0_0) >= 0)
+        || CcmBridge.isDistributionOf(BackendType.HCD)) {
       builder.withCassandraConfiguration("enable_materialized_views", true);
       builder.withCassandraConfiguration("enable_sasi_indexes", true);
     }
-    if (CcmBridge.VERSION.nextStable().compareTo(Version.V3_0_0) >= 0) {
+    if (CcmBridge.getDistributionVersion().nextStable().compareTo(Version.V3_0_0) >= 0) {
       builder.withJvmArgs("-Dcassandra.superuser_setup_delay_ms=0");
       builder.withJvmArgs("-Dcassandra.skip_wait_for_gossip_to_settle=0");
       builder.withCassandraConfiguration("num_tokens", "1");

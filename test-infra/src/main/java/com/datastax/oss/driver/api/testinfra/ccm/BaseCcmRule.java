@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirementRule;
-import java.util.Optional;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import org.junit.AssumptionViolatedException;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -72,17 +72,29 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
     }
   }
 
-  public Version getCassandraVersion() {
-    return ccmBridge.getCassandraVersion();
+  public BackendType getDistribution() {
+    return CcmBridge.DISTRIBUTION;
   }
 
-  public Optional<Version> getDseVersion() {
-    return ccmBridge.getDseVersion();
+  public boolean isDistributionOf(BackendType type) {
+    return CcmBridge.isDistributionOf(type);
+  }
+
+  public boolean isDistributionOf(BackendType type, CcmBridge.VersionComparator comparator) {
+    return CcmBridge.isDistributionOf(type, comparator);
+  }
+
+  public Version getDistributionVersion() {
+    return CcmBridge.getDistributionVersion();
+  }
+
+  public Version getCassandraVersion() {
+    return CcmBridge.getCassandraVersion();
   }
 
   @Override
   public ProtocolVersion getHighestProtocolVersion() {
-    if (ccmBridge.getCassandraVersion().compareTo(Version.V2_2_0) >= 0) {
+    if (CcmBridge.getCassandraVersion().compareTo(Version.V2_2_0) >= 0) {
       return DefaultProtocolVersion.V4;
     } else {
       return DefaultProtocolVersion.V3;
