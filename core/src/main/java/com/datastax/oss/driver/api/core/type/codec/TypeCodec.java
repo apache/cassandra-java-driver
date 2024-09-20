@@ -220,7 +220,7 @@ public interface TypeCodec<JavaTypeT> {
    * Formats items from collection type as valid list of CQL literals.
    *
    * <p>Implementing this method is not strictly mandatory. Default implementation falls back to
-   * {@code #format(JavaTypeT)}. Method is used primarily for literal values in the query builder
+   * {@link #format(JavaTypeT)}. Method is used primarily for literal values in the query builder
    * (see {@code DefaultLiteral#appendElementsTo(StringBuilder)}.
    */
   default String formatElements(@Nullable JavaTypeT value) {
