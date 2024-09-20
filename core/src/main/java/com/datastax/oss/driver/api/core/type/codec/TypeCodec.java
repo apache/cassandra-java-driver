@@ -221,7 +221,7 @@ public interface TypeCodec<JavaTypeT> {
    *
    * <p>Implementing this method is not strictly mandatory. Default implementation falls back to
    * {@link #format(JavaTypeT)}. Method is used primarily for literal values in the query builder
-   * (see {@code DefaultLiteral#appendElementsTo(StringBuilder)}.
+   * (see {@code DefaultLiteral#appendElementsTo(StringBuilder)}).
    */
   default String formatElements(@Nullable JavaTypeT value) {
     return format(value);
