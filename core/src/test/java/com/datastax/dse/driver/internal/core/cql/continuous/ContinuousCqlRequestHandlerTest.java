@@ -23,15 +23,14 @@ import static com.datastax.dse.protocol.internal.DseProtocolConstants.RevisionTy
 import static com.datastax.dse.protocol.internal.DseProtocolConstants.RevisionType.MORE_CONTINUOUS_PAGES;
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
+import static com.datastax.oss.driver.internal.core.cql.CqlRequestHandlerTrackerTest.execInfoMatcher;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.matches;
-import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -47,7 +46,6 @@ import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.NoNodeAvailableException;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
-import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
@@ -494,28 +492,22 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
 
                 verify(requestTracker)
                     .onNodeError(
-                        eq(UNDEFINED_IDEMPOTENCE_STATEMENT),
-                        any(BootstrappingException.class),
                         anyLong(),
-                        any(DriverExecutionProfile.class),
-                        eq(node1),
-                        nullable(ExecutionInfo.class),
+                        argThat(
+                            execInfoMatcher(
+                                node1,
+                                UNDEFINED_IDEMPOTENCE_STATEMENT,
+                                BootstrappingException.class)),
                         matches(LOG_PREFIX_PER_REQUEST));
                 verify(requestTracker)
                     .onNodeSuccess(
-                        eq(UNDEFINED_IDEMPOTENCE_STATEMENT),
                         anyLong(),
-                        any(DriverExecutionProfile.class),
-                        eq(node2),
-                        any(ExecutionInfo.class),
+                        argThat(execInfoMatcher(node2, UNDEFINED_IDEMPOTENCE_STATEMENT, null)),
                         matches(LOG_PREFIX_PER_REQUEST));
                 verify(requestTracker)
                     .onSuccess(
-                        eq(UNDEFINED_IDEMPOTENCE_STATEMENT),
                         anyLong(),
-                        any(DriverExecutionProfile.class),
-                        eq(node2),
-                        any(ExecutionInfo.class),
+                        argThat(execInfoMatcher(node2, UNDEFINED_IDEMPOTENCE_STATEMENT, null)),
                         matches(LOG_PREFIX_PER_REQUEST));
                 verifyNoMoreInteractions(requestTracker);
               });

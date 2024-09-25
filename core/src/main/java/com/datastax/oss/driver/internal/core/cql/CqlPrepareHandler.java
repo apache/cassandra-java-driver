@@ -537,11 +537,9 @@ public class CqlPrepareHandler implements Throttled {
     long latencyNanos = System.nanoTime() - startTimeNanos;
     ExecutionInfo executionInfo = defaultExecutionInfo(request, node, error).build();
     if (error == null) {
-      requestTracker.onNodeSuccess(
-          request, latencyNanos, executionProfile, node, executionInfo, logPrefix);
+      requestTracker.onNodeSuccess(latencyNanos, executionInfo, logPrefix);
     } else {
-      requestTracker.onNodeError(
-          request, error, latencyNanos, executionProfile, node, executionInfo, logPrefix);
+      requestTracker.onNodeError(latencyNanos, executionInfo, logPrefix);
     }
   }
 
@@ -556,11 +554,9 @@ public class CqlPrepareHandler implements Throttled {
     long latencyNanos = System.nanoTime() - this.startTimeNanos;
     ExecutionInfo executionInfo = defaultExecutionInfo(initialRequest, node, error).build();
     if (error == null) {
-      requestTracker.onSuccess(
-          initialRequest, latencyNanos, executionProfile, node, executionInfo, logPrefix);
+      requestTracker.onSuccess(latencyNanos, executionInfo, logPrefix);
     } else {
-      requestTracker.onError(
-          initialRequest, error, latencyNanos, executionProfile, node, executionInfo, logPrefix);
+      requestTracker.onError(latencyNanos, executionInfo, logPrefix);
     }
   }
 

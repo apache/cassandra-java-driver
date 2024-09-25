@@ -283,19 +283,21 @@ public class DefaultExecutionInfo implements ExecutionInfo {
     public DefaultExecutionInfo build() {
       final ByteBuffer pagingState =
           (response instanceof Rows) ? ((Rows) response).getMetadata().pagingState : null;
-      return new DefaultExecutionInfo(
-          request,
-          coordinator,
-          speculativeExecutionCount,
-          successfulExecutionIndex,
-          driverError,
-          errors,
-          pagingState,
-          frame,
-          schemaInAgreement,
-          session,
-          context,
-          executionProfile);
+      DefaultExecutionInfo executionInfo =
+          new DefaultExecutionInfo(
+              request,
+              coordinator,
+              speculativeExecutionCount,
+              successfulExecutionIndex,
+              driverError,
+              errors,
+              pagingState,
+              frame,
+              schemaInAgreement,
+              session,
+              context,
+              executionProfile);
+      return executionInfo;
     }
   }
 }

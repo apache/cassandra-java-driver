@@ -69,6 +69,12 @@ public interface GraphExecutionInfo {
    */
   int getSuccessfulExecutionIndex();
 
+  /** @return Exception raised by the driver to the application. */
+  @Nullable
+  default Throwable getDriverError() {
+    return null;
+  }
+
   /**
    * The errors encountered on previous coordinators, if any.
    *

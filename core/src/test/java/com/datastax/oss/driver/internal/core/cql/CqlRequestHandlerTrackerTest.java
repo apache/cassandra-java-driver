@@ -21,8 +21,8 @@ import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockingDetails;
 import static org.mockito.Mockito.spy;
@@ -50,7 +50,6 @@ import com.datastax.oss.protocol.internal.response.error.Unprepared;
 import com.datastax.oss.protocol.internal.response.result.Prepared;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -58,6 +57,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.Invocation;
 
 public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
@@ -109,20 +109,12 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
                         any(String.class));
                 verify(requestTracker)
                     .onNodeError(
-                        eq(UNDEFINED_IDEMPOTENCE_STATEMENT),
-                        any(BootstrappingException.class),
                         anyLong(),
-                        any(DriverExecutionProfile.class),
-                        eq(node1),
-                        nullable(ExecutionInfo.class),
-                        any(String.class));
-                verify(requestTracker)
-                    .onNodeSuccess(
-                        eq(UNDEFINED_IDEMPOTENCE_STATEMENT),
-                        anyLong(),
-                        any(DriverExecutionProfile.class),
-                        eq(node2),
-                        any(ExecutionInfo.class),
+                        argThat(
+                            execInfoMatcher(
+                                node1,
+                                UNDEFINED_IDEMPOTENCE_STATEMENT,
+                                BootstrappingException.class)),
                         any(String.class));
                 verify(requestTracker)
                     .onRequestCreatedForNode(
@@ -131,39 +123,18 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
                         eq(node2),
                         any(String.class));
                 verify(requestTracker)
-                    .onSuccess(
-                        eq(UNDEFINED_IDEMPOTENCE_STATEMENT),
+                    .onNodeSuccess(
                         anyLong(),
-                        any(DriverExecutionProfile.class),
-                        eq(node2),
-                        any(ExecutionInfo.class),
+                        argThat(execInfoMatcher(node2, UNDEFINED_IDEMPOTENCE_STATEMENT, null)),
+                        any(String.class));
+                verify(requestTracker)
+                    .onSuccess(
+                        anyLong(),
+                        argThat(execInfoMatcher(node2, UNDEFINED_IDEMPOTENCE_STATEMENT, null)),
                         any(String.class));
                 verifyNoMoreInteractions(requestTracker);
               });
-
-      // verify that passed ExecutionInfo object had correct details
-      List<Invocation> invocations =
-          new ArrayList<>(mockingDetails(requestTracker).getInvocations());
-      checkExecutionInfo(
-          (ExecutionInfo) invocations.get(2).getRawArguments()[5],
-          UNDEFINED_IDEMPOTENCE_STATEMENT,
-          node1);
-      checkExecutionInfo(
-          (ExecutionInfo) invocations.get(4).getRawArguments()[4],
-          UNDEFINED_IDEMPOTENCE_STATEMENT,
-          node2);
-      checkExecutionInfo(
-          (ExecutionInfo) invocations.get(5).getRawArguments()[4],
-          UNDEFINED_IDEMPOTENCE_STATEMENT,
-          node2);
     }
-  }
-
-  private void checkExecutionInfo(
-      ExecutionInfo executionInfo, Request expectedRequest, Node expectedNode) {
-    assertThat(executionInfo.getRequest()).isEqualTo(expectedRequest);
-    assertThat(executionInfo.getExecutionProfile()).isNotNull();
-    assertThat(executionInfo.getCoordinator()).isEqualTo(expectedNode);
   }
 
   @Test
@@ -248,54 +219,54 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
                     (List<Invocation>) mockingDetails(requestTracker).getInvocations();
                 assertThat(invocations).hasSize(10);
                 // start processing CQL statement
-                checkInvocation(
+                checkOnCreateInvocation(
                     invocations.get(0),
                     ON_REQUEST_CREATED,
                     DefaultSimpleStatement.class,
                     LOG_PREFIX_PER_REQUEST);
-                checkInvocation(
+                checkOnCreateInvocation(
                     invocations.get(1),
                     ON_REQUEST_CREATED_FOR_NODE,
                     DefaultSimpleStatement.class,
                     LOG_PREFIX_WITH_EXECUTION_NUMBER);
-                checkInvocation(
+                checkOnEndInvocation(
                     invocations.get(2),
                     ON_NODE_ERROR,
                     DefaultSimpleStatement.class,
                     LOG_PREFIX_WITH_EXECUTION_NUMBER);
                 // implicit reprepare statement
-                checkInvocation(
+                checkOnCreateInvocation(
                     invocations.get(3),
                     ON_REQUEST_CREATED,
                     DefaultPrepareRequest.class,
                     LOG_PREFIX_WITH_EXECUTION_NUMBER);
-                checkInvocation(
+                checkOnCreateInvocation(
                     invocations.get(4),
                     ON_REQUEST_CREATED_FOR_NODE,
                     DefaultPrepareRequest.class,
                     LOG_PREFIX_WITH_EXECUTION_NUMBER);
-                checkInvocation(
+                checkOnEndInvocation(
                     invocations.get(5),
                     ON_NODE_SUCCESS,
                     DefaultPrepareRequest.class,
                     LOG_PREFIX_WITH_EXECUTION_NUMBER);
-                checkInvocation(
+                checkOnEndInvocation(
                     invocations.get(6),
                     ON_SUCCESS,
                     DefaultPrepareRequest.class,
                     LOG_PREFIX_WITH_EXECUTION_NUMBER);
                 // send new statement and process it
-                checkInvocation(
+                checkOnCreateInvocation(
                     invocations.get(7),
                     ON_REQUEST_CREATED_FOR_NODE,
                     DefaultSimpleStatement.class,
                     LOG_PREFIX_WITH_EXECUTION_NUMBER);
-                checkInvocation(
+                checkOnEndInvocation(
                     invocations.get(8),
                     ON_NODE_SUCCESS,
                     DefaultSimpleStatement.class,
                     LOG_PREFIX_WITH_EXECUTION_NUMBER);
-                checkInvocation(
+                checkOnEndInvocation(
                     invocations.get(9),
                     ON_SUCCESS,
                     DefaultSimpleStatement.class,
@@ -304,11 +275,32 @@ public class CqlRequestHandlerTrackerTest extends CqlRequestHandlerTestBase {
     }
   }
 
-  private void checkInvocation(
+  private void checkOnCreateInvocation(
       Invocation invocation, String methodName, Class<?> firstParameter, Pattern logPrefixPattern) {
     assertThat(invocation.getMethod().getName()).isEqualTo(methodName);
     assertThat(invocation.getArguments()[0]).isInstanceOf(firstParameter);
     String logPrefix = invocation.getArguments()[invocation.getArguments().length - 1].toString();
     assertThat(logPrefix).matches(logPrefixPattern);
+  }
+
+  private void checkOnEndInvocation(
+      Invocation invocation, String methodName, Class<?> firstParameter, Pattern logPrefixPattern) {
+    assertThat(invocation.getMethod().getName()).isEqualTo(methodName);
+    assertThat(((ExecutionInfo) invocation.getArguments()[1]).getRequest())
+        .isInstanceOf(firstParameter);
+    String logPrefix = invocation.getArguments()[invocation.getArguments().length - 1].toString();
+    assertThat(logPrefix).matches(logPrefixPattern);
+  }
+
+  public static ArgumentMatcher<ExecutionInfo> execInfoMatcher(
+      Node node, Request request, Class<? extends Throwable> errorClass) {
+    return executionInfo ->
+        node.equals(executionInfo.getCoordinator())
+            && request.equals(executionInfo.getRequest())
+            && (errorClass != null
+                ? executionInfo.getDriverError() != null
+                    && executionInfo.getDriverError().getClass().isAssignableFrom(errorClass)
+                : executionInfo.getDriverError() == null)
+            && executionInfo.getExecutionProfile() != null;
   }
 }

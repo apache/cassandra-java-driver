@@ -17,7 +17,11 @@
  */
 package com.datastax.oss.driver.internal.core.tracker;
 
+import static com.datastax.oss.driver.internal.core.cql.CqlRequestHandlerTrackerTest.execInfoMatcher;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.verify;
@@ -28,11 +32,12 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.datastax.oss.driver.api.core.DriverExecutionException;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
-import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.cql.DefaultExecutionInfo;
+import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,8 +56,8 @@ public class MultiplexingRequestTrackerTest {
   @Mock private Request request;
   @Mock private DriverExecutionProfile profile;
   @Mock private Node node;
-  @Mock private Session session;
-  @Mock private ExecutionInfo executionInfo;
+  @Mock private DefaultSession session;
+  @Mock private InternalDriverContext driverContext;
 
   @Mock private Appender<ILoggingEvent> appender;
   @Captor private ArgumentCaptor<ILoggingEvent> loggingEventCaptor;
@@ -111,14 +116,16 @@ public class MultiplexingRequestTrackerTest {
   public void should_notify_onSuccess() {
     // given
     MultiplexingRequestTracker tracker = new MultiplexingRequestTracker(child1, child2);
-    willThrow(new NullPointerException())
-        .given(child1)
-        .onSuccess(request, 123456L, profile, node, executionInfo, "test");
+    willThrow(new NullPointerException()).given(child1).onSuccess(eq(123456L), any(), eq("test"));
     // when
-    tracker.onSuccess(request, 123456L, profile, node, executionInfo, "test");
+    tracker.onSuccess(123456L, createExecutionInfo(), "test");
     // then
-    verify(child1).onSuccess(request, 123456L, profile, node, executionInfo, "test");
-    verify(child2).onSuccess(request, 123456L, profile, node, executionInfo, "test");
+    verify(child1)
+        .onSuccess(
+            eq(123456L), argThat(execInfoMatcher(node, request, error.getClass())), eq("test"));
+    verify(child2)
+        .onSuccess(
+            eq(123456L), argThat(execInfoMatcher(node, request, error.getClass())), eq("test"));
     verify(appender).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getAllValues().stream().map(ILoggingEvent::getFormattedMessage))
         .contains(
@@ -129,14 +136,16 @@ public class MultiplexingRequestTrackerTest {
   public void should_notify_onError() {
     // given
     MultiplexingRequestTracker tracker = new MultiplexingRequestTracker(child1, child2);
-    willThrow(new NullPointerException())
-        .given(child1)
-        .onError(request, error, 123456L, profile, node, executionInfo, "test");
+    willThrow(new NullPointerException()).given(child1).onError(eq(123456L), any(), eq("test"));
     // when
-    tracker.onError(request, error, 123456L, profile, node, executionInfo, "test");
+    tracker.onError(123456L, createExecutionInfo(), "test");
     // then
-    verify(child1).onError(request, error, 123456L, profile, node, executionInfo, "test");
-    verify(child2).onError(request, error, 123456L, profile, node, executionInfo, "test");
+    verify(child1)
+        .onError(
+            eq(123456L), argThat(execInfoMatcher(node, request, error.getClass())), eq("test"));
+    verify(child2)
+        .onError(
+            eq(123456L), argThat(execInfoMatcher(node, request, error.getClass())), eq("test"));
     verify(appender).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getAllValues().stream().map(ILoggingEvent::getFormattedMessage))
         .contains(
@@ -149,12 +158,16 @@ public class MultiplexingRequestTrackerTest {
     MultiplexingRequestTracker tracker = new MultiplexingRequestTracker(child1, child2);
     willThrow(new NullPointerException())
         .given(child1)
-        .onNodeSuccess(request, 123456L, profile, node, executionInfo, "test");
+        .onNodeSuccess(eq(123456L), any(), eq("test"));
     // when
-    tracker.onNodeSuccess(request, 123456L, profile, node, executionInfo, "test");
+    tracker.onNodeSuccess(123456L, createExecutionInfo(), "test");
     // then
-    verify(child1).onNodeSuccess(request, 123456L, profile, node, executionInfo, "test");
-    verify(child2).onNodeSuccess(request, 123456L, profile, node, executionInfo, "test");
+    verify(child1)
+        .onNodeSuccess(
+            eq(123456L), argThat(execInfoMatcher(node, request, error.getClass())), eq("test"));
+    verify(child2)
+        .onNodeSuccess(
+            eq(123456L), argThat(execInfoMatcher(node, request, error.getClass())), eq("test"));
     verify(appender).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getAllValues().stream().map(ILoggingEvent::getFormattedMessage))
         .contains(
@@ -165,14 +178,16 @@ public class MultiplexingRequestTrackerTest {
   public void should_notify_onNodeError() {
     // given
     MultiplexingRequestTracker tracker = new MultiplexingRequestTracker(child1, child2);
-    willThrow(new NullPointerException())
-        .given(child1)
-        .onNodeError(request, error, 123456L, profile, node, executionInfo, "test");
+    willThrow(new NullPointerException()).given(child1).onNodeError(eq(123456L), any(), eq("test"));
     // when
-    tracker.onNodeError(request, error, 123456L, profile, node, executionInfo, "test");
+    tracker.onNodeError(123456L, createExecutionInfo(), "test");
     // then
-    verify(child1).onNodeError(request, error, 123456L, profile, node, executionInfo, "test");
-    verify(child2).onNodeError(request, error, 123456L, profile, node, executionInfo, "test");
+    verify(child1)
+        .onNodeError(
+            eq(123456L), argThat(execInfoMatcher(node, request, error.getClass())), eq("test"));
+    verify(child2)
+        .onNodeError(
+            eq(123456L), argThat(execInfoMatcher(node, request, error.getClass())), eq("test"));
     verify(appender).doAppend(loggingEventCaptor.capture());
     assertThat(loggingEventCaptor.getAllValues().stream().map(ILoggingEvent::getFormattedMessage))
         .contains(
@@ -211,5 +226,11 @@ public class MultiplexingRequestTrackerTest {
     assertThat(loggingEventCaptor.getAllValues().stream().map(ILoggingEvent::getFormattedMessage))
         .contains(
             "Unexpected error while closing request tracker child1. (NullPointerException: null)");
+  }
+
+  private DefaultExecutionInfo createExecutionInfo() {
+    return new DefaultExecutionInfo.Builder(
+            request, node, -1, 0, error, null, session, driverContext, profile)
+        .build();
   }
 }

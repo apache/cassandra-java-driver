@@ -44,7 +44,6 @@ import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -221,55 +220,35 @@ public class PagingIterableSpliteratorIT {
 
     @Override
     public synchronized void onNodeSuccess(
-        @NonNull Request request,
-        long latencyNanos,
-        @NonNull DriverExecutionProfile executionProfile,
-        @NonNull Node node,
-        @Nullable ExecutionInfo executionInfo,
-        @NonNull String requestLogPrefix) {
-      if (shouldRecord(request)) {
-        successfulRequestsAtNode.add(Pair.of(request, node));
+        long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String requestLogPrefix) {
+      if (shouldRecord(executionInfo.getRequest())) {
+        successfulRequestsAtNode.add(
+            Pair.of(executionInfo.getRequest(), executionInfo.getCoordinator()));
       }
     }
 
     @Override
     public synchronized void onSuccess(
-        @NonNull Request request,
-        long latencyNanos,
-        @NonNull DriverExecutionProfile executionProfile,
-        @NonNull Node node,
-        @Nullable ExecutionInfo executionInfo,
-        @NonNull String requestLogPrefix) {
-      if (shouldRecord(request)) {
-        successfulRequests.add(request);
+        long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String requestLogPrefix) {
+      if (shouldRecord(executionInfo.getRequest())) {
+        successfulRequests.add(executionInfo.getRequest());
       }
     }
 
     @Override
     public synchronized void onNodeError(
-        @NonNull Request request,
-        @NonNull Throwable error,
-        long latencyNanos,
-        @NonNull DriverExecutionProfile executionProfile,
-        @NonNull Node node,
-        @Nullable ExecutionInfo executionInfo,
-        @NonNull String requestLogPrefix) {
-      if (shouldRecord(request)) {
-        errorRequestsAtNode.add(Pair.of(request, node));
+        long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String requestLogPrefix) {
+      if (shouldRecord(executionInfo.getRequest())) {
+        errorRequestsAtNode.add(
+            Pair.of(executionInfo.getRequest(), executionInfo.getCoordinator()));
       }
     }
 
     @Override
     public synchronized void onError(
-        @NonNull Request request,
-        @NonNull Throwable error,
-        long latencyNanos,
-        @NonNull DriverExecutionProfile executionProfile,
-        @Nullable Node node,
-        @Nullable ExecutionInfo executionInfo,
-        @NonNull String requestLogPrefix) {
-      if (shouldRecord(request)) {
-        errorRequests.add(request);
+        long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String requestLogPrefix) {
+      if (shouldRecord(executionInfo.getRequest())) {
+        errorRequests.add(executionInfo.getRequest());
       }
     }
 

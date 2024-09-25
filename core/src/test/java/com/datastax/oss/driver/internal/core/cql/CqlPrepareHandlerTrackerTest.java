@@ -19,6 +19,8 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static com.datastax.oss.driver.internal.core.cql.CqlRequestHandlerTestBase.defaultFrameOf;
+import static com.datastax.oss.driver.internal.core.cql.CqlRequestHandlerTrackerTest.execInfoMatcher;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.eq;
@@ -29,7 +31,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.servererrors.BootstrappingException;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
@@ -74,12 +75,9 @@ public class CqlPrepareHandlerTrackerTest extends CqlPrepareHandlerTestBase {
                         any(String.class));
                 verify(requestTracker)
                     .onNodeError(
-                        eq(PREPARE_REQUEST),
-                        any(BootstrappingException.class),
                         anyLong(),
-                        any(DriverExecutionProfile.class),
-                        eq(node1),
-                        any(ExecutionInfo.class),
+                        argThat(
+                            execInfoMatcher(node1, PREPARE_REQUEST, BootstrappingException.class)),
                         any(String.class));
                 verify(requestTracker)
                     .onRequestCreatedForNode(
@@ -89,19 +87,13 @@ public class CqlPrepareHandlerTrackerTest extends CqlPrepareHandlerTestBase {
                         any(String.class));
                 verify(requestTracker)
                     .onNodeSuccess(
-                        eq(PREPARE_REQUEST),
                         anyLong(),
-                        any(DriverExecutionProfile.class),
-                        eq(node2),
-                        any(ExecutionInfo.class),
+                        argThat(execInfoMatcher(node2, PREPARE_REQUEST, null)),
                         any(String.class));
                 verify(requestTracker)
                     .onSuccess(
-                        eq(PREPARE_REQUEST),
                         anyLong(),
-                        any(DriverExecutionProfile.class),
-                        eq(node2),
-                        any(ExecutionInfo.class),
+                        argThat(execInfoMatcher(node2, PREPARE_REQUEST, null)),
                         any(String.class));
                 verifyNoMoreInteractions(requestTracker);
               });

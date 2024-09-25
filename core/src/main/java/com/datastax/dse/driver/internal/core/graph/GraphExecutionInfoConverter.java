@@ -84,6 +84,12 @@ public class GraphExecutionInfoConverter {
         return graphExecutionInfo.getSuccessfulExecutionIndex();
       }
 
+      @Nullable
+      @Override
+      public Throwable getDriverError() {
+        return graphExecutionInfo.getDriverError();
+      }
+
       @NonNull
       @Override
       public List<Entry<Node, Throwable>> getErrors() {
@@ -170,6 +176,11 @@ public class GraphExecutionInfoConverter {
       @Override
       public int getSuccessfulExecutionIndex() {
         return executionInfo.getSuccessfulExecutionIndex();
+      }
+
+      @Override
+      public Throwable getDriverError() {
+        return executionInfo.getDriverError();
       }
 
       @Override

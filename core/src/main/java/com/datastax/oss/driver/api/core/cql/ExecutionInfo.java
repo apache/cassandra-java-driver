@@ -120,6 +120,7 @@ public interface ExecutionInfo {
   @NonNull
   List<Map.Entry<Node, Throwable>> getErrors();
 
+  /** @return Exception raised by the driver to the application. */
   @Nullable
   default Throwable getDriverError() {
     return null;

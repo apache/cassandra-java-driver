@@ -26,7 +26,6 @@ import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Duration;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
@@ -84,13 +83,9 @@ public class RequestLogger implements RequestTracker {
 
   @Override
   public void onSuccess(
-      @NonNull Request request,
-      long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull ExecutionInfo executionInfo,
-      @NonNull String logPrefix) {
+      long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String logPrefix) {
 
+    DriverExecutionProfile executionProfile = executionInfo.getExecutionProfile();
     boolean successEnabled =
         executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, false);
     boolean slowEnabled =
@@ -124,10 +119,10 @@ public class RequestLogger implements RequestTracker {
             DEFAULT_REQUEST_LOGGER_MAX_VALUE_LENGTH);
 
     logSuccess(
-        request,
+        executionInfo.getRequest(),
         latencyNanos,
         isSlow,
-        node,
+        executionInfo.getCoordinator(),
         maxQueryLength,
         showValues,
         maxValues,
@@ -137,14 +132,9 @@ public class RequestLogger implements RequestTracker {
 
   @Override
   public void onError(
-      @NonNull Request request,
-      @NonNull Throwable error,
-      long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      Node node,
-      @NonNull ExecutionInfo executionInfo,
-      @NonNull String logPrefix) {
+      long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String logPrefix) {
 
+    DriverExecutionProfile executionProfile = executionInfo.getExecutionProfile();
     if (!executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, false)) {
       return;
     }
@@ -168,10 +158,10 @@ public class RequestLogger implements RequestTracker {
         executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES, false);
 
     logError(
-        request,
-        error,
+        executionInfo.getRequest(),
+        executionInfo.getDriverError(),
         latencyNanos,
-        node,
+        executionInfo.getCoordinator(),
         maxQueryLength,
         showValues,
         maxValues,
@@ -182,24 +172,13 @@ public class RequestLogger implements RequestTracker {
 
   @Override
   public void onNodeError(
-      @NonNull Request request,
-      @NonNull Throwable error,
-      long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @Nullable ExecutionInfo executionInfo,
-      @NonNull String logPrefix) {
+      long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String logPrefix) {
     // Nothing to do
   }
 
   @Override
   public void onNodeSuccess(
-      @NonNull Request request,
-      long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull ExecutionInfo executionInfo,
-      @NonNull String logPrefix) {
+      long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String logPrefix) {
     // Nothing to do
   }
 

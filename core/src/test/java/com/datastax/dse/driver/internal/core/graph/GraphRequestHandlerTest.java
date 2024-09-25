@@ -26,9 +26,11 @@ import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.seriali
 import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.singleGraphRow;
 import static com.datastax.oss.driver.api.core.type.codec.TypeCodecs.BIGINT;
 import static com.datastax.oss.driver.api.core.type.codec.TypeCodecs.TEXT;
+import static com.datastax.oss.driver.internal.core.cql.CqlRequestHandlerTrackerTest.execInfoMatcher;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.mock;
@@ -56,7 +58,6 @@ import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.internal.core.cql.Conversions;
@@ -518,19 +519,13 @@ public class GraphRequestHandlerTest {
 
     verify(requestTracker)
         .onSuccess(
-            eq(graphStatement),
             anyLong(),
-            any(DriverExecutionProfile.class),
-            eq(node),
-            any(ExecutionInfo.class),
+            argThat(execInfoMatcher(node, graphStatement, null)),
             matches(LOG_PREFIX_PER_REQUEST));
     verify(requestTracker)
         .onNodeSuccess(
-            eq(graphStatement),
             anyLong(),
-            any(DriverExecutionProfile.class),
-            eq(node),
-            any(ExecutionInfo.class),
+            argThat(execInfoMatcher(node, graphStatement, null)),
             matches(LOG_PREFIX_PER_REQUEST));
     verifyNoMoreInteractions(requestTracker);
 

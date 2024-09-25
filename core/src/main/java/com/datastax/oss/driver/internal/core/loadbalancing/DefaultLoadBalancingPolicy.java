@@ -21,7 +21,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -242,25 +241,14 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
 
   @Override
   public void onNodeSuccess(
-      @NonNull Request request,
-      long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull ExecutionInfo executionInfo,
-      @NonNull String logPrefix) {
-    updateResponseTimes(node);
+      long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String logPrefix) {
+    updateResponseTimes(executionInfo.getCoordinator());
   }
 
   @Override
   public void onNodeError(
-      @NonNull Request request,
-      @NonNull Throwable error,
-      long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @Nullable ExecutionInfo executionInfo,
-      @NonNull String logPrefix) {
-    updateResponseTimes(node);
+      long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String logPrefix) {
+    updateResponseTimes(executionInfo.getCoordinator());
   }
 
   /** Exposed as a protected method so that it can be accessed by tests */
