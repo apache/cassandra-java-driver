@@ -46,4 +46,28 @@ public interface ColumnRelationBuilder<ResultT>
   default ResultT containsKey(@NonNull Term term) {
     return build(" CONTAINS KEY ", term);
   }
+
+  /**
+   * Builds a NOT CONTAINS relation for the column.
+   *
+   * <p>Note that NOT CONTAINS support is only available in Cassandra 5.1 or later. See <a
+   * href="https://issues.apache.org/jira/browse/CASSANDRA-18584">CASSANDRA-18584</a> for more
+   * information.
+   */
+  @NonNull
+  default ResultT notContains(@NonNull Term term) {
+    return build(" NOT CONTAINS ", term);
+  }
+
+  /**
+   * Builds a NOT CONTAINS KEY relation for the column.
+   *
+   * <p>Note that NOT CONTAINS KEY support is only available in Cassandra 5.1 or later. See <a
+   * href="https://issues.apache.org/jira/browse/CASSANDRA-18584">CASSANDRA-18584</a> for more
+   * information.
+   */
+  @NonNull
+  default ResultT notContainsKey(@NonNull Term term) {
+    return build(" NOT CONTAINS KEY ", term);
+  }
 }

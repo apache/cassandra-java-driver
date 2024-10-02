@@ -19,10 +19,12 @@ package com.datastax.oss.driver.api.querybuilder.relation;
 
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.raw;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.tuple;
 
+import org.assertj.core.util.Lists;
 import org.junit.Test;
 
 public class RelationTest {
@@ -42,11 +44,76 @@ public class RelationTest {
   }
 
   @Test
-  public void should_generate_in_relation() {
+  public void should_generate_contains_relation() {
+    assertThat(selectFrom("foo").all().where(Relation.column("k").contains(literal(1))))
+        .hasCql("SELECT * FROM foo WHERE k CONTAINS 1");
+  }
+
+  @Test
+  public void should_generate_contains_key_relation() {
+    assertThat(selectFrom("foo").all().where(Relation.column("k").containsKey(literal(1))))
+        .hasCql("SELECT * FROM foo WHERE k CONTAINS KEY 1");
+  }
+
+  @Test
+  public void should_generate_not_contains_relation() {
+    assertThat(selectFrom("foo").all().where(Relation.column("k").notContains(literal(1))))
+        .hasCql("SELECT * FROM foo WHERE k NOT CONTAINS 1");
+  }
+
+  @Test
+  public void should_generate_not_contains_key_relation() {
+    assertThat(selectFrom("foo").all().where(Relation.column("k").notContainsKey(literal(1))))
+        .hasCql("SELECT * FROM foo WHERE k NOT CONTAINS KEY 1");
+  }
+
+  @Test
+  public void should_generate_in_relation_bind_markers() {
     assertThat(selectFrom("foo").all().where(Relation.column("k").in(bindMarker())))
         .hasCql("SELECT * FROM foo WHERE k IN ?");
     assertThat(selectFrom("foo").all().where(Relation.column("k").in(bindMarker(), bindMarker())))
         .hasCql("SELECT * FROM foo WHERE k IN (?,?)");
+  }
+
+  @Test
+  public void should_generate_in_relation_terms() {
+    assertThat(
+            selectFrom("foo")
+                .all()
+                .where(
+                    Relation.column("k")
+                        .in(Lists.newArrayList(literal(1), literal(2), literal(3)))))
+        .hasCql("SELECT * FROM foo WHERE k IN (1,2,3)");
+    assertThat(
+            selectFrom("foo")
+                .all()
+                .where(Relation.column("k").in(literal(1), literal(2), literal(3))))
+        .hasCql("SELECT * FROM foo WHERE k IN (1,2,3)");
+  }
+
+  @Test
+  public void should_generate_not_in_relation_bind_markers() {
+    assertThat(selectFrom("foo").all().where(Relation.column("k").notIn(bindMarker())))
+        .hasCql("SELECT * FROM foo WHERE k NOT IN ?");
+    assertThat(
+            selectFrom("foo").all().where(Relation.column("k").notIn(bindMarker(), bindMarker())))
+        .hasCql("SELECT * FROM foo WHERE k NOT IN (?,?)");
+  }
+
+  @Test
+  public void should_generate_not_in_relation_terms() {
+    assertThat(
+            selectFrom("foo")
+                .all()
+                .where(
+                    Relation.column("k")
+                        .notIn(Lists.newArrayList(literal(1), literal(2), literal(3)))))
+        .hasCql("SELECT * FROM foo WHERE k NOT IN (1,2,3)");
+    assertThat(
+            selectFrom("foo")
+                .all()
+                .where(Relation.column("k").notIn(literal(1), literal(2), literal(3))))
+        .hasCql("SELECT * FROM foo WHERE k NOT IN (1,2,3)");
   }
 
   @Test
