@@ -50,6 +50,38 @@ public interface InRelationBuilder<ResultT> {
     return in(Arrays.asList(alternatives));
   }
 
+  /**
+   * Builds a NOT IN relation where the whole set of possible values is a bound variable, as in
+   * {@code NOT IN ?}.
+   *
+   * <p>Note that NOT IN support is only available in Cassandra 5.1 or later. See <a
+   * href="https://issues.apache.org/jira/browse/CASSANDRA-18584">CASSANDRA-18584</a> for more
+   * information.
+   */
+  @NonNull
+  default ResultT notIn(@NonNull BindMarker bindMarker) {
+    return build(" NOT IN ", bindMarker);
+  }
+
+  /**
+   * Builds an IN relation where the arguments are the possible values, as in {@code IN (term1,
+   * term2...)}.
+   *
+   * <p>Note that NOT IN support is only available in Cassandra 5.1 or later. See <a
+   * href="https://issues.apache.org/jira/browse/CASSANDRA-18584">CASSANDRA-18584</a> for more
+   * information.
+   */
+  @NonNull
+  default ResultT notIn(@NonNull Iterable<Term> alternatives) {
+    return build(" NOT IN ", QueryBuilder.tuple(alternatives));
+  }
+
+  /** Var-arg equivalent of {@link #notIn(Iterable)} . */
+  @NonNull
+  default ResultT notIn(@NonNull Term... alternatives) {
+    return notIn(Arrays.asList(alternatives));
+  }
+
   @NonNull
   ResultT build(@NonNull String operator, @Nullable Term rightOperand);
 }
