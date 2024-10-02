@@ -29,6 +29,7 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -67,13 +68,16 @@ public class AsyncResultSetIT {
   @BeforeClass
   public static void setupSchema() {
     // create table and load data across two partitions so we can test paging across tokens.
-    SESSION_RULE
-        .session()
-        .execute(
-            SimpleStatement.builder(
-                    "CREATE TABLE IF NOT EXISTS test (k0 text, k1 int, v int, PRIMARY KEY(k0, k1))")
-                .setExecutionProfile(SESSION_RULE.slowProfile())
-                .build());
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          SESSION_RULE
+              .session()
+              .execute(
+                  SimpleStatement.builder(
+                          "CREATE TABLE IF NOT EXISTS test (k0 text, k1 int, v int, PRIMARY KEY(k0, k1))")
+                      .setExecutionProfile(SESSION_RULE.slowProfile())
+                      .build());
+        });
 
     PreparedStatement prepared =
         SESSION_RULE.session().prepare("INSERT INTO test (k0, k1, v) VALUES (?, ?, ?)");

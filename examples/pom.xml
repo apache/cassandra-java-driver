@@ -23,7 +23,7 @@
   <parent>
     <artifactId>java-driver-parent</artifactId>
     <groupId>org.apache.cassandra</groupId>
-    <version>4.18.1-SNAPSHOT</version>
+    <version>4.18.2-SNAPSHOT</version>
   </parent>
   <artifactId>java-driver-examples</artifactId>
   <name>Apache Cassandra Java Driver - examples.</name>

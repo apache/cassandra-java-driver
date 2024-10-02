@@ -21,6 +21,16 @@ under the License.
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.18.1
+
+- [improvement] JAVA-3142: Ability to specify ordering of remote local dc's via new configuration for graceful automatic failovers
+- [bug] CASSANDRA-19457: Object reference in Micrometer metrics prevent GC from reclaiming Session instances
+- [improvement] CASSANDRA-19468: Don't swallow exception during metadata refresh
+- [bug] CASSANDRA-19333: Fix data corruption in VectorCodec when using heap buffers
+- [improvement] CASSANDRA-19290: Replace uses of AttributeKey.newInstance
+- [improvement] CASSANDRA-19352: Support native_transport_(address|port) + native_transport_port_ssl for DSE 6.8 (4.x edition)
+- [improvement] CASSANDRA-19180: Support reloading keystore in cassandra-java-driver
+
 ### 4.18.0
 
 - [improvement] PR 1689: Add support for publishing percentile time series for the histogram metrics (nparaddi-walmart)

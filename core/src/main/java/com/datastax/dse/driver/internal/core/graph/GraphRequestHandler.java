@@ -153,6 +153,7 @@ public class GraphRequestHandler implements Throttled {
           try {
             if (t instanceof CancellationException) {
               cancelScheduledTasks();
+              context.getRequestThrottler().signalCancel(this);
             }
           } catch (Throwable t2) {
             Loggers.warnWithException(LOG, "[{}] Uncaught exception", logPrefix, t2);
@@ -557,12 +558,13 @@ public class GraphRequestHandler implements Throttled {
           cancel();
         } else {
           inFlightCallbacks.add(this);
-          if (scheduleNextExecution && Conversions.resolveIdempotence(statement, context)) {
+          if (scheduleNextExecution
+              && Conversions.resolveIdempotence(statement, executionProfile)) {
             int nextExecution = execution + 1;
             long nextDelay;
             try {
               nextDelay =
-                  Conversions.resolveSpeculativeExecutionPolicy(statement, context)
+                  Conversions.resolveSpeculativeExecutionPolicy(context, executionProfile)
                       .nextExecution(node, null, statement, nextExecution);
             } catch (Throwable cause) {
               // This is a bug in the policy, but not fatal since we have at least one other
@@ -678,7 +680,7 @@ public class GraphRequestHandler implements Throttled {
         trackNodeError(node, error, NANOTIME_NOT_MEASURED_YET);
         setFinalError(statement, error, node, execution);
       } else {
-        RetryPolicy retryPolicy = Conversions.resolveRetryPolicy(statement, context);
+        RetryPolicy retryPolicy = Conversions.resolveRetryPolicy(context, executionProfile);
         RetryVerdict verdict;
         if (error instanceof ReadTimeoutException) {
           ReadTimeoutException readTimeout = (ReadTimeoutException) error;
@@ -699,7 +701,7 @@ public class GraphRequestHandler implements Throttled {
         } else if (error instanceof WriteTimeoutException) {
           WriteTimeoutException writeTimeout = (WriteTimeoutException) error;
           verdict =
-              Conversions.resolveIdempotence(statement, context)
+              Conversions.resolveIdempotence(statement, executionProfile)
                   ? retryPolicy.onWriteTimeoutVerdict(
                       statement,
                       writeTimeout.getConsistencyLevel(),
@@ -731,7 +733,7 @@ public class GraphRequestHandler implements Throttled {
               DefaultNodeMetric.IGNORES_ON_UNAVAILABLE);
         } else {
           verdict =
-              Conversions.resolveIdempotence(statement, context)
+              Conversions.resolveIdempotence(statement, executionProfile)
                   ? retryPolicy.onErrorResponseVerdict(statement, error, retryCount)
                   : RetryVerdict.RETHROW;
           updateErrorMetrics(
@@ -810,12 +812,12 @@ public class GraphRequestHandler implements Throttled {
       }
       LOG.trace("[{}] Request failure, processing: {}", logPrefix, error);
       RetryVerdict verdict;
-      if (!Conversions.resolveIdempotence(statement, context)
+      if (!Conversions.resolveIdempotence(statement, executionProfile)
           || error instanceof FrameTooLongException) {
         verdict = RetryVerdict.RETHROW;
       } else {
         try {
-          RetryPolicy retryPolicy = Conversions.resolveRetryPolicy(statement, context);
+          RetryPolicy retryPolicy = Conversions.resolveRetryPolicy(context, executionProfile);
           verdict = retryPolicy.onRequestAbortedVerdict(statement, error, retryCount);
         } catch (Throwable cause) {
           setFinalError(

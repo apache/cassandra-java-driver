@@ -410,6 +410,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
 
     cancelScheduledTasks(null);
     cancelGlobalTimeout();
+    throttler.signalCancel(this);
   }
 
   private void cancelGlobalTimeout() {
@@ -648,12 +649,13 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
         }
       } else {
         LOG.trace("[{}] Request sent on {}", logPrefix, channel);
-        if (scheduleSpeculativeExecution && Conversions.resolveIdempotence(statement, context)) {
+        if (scheduleSpeculativeExecution
+            && Conversions.resolveIdempotence(statement, executionProfile)) {
           int nextExecution = executionIndex + 1;
           // Note that `node` is the first node of the execution, it might not be the "slow" one
           // if there were retries, but in practice retries are rare.
           long nextDelay =
-              Conversions.resolveSpeculativeExecutionPolicy(statement, context)
+              Conversions.resolveSpeculativeExecutionPolicy(context, executionProfile)
                   .nextExecution(node, keyspace, statement, nextExecution);
           if (nextDelay >= 0) {
             scheduleSpeculativeExecution(nextExecution, nextDelay);
@@ -787,12 +789,12 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       cancelTimeout(pageTimeout);
       LOG.trace(String.format("[%s] Request failure", logPrefix), error);
       RetryVerdict verdict;
-      if (!Conversions.resolveIdempotence(statement, context)
+      if (!Conversions.resolveIdempotence(statement, executionProfile)
           || error instanceof FrameTooLongException) {
         verdict = RetryVerdict.RETHROW;
       } else {
         try {
-          RetryPolicy retryPolicy = Conversions.resolveRetryPolicy(statement, context);
+          RetryPolicy retryPolicy = Conversions.resolveRetryPolicy(context, executionProfile);
           verdict = retryPolicy.onRequestAbortedVerdict(statement, error, retryCount);
         } catch (Throwable cause) {
           abort(
@@ -945,7 +947,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
       assert lock.isHeldByCurrentThread();
       NodeMetricUpdater metricUpdater = ((DefaultNode) node).getMetricUpdater();
       RetryVerdict verdict;
-      RetryPolicy retryPolicy = Conversions.resolveRetryPolicy(statement, context);
+      RetryPolicy retryPolicy = Conversions.resolveRetryPolicy(context, executionProfile);
       if (error instanceof ReadTimeoutException) {
         ReadTimeoutException readTimeout = (ReadTimeoutException) error;
         verdict =
@@ -964,7 +966,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
             DefaultNodeMetric.IGNORES_ON_READ_TIMEOUT);
       } else if (error instanceof WriteTimeoutException) {
         WriteTimeoutException writeTimeout = (WriteTimeoutException) error;
-        if (Conversions.resolveIdempotence(statement, context)) {
+        if (Conversions.resolveIdempotence(statement, executionProfile)) {
           verdict =
               retryPolicy.onWriteTimeoutVerdict(
                   statement,
@@ -999,7 +1001,7 @@ public abstract class ContinuousRequestHandlerBase<StatementT extends Request, R
             DefaultNodeMetric.IGNORES_ON_UNAVAILABLE);
       } else {
         verdict =
-            Conversions.resolveIdempotence(statement, context)
+            Conversions.resolveIdempotence(statement, executionProfile)
                 ? retryPolicy.onErrorResponseVerdict(statement, error, retryCount)
                 : RetryVerdict.RETHROW;
         updateErrorMetrics(

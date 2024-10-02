@@ -513,6 +513,7 @@ public interface Statement<SelfT extends Statement<SelfT>> extends Request {
    * @see #NO_NOW_IN_SECONDS
    */
   @NonNull
+  @CheckReturnValue
   @SuppressWarnings("unchecked")
   default SelfT setNowInSeconds(int nowInSeconds) {
     return (SelfT) this;

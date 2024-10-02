@@ -100,7 +100,10 @@ public class CompletableFutures {
                 } else {
                   Throwable finalError = errors.get(0);
                   for (int i = 1; i < errors.size(); i++) {
-                    finalError.addSuppressed(errors.get(i));
+                    Throwable suppressedError = errors.get(i);
+                    if (finalError != suppressedError) {
+                      finalError.addSuppressed(suppressedError);
+                    }
                   }
                   result.completeExceptionally(finalError);
                 }

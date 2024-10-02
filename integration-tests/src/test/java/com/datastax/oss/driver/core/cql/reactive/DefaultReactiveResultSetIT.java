@@ -32,6 +32,7 @@ import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.cql.EmptyColumnDefinitions;
@@ -64,20 +65,23 @@ public class DefaultReactiveResultSetIT {
   @BeforeClass
   public static void initialize() {
     CqlSession session = sessionRule.session();
-    session.execute("DROP TABLE IF EXISTS test_reactive_read");
-    session.execute("DROP TABLE IF EXISTS test_reactive_write");
-    session.checkSchemaAgreement();
-    session.execute(
-        SimpleStatement.builder(
-                "CREATE TABLE test_reactive_read (pk int, cc int, v int, PRIMARY KEY ((pk), cc))")
-            .setExecutionProfile(sessionRule.slowProfile())
-            .build());
-    session.execute(
-        SimpleStatement.builder(
-                "CREATE TABLE test_reactive_write (pk int, cc int, v int, PRIMARY KEY ((pk), cc))")
-            .setExecutionProfile(sessionRule.slowProfile())
-            .build());
-    session.checkSchemaAgreement();
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          session.execute("DROP TABLE IF EXISTS test_reactive_read");
+          session.execute("DROP TABLE IF EXISTS test_reactive_write");
+          session.checkSchemaAgreement();
+          session.execute(
+              SimpleStatement.builder(
+                      "CREATE TABLE test_reactive_read (pk int, cc int, v int, PRIMARY KEY ((pk), cc))")
+                  .setExecutionProfile(sessionRule.slowProfile())
+                  .build());
+          session.execute(
+              SimpleStatement.builder(
+                      "CREATE TABLE test_reactive_write (pk int, cc int, v int, PRIMARY KEY ((pk), cc))")
+                  .setExecutionProfile(sessionRule.slowProfile())
+                  .build());
+          session.checkSchemaAgreement();
+        });
     for (int i = 0; i < 1000; i++) {
       session.execute(
           SimpleStatement.builder("INSERT INTO test_reactive_read (pk, cc, v) VALUES (0, ?, ?)")

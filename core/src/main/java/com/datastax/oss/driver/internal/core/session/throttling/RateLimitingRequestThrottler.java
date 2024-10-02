@@ -199,6 +199,18 @@ public class RateLimitingRequestThrottler implements RequestThrottler {
   }
 
   @Override
+  public void signalCancel(@NonNull Throttled request) {
+    lock.lock();
+    try {
+      if (!closed && queue.remove(request)) { // The request has been cancelled before it was active
+        LOG.trace("[{}] Removing cancelled request from the queue", logPrefix);
+      }
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
   public void close() {
     lock.lock();
     try {

@@ -360,7 +360,8 @@ public class DefaultBoundStatement implements BoundStatement {
       if (indices.isEmpty()) {
         return null;
       } else if (indices.size() == 1) {
-        return getBytesUnsafe(indices.get(0));
+        int index = indices.get(0);
+        return isSet(index) ? getBytesUnsafe(index) : null;
       } else {
         ByteBuffer[] components = new ByteBuffer[indices.size()];
         for (int i = 0; i < components.length; i++) {

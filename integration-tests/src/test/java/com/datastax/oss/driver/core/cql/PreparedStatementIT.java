@@ -527,6 +527,25 @@ public class PreparedStatementIT {
     assertThat(tokenFactory.hash(boundStatement.getRoutingKey())).isEqualTo(expectedToken);
   }
 
+  @Test
+  public void should_return_null_routing_information_when_single_partition_key_is_unbound() {
+    should_return_null_routing_information_when_single_partition_key_is_unbound(
+        "SELECT a FROM prepared_statement_test WHERE a = ?");
+    should_return_null_routing_information_when_single_partition_key_is_unbound(
+        "INSERT INTO prepared_statement_test (a) VALUES (?)");
+    should_return_null_routing_information_when_single_partition_key_is_unbound(
+        "UPDATE prepared_statement_test SET b = 1 WHERE a = ?");
+    should_return_null_routing_information_when_single_partition_key_is_unbound(
+        "DELETE FROM prepared_statement_test WHERE a = ?");
+  }
+
+  private void should_return_null_routing_information_when_single_partition_key_is_unbound(
+      String queryString) {
+    CqlSession session = sessionRule.session();
+    BoundStatement boundStatement = session.prepare(queryString).bind();
+    assertThat(boundStatement.getRoutingKey()).isNull();
+  }
+
   private static Iterable<Row> firstPageOf(CompletionStage<AsyncResultSet> stage) {
     return CompletableFutures.getUninterruptibly(stage).currentPage();
   }

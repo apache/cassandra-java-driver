@@ -35,6 +35,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Insert;
 import com.datastax.oss.driver.api.mapper.annotations.Mapper;
 import com.datastax.oss.driver.api.mapper.annotations.Select;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -72,10 +73,15 @@ public class SelectCustomWhereClauseIT extends InventoryITBase {
 
     CqlSession session = SESSION_RULE.session();
 
-    for (String query : createStatements(CCM_RULE)) {
-      session.execute(
-          SimpleStatement.builder(query).setExecutionProfile(SESSION_RULE.slowProfile()).build());
-    }
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          for (String query : createStatements(CCM_RULE, true)) {
+            session.execute(
+                SimpleStatement.builder(query)
+                    .setExecutionProfile(SESSION_RULE.slowProfile())
+                    .build());
+          }
+        });
 
     InventoryMapper inventoryMapper =
         new SelectCustomWhereClauseIT_InventoryMapperBuilder(session).build();

@@ -2,7 +2,8 @@
 
 :warning: The java-driver has recently been donated by Datastax to The Apache Software Foundation and the Apache Cassandra project.  Bear with us as we move assets and coordinates.
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.datastax.oss/java-driver-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.datastax.oss/java-driver-core)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.apache.cassandra/java-driver-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.apache.cassandra/java-driver-core)
 
 *If you're reading this on github.com, please note that this is the readme for the development 
 version and that some features described here might not yet have been released. You can find the

@@ -31,6 +31,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -67,13 +68,16 @@ public class PerRequestKeyspaceIT {
 
   @Before
   public void setupSchema() {
-    sessionRule
-        .session()
-        .execute(
-            SimpleStatement.builder(
-                    "CREATE TABLE IF NOT EXISTS foo (k text, cc int, v int, PRIMARY KEY(k, cc))")
-                .setExecutionProfile(sessionRule.slowProfile())
-                .build());
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          sessionRule
+              .session()
+              .execute(
+                  SimpleStatement.builder(
+                          "CREATE TABLE IF NOT EXISTS foo (k text, cc int, v int, PRIMARY KEY(k, cc))")
+                      .setExecutionProfile(sessionRule.slowProfile())
+                      .build());
+        });
   }
 
   @Test
@@ -220,27 +224,31 @@ public class PerRequestKeyspaceIT {
   @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "4.0")
   public void should_reprepare_statement_with_keyspace_on_the_fly() {
     // Create a separate session because we don't want it to have a default keyspace
-    try (CqlSession session = SessionUtils.newSession(ccmRule)) {
-      executeDdl(
-          session,
-          String.format(
-              "CREATE TABLE IF NOT EXISTS %s.bar (k int primary key)", sessionRule.keyspace()));
-      PreparedStatement pst =
-          session.prepare(
-              SimpleStatement.newInstance("SELECT * FROM bar WHERE k=?")
-                  .setKeyspace(sessionRule.keyspace()));
+    SchemaChangeSynchronizer.withLock(
+        () -> {
+          try (CqlSession session = SessionUtils.newSession(ccmRule)) {
+            executeDdl(
+                session,
+                String.format(
+                    "CREATE TABLE IF NOT EXISTS %s.bar (k int primary key)",
+                    sessionRule.keyspace()));
+            PreparedStatement pst =
+                session.prepare(
+                    SimpleStatement.newInstance("SELECT * FROM bar WHERE k=?")
+                        .setKeyspace(sessionRule.keyspace()));
 
-      // Drop and re-create the table to invalidate the prepared statement server side
-      executeDdl(session, String.format("DROP TABLE %s.bar", sessionRule.keyspace()));
-      executeDdl(
-          session,
-          String.format("CREATE TABLE %s.bar (k int primary key)", sessionRule.keyspace()));
-      assertThat(preparedStatementExistsOnServer(session, pst.getId())).isFalse();
+            // Drop and re-create the table to invalidate the prepared statement server side
+            executeDdl(session, String.format("DROP TABLE %s.bar", sessionRule.keyspace()));
+            executeDdl(
+                session,
+                String.format("CREATE TABLE %s.bar (k int primary key)", sessionRule.keyspace()));
+            assertThat(preparedStatementExistsOnServer(session, pst.getId())).isFalse();
 
-      // This will re-prepare on the fly
-      session.execute(pst.bind(0));
-      assertThat(preparedStatementExistsOnServer(session, pst.getId())).isTrue();
-    }
+            // This will re-prepare on the fly
+            session.execute(pst.bind(0));
+            assertThat(preparedStatementExistsOnServer(session, pst.getId())).isTrue();
+          }
+        });
   }
 
   private void executeDdl(CqlSession session, String query) {
