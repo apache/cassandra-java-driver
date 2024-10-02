@@ -19,7 +19,6 @@ package com.datastax.oss.driver.api.querybuilder;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
@@ -30,7 +29,6 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.querybuilder.delete.DeleteSelection;
 import com.datastax.oss.driver.api.querybuilder.insert.InsertInto;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
-import com.datastax.oss.driver.api.querybuilder.select.Ann;
 import com.datastax.oss.driver.api.querybuilder.select.SelectFrom;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
@@ -45,7 +43,6 @@ import com.datastax.oss.driver.internal.querybuilder.DefaultLiteral;
 import com.datastax.oss.driver.internal.querybuilder.DefaultRaw;
 import com.datastax.oss.driver.internal.querybuilder.delete.DefaultDelete;
 import com.datastax.oss.driver.internal.querybuilder.insert.DefaultInsert;
-import com.datastax.oss.driver.internal.querybuilder.select.DefaultAnn;
 import com.datastax.oss.driver.internal.querybuilder.select.DefaultBindMarker;
 import com.datastax.oss.driver.internal.querybuilder.select.DefaultSelect;
 import com.datastax.oss.driver.internal.querybuilder.term.BinaryArithmeticTerm;
@@ -540,13 +537,5 @@ public class QueryBuilder {
   public static Truncate truncate(@Nullable String keyspace, @NonNull String table) {
     return truncate(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(table));
-  }
-
-  public static Ann annOf(@NonNull CqlIdentifier cqlIdentifier, @NonNull CqlVector<Number> vector) {
-    return new DefaultAnn(cqlIdentifier, vector);
-  }
-
-  public static Ann annOf(@NonNull String cqlIdentifier, @NonNull CqlVector<Number> vector) {
-    return new DefaultAnn(CqlIdentifier.fromCql(cqlIdentifier), vector);
   }
 }

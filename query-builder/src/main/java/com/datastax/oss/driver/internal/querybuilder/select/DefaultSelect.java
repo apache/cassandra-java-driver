@@ -20,10 +20,11 @@ package com.datastax.oss.driver.internal.querybuilder.select;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
+import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
-import com.datastax.oss.driver.api.querybuilder.select.Ann;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.datastax.oss.driver.api.querybuilder.select.SelectFrom;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
@@ -276,14 +277,20 @@ public class DefaultSelect implements SelectFrom, Select {
 
   @NonNull
   @Override
-  public Select orderByIds(@NonNull Map<CqlIdentifier, ClusteringOrder> newOrderings) {
-    return withOrderings(ImmutableCollections.concat(orderings, newOrderings));
+  public Select orderBy(@NonNull String columnName, @NonNull CqlVector<? extends Number> ann) {
+    return withAnn(new Ann(CqlIdentifier.fromCql(columnName), ann));
   }
 
   @NonNull
   @Override
-  public Select orderBy(@NonNull Ann ann) {
-    return withAnn(ann);
+  public Select orderBy(@NonNull CqlIdentifier columnId, @NonNull CqlVector<? extends Number> ann) {
+    return withAnn(new Ann(columnId, ann));
+  }
+
+  @NonNull
+  @Override
+  public Select orderByIds(@NonNull Map<CqlIdentifier, ClusteringOrder> newOrderings) {
+    return withOrderings(ImmutableCollections.concat(orderings, newOrderings));
   }
 
   @NonNull
@@ -435,7 +442,8 @@ public class DefaultSelect implements SelectFrom, Select {
     CqlHelper.append(groupByClauses, builder, " GROUP BY ", ",", null);
 
     if (ann != null) {
-      builder.append(" ").append(this.ann.asCql());
+      builder.append(" ORDER BY ").append(this.ann.columnId.asCql(true)).append(" ANN OF ");
+      QueryBuilder.literal(ann.vector).appendTo(builder);
     } else {
       boolean first = true;
       for (Map.Entry<CqlIdentifier, ClusteringOrder> entry : orderings.entrySet()) {
@@ -558,5 +566,15 @@ public class DefaultSelect implements SelectFrom, Select {
   @Override
   public String toString() {
     return asCql();
+  }
+
+  public static class Ann {
+    private final CqlVector<? extends Number> vector;
+    private final CqlIdentifier columnId;
+
+    private Ann(CqlIdentifier columnId, CqlVector<? extends Number> vector) {
+      this.vector = vector;
+      this.columnId = columnId;
+    }
   }
 }
