@@ -111,12 +111,7 @@ public class AlterTableTest {
 
   @Test
   public void should_generate_alter_table_with_vector() {
-    assertThat(
-            alterTable("bar")
-                .alterColumn(
-                    "v",
-                    DataTypes.custom(
-                        "org.apache.cassandra.db.marshal.VectorType(org.apache.cassandra.db.marshal.FloatType,3)")))
-        .hasCql("ALTER TABLE bar ALTER v TYPE VECTOR<FLOAT, 3>");
+    assertThat(alterTable("bar").alterColumn("v", DataTypes.vectorOf(DataTypes.FLOAT, 3)))
+        .hasCql("ALTER TABLE bar ALTER v TYPE vector<float, 3>");
   }
 }

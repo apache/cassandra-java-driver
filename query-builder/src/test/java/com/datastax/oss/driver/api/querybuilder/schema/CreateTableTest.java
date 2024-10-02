@@ -27,7 +27,6 @@ import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder.RowsPerPartition;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.TimeWindowCompactionStrategy.CompactionWindowUnit;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.TimeWindowCompactionStrategy.TimestampResolution;
-import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import org.junit.Test;
 
@@ -314,7 +313,7 @@ public class CreateTableTest {
     assertThat(
             createTable("foo")
                 .withPartitionKey("k", DataTypes.INT)
-                .withColumn("v", new DefaultVectorType(DataTypes.FLOAT, 3)))
-        .hasCql("CREATE TABLE foo (k int PRIMARY KEY,v VECTOR<FLOAT, 3>)");
+                .withColumn("v", DataTypes.vectorOf(DataTypes.FLOAT, 3)))
+        .hasCql("CREATE TABLE foo (k int PRIMARY KEY,v vector<float, 3>)");
   }
 }

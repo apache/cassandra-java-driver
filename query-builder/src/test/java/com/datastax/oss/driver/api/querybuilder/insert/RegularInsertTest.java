@@ -23,10 +23,10 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
+import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.insert.DefaultInsert;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import java.util.Arrays;
 import java.util.Map;
 import org.junit.Test;
 
@@ -44,8 +44,8 @@ public class RegularInsertTest {
 
   @Test
   public void should_generate_vector_literals() {
-    assertThat(insertInto("foo").value("a", literal(Arrays.asList(0.1, 0.2, 0.3))))
-        .hasCql("INSERT INTO foo (a) VALUES ([0.1,0.2,0.3])");
+    assertThat(insertInto("foo").value("a", literal(CqlVector.newInstance(0.1, 0.2, 0.3))))
+        .hasCql("INSERT INTO foo (a) VALUES ([0.1, 0.2, 0.3])");
   }
 
   @Test
