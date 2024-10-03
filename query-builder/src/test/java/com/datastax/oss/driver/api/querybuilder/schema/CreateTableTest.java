@@ -28,6 +28,7 @@ import com.datastax.oss.driver.api.querybuilder.SchemaBuilder.RowsPerPartition;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.TimeWindowCompactionStrategy.CompactionWindowUnit;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.TimeWindowCompactionStrategy.TimestampResolution;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import java.nio.charset.StandardCharsets;
 import org.junit.Test;
 
 public class CreateTableTest {
@@ -169,6 +170,12 @@ public class CreateTableTest {
                 .withComment("Hello world")
                 .withDcLocalReadRepairChance(0.54)
                 .withDefaultTimeToLiveSeconds(86400)
+                .withExtensions(
+                    ImmutableMap.of(
+                        "key1",
+                        "apache".getBytes(StandardCharsets.UTF_8),
+                        "key2",
+                        "cassandra".getBytes(StandardCharsets.UTF_8)))
                 .withGcGraceSeconds(864000)
                 .withMemtableFlushPeriodInMs(10000)
                 .withMinIndexInterval(1024)
@@ -176,7 +183,7 @@ public class CreateTableTest {
                 .withReadRepairChance(0.55)
                 .withSpeculativeRetry("99percentile"))
         .hasCql(
-            "CREATE TABLE bar (k int PRIMARY KEY,v text) WITH bloom_filter_fp_chance=0.42 AND cdc=false AND comment='Hello world' AND dclocal_read_repair_chance=0.54 AND default_time_to_live=86400 AND gc_grace_seconds=864000 AND memtable_flush_period_in_ms=10000 AND min_index_interval=1024 AND max_index_interval=4096 AND read_repair_chance=0.55 AND speculative_retry='99percentile'");
+            "CREATE TABLE bar (k int PRIMARY KEY,v text) WITH bloom_filter_fp_chance=0.42 AND cdc=false AND comment='Hello world' AND dclocal_read_repair_chance=0.54 AND default_time_to_live=86400 AND extensions={'key1':0x617061636865,'key2':0x63617373616e647261} AND gc_grace_seconds=864000 AND memtable_flush_period_in_ms=10000 AND min_index_interval=1024 AND max_index_interval=4096 AND read_repair_chance=0.55 AND speculative_retry='99percentile'");
   }
 
   @Test
