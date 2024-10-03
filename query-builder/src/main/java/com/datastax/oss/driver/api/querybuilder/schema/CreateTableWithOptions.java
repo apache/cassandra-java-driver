@@ -18,7 +18,11 @@
 package com.datastax.oss.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
+import com.datastax.oss.driver.internal.querybuilder.schema.RawOptionsWrapper;
+import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
+import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Map;
 
 public interface CreateTableWithOptions
     extends BuildableQuery, RelationStructure<CreateTableWithOptions> {
@@ -26,4 +30,11 @@ public interface CreateTableWithOptions
   /** Enables COMPACT STORAGE in the CREATE TABLE statement. */
   @NonNull
   CreateTableWithOptions withCompactStorage();
+
+  /** Attaches custom metadata to CQL table definition. */
+  @NonNull
+  @CheckReturnValue
+  default CreateTableWithOptions withExtensions(@NonNull Map<String, byte[]> extensions) {
+    return withOption("extensions", Maps.transformValues(extensions, RawOptionsWrapper::of));
+  }
 }
