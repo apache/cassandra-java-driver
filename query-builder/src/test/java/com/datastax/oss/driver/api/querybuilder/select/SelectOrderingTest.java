@@ -82,7 +82,7 @@ public class SelectOrderingTest {
             selectFrom("foo")
                 .all()
                 .where(Relation.column("k").isEqualTo(literal(1)))
-                .orderBy("c1", CqlVector.newInstance(0.1, 0.2, 0.3)))
+                .orderByAnnOf("c1", CqlVector.newInstance(0.1, 0.2, 0.3)))
         .hasCql("SELECT * FROM foo WHERE k=1 ORDER BY c1 ANN OF [0.1, 0.2, 0.3]");
   }
 
@@ -92,6 +92,6 @@ public class SelectOrderingTest {
         .all()
         .where(Relation.column("k").isEqualTo(literal(1)))
         .orderBy("c1", ASC)
-        .orderBy("c2", CqlVector.newInstance(0.1, 0.2, 0.3));
+        .orderByAnnOf("c2", CqlVector.newInstance(0.1, 0.2, 0.3));
   }
 }

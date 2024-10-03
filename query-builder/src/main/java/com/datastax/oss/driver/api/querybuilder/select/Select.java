@@ -148,15 +148,15 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
   }
 
   /**
-   * Shortcut for {@link #orderBy(CqlIdentifier, CqlVector)}, adding an ORDER BY ... ANN OF ...
+   * Shortcut for {@link #orderByAnnOf(CqlIdentifier, CqlVector)}, adding an ORDER BY ... ANN OF ...
    * clause
    */
   @NonNull
-  Select orderBy(@NonNull String columnName, @NonNull CqlVector<? extends Number> ann);
+  Select orderByAnnOf(@NonNull String columnName, @NonNull CqlVector<? extends Number> ann);
 
   /** Adds the ORDER BY ... ANN OF ... clause */
   @NonNull
-  Select orderBy(@NonNull CqlIdentifier columnId, @NonNull CqlVector<? extends Number> ann);
+  Select orderByAnnOf(@NonNull CqlIdentifier columnId, @NonNull CqlVector<? extends Number> ann);
   /**
    * Adds a LIMIT clause to this query with a literal value.
    *

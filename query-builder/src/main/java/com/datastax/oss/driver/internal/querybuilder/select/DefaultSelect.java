@@ -127,7 +127,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         orderings,
-        null,
+        ann,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -145,7 +145,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         orderings,
-        null,
+        ann,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -205,7 +205,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         orderings,
-        null,
+        ann,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -234,7 +234,7 @@ public class DefaultSelect implements SelectFrom, Select {
         newRelations,
         groupByClauses,
         orderings,
-        null,
+        ann,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -263,7 +263,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         newGroupByClauses,
         orderings,
-        null,
+        ann,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -277,13 +277,14 @@ public class DefaultSelect implements SelectFrom, Select {
 
   @NonNull
   @Override
-  public Select orderBy(@NonNull String columnName, @NonNull CqlVector<? extends Number> ann) {
+  public Select orderByAnnOf(@NonNull String columnName, @NonNull CqlVector<? extends Number> ann) {
     return withAnn(new Ann(CqlIdentifier.fromCql(columnName), ann));
   }
 
   @NonNull
   @Override
-  public Select orderBy(@NonNull CqlIdentifier columnId, @NonNull CqlVector<? extends Number> ann) {
+  public Select orderByAnnOf(
+      @NonNull CqlIdentifier columnId, @NonNull CqlVector<? extends Number> ann) {
     return withAnn(new Ann(columnId, ann));
   }
 
@@ -304,7 +305,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         newOrderings,
-        null,
+        ann,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -340,7 +341,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         orderings,
-        null,
+        ann,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -358,7 +359,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         orderings,
-        null,
+        ann,
         bindMarker,
         perPartitionLimit,
         allowsFiltering);
@@ -378,7 +379,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         orderings,
-        null,
+        ann,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -396,7 +397,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         orderings,
-        null,
+        ann,
         limit,
         bindMarker,
         allowsFiltering);
@@ -414,7 +415,7 @@ public class DefaultSelect implements SelectFrom, Select {
         relations,
         groupByClauses,
         orderings,
-        null,
+        ann,
         limit,
         perPartitionLimit,
         true);
