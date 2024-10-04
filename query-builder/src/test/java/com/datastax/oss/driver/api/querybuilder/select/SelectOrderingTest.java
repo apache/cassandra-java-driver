@@ -122,10 +122,15 @@ public class SelectOrderingTest {
                 .where(
                     subCondition()
                         .where(Relation.column("l").isEqualTo(literal(2)))
+                        .or()
                         .where(Relation.column("m").isEqualTo(literal(3)))
                         .or()
-                        .where(Relation.column("x").isEqualTo(literal(4)))))
-        .hasCql("SELECT * FROM foo WHERE k=1 AND (l=2 AND m=3 OR x=4)");
+                        .where(
+                            subCondition()
+                                .where(Relation.column("q").isEqualTo(literal(4)))
+                                .and()
+                                .where(Relation.column("p").isEqualTo(literal(5))))))
+        .hasCql("SELECT * FROM foo WHERE k=1 AND (l=2 OR m=3 OR (q=4 AND p=5))");
   }
 
   @Test
