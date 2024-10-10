@@ -2775,12 +2775,12 @@
       },
       {
         "code": "java.method.addedToInterface",
-        "new": "method com.datastax.oss.driver.api.querybuilder.select.Select com.datastax.oss.driver.api.querybuilder.select.Select::orderByAnnOf(java.lang.String, com.datastax.oss.driver.api.core.data.CqlVector<? extends java.lang.Number>)",
+        "new": "method com.datastax.oss.driver.api.querybuilder.select.Select com.datastax.oss.driver.api.querybuilder.select.Select::orderByAnnOf(java.lang.String, com.datastax.oss.driver.api.core.data.CqlVector<?>)",
         "justification": "JAVA-3118: Add support for vector data type in Schema Builder, QueryBuilder"
       },
       {
         "code": "java.method.addedToInterface",
-        "new": "method com.datastax.oss.driver.api.querybuilder.select.Select com.datastax.oss.driver.api.querybuilder.select.Select::orderByAnnOf(com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.data.CqlVector<? extends java.lang.Number>)",
+        "new": "method com.datastax.oss.driver.api.querybuilder.select.Select com.datastax.oss.driver.api.querybuilder.select.Select::orderByAnnOf(com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.data.CqlVector<?>)",
         "justification": "JAVA-3118: Add support for vector data type in Schema Builder, QueryBuilder"
       }
     ]

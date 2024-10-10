@@ -277,14 +277,13 @@ public class DefaultSelect implements SelectFrom, Select {
 
   @NonNull
   @Override
-  public Select orderByAnnOf(@NonNull String columnName, @NonNull CqlVector<? extends Number> ann) {
+  public Select orderByAnnOf(@NonNull String columnName, @NonNull CqlVector<?> ann) {
     return withAnn(new Ann(CqlIdentifier.fromCql(columnName), ann));
   }
 
   @NonNull
   @Override
-  public Select orderByAnnOf(
-      @NonNull CqlIdentifier columnId, @NonNull CqlVector<? extends Number> ann) {
+  public Select orderByAnnOf(@NonNull CqlIdentifier columnId, @NonNull CqlVector<?> ann) {
     return withAnn(new Ann(columnId, ann));
   }
 
@@ -570,7 +569,7 @@ public class DefaultSelect implements SelectFrom, Select {
   }
 
   public static class Ann {
-    private final CqlVector<? extends Number> vector;
+    private final CqlVector<?> vector;
     private final CqlIdentifier columnId;
 
     private Ann(CqlIdentifier columnId, CqlVector<? extends Number> vector) {

@@ -152,11 +152,11 @@ public interface Select extends OngoingSelection, OngoingWhereClause<Select>, Bu
    * clause
    */
   @NonNull
-  Select orderByAnnOf(@NonNull String columnName, @NonNull CqlVector<? extends Number> ann);
+  Select orderByAnnOf(@NonNull String columnName, @NonNull CqlVector<?> ann);
 
   /** Adds the ORDER BY ... ANN OF ... clause */
   @NonNull
-  Select orderByAnnOf(@NonNull CqlIdentifier columnId, @NonNull CqlVector<? extends Number> ann);
+  Select orderByAnnOf(@NonNull CqlIdentifier columnId, @NonNull CqlVector<?> ann);
   /**
    * Adds a LIMIT clause to this query with a literal value.
    *
