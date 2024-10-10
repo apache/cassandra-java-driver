@@ -555,6 +555,11 @@ public class DefaultSelect implements SelectFrom, Select {
   }
 
   @Nullable
+  public Ann getAnn() {
+    return ann;
+  }
+
+  @Nullable
   public Object getPerPartitionLimit() {
     return perPartitionLimit;
   }
