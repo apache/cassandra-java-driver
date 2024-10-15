@@ -164,6 +164,6 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
 
   @Override
   public void close() throws Exception {
-    kmf.close();
+    if (kmf != null) kmf.close();
   }
 }
