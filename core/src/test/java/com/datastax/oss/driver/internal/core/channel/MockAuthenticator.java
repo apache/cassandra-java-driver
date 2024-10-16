@@ -17,6 +17,7 @@
  */
 package com.datastax.oss.driver.internal.core.channel;
 
+import com.datastax.oss.driver.api.core.auth.AuthenticationException;
 import com.datastax.oss.driver.api.core.auth.SyncAuthenticator;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.nio.ByteBuffer;
@@ -32,6 +33,7 @@ public class MockAuthenticator implements SyncAuthenticator {
   static final String INITIAL_RESPONSE = "0xcafebabe";
 
   volatile String successToken;
+  volatile boolean authFailure;
 
   @Override
   public ByteBuffer initialResponseSync() {
@@ -46,5 +48,10 @@ public class MockAuthenticator implements SyncAuthenticator {
   @Override
   public void onAuthenticationSuccessSync(ByteBuffer token) {
     successToken = Bytes.toHexString(token);
+  }
+
+  @Override
+  public void onAuthenticationFailure(AuthenticationException exception) {
+    authFailure = true;
   }
 }

@@ -412,6 +412,49 @@ public class ProtocolInitHandlerTest extends ChannelHandlerTestBase {
   }
 
   @Test
+  public void should_invoke_authenticator_if_server_sends_auth_error() throws Throwable {
+    channel
+        .pipeline()
+        .addLast(
+            ChannelFactory.INIT_HANDLER_NAME,
+            new ProtocolInitHandler(
+                internalDriverContext,
+                DefaultProtocolVersion.V4,
+                null,
+                END_POINT,
+                DriverChannelOptions.DEFAULT,
+                heartbeatHandler,
+                false));
+
+    String serverAuthenticator = "mockServerAuthenticator";
+    AuthProvider authProvider = mock(AuthProvider.class);
+    MockAuthenticator authenticator = new MockAuthenticator();
+    when(authProvider.newAuthenticator(END_POINT, serverAuthenticator)).thenReturn(authenticator);
+    when(internalDriverContext.getAuthProvider()).thenReturn(Optional.of(authProvider));
+
+    ChannelFuture connectFuture = channel.connect(new InetSocketAddress("localhost", 9042));
+
+    Frame requestFrame = readOutboundFrame();
+    assertThat(requestFrame.message).isInstanceOf(Startup.class);
+    assertThat(connectFuture).isNotDone();
+
+    writeInboundFrame(requestFrame, new Authenticate("mockServerAuthenticator"));
+
+    requestFrame = readOutboundFrame();
+    assertThat(requestFrame.message).isInstanceOf(AuthResponse.class);
+    assertThat(connectFuture).isNotDone();
+
+    writeInboundFrame(
+        requestFrame, new Error(ProtocolConstants.ErrorCode.AUTH_ERROR, "mock error"));
+
+    assertThat(connectFuture)
+        .isFailed(e -> assertThat(e).isInstanceOf(AuthenticationException.class));
+
+    // verify that onAuthenticationFailure callback was invoked
+    assertThat(authenticator.authFailure).isTrue();
+  }
+
+  @Test
   public void should_check_cluster_name_if_provided() {
     channel
         .pipeline()
