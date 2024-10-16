@@ -330,7 +330,18 @@ public class GraphRequestHandler implements Throttled {
   private void setFinalResult(
       Result resultMessage, Frame responseFrame, NodeResponseCallback callback) {
     try {
-      ExecutionInfo executionInfo = buildExecutionInfo(callback, responseFrame);
+      ExecutionInfo executionInfo =
+          DefaultExecutionInfo.builder(
+                  callback.statement,
+                  callback.node,
+                  startedSpeculativeExecutionsCount.get(),
+                  callback.execution,
+                  errors,
+                  session,
+                  context,
+                  callback.executionProfile)
+              .withServerResponse(resultMessage, responseFrame)
+              .build();
       DriverExecutionProfile executionProfile =
           Conversions.resolveExecutionProfile(callback.statement, context);
       GraphProtocol subProtocol =
@@ -361,9 +372,19 @@ public class GraphRequestHandler implements Throttled {
           totalLatencyNanos = completionTimeNanos - startTimeNanos;
           long nodeLatencyNanos = completionTimeNanos - callback.nodeStartTimeNanos;
           requestTracker.onNodeSuccess(
-              callback.statement, nodeLatencyNanos, executionProfile, callback.node, logPrefix);
+              callback.statement,
+              nodeLatencyNanos,
+              executionProfile,
+              callback.node,
+              executionInfo,
+              logPrefix);
           requestTracker.onSuccess(
-              callback.statement, totalLatencyNanos, executionProfile, callback.node, logPrefix);
+              callback.statement,
+              totalLatencyNanos,
+              executionProfile,
+              callback.node,
+              executionInfo,
+              logPrefix);
         }
         if (sessionMetricUpdater.isEnabled(
             DseSessionMetric.GRAPH_REQUESTS, executionProfile.getName())) {
@@ -417,23 +438,6 @@ public class GraphRequestHandler implements Throttled {
             LOG.warn("Query '{}' generated server side warning(s): {}", statementString, warning));
   }
 
-  private ExecutionInfo buildExecutionInfo(NodeResponseCallback callback, Frame responseFrame) {
-    DriverExecutionProfile executionProfile =
-        Conversions.resolveExecutionProfile(callback.statement, context);
-    return new DefaultExecutionInfo(
-        callback.statement,
-        callback.node,
-        startedSpeculativeExecutionsCount.get(),
-        callback.execution,
-        errors,
-        null,
-        responseFrame,
-        true,
-        session,
-        context,
-        executionProfile);
-  }
-
   @Override
   public void onThrottleFailure(@NonNull RequestThrottlingException error) {
     DriverExecutionProfile executionProfile =
@@ -447,27 +451,26 @@ public class GraphRequestHandler implements Throttled {
       GraphStatement<?> statement, Throwable error, Node node, int execution) {
     DriverExecutionProfile executionProfile =
         Conversions.resolveExecutionProfile(statement, context);
+    ExecutionInfo executionInfo =
+        DefaultExecutionInfo.builder(
+                statement,
+                node,
+                startedSpeculativeExecutionsCount.get(),
+                execution,
+                errors,
+                session,
+                context,
+                executionProfile)
+            .build();
     if (error instanceof DriverException) {
-      ((DriverException) error)
-          .setExecutionInfo(
-              new DefaultExecutionInfo(
-                  statement,
-                  node,
-                  startedSpeculativeExecutionsCount.get(),
-                  execution,
-                  errors,
-                  null,
-                  null,
-                  true,
-                  session,
-                  context,
-                  executionProfile));
+      ((DriverException) error).setExecutionInfo(executionInfo);
     }
     if (result.completeExceptionally(error)) {
       cancelScheduledTasks();
       if (!(requestTracker instanceof NoopRequestTracker)) {
         long latencyNanos = System.nanoTime() - startTimeNanos;
-        requestTracker.onError(statement, error, latencyNanos, executionProfile, node, logPrefix);
+        requestTracker.onError(
+            statement, error, latencyNanos, executionProfile, node, executionInfo, logPrefix);
       }
       if (error instanceof DriverTimeoutException) {
         throttler.signalTimeout(this);
@@ -860,7 +863,8 @@ public class GraphRequestHandler implements Throttled {
         nodeResponseTimeNanos = System.nanoTime();
       }
       long latencyNanos = nodeResponseTimeNanos - this.nodeStartTimeNanos;
-      requestTracker.onNodeError(statement, error, latencyNanos, executionProfile, node, logPrefix);
+      requestTracker.onNodeError(
+          statement, error, latencyNanos, executionProfile, node, null, logPrefix);
     }
 
     @Override

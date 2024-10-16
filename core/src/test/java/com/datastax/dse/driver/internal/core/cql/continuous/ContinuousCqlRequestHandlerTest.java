@@ -31,6 +31,7 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.matches;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -498,6 +499,7 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node1),
+                        nullable(ExecutionInfo.class),
                         matches(LOG_PREFIX_PER_REQUEST));
                 verify(requestTracker)
                     .onNodeSuccess(
@@ -505,6 +507,7 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node2),
+                        any(ExecutionInfo.class),
                         matches(LOG_PREFIX_PER_REQUEST));
                 verify(requestTracker)
                     .onSuccess(
@@ -512,6 +515,7 @@ public class ContinuousCqlRequestHandlerTest extends ContinuousCqlRequestHandler
                         anyLong(),
                         any(DriverExecutionProfile.class),
                         eq(node2),
+                        any(ExecutionInfo.class),
                         matches(LOG_PREFIX_PER_REQUEST));
                 verifyNoMoreInteractions(requestTracker);
               });

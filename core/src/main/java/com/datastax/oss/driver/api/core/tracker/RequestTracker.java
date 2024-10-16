@@ -18,6 +18,7 @@
 package com.datastax.oss.driver.api.core.tracker;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
@@ -36,23 +37,13 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 public interface RequestTracker extends AutoCloseable {
 
   /**
-   * @deprecated This method only exists for backward compatibility. Override {@link
-   *     #onSuccess(Request, long, DriverExecutionProfile, Node, String)} instead.
-   */
-  @Deprecated
-  default void onSuccess(
-      @NonNull Request request,
-      long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node) {}
-
-  /**
    * Invoked each time a request succeeds.
    *
    * @param latencyNanos the overall execution time (from the {@link Session#execute(Request,
    *     GenericType) session.execute} call until the result is made available to the client).
    * @param executionProfile the execution profile of this request.
    * @param node the node that returned the successful response.
+   * @param executionInfo the execution info containing the results of this request
    * @param requestLogPrefix the dedicated log prefix for this request
    */
   default void onSuccess(
@@ -60,22 +51,11 @@ public interface RequestTracker extends AutoCloseable {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
+      @NonNull ExecutionInfo executionInfo,
       @NonNull String requestLogPrefix) {
-    // If client doesn't override onSuccess with requestLogPrefix delegate call to the old method
-    onSuccess(request, latencyNanos, executionProfile, node);
+    // delegate call to the old method
+    onSuccess(request, latencyNanos, executionProfile, node, requestLogPrefix);
   }
-
-  /**
-   * @deprecated This method only exists for backward compatibility. Override {@link
-   *     #onError(Request, Throwable, long, DriverExecutionProfile, Node, String)} instead.
-   */
-  @Deprecated
-  default void onError(
-      @NonNull Request request,
-      @NonNull Throwable error,
-      long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @Nullable Node node) {}
 
   /**
    * Invoked each time a request fails.
@@ -84,6 +64,8 @@ public interface RequestTracker extends AutoCloseable {
    *     GenericType) session.execute} call until the error is propagated to the client).
    * @param executionProfile the execution profile of this request.
    * @param node the node that returned the error response, or {@code null} if the error occurred
+   * @param executionInfo the execution info being returned to the client for this request if
+   *     available
    * @param requestLogPrefix the dedicated log prefix for this request
    */
   default void onError(
@@ -92,54 +74,11 @@ public interface RequestTracker extends AutoCloseable {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @Nullable Node node,
+      @Nullable ExecutionInfo executionInfo,
       @NonNull String requestLogPrefix) {
-    // If client doesn't override onError with requestLogPrefix delegate call to the old method
-    onError(request, error, latencyNanos, executionProfile, node);
+    // delegate call to the old method
+    onError(request, error, latencyNanos, executionProfile, node, requestLogPrefix);
   }
-
-  /**
-   * @deprecated This method only exists for backward compatibility. Override {@link
-   *     #onNodeError(Request, Throwable, long, DriverExecutionProfile, Node, String)} instead.
-   */
-  @Deprecated
-  default void onNodeError(
-      @NonNull Request request,
-      @NonNull Throwable error,
-      long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node) {}
-
-  /**
-   * Invoked each time a request fails at the node level. Similar to {@link #onError(Request,
-   * Throwable, long, DriverExecutionProfile, Node, String)} but at a per node level.
-   *
-   * @param latencyNanos the overall execution time (from the {@link Session#execute(Request,
-   *     GenericType) session.execute} call until the error is propagated to the client).
-   * @param executionProfile the execution profile of this request.
-   * @param node the node that returned the error response.
-   * @param requestLogPrefix the dedicated log prefix for this request
-   */
-  default void onNodeError(
-      @NonNull Request request,
-      @NonNull Throwable error,
-      long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String requestLogPrefix) {
-    // If client doesn't override onNodeError with requestLogPrefix delegate call to the old method
-    onNodeError(request, error, latencyNanos, executionProfile, node);
-  }
-
-  /**
-   * @deprecated This method only exists for backward compatibility. Override {@link
-   *     #onNodeSuccess(Request, long, DriverExecutionProfile, Node, String)} instead.
-   */
-  @Deprecated
-  default void onNodeSuccess(
-      @NonNull Request request,
-      long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node) {}
 
   /**
    * Invoked each time a request succeeds at the node level. Similar to {@link #onSuccess(Request,
@@ -149,6 +88,7 @@ public interface RequestTracker extends AutoCloseable {
    *     GenericType) session.execute} call until the result is made available to the client).
    * @param executionProfile the execution profile of this request.
    * @param node the node that returned the successful response.
+   * @param executionInfo the execution info containing the results of this request
    * @param requestLogPrefix the dedicated log prefix for this request
    */
   default void onNodeSuccess(
@@ -156,10 +96,33 @@ public interface RequestTracker extends AutoCloseable {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
+      @NonNull ExecutionInfo executionInfo,
       @NonNull String requestLogPrefix) {
-    // If client doesn't override onNodeSuccess with requestLogPrefix delegate call to the old
-    // method
-    onNodeSuccess(request, latencyNanos, executionProfile, node);
+    // delegate call to the old method
+    onNodeSuccess(request, latencyNanos, executionProfile, node, requestLogPrefix);
+  }
+
+  /**
+   * Invoked each time a request fails at the node level. Similar to {@link #onError(Request,
+   * Throwable, long, DriverExecutionProfile, Node, String)} but at a per node level.
+   *
+   * @param latencyNanos the overall execution time (from the {@link Session#execute(Request,
+   *     GenericType) session.execute} call until the error is propagated to the client).
+   * @param executionProfile the execution profile of this request.
+   * @param node the node that returned the error response.
+   * @param executionInfo the execution info containing the results of this request if available
+   * @param requestLogPrefix the dedicated log prefix for this request
+   */
+  default void onNodeError(
+      @NonNull Request request,
+      @NonNull Throwable error,
+      long latencyNanos,
+      @NonNull DriverExecutionProfile executionProfile,
+      @NonNull Node node,
+      @Nullable ExecutionInfo executionInfo,
+      @NonNull String requestLogPrefix) {
+    // delegate call to the old method
+    onNodeError(request, error, latencyNanos, executionProfile, node, requestLogPrefix);
   }
 
   /**
@@ -182,4 +145,120 @@ public interface RequestTracker extends AutoCloseable {
    * <p>The default implementation is empty.
    */
   default void onSessionReady(@NonNull Session session) {}
+
+  // ----- Below methods have been deprecated and will be removed in next releases -----
+
+  /**
+   * @deprecated This method only exists for backward compatibility. Override {@link
+   *     #onSuccess(Request, long, DriverExecutionProfile, Node, ExecutionInfo, String)} instead.
+   */
+  @Deprecated
+  default void onSuccess(
+      @NonNull Request request,
+      long latencyNanos,
+      @NonNull DriverExecutionProfile executionProfile,
+      @NonNull Node node) {}
+
+  /**
+   * @deprecated This method only exists for backward compatibility. Override {@link
+   *     #onSuccess(Request, long, DriverExecutionProfile, Node, ExecutionInfo, String)} instead.
+   */
+  @Deprecated
+  default void onSuccess(
+      @NonNull Request request,
+      long latencyNanos,
+      @NonNull DriverExecutionProfile executionProfile,
+      @NonNull Node node,
+      @NonNull String requestLogPrefix) {
+    // delegate call to the old method
+    onSuccess(request, latencyNanos, executionProfile, node);
+  }
+
+  /**
+   * @deprecated This method only exists for backward compatibility. Override {@link
+   *     #onError(Request, Throwable, long, DriverExecutionProfile, Node, ExecutionInfo, String)}
+   *     instead.
+   */
+  @Deprecated
+  default void onError(
+      @NonNull Request request,
+      @NonNull Throwable error,
+      long latencyNanos,
+      @NonNull DriverExecutionProfile executionProfile,
+      @Nullable Node node) {}
+
+  /**
+   * @deprecated This method only exists for backward compatibility. Override {@link
+   *     #onError(Request, Throwable, long, DriverExecutionProfile, Node, ExecutionInfo, String)}
+   *     instead.
+   */
+  @Deprecated
+  default void onError(
+      @NonNull Request request,
+      @NonNull Throwable error,
+      long latencyNanos,
+      @NonNull DriverExecutionProfile executionProfile,
+      @Nullable Node node,
+      @NonNull String requestLogPrefix) {
+    // delegate call to the old method
+    onError(request, error, latencyNanos, executionProfile, node);
+  }
+
+  /**
+   * @deprecated This method only exists for backward compatibility. Override {@link
+   *     #onNodeError(Request, Throwable, long, DriverExecutionProfile, Node, ExecutionInfo,
+   *     String)} instead.
+   */
+  @Deprecated
+  default void onNodeError(
+      @NonNull Request request,
+      @NonNull Throwable error,
+      long latencyNanos,
+      @NonNull DriverExecutionProfile executionProfile,
+      @NonNull Node node) {}
+
+  /**
+   * @deprecated This method only exists for backward compatibility. Override {@link
+   *     #onNodeError(Request, Throwable, long, DriverExecutionProfile, Node, ExecutionInfo,
+   *     String)} instead.
+   */
+  @Deprecated
+  default void onNodeError(
+      @NonNull Request request,
+      @NonNull Throwable error,
+      long latencyNanos,
+      @NonNull DriverExecutionProfile executionProfile,
+      @NonNull Node node,
+      @NonNull String requestLogPrefix) {
+    // delegate call to the old method
+    onNodeError(request, error, latencyNanos, executionProfile, node);
+  }
+
+  /**
+   * @deprecated This method only exists for backward compatibility. Override {@link
+   *     #onNodeSuccess(Request, long, DriverExecutionProfile, Node, ExecutionInfo, String)}
+   *     instead.
+   */
+  @Deprecated
+  default void onNodeSuccess(
+      @NonNull Request request,
+      long latencyNanos,
+      @NonNull DriverExecutionProfile executionProfile,
+      @NonNull Node node) {}
+
+  /**
+   * @deprecated This method only exists for backward compatibility. Override {@link
+   *     #onNodeSuccess(Request, long, DriverExecutionProfile, Node, ExecutionInfo, String)}
+   *     instead.
+   */
+  @Deprecated
+  default void onNodeSuccess(
+      @NonNull Request request,
+      long latencyNanos,
+      @NonNull DriverExecutionProfile executionProfile,
+      @NonNull Node node,
+      @NonNull String requestLogPrefix) {
+    // delegate call to the old method
+    onNodeSuccess(request, latencyNanos, executionProfile, node);
+  }
 }
