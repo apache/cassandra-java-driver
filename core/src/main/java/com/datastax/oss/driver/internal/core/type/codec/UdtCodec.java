@@ -30,9 +30,13 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import net.jcip.annotations.ThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ThreadSafe
 public class UdtCodec implements TypeCodec<UdtValue> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(UdtCodec.class);
 
   private final UserDefinedType cqlType;
 
@@ -107,10 +111,8 @@ public class UdtCodec implements TypeCodec<UdtValue> {
       int i = 0;
       while (input.hasRemaining()) {
         if (i == cqlType.getFieldTypes().size()) {
-          throw new IllegalArgumentException(
-              String.format(
-                  "Too many fields in encoded UDT value, expected %d",
-                  cqlType.getFieldTypes().size()));
+          LOG.debug("Encountered unexpected fields when parsing codec {}", cqlType);
+          break;
         }
         int elementSize = input.getInt();
         ByteBuffer element;
