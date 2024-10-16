@@ -142,6 +142,14 @@ public class ListCodec<ElementT> implements TypeCodec<List<ElementT>> {
       return "NULL";
     }
     StringBuilder sb = new StringBuilder("[");
+    sb.append(formatElements(value));
+    sb.append("]");
+    return sb.toString();
+  }
+
+  @Override
+  public String formatElements(@Nullable List<ElementT> value) {
+    StringBuilder sb = new StringBuilder();
     boolean first = true;
     for (ElementT t : value) {
       if (first) {
@@ -151,7 +159,6 @@ public class ListCodec<ElementT> implements TypeCodec<List<ElementT>> {
       }
       sb.append(elementCodec.format(t));
     }
-    sb.append("]");
     return sb.toString();
   }
 

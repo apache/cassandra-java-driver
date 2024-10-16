@@ -71,6 +71,29 @@ public class CqlHelper {
     }
   }
 
+  public static void appendElements(
+      @NonNull Iterable<? extends CqlSnippet> snippets,
+      @NonNull StringBuilder builder,
+      @Nullable String prefix,
+      @NonNull String separator,
+      @Nullable String suffix) {
+    boolean first = true;
+    for (CqlSnippet snippet : snippets) {
+      if (first) {
+        if (prefix != null) {
+          builder.append(prefix);
+        }
+        first = false;
+      } else {
+        builder.append(separator);
+      }
+      snippet.appendElementsTo(builder);
+    }
+    if (!first && suffix != null) {
+      builder.append(suffix);
+    }
+  }
+
   public static void qualify(
       @Nullable CqlIdentifier keyspace,
       @NonNull CqlIdentifier element,

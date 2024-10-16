@@ -40,6 +40,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -250,6 +251,11 @@ public class GenericType<T> {
    */
   public final boolean isArray() {
     return token.isArray();
+  }
+
+  /** Returns true if this type is a Java collection (e.g. list or set). */
+  public boolean isCollection() {
+    return Collection.class.isAssignableFrom(token.getRawType());
   }
 
   /** Returns true if this type is one of the nine primitive types (including {@code void}). */

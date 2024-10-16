@@ -19,10 +19,15 @@ package com.datastax.oss.driver.api.querybuilder.relation;
 
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.raw;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.tuple;
 
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 import org.junit.Test;
 
 public class RelationTest {
@@ -47,6 +52,25 @@ public class RelationTest {
         .hasCql("SELECT * FROM foo WHERE k IN ?");
     assertThat(selectFrom("foo").all().where(Relation.column("k").in(bindMarker(), bindMarker())))
         .hasCql("SELECT * FROM foo WHERE k IN (?,?)");
+    assertThat(
+            selectFrom("foo")
+                .all()
+                .where(Relation.column("k").in(literal(Arrays.asList("vector", "data")))))
+        .hasCql("SELECT * FROM foo WHERE k IN ('vector','data')");
+    List<UUID> uuids =
+        Arrays.asList(
+            UUID.fromString("d3f5c945-74bd-4a99-b6d7-aa73e54a5b75"),
+            UUID.fromString("464a834d-8fd8-4842-9fba-47bc599b8083"));
+    assertThat(selectFrom("foo").all().where(Relation.column("k").in(literal(uuids))))
+        .hasCql(
+            "SELECT * FROM foo WHERE k IN (d3f5c945-74bd-4a99-b6d7-aa73e54a5b75,464a834d-8fd8-4842-9fba-47bc599b8083)");
+    assertThat(
+            selectFrom("foo")
+                .all()
+                .where(Relation.column("k").in(literal(ImmutableSet.of(1, 3, 5, 7)))))
+        .hasCql("SELECT * FROM foo WHERE k IN (1,3,5,7)");
+    assertThat(selectFrom("foo").all().where(Relation.column("k").in(literal("atomic value"))))
+        .hasCql("SELECT * FROM foo WHERE k IN ('atomic value')");
   }
 
   @Test
