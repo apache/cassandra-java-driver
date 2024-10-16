@@ -17,6 +17,7 @@
  */
 package com.datastax.oss.driver.internal.core.config.cloud;
 
+import com.datastax.oss.driver.api.core.DriverTimeoutException;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.internal.core.metadata.SniEndPoint;
 import com.datastax.oss.driver.internal.core.ssl.SniSslEngineFactory;
@@ -58,6 +59,8 @@ import org.slf4j.LoggerFactory;
 @ThreadSafe
 public class CloudConfigFactory {
   private static final Logger LOG = LoggerFactory.getLogger(CloudConfigFactory.class);
+  private static final int METADATA_RETRY_MAX_ATTEMPTS = 4;
+  private static final int METADATA_RETRY_INITIAL_DELAY_MS = 250;
   /**
    * Creates a {@link CloudConfig} with information fetched from the specified Cloud configuration
    * URL.
@@ -225,22 +228,51 @@ public class CloudConfigFactory {
   @NonNull
   protected BufferedReader fetchProxyMetadata(
       @NonNull URL metadataServiceUrl, @NonNull SSLContext sslContext) throws IOException {
-    try {
-      HttpsURLConnection connection = (HttpsURLConnection) metadataServiceUrl.openConnection();
+    HttpsURLConnection connection = null;
+    int attempt = 0;
+    while (attempt < METADATA_RETRY_MAX_ATTEMPTS) {
+      attempt++;
+      connection = (HttpsURLConnection) metadataServiceUrl.openConnection();
       connection.setSSLSocketFactory(sslContext.getSocketFactory());
       connection.setRequestMethod("GET");
       connection.setRequestProperty("host", "localhost");
-      return new BufferedReader(
-          new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
-    } catch (ConnectException e) {
-      throw new IllegalStateException(
-          "Unable to connect to cloud metadata service. Please make sure your cluster is not parked or terminated",
-          e);
-    } catch (UnknownHostException e) {
-      throw new IllegalStateException(
-          "Unable to resolve host for cloud metadata service. Please make sure your cluster is not terminated",
-          e);
+      // if this is the last attempt, throw
+      // else if the response code is 401, 421, or 5xx, retry
+      // else, throw
+      if (attempt < METADATA_RETRY_MAX_ATTEMPTS
+          && (connection.getResponseCode() == 401
+              || connection.getResponseCode() == 421
+              || connection.getResponseCode() >= 500)) {
+        try {
+          Thread.sleep(METADATA_RETRY_INITIAL_DELAY_MS);
+          continue;
+        } catch (InterruptedException interruptedException) {
+          throw new IOException(
+              "Interrupted while waiting to retry metadata fetch", interruptedException);
+        }
+      }
+
+      // last attempt, still 421 or 401
+      if (connection.getResponseCode() == 421 || connection.getResponseCode() == 401) {
+        throw new IllegalStateException(
+            "Unable to fetch metadata from cloud metadata service. Please make sure your cluster is not parked or terminated");
+      }
+
+      try {
+        return new BufferedReader(
+            new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
+      } catch (ConnectException e) {
+        throw new IllegalStateException(
+            "Unable to connect to cloud metadata service. Please make sure your cluster is not parked or terminated",
+            e);
+      } catch (UnknownHostException e) {
+        throw new IllegalStateException(
+            "Unable to resolve host for cloud metadata service. Please make sure your cluster is not terminated",
+            e);
+      }
     }
+    throw new DriverTimeoutException(
+        "Unable to fetch metadata from cloud metadata service"); // dead code
   }
 
   @NonNull
