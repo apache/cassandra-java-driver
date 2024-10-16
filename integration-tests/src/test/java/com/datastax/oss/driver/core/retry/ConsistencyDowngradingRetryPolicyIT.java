@@ -263,7 +263,7 @@ public class ConsistencyDowngradingRetryPolicyIT {
       List<Entry<Node, Throwable>> errors = rte.getExecutionInfo().getErrors();
       assertThat(errors).hasSize(1);
       Entry<Node, Throwable> error = errors.get(0);
-      assertThat(error.getKey().getEndPoint().resolve()).isEqualTo(node0.getAddress());
+      assertThat(error.getKey().getEndPoint().retrieve()).isEqualTo(node0.getAddress());
       assertThat(error.getValue())
           .isInstanceOfSatisfying(
               ReadTimeoutException.class,
@@ -328,7 +328,7 @@ public class ConsistencyDowngradingRetryPolicyIT {
     List<Entry<Node, Throwable>> errors = rs.getExecutionInfo().getErrors();
     assertThat(errors).hasSize(1);
     Entry<Node, Throwable> error = errors.get(0);
-    assertThat(error.getKey().getEndPoint().resolve()).isEqualTo(node0.getAddress());
+    assertThat(error.getKey().getEndPoint().retrieve()).isEqualTo(node0.getAddress());
     assertThat(error.getValue())
         .isInstanceOfSatisfying(
             ReadTimeoutException.class,
@@ -396,7 +396,7 @@ public class ConsistencyDowngradingRetryPolicyIT {
       List<Entry<Node, Throwable>> errors = rte.getExecutionInfo().getErrors();
       assertThat(errors).hasSize(1);
       Entry<Node, Throwable> error = errors.get(0);
-      assertThat(error.getKey().getEndPoint().resolve()).isEqualTo(node0.getAddress());
+      assertThat(error.getKey().getEndPoint().retrieve()).isEqualTo(node0.getAddress());
       assertThat(error.getValue())
           .isInstanceOfSatisfying(
               ReadTimeoutException.class,
@@ -470,7 +470,7 @@ public class ConsistencyDowngradingRetryPolicyIT {
       List<Entry<Node, Throwable>> errors = wte.getExecutionInfo().getErrors();
       assertThat(errors).hasSize(1);
       Entry<Node, Throwable> error = errors.get(0);
-      assertThat(error.getKey().getEndPoint().resolve()).isEqualTo(node0.getAddress());
+      assertThat(error.getKey().getEndPoint().retrieve()).isEqualTo(node0.getAddress());
       assertThat(error.getValue())
           .isInstanceOfSatisfying(
               ReadTimeoutException.class,
@@ -546,7 +546,7 @@ public class ConsistencyDowngradingRetryPolicyIT {
       List<Entry<Node, Throwable>> errors = wte.getExecutionInfo().getErrors();
       assertThat(errors).hasSize(1);
       Entry<Node, Throwable> error = errors.get(0);
-      assertThat(error.getKey().getEndPoint().resolve()).isEqualTo(node0.getAddress());
+      assertThat(error.getKey().getEndPoint().retrieve()).isEqualTo(node0.getAddress());
       assertThat(error.getValue())
           .isInstanceOfSatisfying(
               WriteTimeoutException.class,
@@ -737,7 +737,7 @@ public class ConsistencyDowngradingRetryPolicyIT {
     List<Entry<Node, Throwable>> errors = rs.getExecutionInfo().getErrors();
     assertThat(errors).hasSize(1);
     Entry<Node, Throwable> error = errors.get(0);
-    assertThat(error.getKey().getEndPoint().resolve()).isEqualTo(node0.getAddress());
+    assertThat(error.getKey().getEndPoint().retrieve()).isEqualTo(node0.getAddress());
     assertThat(error.getValue())
         .isInstanceOfSatisfying(
             WriteTimeoutException.class,
@@ -841,7 +841,7 @@ public class ConsistencyDowngradingRetryPolicyIT {
       List<Entry<Node, Throwable>> errors = wte.getExecutionInfo().getErrors();
       assertThat(errors).hasSize(1);
       Entry<Node, Throwable> error = errors.get(0);
-      assertThat(error.getKey().getEndPoint().resolve()).isEqualTo(node0.getAddress());
+      assertThat(error.getKey().getEndPoint().retrieve()).isEqualTo(node0.getAddress());
       assertThat(error.getValue())
           .isInstanceOfSatisfying(
               WriteTimeoutException.class,
@@ -904,7 +904,7 @@ public class ConsistencyDowngradingRetryPolicyIT {
     // an error on the host that received the query.
     assertThat(result.getExecutionInfo().getErrors()).hasSize(1);
     Map.Entry<Node, Throwable> error = result.getExecutionInfo().getErrors().get(0);
-    assertThat(error.getKey().getEndPoint().resolve()).isEqualTo(node0.getAddress());
+    assertThat(error.getKey().getEndPoint().retrieve()).isEqualTo(node0.getAddress());
     assertThat(error.getValue())
         .isInstanceOfSatisfying(
             UnavailableException.class,
@@ -950,7 +950,7 @@ public class ConsistencyDowngradingRetryPolicyIT {
     // an error on the host that received the query.
     assertThat(rs.getExecutionInfo().getErrors()).hasSize(1);
     Map.Entry<Node, Throwable> error = rs.getExecutionInfo().getErrors().get(0);
-    assertThat(error.getKey().getEndPoint().resolve()).isEqualTo(node0.getAddress());
+    assertThat(error.getKey().getEndPoint().retrieve()).isEqualTo(node0.getAddress());
     assertThat(error.getValue())
         .isInstanceOfSatisfying(
             UnavailableException.class,
@@ -1008,7 +1008,7 @@ public class ConsistencyDowngradingRetryPolicyIT {
       assertThat(ue.getAlive()).isEqualTo(0);
       assertThat(ue.getExecutionInfo().getErrors()).hasSize(1);
       Map.Entry<Node, Throwable> error = ue.getExecutionInfo().getErrors().get(0);
-      assertThat(error.getKey().getEndPoint().resolve()).isEqualTo(node0.getAddress());
+      assertThat(error.getKey().getEndPoint().retrieve()).isEqualTo(node0.getAddress());
       assertThat(error.getValue())
           .isInstanceOfSatisfying(
               UnavailableException.class,
@@ -1068,7 +1068,7 @@ public class ConsistencyDowngradingRetryPolicyIT {
     // an error on the host that received the query.
     assertThat(result.getExecutionInfo().getErrors()).hasSize(1);
     Map.Entry<Node, Throwable> error = result.getExecutionInfo().getErrors().get(0);
-    assertThat(error.getKey().getEndPoint().resolve()).isEqualTo(node0.getAddress());
+    assertThat(error.getKey().getEndPoint().retrieve()).isEqualTo(node0.getAddress());
     assertThat(error.getValue()).isInstanceOf(ClosedConnectionException.class);
     // the host that returned the response should be node 1.
     assertThat(coordinatorAddress(result.getExecutionInfo())).isEqualTo(node1.getAddress());
@@ -1323,6 +1323,6 @@ public class ConsistencyDowngradingRetryPolicyIT {
   private SocketAddress coordinatorAddress(ExecutionInfo executionInfo) {
     Node coordinator = executionInfo.getCoordinator();
     assertThat(coordinator).isNotNull();
-    return coordinator.getEndPoint().resolve();
+    return coordinator.getEndPoint().retrieve();
   }
 }

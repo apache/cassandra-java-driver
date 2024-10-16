@@ -924,7 +924,7 @@ public class DefaultSessionPoolsTest {
     when(node.getHostId()).thenReturn(UUID.randomUUID());
     DefaultEndPoint endPoint = TestNodeFactory.newEndPoint(i);
     when(node.getEndPoint()).thenReturn(endPoint);
-    when(node.getBroadcastRpcAddress()).thenReturn(Optional.of(endPoint.resolve()));
+    when(node.getBroadcastRpcAddress()).thenReturn(Optional.of(endPoint.retrieve()));
     when(node.getDistance()).thenReturn(NodeDistance.LOCAL);
     when(node.toString()).thenReturn("node" + i);
     return node;

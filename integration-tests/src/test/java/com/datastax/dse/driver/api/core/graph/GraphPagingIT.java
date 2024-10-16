@@ -136,7 +136,7 @@ public class GraphPagingIT {
       assertThat(node.asString()).isEqualTo("user" + i);
     }
     assertThat(result.getRequestExecutionInfo()).isNotNull();
-    assertThat(result.getRequestExecutionInfo().getCoordinator().getEndPoint().resolve())
+    assertThat(result.getRequestExecutionInfo().getCoordinator().getEndPoint().retrieve())
         .isEqualTo(firstCcmNode());
     assertIfMultiPage(result, options.expectedPages);
     validateMetrics(SESSION_RULE.session());
@@ -173,7 +173,7 @@ public class GraphPagingIT {
       assertThat(node.asString()).isEqualTo("user" + i);
     }
     assertThat(result.getRequestExecutionInfo()).isNotNull();
-    assertThat(result.getRequestExecutionInfo().getCoordinator().getEndPoint().resolve())
+    assertThat(result.getRequestExecutionInfo().getCoordinator().getEndPoint().retrieve())
         .isEqualTo(firstCcmNode());
 
     assertIfMultiPage(result, options.expectedPages);
@@ -222,7 +222,7 @@ public class GraphPagingIT {
       assertThat(node.asString()).isEqualTo("user" + i);
     }
     assertThat(result.getRequestExecutionInfo()).isNotNull();
-    assertThat(result.getRequestExecutionInfo().getCoordinator().getEndPoint().resolve())
+    assertThat(result.getRequestExecutionInfo().getCoordinator().getEndPoint().retrieve())
         .isEqualTo(firstCcmNode());
     validateMetrics(SESSION_RULE.session());
   }
@@ -342,7 +342,7 @@ public class GraphPagingIT {
 
     assertThat(result.remaining()).isZero();
     assertThat(result.getRequestExecutionInfo()).isNotNull();
-    assertThat(result.getRequestExecutionInfo().getCoordinator().getEndPoint().resolve())
+    assertThat(result.getRequestExecutionInfo().getCoordinator().getEndPoint().retrieve())
         .isEqualTo(firstCcmNode());
 
     graphExecutionInfos.add(result.getRequestExecutionInfo());
@@ -491,7 +491,7 @@ public class GraphPagingIT {
   }
 
   private SocketAddress firstCcmNode() {
-    return CCM_RULE.getContactPoints().iterator().next().resolve();
+    return CCM_RULE.getContactPoints().iterator().next().retrieve();
   }
 
   private void validateMetrics(CqlSession session) {

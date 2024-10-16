@@ -358,7 +358,7 @@ public class DefaultTopologyMonitorTest {
               assertThat(info1.getEndPoint()).isEqualTo(node1.getEndPoint());
               assertThat(info1.getDatacenter()).isEqualTo("dc1");
               NodeInfo info3 = iterator.next();
-              assertThat(info3.getEndPoint().resolve())
+              assertThat(info3.getEndPoint().retrieve())
                   .isEqualTo(new InetSocketAddress("127.0.0.3", 9042));
               assertThat(info3.getDatacenter()).isEqualTo("dc3");
               NodeInfo info2 = iterator.next();

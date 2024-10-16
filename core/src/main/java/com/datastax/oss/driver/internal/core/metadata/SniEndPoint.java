@@ -18,6 +18,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.primitives.UnsignedBytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
@@ -26,13 +27,19 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SniEndPoint implements EndPoint {
-  private static final AtomicLong OFFSET = new AtomicLong();
+  // initialize offset to random position to avoid all clients starting at the same index
+  @VisibleForTesting
+  static final AtomicInteger OFFSET =
+      new AtomicInteger(ThreadLocalRandom.current().nextInt(0, 1024));
 
   private final InetSocketAddress proxyAddress;
   private final String serverName;
+
+  private InetSocketAddress lastResolvedAddress = null;
 
   /**
    * @param proxyAddress the address of the proxy. If it is {@linkplain
@@ -55,7 +62,7 @@ public class SniEndPoint implements EndPoint {
   @Override
   public InetSocketAddress resolve() {
     try {
-      InetAddress[] aRecords = InetAddress.getAllByName(proxyAddress.getHostName());
+      InetAddress[] aRecords = resolveARecords();
       if (aRecords.length == 0) {
         // Probably never happens, but the JDK docs don't explicitly say so
         throw new IllegalArgumentException(
@@ -64,12 +71,33 @@ public class SniEndPoint implements EndPoint {
       // The order of the returned address is unspecified. Sort by IP to make sure we get a true
       // round-robin
       Arrays.sort(aRecords, IP_COMPARATOR);
-      int index = (aRecords.length == 1) ? 0 : (int) OFFSET.getAndIncrement() % aRecords.length;
-      return new InetSocketAddress(aRecords[index], proxyAddress.getPort());
+
+      // get next offset value, reset OFFSET if wrapped around to negative
+      int nextOffset = OFFSET.getAndIncrement();
+      if (nextOffset < 0) {
+        // if negative set OFFSET to 1 and nextOffset to 0, else simulate getAndIncrement()
+        nextOffset = OFFSET.updateAndGet(v -> v < 0 ? 1 : v + 1) - 1;
+      }
+
+      // This address is immutable
+      lastResolvedAddress =
+          new InetSocketAddress(aRecords[nextOffset % aRecords.length], proxyAddress.getPort());
+      return lastResolvedAddress;
     } catch (UnknownHostException e) {
       throw new IllegalArgumentException(
           "Could not resolve proxy address " + proxyAddress.getHostName(), e);
     }
+  }
+
+  @VisibleForTesting
+  InetAddress[] resolveARecords() throws UnknownHostException {
+    // moving static call to method to allow mocking in tests
+    return InetAddress.getAllByName(proxyAddress.getHostName());
+  }
+
+  @Override
+  public InetSocketAddress retrieve() {
+    return lastResolvedAddress != null ? lastResolvedAddress : proxyAddress;
   }
 
   @Override

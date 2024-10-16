@@ -416,7 +416,7 @@ public class AllLoadBalancingPoliciesSimulacronIT {
 
   private BoundNode findNode(Node node) {
     BoundCluster simulacron = SIMULACRON_RULE.cluster();
-    SocketAddress toFind = node.getEndPoint().resolve();
+    SocketAddress toFind = node.getEndPoint().retrieve();
     for (BoundNode boundNode : simulacron.getNodes()) {
       if (boundNode.getAddress().equals(toFind)) {
         return boundNode;
