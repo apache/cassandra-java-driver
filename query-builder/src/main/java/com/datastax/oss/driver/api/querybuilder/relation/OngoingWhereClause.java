@@ -27,6 +27,7 @@ import com.datastax.oss.driver.internal.querybuilder.relation.DefaultColumnCompo
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultColumnRelationBuilder;
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultMultiColumnRelationBuilder;
 import com.datastax.oss.driver.internal.querybuilder.relation.DefaultTokenRelationBuilder;
+import com.datastax.oss.driver.internal.querybuilder.relation.LogicalRelation;
 import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Arrays;
@@ -46,6 +47,20 @@ public interface OngoingWhereClause<SelfT extends OngoingWhereClause<SelfT>> {
   @NonNull
   @CheckReturnValue
   SelfT where(@NonNull Relation relation);
+
+  /** Adds conjunction clause. Next relation is logically joined with AND. */
+  @NonNull
+  @CheckReturnValue
+  default SelfT and() {
+    return where(LogicalRelation.AND);
+  }
+
+  /** Adds alternative clause. Next relation is logically joined with OR. */
+  @NonNull
+  @CheckReturnValue
+  default SelfT or() {
+    return where(LogicalRelation.OR);
+  }
 
   /**
    * Adds multiple relations at once. All relations are logically joined with AND.
