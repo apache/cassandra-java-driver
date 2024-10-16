@@ -19,7 +19,7 @@ and Cassandra Query Language (CQL) v3.
 
 ## Getting the driver
 
-The driver artifacts are published in Maven central, under the group id [com.datastax.oss]; there
+The driver artifacts are published in Maven central, under the group id [org.apache.cassandra]. There
 are multiple modules, all prefixed with `java-driver-`.
 
 ```xml
@@ -48,7 +48,7 @@ dependency if you plan to use it.
 Refer to each module's manual for more details ([core](manual/core/), [query
 builder](manual/query_builder/), [mapper](manual/mapper)).
 
-[com.datastax.oss]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.datastax.oss%22
+[org.apache.cassandra]: https://central.sonatype.com/search?namespace=org.apache.cassandra
 
 ## Compatibility
 
