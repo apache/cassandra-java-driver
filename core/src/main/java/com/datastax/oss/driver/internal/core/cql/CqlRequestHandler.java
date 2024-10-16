@@ -460,6 +460,7 @@ public class CqlRequestHandler implements Throttled {
       implements ResponseCallback, GenericFutureListener<Future<java.lang.Void>> {
 
     private final long nodeStartTimeNanos = System.nanoTime();
+    private long sendStartTimeNanos = NANOTIME_NOT_MEASURED_YET;
     private final Statement<?> statement;
     private final Node node;
     private final Queue<Node> queryPlan;
@@ -492,7 +493,15 @@ public class CqlRequestHandler implements Throttled {
       this.logPrefix = logPrefix + "|" + execution;
     }
 
-    // this gets invoked once the write completes.
+    @Override
+    public void onRequestSent(Frame frame) {
+      if (sessionMetricUpdater.isEnabled(
+          DefaultSessionMetric.SEND_LATENCY, executionProfile.getName())) {
+        sendStartTimeNanos = System.nanoTime();
+      }
+    }
+
+    // this gets invoked once the write request completes.
     @Override
     public void operationComplete(Future<java.lang.Void> future) throws Exception {
       if (!future.isSuccess()) {
@@ -522,6 +531,14 @@ public class CqlRequestHandler implements Throttled {
         }
       } else {
         LOG.trace("[{}] Request sent on {}", logPrefix, channel);
+        if (sendStartTimeNanos != NANOTIME_NOT_MEASURED_YET) {
+          // only if send latency metric is enabled
+          sessionMetricUpdater.updateTimer(
+              DefaultSessionMetric.SEND_LATENCY,
+              executionProfile.getName(),
+              System.nanoTime() - sendStartTimeNanos,
+              TimeUnit.NANOSECONDS);
+        }
         if (result.isDone()) {
           // If the handler completed since the last time we checked, cancel directly because we
           // don't know if cancelScheduledTasks() has run yet
@@ -730,7 +747,7 @@ public class CqlRequestHandler implements Throttled {
                       trackNodeError(node, illegalStateException, NANOTIME_NOT_MEASURED_YET);
                       setFinalError(statement, illegalStateException, node, execution);
                     }
-                    LOG.trace("[{}] Reprepare sucessful, retrying", logPrefix);
+                    LOG.trace("[{}] Reprepare successful, retrying", logPrefix);
                     sendRequest(statement, node, queryPlan, execution, retryCount, false);
                   }
                   return null;

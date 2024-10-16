@@ -988,7 +988,48 @@ public enum DefaultDriverOption implements DriverOption {
    * <p>Value type: {@link java.util.List List}&#60;{@link String}&#62;
    */
   LOAD_BALANCING_DC_FAILOVER_PREFERRED_REMOTE_DCS(
-      "advanced.load-balancing-policy.dc-failover.preferred-remote-dcs");
+      "advanced.load-balancing-policy.dc-failover.preferred-remote-dcs"),
+
+  /**
+   * The largest latency that we expect to record for requests.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_SEND_LATENCY_HIGHEST("advanced.metrics.session.send-latency.highest-latency"),
+  /**
+   * The shortest latency that we expect to record for requests.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_SEND_LATENCY_LOWEST("advanced.metrics.session.send-latency.lowest-latency"),
+  /**
+   * The number of significant decimal digits to which internal structures will maintain for
+   * requests.
+   *
+   * <p>Value-type: int
+   */
+  METRICS_SESSION_SEND_LATENCY_DIGITS("advanced.metrics.session.send-latency.significant-digits"),
+  /**
+   * The interval at which percentile data is refreshed for requests.
+   *
+   * <p>Value-type: {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_SEND_LATENCY_INTERVAL("advanced.metrics.session.send-latency.refresh-interval"),
+  /**
+   * Optional service-level objectives to meet, as a list of latencies to track.
+   *
+   * <p>Value-type: List of {@link java.time.Duration Duration}
+   */
+  METRICS_SESSION_SEND_LATENCY_SLO("advanced.metrics.session.send-latency.slo"),
+  /**
+   * Optional list of percentiles to publish for send-latency metric. Produces an additional time
+   * series for each requested percentile. This percentile is computed locally, and so can't be
+   * aggregated with percentiles computed across other dimensions (e.g. in a different instance).
+   *
+   * <p>Value type: {@link java.util.List List}&#60;{@link Double}&#62;
+   */
+  METRICS_SESSION_SEND_LATENCY_PUBLISH_PERCENTILES(
+      "advanced.metrics.session.send-latency.publish-percentiles");
 
   private final String path;
 
