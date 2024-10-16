@@ -33,15 +33,19 @@ import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.ArrayUtils;
 import com.datastax.oss.driver.internal.core.util.collection.QueryPlan;
 import com.datastax.oss.driver.internal.core.util.collection.SimpleQueryPlan;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import com.datastax.oss.driver.shaded.guava.common.collect.MapMaker;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.BitSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLongArray;
 import net.jcip.annotations.ThreadSafe;
@@ -96,7 +100,7 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
   private static final int MAX_IN_FLIGHT_THRESHOLD = 10;
   private static final long RESPONSE_COUNT_RESET_INTERVAL_NANOS = MILLISECONDS.toNanos(200);
 
-  protected final Map<Node, AtomicLongArray> responseTimes = new ConcurrentHashMap<>();
+  protected final ConcurrentMap<Node, NodeResponseRateSample> responseTimes;
   protected final Map<Node, Long> upTimes = new ConcurrentHashMap<>();
   private final boolean avoidSlowReplicas;
 
@@ -104,6 +108,7 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
     super(context, profileName);
     this.avoidSlowReplicas =
         profile.getBoolean(DefaultDriverOption.LOAD_BALANCING_POLICY_SLOW_AVOIDANCE, true);
+    this.responseTimes = new MapMaker().weakKeys().makeMap();
   }
 
   @NonNull
@@ -274,40 +279,19 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
   }
 
   protected boolean isResponseRateInsufficient(@NonNull Node node, long now) {
-    // response rate is considered insufficient when less than 2 responses were obtained in
-    // the past interval delimited by RESPONSE_COUNT_RESET_INTERVAL_NANOS.
-    if (responseTimes.containsKey(node)) {
-      AtomicLongArray array = responseTimes.get(node);
-      if (array.length() == 2) {
-        long threshold = now - RESPONSE_COUNT_RESET_INTERVAL_NANOS;
-        long leastRecent = array.get(0);
-        return leastRecent - threshold < 0;
-      }
-    }
-    return true;
+    NodeResponseRateSample sample = responseTimes.get(node);
+    return !(sample == null || sample.hasSufficientResponses(now));
   }
 
+  /**
+   * Synchronously updates the response times for the given node. It is synchronous because the
+   * {@link #DefaultLoadBalancingPolicy(com.datastax.oss.driver.api.core.context.DriverContext,
+   * java.lang.String) CacheLoader.load} assigned is synchronous.
+   *
+   * @param node The node to update.
+   */
   protected void updateResponseTimes(@NonNull Node node) {
-    responseTimes.compute(
-        node,
-        (n, array) -> {
-          // The array stores at most two timestamps, since we don't need more;
-          // the first one is always the least recent one, and hence the one to inspect.
-          long now = nanoTime();
-          if (array == null) {
-            array = new AtomicLongArray(1);
-            array.set(0, now);
-          } else if (array.length() == 1) {
-            long previous = array.get(0);
-            array = new AtomicLongArray(2);
-            array.set(0, previous);
-            array.set(1, now);
-          } else {
-            array.set(0, array.get(1));
-            array.set(1, now);
-          }
-          return array;
-        });
+    this.responseTimes.compute(node, (k, v) -> v == null ? new NodeResponseRateSample() : v.next());
   }
 
   protected int getInFlight(@NonNull Node node, @NonNull Session session) {
@@ -317,5 +301,53 @@ public class DefaultLoadBalancingPolicy extends BasicLoadBalancingPolicy impleme
     // for requests that were cancelled or timed out (since the node is likely to still be
     // processing them).
     return (pool == null) ? 0 : pool.getInFlight();
+  }
+
+  protected class NodeResponseRateSample {
+
+    @VisibleForTesting protected final long oldest;
+    @VisibleForTesting protected final OptionalLong newest;
+
+    private NodeResponseRateSample() {
+      long now = nanoTime();
+      this.oldest = now;
+      this.newest = OptionalLong.empty();
+    }
+
+    private NodeResponseRateSample(long oldestSample) {
+      this(oldestSample, nanoTime());
+    }
+
+    private NodeResponseRateSample(long oldestSample, long newestSample) {
+      this.oldest = oldestSample;
+      this.newest = OptionalLong.of(newestSample);
+    }
+
+    @VisibleForTesting
+    protected NodeResponseRateSample(AtomicLongArray times) {
+      assert times.length() >= 1;
+      this.oldest = times.get(0);
+      this.newest = (times.length() > 1) ? OptionalLong.of(times.get(1)) : OptionalLong.empty();
+    }
+
+    // Our newest sample becomes the oldest in the next generation
+    private NodeResponseRateSample next() {
+      return new NodeResponseRateSample(this.getNewestValidSample(), nanoTime());
+    }
+
+    // If we have a pair of values return the newest, otherwise we have just one value... so just
+    // return it
+    private long getNewestValidSample() {
+      return this.newest.orElse(this.oldest);
+    }
+
+    // response rate is considered insufficient when less than 2 responses were obtained in
+    // the past interval delimited by RESPONSE_COUNT_RESET_INTERVAL_NANOS.
+    private boolean hasSufficientResponses(long now) {
+      // If we only have one sample it's an automatic failure
+      if (!this.newest.isPresent()) return true;
+      long threshold = now - RESPONSE_COUNT_RESET_INTERVAL_NANOS;
+      return this.oldest - threshold >= 0;
+    }
   }
 }

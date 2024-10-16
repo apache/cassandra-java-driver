@@ -82,6 +82,7 @@ public class ReplayingEventFilter<EventT> {
         consumer.accept(event);
       }
     } finally {
+      recordedEvents.clear();
       stateLock.writeLock().unlock();
     }
   }

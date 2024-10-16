@@ -527,14 +527,18 @@ public class DefaultSession implements CqlSession {
 
     private void onNodeStateChanged(NodeStateEvent event) {
       assert adminExecutor.inEventLoop();
-      if (event.newState == null) {
-        context.getNodeStateListener().onRemove(event.node);
+      DefaultNode node = event.node;
+      if (node == null) {
+        LOG.debug(
+            "[{}] Node for this event was removed, ignoring state change: {}", logPrefix, event);
+      } else if (event.newState == null) {
+        context.getNodeStateListener().onRemove(node);
       } else if (event.oldState == null && event.newState == NodeState.UNKNOWN) {
-        context.getNodeStateListener().onAdd(event.node);
+        context.getNodeStateListener().onAdd(node);
       } else if (event.newState == NodeState.UP) {
-        context.getNodeStateListener().onUp(event.node);
+        context.getNodeStateListener().onUp(node);
       } else if (event.newState == NodeState.DOWN || event.newState == NodeState.FORCED_DOWN) {
-        context.getNodeStateListener().onDown(event.node);
+        context.getNodeStateListener().onDown(node);
       }
     }
 

@@ -69,11 +69,11 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
 
     // Then
     assertThat(policy.responseTimes)
-        .hasEntrySatisfying(node1, value -> assertThat(value.get(0)).isEqualTo(123L))
+        .hasEntrySatisfying(node1, value -> assertThat(value.oldest).isEqualTo(123L))
         .doesNotContainKeys(node2, node3);
-    assertThat(policy.isResponseRateInsufficient(node1, nextNanoTime)).isTrue();
-    assertThat(policy.isResponseRateInsufficient(node2, nextNanoTime)).isTrue();
-    assertThat(policy.isResponseRateInsufficient(node3, nextNanoTime)).isTrue();
+    assertThat(policy.isResponseRateInsufficient(node1, nextNanoTime)).isFalse();
+    assertThat(policy.isResponseRateInsufficient(node2, nextNanoTime)).isFalse();
+    assertThat(policy.isResponseRateInsufficient(node3, nextNanoTime)).isFalse();
   }
 
   @Test
@@ -91,13 +91,13 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
             node1,
             value -> {
               // oldest value first
-              assertThat(value.get(0)).isEqualTo(123);
-              assertThat(value.get(1)).isEqualTo(456);
+              assertThat(value.oldest).isEqualTo(123);
+              assertThat(value.newest.getAsLong()).isEqualTo(456);
             })
         .doesNotContainKeys(node2, node3);
     assertThat(policy.isResponseRateInsufficient(node1, nextNanoTime)).isFalse();
-    assertThat(policy.isResponseRateInsufficient(node2, nextNanoTime)).isTrue();
-    assertThat(policy.isResponseRateInsufficient(node3, nextNanoTime)).isTrue();
+    assertThat(policy.isResponseRateInsufficient(node2, nextNanoTime)).isFalse();
+    assertThat(policy.isResponseRateInsufficient(node3, nextNanoTime)).isFalse();
   }
 
   @Test
@@ -116,14 +116,14 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
             node1,
             value -> {
               // values should rotate left (bubble up)
-              assertThat(value.get(0)).isEqualTo(456);
-              assertThat(value.get(1)).isEqualTo(789);
+              assertThat(value.oldest).isEqualTo(456);
+              assertThat(value.newest.getAsLong()).isEqualTo(789);
             })
-        .hasEntrySatisfying(node2, value -> assertThat(value.get(0)).isEqualTo(789))
+        .hasEntrySatisfying(node2, value -> assertThat(value.oldest).isEqualTo(789))
         .doesNotContainKey(node3);
     assertThat(policy.isResponseRateInsufficient(node1, nextNanoTime)).isFalse();
-    assertThat(policy.isResponseRateInsufficient(node2, nextNanoTime)).isTrue();
-    assertThat(policy.isResponseRateInsufficient(node3, nextNanoTime)).isTrue();
+    assertThat(policy.isResponseRateInsufficient(node2, nextNanoTime)).isFalse();
+    assertThat(policy.isResponseRateInsufficient(node3, nextNanoTime)).isFalse();
   }
 
   @Test
@@ -137,11 +137,11 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
 
     // Then
     assertThat(policy.responseTimes)
-        .hasEntrySatisfying(node1, value -> assertThat(value.get(0)).isEqualTo(123L))
+        .hasEntrySatisfying(node1, value -> assertThat(value.oldest).isEqualTo(123L))
         .doesNotContainKeys(node2, node3);
-    assertThat(policy.isResponseRateInsufficient(node1, nextNanoTime)).isTrue();
-    assertThat(policy.isResponseRateInsufficient(node2, nextNanoTime)).isTrue();
-    assertThat(policy.isResponseRateInsufficient(node3, nextNanoTime)).isTrue();
+    assertThat(policy.isResponseRateInsufficient(node1, nextNanoTime)).isFalse();
+    assertThat(policy.isResponseRateInsufficient(node2, nextNanoTime)).isFalse();
+    assertThat(policy.isResponseRateInsufficient(node3, nextNanoTime)).isFalse();
   }
 
   @Test
@@ -160,13 +160,13 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
             node1,
             value -> {
               // oldest value first
-              assertThat(value.get(0)).isEqualTo(123);
-              assertThat(value.get(1)).isEqualTo(456);
+              assertThat(value.oldest).isEqualTo(123);
+              assertThat(value.newest.getAsLong()).isEqualTo(456);
             })
         .doesNotContainKeys(node2, node3);
     assertThat(policy.isResponseRateInsufficient(node1, nextNanoTime)).isFalse();
-    assertThat(policy.isResponseRateInsufficient(node2, nextNanoTime)).isTrue();
-    assertThat(policy.isResponseRateInsufficient(node3, nextNanoTime)).isTrue();
+    assertThat(policy.isResponseRateInsufficient(node2, nextNanoTime)).isFalse();
+    assertThat(policy.isResponseRateInsufficient(node3, nextNanoTime)).isFalse();
   }
 
   @Test
@@ -186,13 +186,13 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
             node1,
             value -> {
               // values should rotate left (bubble up)
-              assertThat(value.get(0)).isEqualTo(456);
-              assertThat(value.get(1)).isEqualTo(789);
+              assertThat(value.oldest).isEqualTo(456);
+              assertThat(value.newest.getAsLong()).isEqualTo(789);
             })
-        .hasEntrySatisfying(node2, value -> assertThat(value.get(0)).isEqualTo(789))
+        .hasEntrySatisfying(node2, value -> assertThat(value.oldest).isEqualTo(789))
         .doesNotContainKey(node3);
     assertThat(policy.isResponseRateInsufficient(node1, nextNanoTime)).isFalse();
-    assertThat(policy.isResponseRateInsufficient(node2, nextNanoTime)).isTrue();
-    assertThat(policy.isResponseRateInsufficient(node3, nextNanoTime)).isTrue();
+    assertThat(policy.isResponseRateInsufficient(node2, nextNanoTime)).isFalse();
+    assertThat(policy.isResponseRateInsufficient(node3, nextNanoTime)).isFalse();
   }
 }
