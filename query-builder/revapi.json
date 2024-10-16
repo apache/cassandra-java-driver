@@ -2772,6 +2772,16 @@
         "code": "java.method.addedToInterface",
         "new": "method com.datastax.oss.driver.api.querybuilder.update.UpdateStart com.datastax.oss.driver.api.querybuilder.update.UpdateStart::usingTtl(int)",
         "justification": "JAVA-2210: Add ability to set TTL for modification queries"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method com.datastax.oss.driver.api.querybuilder.select.Select com.datastax.oss.driver.api.querybuilder.select.Select::orderByAnnOf(java.lang.String, com.datastax.oss.driver.api.core.data.CqlVector<?>)",
+        "justification": "JAVA-3118: Add support for vector data type in Schema Builder, QueryBuilder"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method com.datastax.oss.driver.api.querybuilder.select.Select com.datastax.oss.driver.api.querybuilder.select.Select::orderByAnnOf(com.datastax.oss.driver.api.core.CqlIdentifier, com.datastax.oss.driver.api.core.data.CqlVector<?>)",
+        "justification": "JAVA-3118: Add support for vector data type in Schema Builder, QueryBuilder"
       }
     ]
   }

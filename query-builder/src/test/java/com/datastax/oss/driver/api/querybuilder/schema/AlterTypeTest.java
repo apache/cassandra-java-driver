@@ -53,4 +53,10 @@ public class AlterTypeTest {
     assertThat(alterType("bar").renameField("x", "y").renameField("u", "v").renameField("b", "a"))
         .hasCql("ALTER TYPE bar RENAME x TO y AND u TO v AND b TO a");
   }
+
+  @Test
+  public void should_generate_alter_type_with_vector() {
+    assertThat(alterType("foo", "bar").alterField("vec", DataTypes.vectorOf(DataTypes.FLOAT, 3)))
+        .hasCql("ALTER TYPE foo.bar ALTER vec TYPE vector<float, 3>");
+  }
 }
