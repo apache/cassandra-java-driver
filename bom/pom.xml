@@ -78,7 +78,7 @@
       <dependency>
         <groupId>com.datastax.oss</groupId>
         <artifactId>java-driver-shaded-guava</artifactId>
-        <version>25.1-jre-graal-sub-1</version>
+        <version>32.0.1-jre-graal-sub-1</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
