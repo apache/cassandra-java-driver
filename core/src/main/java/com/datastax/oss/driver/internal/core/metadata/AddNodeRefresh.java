@@ -25,9 +25,13 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.UUID;
 import net.jcip.annotations.ThreadSafe;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ThreadSafe
 public class AddNodeRefresh extends NodesRefresh {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AddNodeRefresh.class);
 
   @VisibleForTesting final NodeInfo newNodeInfo;
 
@@ -38,6 +42,8 @@ public class AddNodeRefresh extends NodesRefresh {
   @Override
   public Result compute(
       DefaultMetadata oldMetadata, boolean tokenMapEnabled, InternalDriverContext context) {
+    String logPrefix = context.getSessionName();
+
     Map<UUID, Node> oldNodes = oldMetadata.getNodes();
     Node existing = oldNodes.get(newNodeInfo.getHostId());
     if (existing == null) {
@@ -48,6 +54,15 @@ public class AddNodeRefresh extends NodesRefresh {
               .putAll(oldNodes)
               .put(newNode.getHostId(), newNode)
               .build();
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(
+            "[{}] Adding new node {} with system-table address {}",
+            logPrefix,
+            newNode,
+            newNodeInfo.getBroadcastRpcAddress().orElse(null));
+      }
+
       return new Result(
           oldMetadata.withNodes(newNodes, tokenMapEnabled, false, null, context),
           ImmutableList.of(NodeStateEvent.added(newNode)));

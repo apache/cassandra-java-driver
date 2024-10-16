@@ -61,6 +61,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntUnaryOperator;
+import java.util.stream.Collectors;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -180,7 +181,11 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
         // This includes state == UNKNOWN. If the node turns out to be unreachable, this will be
         // detected when we try to open a pool to it, it will get marked down and this will be
         // signaled back to this policy, which will then remove it from the live set.
+        LOG.debug("[{}] {} added to initial live set", logPrefix, node);
         liveNodes.add(node);
+      }
+      if (LOG.isTraceEnabled()) {
+        logLiveNodesByDc();
       }
     }
   }
@@ -408,6 +413,9 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
     }
     if (distance != NodeDistance.IGNORED && liveNodes.add(node)) {
       LOG.debug("[{}] {} came back UP, added to live set", logPrefix, node);
+      if (LOG.isTraceEnabled()) {
+        logLiveNodesByDc();
+      }
     }
   }
 
@@ -415,6 +423,9 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   public void onDown(@NonNull Node node) {
     if (liveNodes.remove(node)) {
       LOG.debug("[{}] {} went DOWN, removed from live set", logPrefix, node);
+      if (LOG.isTraceEnabled()) {
+        logLiveNodesByDc();
+      }
     }
   }
 
@@ -422,6 +433,9 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   public void onRemove(@NonNull Node node) {
     if (liveNodes.remove(node)) {
       LOG.debug("[{}] {} was removed, removed from live set", logPrefix, node);
+      if (LOG.isTraceEnabled()) {
+        logLiveNodesByDc();
+      }
     }
   }
 
@@ -465,5 +479,26 @@ public class BasicLoadBalancingPolicy implements LoadBalancingPolicy {
   @Override
   public void close() {
     // nothing to do
+  }
+
+  // logs current list of
+  private void logLiveNodesByDc() {
+    // check trace level enabled just in case
+    if (!LOG.isTraceEnabled()) {
+      return;
+    }
+
+    LOG.trace(
+        "[{}] Current live nodes by dc: {{}}",
+        logPrefix,
+        liveNodes.dcs().stream()
+            .map(
+                dc ->
+                    dc
+                        + ": "
+                        + liveNodes.dc(dc).stream()
+                            .map(Objects::toString)
+                            .collect(Collectors.joining(", ")))
+            .collect(Collectors.joining(", ")));
   }
 }

@@ -56,11 +56,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -355,6 +357,14 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
         Runnable onSuccess,
         Consumer<Throwable> onFailure) {
       assert adminExecutor.inEventLoop();
+
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(
+            "[{}] Control connection candidate nodes: [{}]",
+            logPrefix,
+            nodes.stream().map(Objects::toString).collect(Collectors.joining(", ")));
+      }
+
       Node node = nodes.poll();
       if (node == null) {
         onFailure.accept(AllNodesFailedException.fromErrors(errors));
@@ -370,11 +380,17 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                     NodeStateEvent lastStateEvent = lastStateEvents.get(node);
                     if (error != null) {
                       if (closeWasCalled || initFuture.isCancelled()) {
+                        LOG.trace(
+                            "[{}] Error connecting to {} after close called", logPrefix, node);
                         onSuccess.run(); // abort, we don't really care about the result
                       } else {
                         if (error instanceof AuthenticationException) {
                           Loggers.warnWithException(
-                              LOG, "[{}] Authentication error", logPrefix, error);
+                              LOG,
+                              "[{}] Authentication error connecting to {}",
+                              logPrefix,
+                              node,
+                              error);
                         } else {
                           if (config
                               .getDefaultProfile()
@@ -401,39 +417,44 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                       }
                     } else if (closeWasCalled || initFuture.isCancelled()) {
                       LOG.debug(
-                          "[{}] New channel opened ({}) but the control connection was closed, closing it",
+                          "[{}] New channel opened ({}) to {} but the control connection was closed, closing it",
                           logPrefix,
-                          channel);
+                          channel,
+                          node);
                       channel.forceClose();
                       onSuccess.run();
                     } else if (lastDistanceEvent != null
                         && lastDistanceEvent.distance == NodeDistance.IGNORED) {
                       LOG.debug(
-                          "[{}] New channel opened ({}) but node became ignored, "
+                          "[{}] New channel opened ({}) to {} but node became ignored, "
                               + "closing and trying next node",
                           logPrefix,
-                          channel);
+                          channel,
+                          node);
                       channel.forceClose();
                       connect(nodes, errors, onSuccess, onFailure);
                     } else if (lastStateEvent != null
                         && (lastStateEvent.newState == null /*(removed)*/
                             || lastStateEvent.newState == NodeState.FORCED_DOWN)) {
                       LOG.debug(
-                          "[{}] New channel opened ({}) but node was removed or forced down, "
+                          "[{}] New channel opened ({}) to {} but node was removed or forced down, "
                               + "closing and trying next node",
                           logPrefix,
-                          channel);
+                          channel,
+                          node);
                       channel.forceClose();
                       connect(nodes, errors, onSuccess, onFailure);
                     } else {
-                      LOG.debug("[{}] New channel opened {}", logPrefix, channel);
+                      LOG.debug("[{}] New channel opened {} to {}", logPrefix, channel, node);
                       DriverChannel previousChannel = ControlConnection.this.channel;
                       ControlConnection.this.channel = channel;
                       if (previousChannel != null) {
                         // We were reconnecting: make sure previous channel gets closed (it may
                         // still be open if reconnection was forced)
                         LOG.debug(
-                            "[{}] Forcefully closing previous channel {}", logPrefix, channel);
+                            "[{}] Forcefully closing previous channel {}",
+                            logPrefix,
+                            previousChannel);
                         previousChannel.forceClose();
                       }
                       context.getEventBus().fire(ChannelEvent.channelOpened(node));
@@ -540,9 +561,10 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
           && !channel.closeFuture().isDone()
           && event.node.getEndPoint().equals(channel.getEndPoint())) {
         LOG.debug(
-            "[{}] Control node {} became IGNORED, reconnecting to a different node",
+            "[{}] Control node {} with channel {} became IGNORED, reconnecting to a different node",
             logPrefix,
-            event.node);
+            event.node,
+            channel);
         reconnectNow();
       }
     }
@@ -555,9 +577,10 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
           && !channel.closeFuture().isDone()
           && event.node.getEndPoint().equals(channel.getEndPoint())) {
         LOG.debug(
-            "[{}] Control node {} was removed or forced down, reconnecting to a different node",
+            "[{}] Control node {} with channel {} was removed or forced down, reconnecting to a different node",
             logPrefix,
-            event.node);
+            event.node,
+            channel);
         reconnectNow();
       }
     }

@@ -30,16 +30,18 @@ public class DefaultNodeTest {
   private final String uuidStr = "1e4687e6-f94e-432e-a792-216f89ef265f";
   private final UUID hostId = UUID.fromString(uuidStr);
   private final EndPoint endPoint = new DefaultEndPoint(new InetSocketAddress("localhost", 9042));
+  private final String dc = "earth-1";
 
   @Test
   public void should_have_expected_string_representation() {
 
     DefaultNode node = new DefaultNode(endPoint, MockedDriverContextFactory.defaultDriverContext());
     node.hostId = hostId;
+    node.datacenter = dc;
 
     String expected =
         String.format(
-            "Node(endPoint=localhost/127.0.0.1:9042, hostId=1e4687e6-f94e-432e-a792-216f89ef265f, hashCode=%x)",
+            "Node(endPoint=localhost/127.0.0.1:9042, hostId=1e4687e6-f94e-432e-a792-216f89ef265f, hashCode=%x, dc=earth-1)",
             node.hashCode());
     assertThat(node.toString()).isEqualTo(expected);
   }
@@ -49,10 +51,12 @@ public class DefaultNodeTest {
 
     DefaultNode node = new DefaultNode(endPoint, MockedDriverContextFactory.defaultDriverContext());
     node.hostId = null;
+    node.datacenter = null;
 
     String expected =
         String.format(
-            "Node(endPoint=localhost/127.0.0.1:9042, hostId=null, hashCode=%x)", node.hashCode());
+            "Node(endPoint=localhost/127.0.0.1:9042, hostId=null, hashCode=%x, dc=null)",
+            node.hashCode());
     assertThat(node.toString()).isEqualTo(expected);
   }
 }
