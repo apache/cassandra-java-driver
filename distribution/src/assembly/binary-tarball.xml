@@ -32,7 +32,7 @@
     <moduleSet>
       <useAllReactorProjects>true</useAllReactorProjects>
       <includes>
-        <include>com.datastax.oss:java-driver-core</include>
+        <include>org.apache.cassandra:java-driver-core</include>
       </includes>
       <binaries>
         <outputDirectory>lib/core</outputDirectory>
@@ -45,7 +45,7 @@
                 For some reason, we need to exclude all other modules here, even though our
                 moduleSet targets core only
               -->
-              <exclude>com.datastax.oss:java-driver-query-builder</exclude>
+              <exclude>org.apache.cassandra:java-driver-query-builder</exclude>
             </excludes>
             <useTransitiveFiltering>true</useTransitiveFiltering>
           </dependencySet>
@@ -57,7 +57,7 @@
     <moduleSet>
       <useAllReactorProjects>true</useAllReactorProjects>
       <includes>
-        <include>com.datastax.oss:java-driver-query-builder</include>
+        <include>org.apache.cassandra:java-driver-query-builder</include>
       </includes>
       <binaries>
         <outputDirectory>lib/query-builder</outputDirectory>
@@ -65,7 +65,7 @@
         <dependencySets>
           <dependencySet>
             <excludes>
-              <exclude>com.datastax.oss:java-driver-core</exclude>
+              <exclude>org.apache.cassandra:java-driver-core</exclude>
               <!-- Don't reinclude dependencies that core also has -->
               <exclude>com.datastax.oss:java-driver-shaded-guava</exclude>
               <exclude>com.github.stephenc.jcip:jcip-annotations</exclude>
@@ -83,7 +83,6 @@
       <includes>
         <include>com.datastax.oss:java-driver-core</include>
         <include>com.datastax.oss:java-driver-query-builder</include>
-      </includes>
       <binaries>
         <unpack>false</unpack>
         <attachmentClassifier>sources</attachmentClassifier>
@@ -110,8 +109,8 @@
       <outputDirectory>.</outputDirectory>
       <includes>
         <include>README*</include>
-        <include>LICENSE*</include>
-        <include>NOTICE*</include>
+        <include>LICENSE_binary</include>
+        <include>NOTICE_binary.txt</include>
       </includes>
     </fileSet>
 
