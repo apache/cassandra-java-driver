@@ -98,7 +98,7 @@ before compilation:
         </sourceDirs>
         <annotationProcessorPaths>
           <annotationProcessorPath>
-            <groupId>com.datastax.oss</groupId>
+            <groupId>org.apache.cassandra</groupId>
             <artifactId>java-driver-mapper-processor</artifactId>
             <version>${java-driver.version}</version>
           </annotationProcessorPath>

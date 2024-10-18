@@ -40,7 +40,7 @@ configuration (make sure you use version 3.5 or higher):
 
 <dependencies>
   <dependency>
-    <groupId>com.datastax.oss</groupId>
+    <groupId>org.apache.cassandra</groupId>
     <artifactId>java-driver-mapper-runtime</artifactId>
     <version>${java-driver.version}</version>
   </dependency>
@@ -56,7 +56,7 @@ configuration (make sure you use version 3.5 or higher):
         <target>1.8</target> <!-- (or higher) -->
         <annotationProcessorPaths>
           <path>
-            <groupId>com.datastax.oss</groupId>
+            <groupId>org.apache.cassandra</groupId>
             <artifactId>java-driver-mapper-processor</artifactId>
             <version>${java-driver.version}</version>
           </path>
@@ -80,13 +80,13 @@ as a regular dependency in the "provided" scope:
 ```xml
 <dependencies>
   <dependency>
-    <groupId>com.datastax.oss</groupId>
+    <groupId>org.apache.cassandra</groupId>
     <artifactId>java-driver-mapper-processor</artifactId>
     <version>${java-driver.version}</version>
     <scope>provided</scope>
   </dependency>
   <dependency>
-    <groupId>com.datastax.oss</groupId>
+    <groupId>org.apache.cassandra</groupId>
     <artifactId>java-driver-mapper-runtime</artifactId>
     <version>${java-driver.version}</version>
   </dependency>
