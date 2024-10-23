@@ -60,7 +60,7 @@ public class DefaultVectorType implements VectorType {
   @NonNull
   @Override
   public String asCql(boolean includeFrozen, boolean pretty) {
-    return String.format("'%s(%d)'", getClassName(), getDimensions());
+    return String.format("vector<%s, %d>", getElementType().asCql(true, false), getDimensions());
   }
 
   /* ============== General class implementation ============== */
