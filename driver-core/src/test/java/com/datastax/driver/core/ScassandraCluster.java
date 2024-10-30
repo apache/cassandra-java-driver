@@ -658,14 +658,14 @@ public class ScassandraCluster {
     column("cluster_name", TEXT),
     column("cql_version", TEXT),
     column("data_center", TEXT),
+    column("graph", BOOLEAN),
+    column("host_id", UUID),
     column("listen_address", INET),
     column("partitioner", TEXT),
     column("rack", TEXT),
     column("release_version", TEXT),
-    column("tokens", set(TEXT)),
-    column("graph", BOOLEAN),
-    column("host_id", UUID),
-    column("schema_version", UUID)
+    column("schema_version", UUID),
+    column("tokens", set(TEXT))
   };
 
   public static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_LOCAL_V2 = {
@@ -676,15 +676,36 @@ public class ScassandraCluster {
     column("cluster_name", TEXT),
     column("cql_version", TEXT),
     column("data_center", TEXT),
+    column("graph", BOOLEAN),
+    column("host_id", UUID),
     column("listen_address", INET),
     column("listen_port", INT),
     column("partitioner", TEXT),
     column("rack", TEXT),
     column("release_version", TEXT),
-    column("tokens", set(TEXT)),
-    column("graph", BOOLEAN),
+    column("schema_version", UUID),
+    column("tokens", set(TEXT))
+  };
+
+  public static final org.scassandra.http.client.types.ColumnMetadata[]
+      SELECT_LOCAL_RPC_ADDRESS_AND_PORT = {
+    column("key", TEXT),
+    column("bootstrapped", TEXT),
+    column("broadcast_address", INET),
+    column("broadcast_port", INT),
+    column("cluster_name", TEXT),
+    column("cql_version", TEXT),
+    column("data_center", TEXT),
     column("host_id", UUID),
-    column("schema_version", UUID)
+    column("listen_address", INET),
+    column("listen_port", INT),
+    column("partitioner", TEXT),
+    column("rack", TEXT),
+    column("release_version", TEXT),
+    column("rpc_address", INET),
+    column("rpc_port", INT),
+    column("schema_version", UUID),
+    column("tokens", set(TEXT))
   };
 
   static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_CLUSTER_NAME = {
