@@ -671,7 +671,7 @@ The remaining core driver dependencies are the only ones that are truly mandator
 
 * the [native protocol](https://github.com/datastax/native-protocol) layer. This is essentially part
   of the driver code, but was externalized for reuse in other projects;
-* `java-driver-shaded-guava`, a shaded version of [Guava](https://github.com/google/guava). It is
+* `java-driver-guava-shaded`, a shaded version of [Guava](https://github.com/google/guava). It is
   relocated to a different package, and only used by internal driver code, so it should be
   completely transparent to third-party code;
 * the [SLF4J](https://www.slf4j.org/) API for [logging](../logging/).

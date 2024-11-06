@@ -49,8 +49,8 @@
       <artifactId>netty-handler</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.datastax.oss</groupId>
-      <artifactId>java-driver-shaded-guava</artifactId>
+      <groupId>org.apache.cassandra</groupId>
+      <artifactId>java-driver-guava-shaded</artifactId>
     </dependency>
     <dependency>
       <groupId>com.typesafe</groupId>

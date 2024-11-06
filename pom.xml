@@ -40,6 +40,7 @@
     <module>mapper-processor</module>
     <module>metrics/micrometer</module>
     <module>metrics/microprofile</module>
+    <module>guava-shaded</module>
     <module>test-infra</module>
     <module>integration-tests</module>
     <module>osgi-tests</module>
@@ -110,7 +111,7 @@
         <version>${netty.version}</version>
       </dependency>
       <dependency>
-        <!-- Only for integration tests, use the shaded JAR for production code -->
+        <!-- Version of Guava used in shaded module and for integration tests. -->
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>25.1-jre</version>

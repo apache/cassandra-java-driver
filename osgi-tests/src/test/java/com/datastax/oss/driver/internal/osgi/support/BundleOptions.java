@@ -35,7 +35,7 @@ public class BundleOptions {
   public static CompositeOption commonBundles() {
     return () ->
         options(
-            mavenBundle("com.datastax.oss", "java-driver-shaded-guava").versionAsInProject(),
+            mavenBundle("org.apache.cassandra", "java-driver-guava-shaded").versionAsInProject(),
             mavenBundle("io.dropwizard.metrics", "metrics-core").versionAsInProject(),
             mavenBundle("org.slf4j", "slf4j-api").versionAsInProject(),
             mavenBundle("org.hdrhistogram", "HdrHistogram").versionAsInProject(),
