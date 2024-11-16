@@ -159,7 +159,10 @@ public class DefaultCodecRegistry extends CachingCodecRegistry {
 
     @Override
     public int hashCode() {
-      return Objects.hash(cqlType, javaType, isJavaCovariant);
+      // NOTE: inlined Objects.hash for performance reasons (avoid Object[] allocation
+      // seen in profiler allocation traces)
+      return ((31 + Objects.hashCode(cqlType)) * 31 + Objects.hashCode(javaType)) * 31
+              + Boolean.hashCode(isJavaCovariant);
     }
   }
 }
