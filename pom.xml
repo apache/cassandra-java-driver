@@ -68,8 +68,8 @@
     <!-- when changing version also update version in LICENSE_binary  -->
     <reactive-streams.version>1.0.3</reactive-streams.version>
     <json.version>20230227</json.version>
-    <jackson.version>2.13.4</jackson.version>
-    <jackson-databind.version>2.13.4.2</jackson-databind.version>
+    <jackson.version>2.13.5</jackson.version>
+    <jackson-databind.version>${jackson.version}</jackson-databind.version>
     <!-- optional dependencies -->
     <snappy.version>1.1.10.1</snappy.version>
     <lz4.version>1.7.1</lz4.version>
