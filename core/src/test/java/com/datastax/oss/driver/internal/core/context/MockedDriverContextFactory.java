@@ -28,7 +28,7 @@ import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.ProgrammaticArguments;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
-import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
+import com.google.common.collect.Maps;
 import java.time.Duration;
 import java.util.Optional;
 

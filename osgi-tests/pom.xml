@@ -40,9 +40,10 @@
     </dependencies>
   </dependencyManagement>
   <dependencies>
+    <!-- Pax Exam requires shaded Guava for tests to run. -->
     <dependency>
       <groupId>org.apache.cassandra</groupId>
-      <artifactId>java-driver-core</artifactId>
+      <artifactId>java-driver-core-shaded</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.cassandra</groupId>
@@ -71,8 +72,12 @@
       <artifactId>logback-classic</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.cassandra</groupId>
-      <artifactId>java-driver-guava-shaded</artifactId>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.graalvm.nativeimage</groupId>
+      <artifactId>svm</artifactId>
     </dependency>
     <dependency>
       <groupId>org.xerial.snappy</groupId>
@@ -211,6 +216,7 @@
             <Bundle-Activator>com.datastax.oss.driver.internal.osgi.MailboxActivator</Bundle-Activator>
             <Export-Package>com.datastax.oss.driver.api.osgi.*</Export-Package>
             <Private-Package>com.datastax.oss.driver.internal.osgi.*</Private-Package>
+            <!-- ,com.google.common.*;resolution:=optional -->
             <Import-Package>!net.jcip.annotations.*,!edu.umd.cs.findbugs.annotations.*,org.apache.tinkerpop.*;resolution:=optional,*</Import-Package>
             <_include>-osgi.bnd</_include>
           </instructions>

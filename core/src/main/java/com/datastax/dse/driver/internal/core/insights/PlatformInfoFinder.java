@@ -23,7 +23,7 @@ import static com.datastax.dse.driver.internal.core.insights.schema.InsightsPlat
 import com.datastax.dse.driver.internal.core.insights.schema.InsightsPlatformInfo;
 import com.datastax.dse.driver.internal.core.insights.schema.InsightsPlatformInfo.CPUS;
 import com.datastax.oss.driver.internal.core.os.Native;
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;

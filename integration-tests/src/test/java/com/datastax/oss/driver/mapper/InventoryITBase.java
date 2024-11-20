@@ -24,7 +24,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.PartitionKey;
 import com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;

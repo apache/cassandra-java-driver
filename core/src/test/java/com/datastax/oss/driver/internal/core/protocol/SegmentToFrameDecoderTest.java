@@ -19,7 +19,6 @@ package com.datastax.oss.driver.internal.core.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.oss.driver.shaded.guava.common.base.Strings;
 import com.datastax.oss.protocol.internal.Compressor;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.FrameCodec;
@@ -31,6 +30,7 @@ import com.datastax.oss.protocol.internal.Segment;
 import com.datastax.oss.protocol.internal.request.AuthResponse;
 import com.datastax.oss.protocol.internal.response.result.Void;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import com.google.common.base.Strings;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.embedded.EmbeddedChannel;

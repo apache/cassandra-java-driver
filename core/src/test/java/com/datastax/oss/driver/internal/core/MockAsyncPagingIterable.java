@@ -20,7 +20,7 @@ package com.datastax.oss.driver.internal.core;
 import com.datastax.oss.driver.api.core.AsyncPagingIterable;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayDeque;
 import java.util.Collections;

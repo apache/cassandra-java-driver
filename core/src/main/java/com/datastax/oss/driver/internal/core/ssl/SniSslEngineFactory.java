@@ -21,7 +21,7 @@ package com.datastax.oss.driver.internal.core.ssl;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.internal.core.metadata.SniEndPoint;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CopyOnWriteArrayList;

@@ -57,10 +57,6 @@
       <artifactId>native-protocol</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.cassandra</groupId>
-      <artifactId>java-driver-guava-shaded</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.typesafe</groupId>
       <artifactId>config</artifactId>
     </dependency>
@@ -163,6 +159,7 @@
                   - All the dependencies we want to shade & relocate.
                   -->
                   <include>org.apache.cassandra:java-driver-core</include>
+                  <include>com.google.guava:*</include>
                   <include>io.netty:*</include>
                   <include>com.fasterxml.jackson.core:*</include>
                 </includes>
@@ -179,6 +176,10 @@
                 <relocation>
                   <pattern>com.fasterxml.jackson</pattern>
                   <shadedPattern>com.datastax.oss.driver.shaded.fasterxml.jackson</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.google</pattern>
+                  <shadedPattern>com.datastax.oss.driver.shaded.guava</shadedPattern>
                 </relocation>
               </relocations>
               <filters>
@@ -199,6 +200,12 @@
                 </filter>
                 <filter>
                   <artifact>com.fasterxml.jackson.core:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/**</exclude>
+                  </excludes>
+                </filter>
+                <filter>
+                  <artifact>com.google.guava:*</artifact>
                   <excludes>
                     <exclude>META-INF/**</exclude>
                   </excludes>
@@ -296,9 +303,8 @@
                 <DynamicImport-Package>*</DynamicImport-Package>
                 <Import-Package>
                   <!--
-                  1) Don't import packages shaded in the driver bundle. Note that shaded-guava lives
-                  in its own bundle, so we must explicitly *not* mention it here.
-                  -->!com.datastax.oss.driver.shaded.netty.*, !com.datastax.oss.driver.shaded.fasterxml.jackson.*,
+                  1) Don't import packages shaded in the driver bundle.
+                  -->!com.datastax.oss.driver.shaded.netty.*, !com.datastax.oss.driver.shaded.fasterxml.jackson.*, !com.datastax.oss.driver.shaded.guava.*,
                   <!--
                   2) Don't include the packages below because they contain annotations only and are
                   not required at runtime.
@@ -317,14 +323,14 @@
                   <!--
                   5) Don't import packages imported by shaded classes, if they are not used by the
                   driver bundle.
-                  -->!com.google.protobuf.*, !com.jcraft.jzlib.*, !com.ning.compress.*, !lzma.sdk.*, !net.jpountz.xxhash.*, !org.bouncycastle.*, !org.conscrypt.*, !org.apache.commons.logging.*, !org.apache.log4j.*, !org.apache.logging.log4j.*, !org.eclipse.jetty.*, !org.jboss.marshalling.*, !sun.misc.*, !sun.security.*, !com.barchart.udt.*, !com.fasterxml.aalto.*, !com.sun.nio.sctp.*, !gnu.io.*, !org.xml.sax.*, !org.w3c.dom.*, !com.aayushatharva.brotli4j.*, !com.github.luben.zstd.*, *
+                  -->!com.google.protobuf.*, !com.jcraft.jzlib.*, !com.ning.compress.*, !lzma.sdk.*, !net.jpountz.xxhash.*, !org.bouncycastle.*, !org.conscrypt.*, !org.apache.commons.logging.*, !org.apache.log4j.*, !org.apache.logging.log4j.*, !org.eclipse.jetty.*, !org.jboss.marshalling.*, sun.misc.*;resolution:=optional, !sun.security.*, !com.barchart.udt.*, !com.fasterxml.aalto.*, !com.sun.nio.sctp.*, !gnu.io.*, !org.xml.sax.*, !org.w3c.dom.*, !com.aayushatharva.brotli4j.*, !com.github.luben.zstd.*, javax.annotation.*;resolution:=optional;version="[3.0,4)", javax.crypto.*;resolution:=optional, !com.datastax.oss.driver.shaded.guava.errorprone.*, !org.checkerframework.*, *
                 </Import-Package>
                 <!--
                 Export:
                 1) The driver's packages (API and internal);
-                2) All shaded packages, except Guava which resides in a separate bundle.
+                2) All shaded packages.
                 -->
-                <Export-Package>com.datastax.oss.driver.api.core.*, com.datastax.oss.driver.internal.core.*, com.datastax.dse.driver.api.core.*, com.datastax.dse.driver.internal.core.*, com.datastax.oss.driver.shaded.netty.*, com.datastax.oss.driver.shaded.fasterxml.jackson.*,</Export-Package>
+                <Export-Package>!com.datastax.oss.driver.shaded.guava.errorprone.*, com.datastax.oss.driver.api.core.*, com.datastax.oss.driver.internal.core.*, com.datastax.dse.driver.api.core.*, com.datastax.dse.driver.internal.core.*, com.datastax.oss.driver.shaded.netty.*, com.datastax.oss.driver.shaded.fasterxml.jackson.*, com.datastax.oss.driver.shaded.guava.*</Export-Package>
               </instructions>
               <rebuildBundle>true</rebuildBundle>
             </configuration>

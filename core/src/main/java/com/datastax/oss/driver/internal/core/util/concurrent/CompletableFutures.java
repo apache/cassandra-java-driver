@@ -19,8 +19,8 @@ package com.datastax.oss.driver.internal.core.util.concurrent;
 
 import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.DriverExecutionException;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import com.datastax.oss.driver.shaded.guava.common.base.Throwables;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;

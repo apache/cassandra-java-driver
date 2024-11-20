@@ -19,7 +19,7 @@ package com.datastax.dse.driver.api.core.graph;
 
 import com.datastax.dse.driver.internal.core.graph.GraphExecutionInfoConverter;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;

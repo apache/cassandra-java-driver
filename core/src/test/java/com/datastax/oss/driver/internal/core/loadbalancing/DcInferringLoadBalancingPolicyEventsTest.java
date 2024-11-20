@@ -21,7 +21,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.api.core.config.DriverExecutionProfile.DEFAULT_NAME;
 import static org.mockito.Mockito.reset;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.UUID;
 

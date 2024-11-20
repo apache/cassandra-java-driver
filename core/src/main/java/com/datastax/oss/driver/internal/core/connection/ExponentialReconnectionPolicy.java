@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;

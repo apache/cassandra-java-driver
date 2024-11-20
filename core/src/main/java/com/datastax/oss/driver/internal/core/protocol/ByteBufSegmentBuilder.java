@@ -17,12 +17,12 @@
  */
 package com.datastax.oss.driver.internal.core.protocol;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import com.datastax.oss.protocol.internal.PrimitiveCodec;
 import com.datastax.oss.protocol.internal.Segment;
 import com.datastax.oss.protocol.internal.SegmentBuilder;
+import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

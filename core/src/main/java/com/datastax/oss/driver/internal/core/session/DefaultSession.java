@@ -45,7 +45,7 @@ import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.util.concurrent.EventExecutor;

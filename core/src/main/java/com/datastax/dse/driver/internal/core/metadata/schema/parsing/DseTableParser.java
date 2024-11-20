@@ -46,10 +46,10 @@ import com.datastax.oss.driver.internal.core.metadata.schema.parsing.RelationPar
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.TableParser;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
 import com.datastax.oss.driver.internal.core.util.Loggers;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMultimap;
-import com.datastax.oss.driver.shaded.guava.common.collect.Multimap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;

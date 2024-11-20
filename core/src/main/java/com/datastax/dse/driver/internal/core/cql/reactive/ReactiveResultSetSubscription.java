@@ -24,7 +24,7 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
+import com.google.common.collect.Iterators;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;

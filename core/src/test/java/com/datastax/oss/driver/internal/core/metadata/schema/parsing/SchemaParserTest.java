@@ -29,7 +29,7 @@ import com.datastax.oss.driver.internal.core.metadata.MetadataRefresh;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.CassandraSchemaRows;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
 import com.datastax.oss.driver.internal.core.metadata.schema.refresh.SchemaRefresh;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import java.util.Map;
 import java.util.function.Consumer;
 import org.junit.Test;

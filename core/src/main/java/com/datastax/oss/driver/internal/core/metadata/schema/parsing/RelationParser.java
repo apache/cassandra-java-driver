@@ -29,7 +29,7 @@ import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import net.jcip.annotations.ThreadSafe;

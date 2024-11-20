@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.internal.core.metadata.token;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

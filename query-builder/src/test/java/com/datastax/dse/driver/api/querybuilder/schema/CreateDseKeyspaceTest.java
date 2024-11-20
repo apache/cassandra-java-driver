@@ -20,7 +20,7 @@ package com.datastax.dse.driver.api.querybuilder.schema;
 import static com.datastax.dse.driver.api.querybuilder.Assertions.assertThat;
 import static com.datastax.dse.driver.api.querybuilder.DseSchemaBuilder.createDseKeyspace;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 public class CreateDseKeyspaceTest {

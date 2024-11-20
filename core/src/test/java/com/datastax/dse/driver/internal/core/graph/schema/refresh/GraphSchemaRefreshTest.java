@@ -39,8 +39,8 @@ import com.datastax.oss.driver.internal.core.metadata.schema.DefaultColumnMetada
 import com.datastax.oss.driver.internal.core.metadata.schema.events.KeyspaceChangeEvent;
 import com.datastax.oss.driver.internal.core.metadata.schema.events.TableChangeEvent;
 import com.datastax.oss.driver.internal.core.metadata.schema.refresh.SchemaRefresh;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;

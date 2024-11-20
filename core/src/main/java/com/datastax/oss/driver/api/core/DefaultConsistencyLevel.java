@@ -17,8 +17,8 @@
  */
 package com.datastax.oss.driver.api.core;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 

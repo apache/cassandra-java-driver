@@ -19,8 +19,8 @@ package com.datastax.oss.driver.api.testinfra.ccm;
 
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
-import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
-import com.datastax.oss.driver.shaded.guava.common.io.Resources;
+import com.google.common.base.Joiner;
+import com.google.common.io.Resources;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;

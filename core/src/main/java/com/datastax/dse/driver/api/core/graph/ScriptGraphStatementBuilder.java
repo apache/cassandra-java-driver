@@ -18,8 +18,8 @@
 package com.datastax.dse.driver.api.core.graph;
 
 import com.datastax.dse.driver.internal.core.graph.DefaultScriptGraphStatement;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;

@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
+import com.google.common.collect.Lists;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;

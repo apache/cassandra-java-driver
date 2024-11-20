@@ -19,7 +19,7 @@ package com.datastax.oss.driver.api.core.config;
 
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;

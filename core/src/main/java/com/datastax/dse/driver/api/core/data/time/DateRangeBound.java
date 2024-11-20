@@ -18,7 +18,7 @@
 package com.datastax.dse.driver.api.core.data.time;
 
 import com.datastax.dse.driver.internal.core.search.DateRangeUtil;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.text.ParseException;

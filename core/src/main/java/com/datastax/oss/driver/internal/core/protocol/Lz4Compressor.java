@@ -21,7 +21,7 @@ import static com.datastax.oss.driver.internal.core.util.Dependency.LZ4;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.internal.core.util.DefaultDependencyChecker;
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import com.google.common.annotations.VisibleForTesting;
 import io.netty.buffer.ByteBuf;
 import java.nio.ByteBuffer;
 import net.jcip.annotations.ThreadSafe;

@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.internal.SerializationHelper;
-import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
+import com.google.common.collect.Iterators;
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectStreamException;

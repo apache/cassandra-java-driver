@@ -17,7 +17,7 @@
  */
 package com.datastax.oss.driver.api.core.type.reflect;
 
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;

@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.runner.RunWith;

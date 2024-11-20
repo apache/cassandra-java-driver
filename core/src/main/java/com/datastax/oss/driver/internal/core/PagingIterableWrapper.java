@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.internal.core.cql.PagingIterableSpliterator;
-import com.datastax.oss.driver.shaded.guava.common.collect.AbstractIterator;
+import com.google.common.collect.AbstractIterator;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Iterator;
 import java.util.List;

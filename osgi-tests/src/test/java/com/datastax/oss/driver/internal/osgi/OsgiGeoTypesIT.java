@@ -54,6 +54,7 @@ public class OsgiGeoTypesIT {
         BundleOptions.driverQueryBuilderBundle(),
         BundleOptions.driverMapperRuntimeBundle(),
         BundleOptions.commonBundles(),
+        BundleOptions.guavaBundles(),
         BundleOptions.nettyBundles(),
         BundleOptions.jacksonBundles(),
         BundleOptions.esriBundles(),

@@ -27,7 +27,7 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminResult;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import java.util.Collections;
 import java.util.Queue;
 import java.util.concurrent.CompletionStage;

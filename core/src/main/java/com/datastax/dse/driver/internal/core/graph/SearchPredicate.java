@@ -17,7 +17,7 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
+import com.google.common.collect.Sets;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;

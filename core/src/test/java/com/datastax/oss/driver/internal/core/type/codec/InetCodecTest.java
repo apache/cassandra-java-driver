@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.datastax.oss.driver.shaded.guava.common.base.Strings;
+import com.google.common.base.Strings;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;

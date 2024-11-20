@@ -19,7 +19,7 @@ package com.datastax.oss.driver.internal.core.session;
 
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

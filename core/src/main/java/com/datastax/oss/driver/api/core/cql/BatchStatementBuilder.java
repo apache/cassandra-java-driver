@@ -19,8 +19,8 @@ package com.datastax.oss.driver.api.core.cql;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.cql.DefaultBatchStatement;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;

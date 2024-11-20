@@ -28,7 +28,7 @@ import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder.RowsPerPartition;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.TimeWindowCompactionStrategy.CompactionWindowUnit;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.TimeWindowCompactionStrategy.TimestampResolution;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 public class CreateDseTableTest {

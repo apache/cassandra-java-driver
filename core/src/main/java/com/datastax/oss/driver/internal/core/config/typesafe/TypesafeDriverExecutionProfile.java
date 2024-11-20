@@ -19,9 +19,9 @@ package com.datastax.oss.driver.internal.core.config.typesafe;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.config.DriverOption;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSortedSet;
-import com.datastax.oss.driver.shaded.guava.common.collect.MapMaker;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.MapMaker;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigValue;

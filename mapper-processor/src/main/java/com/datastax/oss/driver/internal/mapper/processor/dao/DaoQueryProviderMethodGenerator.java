@@ -24,7 +24,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Entity;
 import com.datastax.oss.driver.api.mapper.annotations.QueryProvider;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import java.util.ArrayList;

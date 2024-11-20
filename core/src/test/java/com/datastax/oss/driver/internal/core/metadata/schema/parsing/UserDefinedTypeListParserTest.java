@@ -27,7 +27,7 @@ import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import java.util.Map;
 import org.junit.Test;
 

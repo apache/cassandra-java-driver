@@ -19,9 +19,9 @@ package com.datastax.oss.driver.internal.core.metadata.token;
 
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -173,7 +173,7 @@ public abstract class TokenRangeBase implements TokenRange {
       TokenRange t1 = intersected.get(0);
       TokenRange t2 = intersected.get(1);
       if (t1.getEnd().equals(t2.getStart()) || t2.getEnd().equals(t1.getStart())) {
-        return ImmutableList.of(t1.mergeWith(t2));
+        return Lists.newArrayList(t1.mergeWith(t2));
       }
     }
 

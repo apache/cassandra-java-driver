@@ -21,7 +21,7 @@ import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.RowsPerPart
 
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.CompactionStrategy;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 

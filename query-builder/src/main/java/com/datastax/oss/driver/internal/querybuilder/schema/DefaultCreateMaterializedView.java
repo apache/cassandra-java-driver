@@ -30,9 +30,9 @@ import com.datastax.oss.driver.api.querybuilder.schema.CreateMaterializedViewWhe
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;

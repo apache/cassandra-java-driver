@@ -27,7 +27,7 @@ import com.datastax.oss.driver.api.mapper.annotations.Query;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;

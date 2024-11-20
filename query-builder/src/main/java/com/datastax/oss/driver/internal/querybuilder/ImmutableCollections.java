@@ -17,8 +17,8 @@
  */
 package com.datastax.oss.driver.internal.querybuilder;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.function.Function;

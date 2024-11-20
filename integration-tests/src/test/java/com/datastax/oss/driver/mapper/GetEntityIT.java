@@ -42,7 +42,7 @@ import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
+import com.google.common.collect.Sets;
 import java.util.UUID;
 import java.util.stream.Stream;
 import org.junit.BeforeClass;

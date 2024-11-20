@@ -35,7 +35,6 @@ public class BundleOptions {
   public static CompositeOption commonBundles() {
     return () ->
         options(
-            mavenBundle("org.apache.cassandra", "java-driver-guava-shaded").versionAsInProject(),
             mavenBundle("io.dropwizard.metrics", "metrics-core").versionAsInProject(),
             mavenBundle("org.slf4j", "slf4j-api").versionAsInProject(),
             mavenBundle("org.hdrhistogram", "HdrHistogram").versionAsInProject(),
@@ -83,6 +82,10 @@ public class BundleOptions {
             mavenBundle("org.awaitility", "awaitility").versionAsInProject(),
             mavenBundle("org.hamcrest", "hamcrest").versionAsInProject(),
             junitBundles());
+  }
+
+  public static CompositeOption guavaBundles() {
+    return () -> options(mavenBundle("com.google.guava", "guava").versionAsInProject());
   }
 
   public static CompositeOption nettyBundles() {

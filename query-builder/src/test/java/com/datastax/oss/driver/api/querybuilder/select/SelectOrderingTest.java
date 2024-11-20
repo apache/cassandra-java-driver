@@ -24,7 +24,7 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 public class SelectOrderingTest {

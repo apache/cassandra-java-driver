@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.ListType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;

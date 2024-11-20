@@ -49,7 +49,7 @@ import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;

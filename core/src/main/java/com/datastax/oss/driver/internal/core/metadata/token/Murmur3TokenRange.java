@@ -19,7 +19,7 @@ package com.datastax.oss.driver.internal.core.metadata.token;
 
 import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metadata.token.TokenRange;
-import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
+import com.google.common.collect.Lists;
 import java.math.BigInteger;
 import java.util.List;
 import net.jcip.annotations.Immutable;

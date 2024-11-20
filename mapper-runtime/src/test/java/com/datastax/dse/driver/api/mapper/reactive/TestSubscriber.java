@@ -17,13 +17,11 @@
  */
 package com.datastax.dse.driver.api.mapper.reactive;
 
-import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
@@ -67,9 +65,5 @@ public class TestSubscriber<T> implements Subscriber<T> {
   @NonNull
   public List<T> getElements() {
     return elements;
-  }
-
-  public void awaitTermination() {
-    Uninterruptibles.awaitUninterruptibly(latch, 1, TimeUnit.MINUTES);
   }
 }

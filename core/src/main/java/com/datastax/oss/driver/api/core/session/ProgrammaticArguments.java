@@ -30,8 +30,8 @@ import com.datastax.oss.driver.internal.core.loadbalancing.helper.NodeFilterToDi
 import com.datastax.oss.driver.internal.core.metadata.MultiplexingNodeStateListener;
 import com.datastax.oss.driver.internal.core.metadata.schema.MultiplexingSchemaChangeListener;
 import com.datastax.oss.driver.internal.core.tracker.MultiplexingRequestTracker;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;

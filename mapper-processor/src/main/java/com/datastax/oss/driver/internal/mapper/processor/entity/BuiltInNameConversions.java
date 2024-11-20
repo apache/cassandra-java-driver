@@ -20,7 +20,7 @@ package com.datastax.oss.driver.internal.mapper.processor.entity;
 import com.datastax.oss.driver.api.mapper.entity.naming.NameConverter;
 import com.datastax.oss.driver.api.mapper.entity.naming.NamingConvention;
 import com.datastax.oss.driver.internal.core.util.Strings;
-import com.datastax.oss.driver.shaded.guava.common.base.CaseFormat;
+import com.google.common.base.CaseFormat;
 
 /**
  * Handles the {@link NamingConvention built-in naming conventions}.

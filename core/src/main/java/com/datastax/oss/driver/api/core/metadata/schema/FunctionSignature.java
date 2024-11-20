@@ -19,7 +19,7 @@ package com.datastax.oss.driver.api.core.metadata.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.type.DataType;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.Serializable;
 import java.util.List;

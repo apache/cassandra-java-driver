@@ -22,7 +22,7 @@ import com.datastax.dse.driver.api.querybuilder.schema.AlterDseKeyspaceStart;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.internal.querybuilder.schema.OptionsUtils;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import net.jcip.annotations.Immutable;

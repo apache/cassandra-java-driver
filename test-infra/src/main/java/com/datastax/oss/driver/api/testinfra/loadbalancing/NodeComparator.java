@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.api.testinfra.loadbalancing;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.shaded.guava.common.primitives.UnsignedBytes;
+import com.google.common.primitives.UnsignedBytes;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Comparator;

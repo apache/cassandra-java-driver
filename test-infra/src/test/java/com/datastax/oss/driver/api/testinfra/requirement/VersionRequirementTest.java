@@ -20,7 +20,7 @@ package com.datastax.oss.driver.api.testinfra.requirement;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.Version;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import java.util.Collections;
 import java.util.List;
 import org.junit.Test;

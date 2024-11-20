@@ -22,7 +22,7 @@ import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.Iterator;

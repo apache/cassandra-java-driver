@@ -29,7 +29,7 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.concurrent.Debouncer;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
-import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
+import com.google.common.collect.Maps;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;

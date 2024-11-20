@@ -20,7 +20,7 @@ package com.datastax.oss.driver.internal.core.loadbalancing;
 import static com.datastax.oss.driver.api.core.config.DriverExecutionProfile.DEFAULT_NAME;
 import static org.mockito.Mockito.spy;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import java.util.UUID;
 
 public class DcInferringLoadBalancingPolicyQueryPlanTest

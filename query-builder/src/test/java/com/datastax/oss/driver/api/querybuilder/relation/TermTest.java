@@ -48,8 +48,8 @@ import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.querybuilder.CharsetCodec;
 import com.datastax.oss.driver.internal.core.type.UserDefinedTypeBuilder;
-import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import java.util.Date;
 import org.junit.Test;
 

@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.IndexKind;
 import com.datastax.oss.driver.api.core.metadata.schema.IndexMetadata;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 public class IndexMetadataTest {

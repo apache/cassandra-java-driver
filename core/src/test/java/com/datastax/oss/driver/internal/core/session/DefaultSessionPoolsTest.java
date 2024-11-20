@@ -61,7 +61,7 @@ import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.pool.ChannelPoolFactory;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.GlobalEventExecutor;

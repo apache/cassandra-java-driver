@@ -27,7 +27,7 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.internal.core.util.CountingIterator;
-import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
+import com.google.common.collect.Lists;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Queue;

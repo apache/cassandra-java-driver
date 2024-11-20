@@ -19,7 +19,7 @@ package com.datastax.oss.driver.api.querybuilder.schema;
 
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery;
 import com.datastax.oss.driver.internal.querybuilder.schema.RawOptionsWrapper;
-import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
+import com.google.common.collect.Maps;
 import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;

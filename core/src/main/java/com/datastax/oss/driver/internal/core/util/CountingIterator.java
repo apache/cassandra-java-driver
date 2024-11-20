@@ -17,7 +17,7 @@
  */
 package com.datastax.oss.driver.internal.core.util;
 
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import net.jcip.annotations.NotThreadSafe;

@@ -23,7 +23,7 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import com.google.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayDeque;

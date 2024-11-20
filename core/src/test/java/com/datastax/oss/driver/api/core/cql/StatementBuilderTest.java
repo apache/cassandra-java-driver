@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
+import com.google.common.base.Charsets;
 import java.nio.ByteBuffer;
 import org.junit.Test;
 

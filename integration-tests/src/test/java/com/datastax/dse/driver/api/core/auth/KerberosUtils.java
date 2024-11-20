@@ -19,7 +19,7 @@ package com.datastax.dse.driver.api.core.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;

@@ -25,7 +25,7 @@ import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;

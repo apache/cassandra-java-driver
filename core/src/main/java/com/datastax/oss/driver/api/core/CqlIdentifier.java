@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.api.core;
 
 import com.datastax.oss.driver.internal.core.util.Strings;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.ObjectInputStream;

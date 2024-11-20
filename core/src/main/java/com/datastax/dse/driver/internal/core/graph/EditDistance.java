@@ -17,8 +17,8 @@
  */
 package com.datastax.dse.driver.internal.core.graph;
 
-import com.datastax.oss.driver.shaded.guava.common.base.Objects;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import java.io.Serializable;
 import net.jcip.annotations.Immutable;
 

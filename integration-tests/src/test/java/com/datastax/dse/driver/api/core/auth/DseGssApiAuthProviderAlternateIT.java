@@ -27,7 +27,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;

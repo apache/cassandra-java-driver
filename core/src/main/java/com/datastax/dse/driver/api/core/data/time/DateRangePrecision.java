@@ -18,8 +18,8 @@
 package com.datastax.dse.driver.api.core.data.time;
 
 import com.datastax.dse.driver.internal.core.search.DateRangeUtil;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;

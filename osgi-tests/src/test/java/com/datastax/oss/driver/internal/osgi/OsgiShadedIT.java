@@ -43,6 +43,8 @@ public class OsgiShadedIT {
         BundleOptions.driverCoreShadedBundle(),
         BundleOptions.driverQueryBuilderBundle(),
         BundleOptions.driverMapperRuntimeBundle(),
+        // Guava is required by query builder, runtime mapper and test infra
+        BundleOptions.guavaBundles(),
         BundleOptions.commonBundles(),
         // Netty and Jackson are shaded
         BundleOptions.testBundles());

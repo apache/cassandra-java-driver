@@ -20,7 +20,7 @@ package com.datastax.oss.driver.internal.core.type;
 import com.datastax.oss.driver.api.core.detach.AttachmentPoint;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.ListType;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.ObjectInputStream;

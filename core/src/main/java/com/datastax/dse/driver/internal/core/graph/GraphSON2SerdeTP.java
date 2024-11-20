@@ -27,7 +27,7 @@ import com.datastax.dse.driver.internal.core.data.geometry.DefaultLineString;
 import com.datastax.dse.driver.internal.core.data.geometry.DefaultPoint;
 import com.datastax.dse.driver.internal.core.data.geometry.DefaultPolygon;
 import com.datastax.dse.driver.internal.core.data.geometry.Distance;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;

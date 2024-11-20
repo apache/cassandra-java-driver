@@ -19,8 +19,8 @@ package com.datastax.dse.driver.internal.core.graph;
 
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.datastax.oss.driver.shaded.guava.common.base.Objects;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;

@@ -17,7 +17,7 @@
  */
 package com.datastax.dse.driver.internal.core.graph.binary;
 
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import org.apache.tinkerpop.gremlin.structure.io.Buffer;
 import org.apache.tinkerpop.gremlin.structure.io.binary.DataType;

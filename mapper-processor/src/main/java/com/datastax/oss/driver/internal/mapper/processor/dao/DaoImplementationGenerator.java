@@ -36,9 +36,9 @@ import com.datastax.oss.driver.internal.mapper.processor.util.Capitalizer;
 import com.datastax.oss.driver.internal.mapper.processor.util.HierarchyScanner;
 import com.datastax.oss.driver.internal.mapper.processor.util.NameIndex;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GenericTypeConstantGenerator;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
-import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -94,7 +94,7 @@ public class DaoImplementationGenerator extends SingleFileCodeGenerator
   private final Set<TypeMirror> interfaces;
   private final Map<Class<? extends Annotation>, Annotation> annotations;
 
-  private static final Set<Class<? extends Annotation>> ANNOTATIONS_TO_SCAN =
+  private static final ImmutableSet<Class<? extends Annotation>> ANNOTATIONS_TO_SCAN =
       ImmutableSet.of(DefaultNullSavingStrategy.class);
 
   public DaoImplementationGenerator(TypeElement interfaceElement, ProcessorContext context) {

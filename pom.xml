@@ -40,7 +40,6 @@
     <module>mapper-processor</module>
     <module>metrics/micrometer</module>
     <module>metrics/microprofile</module>
-    <module>guava-shaded</module>
     <module>test-infra</module>
     <module>integration-tests</module>
     <module>osgi-tests</module>
@@ -115,6 +114,34 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>25.1-jre</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.checkerframework</groupId>
+            <artifactId>checker-qual</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.google.errorprone</groupId>
+            <artifactId>error_prone_annotations</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.google.j2objc</groupId>
+            <artifactId>j2objc-annotations</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>animal-sniffer-annotations</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.graalvm.nativeimage</groupId>
+        <artifactId>svm</artifactId>
+        <version>20.0.0</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>com.typesafe</groupId>

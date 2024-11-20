@@ -23,7 +23,7 @@ import com.datastax.oss.driver.api.querybuilder.relation.OngoingWhereClause;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
 import com.datastax.oss.driver.internal.querybuilder.lhs.ColumnLeftOperand;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import net.jcip.annotations.Immutable;

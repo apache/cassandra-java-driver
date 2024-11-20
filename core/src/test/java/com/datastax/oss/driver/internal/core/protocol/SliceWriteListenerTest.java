@@ -19,7 +19,7 @@ package com.datastax.oss.driver.internal.core.protocol;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.embedded.EmbeddedChannel;
 import org.junit.Before;

@@ -49,8 +49,12 @@
       <artifactId>netty-handler</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.cassandra</groupId>
-      <artifactId>java-driver-guava-shaded</artifactId>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.graalvm.nativeimage</groupId>
+      <artifactId>svm</artifactId>
     </dependency>
     <dependency>
       <groupId>com.typesafe</groupId>

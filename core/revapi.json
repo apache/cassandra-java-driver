@@ -7089,6 +7089,12 @@
         "new": "method com.datastax.oss.driver.api.core.cql.SimpleStatement com.datastax.oss.driver.api.core.cql.SimpleStatement::setNamedValues(java.util.Map<java.lang.String, java.lang.Object>)",
         "annotation": "@edu.umd.cs.findbugs.annotations.CheckReturnValue",
         "justification": "Annotate mutating methods with @CheckReturnValue"
+      },
+      {
+        "code": "java.method.returnTypeChanged",
+        "old": "method com.datastax.oss.driver.shaded.guava.common.reflect.TypeToken<T> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::__getToken()",
+        "new": "method com.google.common.reflect.TypeToken<T> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::__getToken()",
+        "justification": "CASSJAVA-52: Move Guava as standard driver dependency (shaded only in core-shaded JAR)"
       }
     ]
   }

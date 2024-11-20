@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.internal.core.loadbalancing.nodeset;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;

@@ -23,7 +23,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
+import com.google.common.util.concurrent.Uninterruptibles;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.channel.DefaultEventLoop;
 import io.netty.channel.EventLoopGroup;

@@ -17,11 +17,11 @@
  */
 package com.datastax.dse.driver.internal.core.insights.schema;
 
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import com.datastax.oss.driver.shaded.guava.common.base.Strings;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.util.Map;
 import java.util.Objects;
 

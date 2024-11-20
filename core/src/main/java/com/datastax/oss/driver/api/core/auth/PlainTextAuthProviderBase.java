@@ -20,7 +20,7 @@ package com.datastax.oss.driver.api.core.auth;
 import com.datastax.dse.driver.api.core.auth.BaseDseAuthenticator;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.session.Session;
-import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
+import com.google.common.base.Charsets;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.net.InetSocketAddress;

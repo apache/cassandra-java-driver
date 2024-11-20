@@ -17,8 +17,8 @@
  */
 package com.datastax.oss.driver.internal.core.util;
 
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import java.util.Locale;
 import java.util.Objects;
 

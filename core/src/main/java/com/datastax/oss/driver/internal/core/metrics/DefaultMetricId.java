@@ -17,7 +17,7 @@
  */
 package com.datastax.oss.driver.internal.core.metrics;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Objects;

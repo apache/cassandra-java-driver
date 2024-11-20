@@ -41,11 +41,11 @@ import com.datastax.oss.driver.internal.core.metadata.schema.events.TypeChangeEv
 import com.datastax.oss.driver.internal.core.session.BuiltInRequestProcessors;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
 import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
-import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
-import com.datastax.oss.driver.shaded.guava.common.cache.RemovalListener;
-import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalListener;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.Uninterruptibles;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.time.Duration;

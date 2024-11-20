@@ -19,7 +19,7 @@ package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
 import java.util.Objects;
 import net.jcip.annotations.ThreadSafe;

@@ -50,6 +50,7 @@ public class OsgiCustomLoadBalancingPolicyIT {
         BundleOptions.driverQueryBuilderBundle(),
         BundleOptions.driverMapperRuntimeBundle(),
         BundleOptions.commonBundles(),
+        BundleOptions.guavaBundles(),
         BundleOptions.nettyBundles(),
         BundleOptions.jacksonBundles(),
         BundleOptions.testBundles(),

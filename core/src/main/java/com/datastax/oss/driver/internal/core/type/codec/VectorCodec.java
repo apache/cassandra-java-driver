@@ -24,7 +24,7 @@ import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
-import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
+import com.google.common.collect.Iterables;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;

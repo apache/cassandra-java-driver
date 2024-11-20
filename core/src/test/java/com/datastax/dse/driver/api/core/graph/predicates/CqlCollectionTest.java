@@ -20,9 +20,9 @@ package com.datastax.dse.driver.api.core.graph.predicates;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
-import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;

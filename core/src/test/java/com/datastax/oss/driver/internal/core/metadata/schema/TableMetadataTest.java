@@ -23,9 +23,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
 import com.datastax.oss.driver.internal.core.type.PrimitiveType;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.ProtocolConstants.DataType;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.util.UUID;
 import org.junit.Test;
 

@@ -29,7 +29,7 @@ import com.datastax.oss.driver.api.core.type.SetType;
 import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.util.Locale;

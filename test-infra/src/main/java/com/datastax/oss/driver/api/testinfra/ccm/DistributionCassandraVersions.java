@@ -19,7 +19,7 @@ package com.datastax.oss.driver.api.testinfra.ccm;
 
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSortedMap;
+import com.google.common.collect.ImmutableSortedMap;
 import java.util.HashMap;
 import java.util.Map;
 

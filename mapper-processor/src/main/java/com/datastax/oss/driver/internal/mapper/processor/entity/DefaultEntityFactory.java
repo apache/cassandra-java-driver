@@ -35,11 +35,11 @@ import com.datastax.oss.driver.internal.mapper.processor.util.Capitalizer;
 import com.datastax.oss.driver.internal.mapper.processor.util.HierarchyScanner;
 import com.datastax.oss.driver.internal.mapper.processor.util.ResolvedAnnotation;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.PropertyType;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
-import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
-import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.lang.annotation.Annotation;
@@ -69,11 +69,11 @@ public class DefaultEntityFactory implements EntityFactory {
   private final ProcessorContext context;
 
   // property annotations of which only 1 is allowed on a property
-  private static final Set<Class<? extends Annotation>> EXCLUSIVE_PROPERTY_ANNOTATIONS =
+  private static final ImmutableSet<Class<? extends Annotation>> EXCLUSIVE_PROPERTY_ANNOTATIONS =
       ImmutableSet.of(ClusteringColumn.class, PartitionKey.class, Transient.class, Computed.class);
 
   // all valid property annotations to scan for.
-  private static final Set<Class<? extends Annotation>> PROPERTY_ANNOTATIONS =
+  private static final ImmutableSet<Class<? extends Annotation>> PROPERTY_ANNOTATIONS =
       ImmutableSet.<Class<? extends Annotation>>builder()
           .addAll(EXCLUSIVE_PROPERTY_ANNOTATIONS)
           .add(CqlName.class)

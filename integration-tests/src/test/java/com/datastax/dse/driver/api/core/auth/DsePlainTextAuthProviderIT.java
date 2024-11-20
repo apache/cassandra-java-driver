@@ -31,7 +31,7 @@ import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.internal.core.auth.PlainTextAuthProvider;
-import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
+import com.google.common.util.concurrent.Uninterruptibles;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.BeforeClass;

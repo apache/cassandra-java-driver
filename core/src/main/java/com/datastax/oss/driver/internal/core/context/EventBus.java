@@ -17,9 +17,9 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.HashMultimap;
-import com.datastax.oss.driver.shaded.guava.common.collect.Multimaps;
-import com.datastax.oss.driver.shaded.guava.common.collect.SetMultimap;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.SetMultimap;
 import java.util.function.Consumer;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;

@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.internal.mapper.processor.entity;
 
 import com.datastax.oss.driver.api.mapper.annotations.PropertyStrategy;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import edu.umd.cs.findbugs.annotations.Nullable;
