@@ -19,8 +19,8 @@ package com.datastax.oss.driver.api.testinfra.ccm;
 
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
-import com.google.common.base.Joiner;
-import com.google.common.io.Resources;
+import com.datastax.oss.driver.api.testinfra.utils.ByteUtils;
+import com.datastax.oss.driver.api.testinfra.utils.StringUtils;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -277,11 +277,11 @@ public class CcmBridge implements AutoCloseable {
   }
 
   public void nodetool(int node, String... args) {
-    execute(String.format("node%d nodetool %s", node, Joiner.on(" ").join(args)));
+    execute(String.format("node%d nodetool %s", node, StringUtils.join(" ", args)));
   }
 
   public void dsetool(int node, String... args) {
-    execute(String.format("node%d dsetool %s", node, Joiner.on(" ").join(args)));
+    execute(String.format("node%d dsetool %s", node, StringUtils.join(" ", args)));
   }
 
   public void reloadCore(int node, String keyspace, String table, boolean reindex) {
@@ -442,7 +442,7 @@ public class CcmBridge implements AutoCloseable {
     File f = null;
     try (OutputStream os = new FileOutputStream(f = File.createTempFile("server", ".store"))) {
       f.deleteOnExit();
-      Resources.copy(CcmBridge.class.getResource(storePath), os);
+      ByteUtils.copy(CcmBridge.class.getResourceAsStream(storePath), os);
     } catch (IOException e) {
       LOG.warn("Failure to write keystore, SSL-enabled servers may fail to start.", e);
     }

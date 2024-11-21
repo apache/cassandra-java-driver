@@ -20,7 +20,7 @@ package com.datastax.oss.driver.api.testinfra.requirement;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.Version;
-import com.google.common.collect.ImmutableList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.junit.Test;
@@ -125,7 +125,7 @@ public class VersionRequirementTest {
 
   @Test
   public void multi_requirement_any_version() {
-    List<VersionRequirement> req = ImmutableList.of(CASSANDRA_ANY, DSE_ANY);
+    List<VersionRequirement> req = Arrays.asList(CASSANDRA_ANY, DSE_ANY);
 
     assertThat(VersionRequirement.meetsAny(req, CASSANDRA, V_1_0_0)).isTrue();
     assertThat(VersionRequirement.meetsAny(req, DSE, V_1_0_0)).isTrue();
@@ -133,7 +133,7 @@ public class VersionRequirementTest {
 
   @Test
   public void multi_db_requirement_min_one_any_other() {
-    List<VersionRequirement> req = ImmutableList.of(CASSANDRA_FROM_1_0_0, DSE_ANY);
+    List<VersionRequirement> req = Arrays.asList(CASSANDRA_FROM_1_0_0, DSE_ANY);
 
     assertThat(VersionRequirement.meetsAny(req, CASSANDRA, V_1_0_0)).isTrue();
     assertThat(VersionRequirement.meetsAny(req, CASSANDRA, V_2_0_0)).isTrue();
@@ -146,7 +146,7 @@ public class VersionRequirementTest {
   @Test
   public void multi_requirement_two_ranges() {
     List<VersionRequirement> req =
-        ImmutableList.of(CASSANDRA_FROM_1_0_0_TO_2_0_0, CASSANDRA_FROM_3_0_0_TO_3_1_0);
+        Arrays.asList(CASSANDRA_FROM_1_0_0_TO_2_0_0, CASSANDRA_FROM_3_0_0_TO_3_1_0);
 
     assertThat(VersionRequirement.meetsAny(req, CASSANDRA, V_1_0_0)).isTrue();
     assertThat(VersionRequirement.meetsAny(req, CASSANDRA, V_1_1_0)).isTrue();
@@ -162,7 +162,7 @@ public class VersionRequirementTest {
   @Test
   public void multi_requirement_overlapping() {
     List<VersionRequirement> req =
-        ImmutableList.of(CASSANDRA_FROM_1_0_0_TO_2_0_0, CASSANDRA_FROM_1_1_0);
+        Arrays.asList(CASSANDRA_FROM_1_0_0_TO_2_0_0, CASSANDRA_FROM_1_1_0);
 
     assertThat(VersionRequirement.meetsAny(req, CASSANDRA, V_1_0_0)).isTrue();
     assertThat(VersionRequirement.meetsAny(req, CASSANDRA, V_1_1_0)).isTrue();
@@ -174,7 +174,7 @@ public class VersionRequirementTest {
 
   @Test
   public void multi_requirement_not_range() {
-    List<VersionRequirement> req = ImmutableList.of(CASSANDRA_TO_1_0_0, CASSANDRA_FROM_1_1_0);
+    List<VersionRequirement> req = Arrays.asList(CASSANDRA_TO_1_0_0, CASSANDRA_FROM_1_1_0);
 
     assertThat(VersionRequirement.meetsAny(req, CASSANDRA, V_0_0_0)).isTrue();
     assertThat(VersionRequirement.meetsAny(req, CASSANDRA, V_1_1_0)).isTrue();

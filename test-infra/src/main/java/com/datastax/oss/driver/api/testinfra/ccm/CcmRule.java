@@ -63,7 +63,7 @@ public class CcmRule extends BaseCcmRule {
   }
 
   @Override
-  protected synchronized void before() {
+  public synchronized void before() {
     if (!started) {
       // synchronize before so blocks on other before() call waiting to finish.
       super.before();
@@ -72,7 +72,7 @@ public class CcmRule extends BaseCcmRule {
   }
 
   @Override
-  protected void after() {
+  public void after() {
     // override after so we don't remove when done.
   }
 

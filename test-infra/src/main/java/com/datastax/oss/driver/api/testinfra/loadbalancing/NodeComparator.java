@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.api.testinfra.loadbalancing;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.google.common.primitives.UnsignedBytes;
+import com.datastax.oss.driver.api.testinfra.utils.ByteUtils;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Comparator;
@@ -47,7 +47,7 @@ public final class NodeComparator implements Comparator<Node> {
             .map(InetAddress::getAddress)
             .orElse(EMPTY);
 
-    int result = UnsignedBytes.lexicographicalComparator().compare(address1, address2);
+    int result = ByteUtils.LexicographicalByteComparator.INSTANCE.compare(address1, address2);
     if (result != 0) {
       return result;
     }
