@@ -38,7 +38,7 @@ class Requests {
     private static final String CQL_VERSION = "3.0.0";
     private static final String DRIVER_VERSION_OPTION = "DRIVER_VERSION";
     private static final String DRIVER_NAME_OPTION = "DRIVER_NAME";
-    private static final String DRIVER_NAME = "Java Driver";
+    private static final String DRIVER_NAME = "Apache Cassandra Java Driver";
 
     static final String COMPRESSION_OPTION = "COMPRESSION";
     static final String NO_COMPACT_OPTION = "NO_COMPACT";
