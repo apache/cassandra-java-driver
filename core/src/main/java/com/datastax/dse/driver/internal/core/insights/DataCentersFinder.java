@@ -23,7 +23,7 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;

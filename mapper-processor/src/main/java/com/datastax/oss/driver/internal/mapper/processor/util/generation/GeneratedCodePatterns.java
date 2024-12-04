@@ -28,10 +28,10 @@ import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
 import com.datastax.oss.driver.internal.mapper.processor.util.Capitalizer;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
-import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
-import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -61,7 +61,7 @@ public class GeneratedCodePatterns {
    * The names of the primitive getters/setters on {@link GettableByName} and {@link
    * SettableByName}.
    */
-  public static final Map<TypeName, String> PRIMITIVE_ACCESSORS =
+  public static final ImmutableMap<TypeName, String> PRIMITIVE_ACCESSORS =
       ImmutableMap.<TypeName, String>builder()
           .put(TypeName.BOOLEAN, "Boolean")
           .put(TypeName.BYTE, "Byte")

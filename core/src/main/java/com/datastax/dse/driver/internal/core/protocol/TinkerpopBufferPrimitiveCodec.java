@@ -19,8 +19,8 @@ package com.datastax.dse.driver.internal.core.protocol;
 
 import com.datastax.dse.driver.internal.core.graph.binary.buffer.DseNettyBufferFactory;
 import com.datastax.oss.driver.internal.core.protocol.ByteBufPrimitiveCodec;
-import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import com.datastax.oss.protocol.internal.PrimitiveCodec;
+import com.google.common.base.Charsets;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;

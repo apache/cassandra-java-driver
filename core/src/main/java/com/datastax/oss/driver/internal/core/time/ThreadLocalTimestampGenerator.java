@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.internal.core.time;
 
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import com.google.common.annotations.VisibleForTesting;
 import net.jcip.annotations.ThreadSafe;
 
 /**

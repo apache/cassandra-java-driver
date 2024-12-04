@@ -28,7 +28,7 @@ import com.datastax.oss.driver.internal.core.metadata.token.ReplicationStrategyF
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import com.datastax.oss.driver.internal.core.util.NanoTime;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;

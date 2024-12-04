@@ -19,8 +19,8 @@ package com.datastax.oss.driver.api.core.uuid;
 
 import com.datastax.oss.driver.internal.core.os.Native;
 import com.datastax.oss.driver.internal.core.util.Loggers;
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
-import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;

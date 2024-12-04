@@ -19,7 +19,7 @@ package com.datastax.dse.driver.internal.core.cql.reactive;
 
 import static org.assertj.core.api.Fail.fail;
 
-import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
+import com.google.common.util.concurrent.Uninterruptibles;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayList;

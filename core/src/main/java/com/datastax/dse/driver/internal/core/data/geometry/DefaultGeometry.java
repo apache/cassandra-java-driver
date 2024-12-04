@@ -19,12 +19,12 @@ package com.datastax.dse.driver.internal.core.data.geometry;
 
 import com.datastax.dse.driver.api.core.data.geometry.Geometry;
 import com.datastax.dse.driver.api.core.data.geometry.Point;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.esri.core.geometry.GeometryException;
 import com.esri.core.geometry.SpatialReference;
 import com.esri.core.geometry.ogc.OGCGeometry;
 import com.esri.core.geometry.ogc.OGCLineString;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;

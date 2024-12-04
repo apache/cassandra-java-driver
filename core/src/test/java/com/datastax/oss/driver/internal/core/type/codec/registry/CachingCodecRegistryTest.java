@@ -41,7 +41,7 @@ import com.datastax.oss.driver.internal.core.type.codec.CqlIntToStringCodec;
 import com.datastax.oss.driver.internal.core.type.codec.IntCodec;
 import com.datastax.oss.driver.internal.core.type.codec.ListCodec;
 import com.datastax.oss.driver.internal.core.type.codec.registry.CachingCodecRegistryTest.TestCachingCodecRegistry.MockCache;
-import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
+import com.google.common.collect.Lists;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import edu.umd.cs.findbugs.annotations.NonNull;

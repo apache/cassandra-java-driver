@@ -17,10 +17,10 @@
  */
 package com.datastax.dse.driver.api.core.auth;
 
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
-import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
-import com.datastax.oss.driver.shaded.guava.common.io.Files;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.io.Files;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;

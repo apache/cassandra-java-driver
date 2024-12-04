@@ -22,7 +22,7 @@ import static com.google.testing.compile.CompilationSubject.assertThat;
 import com.datastax.oss.driver.api.mapper.annotations.CqlName;
 import com.datastax.oss.driver.api.mapper.annotations.Dao;
 import com.datastax.oss.driver.api.mapper.annotations.Delete;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;

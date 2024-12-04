@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
-import com.datastax.oss.driver.shaded.guava.common.primitives.UnsignedBytes;
+import com.google.common.primitives.UnsignedBytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;

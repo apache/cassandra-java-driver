@@ -22,7 +22,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import com.datastax.oss.driver.api.core.paging.OffsetPager.Page;
 import com.datastax.oss.driver.internal.core.MockAsyncPagingIterable;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import java.util.concurrent.CompletionStage;
 import org.junit.Test;

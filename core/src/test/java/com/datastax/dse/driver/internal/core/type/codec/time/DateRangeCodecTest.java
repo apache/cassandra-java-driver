@@ -23,7 +23,7 @@ import com.datastax.dse.driver.api.core.data.time.DateRange;
 import com.datastax.dse.driver.api.core.type.codec.DseTypeCodecs;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
-import com.datastax.oss.driver.shaded.guava.common.base.MoreObjects;
+import com.google.common.base.MoreObjects;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;

@@ -22,7 +22,7 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.truncate;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 public class TruncateTest {

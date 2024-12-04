@@ -19,11 +19,11 @@ package com.datastax.dse.driver.internal.core.data.geometry;
 
 import com.datastax.dse.driver.api.core.data.geometry.Point;
 import com.datastax.dse.driver.api.core.data.geometry.Polygon;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.esri.core.geometry.Operator;
 import com.esri.core.geometry.OperatorFactoryLocal;
 import com.esri.core.geometry.OperatorSimplifyOGC;
 import com.esri.core.geometry.ogc.OGCPolygon;
+import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import java.util.List;

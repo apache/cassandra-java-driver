@@ -18,7 +18,7 @@
 package com.datastax.dse.driver.internal.core.search;
 
 import com.datastax.dse.driver.api.core.data.time.DateRangePrecision;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.text.ParseException;

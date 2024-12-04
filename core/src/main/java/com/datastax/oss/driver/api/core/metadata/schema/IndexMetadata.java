@@ -19,7 +19,7 @@ package com.datastax.oss.driver.api.core.metadata.schema;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.internal.core.metadata.schema.ScriptBuilder;
-import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
+import com.google.common.collect.Maps;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import java.util.Optional;

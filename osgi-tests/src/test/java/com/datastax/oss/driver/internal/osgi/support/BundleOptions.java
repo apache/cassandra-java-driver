@@ -21,21 +21,29 @@ import static org.ops4j.pax.exam.CoreOptions.bundle;
 import static org.ops4j.pax.exam.CoreOptions.junitBundles;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.options;
+import static org.ops4j.pax.exam.CoreOptions.provision;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 import static org.ops4j.pax.exam.CoreOptions.systemTimeout;
 import static org.ops4j.pax.exam.CoreOptions.vmOption;
 
+import com.datastax.oss.driver.api.osgi.service.TweetMessage;
+import com.datastax.oss.driver.api.osgi.service.TweetService;
+import com.datastax.oss.driver.internal.osgi.BaseActivator;
+import com.datastax.oss.driver.internal.osgi.TweetActivator;
+import com.datastax.oss.driver.internal.osgi.service.TweetServiceImpl;
+import java.io.InputStream;
 import org.ops4j.pax.exam.CoreOptions;
 import org.ops4j.pax.exam.options.CompositeOption;
 import org.ops4j.pax.exam.options.UrlProvisionOption;
 import org.ops4j.pax.exam.options.WrappedUrlProvisionOption;
+import org.ops4j.pax.tinybundles.core.TinyBundles;
+import org.osgi.framework.Constants;
 
 public class BundleOptions {
 
   public static CompositeOption commonBundles() {
     return () ->
         options(
-            mavenBundle("com.datastax.oss", "java-driver-shaded-guava").versionAsInProject(),
             mavenBundle("io.dropwizard.metrics", "metrics-core").versionAsInProject(),
             mavenBundle("org.slf4j", "slf4j-api").versionAsInProject(),
             mavenBundle("org.hdrhistogram", "HdrHistogram").versionAsInProject(),
@@ -52,6 +60,37 @@ public class BundleOptions {
             systemProperty("cassandra.port").value("9042"),
             systemProperty("cassandra.keyspace").value("test_osgi"),
             bundle("reference:file:target/classes"));
+  }
+
+  /**
+   * Tweet service has been implemented to use only driver core module (no mapper and query builder)
+   * and validate that shaded core does not require Guava dependency. Mapper and query builder
+   * modules do require Guava bundle.
+   */
+  public static CompositeOption applicationCoreBundle() {
+    return () -> {
+      InputStream is =
+          TinyBundles.bundle()
+              .activator(TweetActivator.class)
+              .add(BaseActivator.class)
+              .add(TweetMessage.class)
+              .add(TweetService.class)
+              .add(TweetServiceImpl.class)
+              .symbolicName("application-core")
+              .set(
+                  Constants.IMPORT_PACKAGE,
+                  "org.osgi.framework,com.datastax.oss.driver.api.core,com.datastax.oss.driver.internal.core,com.datastax.oss.driver.api.core.config,org.slf4j,org.osgi.framework.wiring,com.datastax.oss.driver.api.core.metrics,com.datastax.oss.driver.api.core.cql")
+              .set(
+                  Constants.EXPORT_PACKAGE,
+                  "com.datastax.oss.driver.api.osgi,com.datastax.oss.driver.api.osgi.service")
+              .build();
+      return options(
+          provision(is),
+          systemProperty("cassandra.contactpoints").value("127.0.0.1"),
+          systemProperty("cassandra.port").value("9042"),
+          systemProperty("cassandra.keyspace").value("test_osgi"),
+          systemProperty("cassandra.datacenter").value("dc1"));
+    };
   }
 
   public static UrlProvisionOption driverCoreBundle() {
@@ -83,6 +122,10 @@ public class BundleOptions {
             mavenBundle("org.awaitility", "awaitility").versionAsInProject(),
             mavenBundle("org.hamcrest", "hamcrest").versionAsInProject(),
             junitBundles());
+  }
+
+  public static CompositeOption guavaBundles() {
+    return () -> options(mavenBundle("com.google.guava", "guava").versionAsInProject());
   }
 
   public static CompositeOption nettyBundles() {

@@ -23,7 +23,7 @@ import com.datastax.oss.driver.api.querybuilder.schema.CreateType;
 import com.datastax.oss.driver.api.querybuilder.schema.CreateTypeStart;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;

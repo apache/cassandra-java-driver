@@ -19,12 +19,11 @@ package com.datastax.dse.driver.internal.core.graph;
 
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.shaded.guava.common.base.Suppliers;
-import com.datastax.oss.driver.shaded.guava.common.base.Throwables;
-import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
-import com.datastax.oss.driver.shaded.guava.common.cache.CacheLoader;
-import com.datastax.oss.driver.shaded.guava.common.cache.LoadingCache;
 import com.datastax.oss.protocol.internal.util.Bytes;
+import com.google.common.base.Suppliers;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -109,7 +108,6 @@ public class GraphSONUtils {
     try {
       return OBJECT_MAPPERS.get(graphSubProtocol).writeValueAsBytes(object);
     } catch (ExecutionException e) {
-      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }
@@ -129,7 +127,6 @@ public class GraphSONUtils {
               String.format("Unknown GraphSON sub-protocol: {%s}", graphSubProtocol));
       }
     } catch (ExecutionException e) {
-      Throwables.throwIfUnchecked(e);
       throw new RuntimeException(e);
     }
   }

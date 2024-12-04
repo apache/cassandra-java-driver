@@ -19,8 +19,8 @@ package com.datastax.dse.driver.api.core.auth;
 
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
+import com.google.common.base.Charsets;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.util.Map;

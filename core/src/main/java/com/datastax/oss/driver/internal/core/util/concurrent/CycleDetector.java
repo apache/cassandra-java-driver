@@ -17,10 +17,10 @@
  */
 package com.datastax.oss.driver.internal.core.util.concurrent;
 
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
-import com.datastax.oss.driver.shaded.guava.common.graph.Graphs;
-import com.datastax.oss.driver.shaded.guava.common.graph.MutableValueGraph;
-import com.datastax.oss.driver.shaded.guava.common.graph.ValueGraphBuilder;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.graph.Graphs;
+import com.google.common.graph.MutableValueGraph;
+import com.google.common.graph.ValueGraphBuilder;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -23,7 +23,7 @@ import com.datastax.dse.driver.api.core.data.geometry.Point;
 import com.datastax.dse.driver.api.core.data.geometry.Polygon;
 import com.datastax.dse.driver.api.core.graph.predicates.Geo;
 import com.datastax.dse.driver.internal.core.data.geometry.Distance;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
+import com.google.common.base.Preconditions;
 
 /**
  * List of predicates for geolocation usage with DseGraph and Search indexes. Should not be accessed

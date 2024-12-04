@@ -19,7 +19,7 @@ package com.datastax.oss.driver.internal.core.config.composite;
 
 import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
+import com.google.common.collect.Sets;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 import java.util.Map;

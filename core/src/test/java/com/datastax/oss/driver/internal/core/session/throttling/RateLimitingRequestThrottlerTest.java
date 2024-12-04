@@ -29,7 +29,7 @@ import com.datastax.oss.driver.api.core.session.throttling.Throttled;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.util.concurrent.ScheduledTaskCapturingEventLoop;
-import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
+import com.google.common.collect.Lists;
 import io.netty.channel.EventLoopGroup;
 import java.time.Duration;
 import java.util.List;

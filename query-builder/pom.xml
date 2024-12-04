@@ -45,8 +45,8 @@
       <artifactId>java-driver-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.datastax.oss</groupId>
-      <artifactId>java-driver-shaded-guava</artifactId>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
     </dependency>
     <dependency>
       <groupId>com.github.stephenc.jcip</groupId>

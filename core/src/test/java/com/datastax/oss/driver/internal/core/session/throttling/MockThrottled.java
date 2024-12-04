@@ -19,7 +19,7 @@ package com.datastax.oss.driver.internal.core.session.throttling;
 
 import com.datastax.oss.driver.api.core.RequestThrottlingException;
 import com.datastax.oss.driver.api.core.session.throttling.Throttled;
-import com.datastax.oss.driver.shaded.guava.common.util.concurrent.Uninterruptibles;
+import com.google.common.util.concurrent.Uninterruptibles;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;

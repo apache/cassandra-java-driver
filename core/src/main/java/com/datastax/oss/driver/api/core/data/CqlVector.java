@@ -18,11 +18,11 @@
 package com.datastax.oss.driver.api.core.data;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import com.datastax.oss.driver.shaded.guava.common.base.Predicates;
-import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
-import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
-import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Streams;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.InvalidObjectException;

@@ -26,7 +26,7 @@ import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.internal.core.adminrequest.AdminRow;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.CassandraSchemaRows;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import java.util.Collections;
 import java.util.Iterator;
 import org.junit.Test;

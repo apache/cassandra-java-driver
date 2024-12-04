@@ -27,8 +27,8 @@ import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.internal.core.metadata.token.ByteOrderedToken;
 import com.datastax.oss.driver.internal.core.metadata.token.Murmur3Token;
 import com.datastax.oss.driver.internal.core.metadata.token.RandomToken;
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import com.google.common.base.Preconditions;
 import java.nio.ByteBuffer;
 import java.util.List;
 

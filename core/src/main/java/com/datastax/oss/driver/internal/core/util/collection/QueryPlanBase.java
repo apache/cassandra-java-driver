@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.internal.core.util.collection;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.shaded.guava.common.collect.Iterators;
+import com.google.common.collect.Iterators;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.AbstractQueue;

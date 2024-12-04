@@ -67,7 +67,6 @@
               <exclude>org.apache.cassandra:java-driver-mapper-runtime</exclude>
               <exclude>org.apache.cassandra:java-driver-mapper-processor</exclude>
               <!-- Don't reinclude dependencies that core also has -->
-              <exclude>com.datastax.oss:java-driver-shaded-guava</exclude>
               <exclude>com.github.stephenc.jcip:jcip-annotations</exclude>
               <exclude>com.github.spotbugs:spotbugs-annotations</exclude>
             </excludes>
@@ -92,7 +91,6 @@
               <exclude>org.apache.cassandra:java-driver-query-builder</exclude>
               <exclude>org.apache.cassandra:java-driver-mapper-processor</exclude>
               <!-- Don't reinclude dependencies that core also has -->
-              <exclude>com.datastax.oss:java-driver-shaded-guava</exclude>
               <exclude>com.github.stephenc.jcip:jcip-annotations</exclude>
               <exclude>com.github.spotbugs:spotbugs-annotations</exclude>
             </excludes>
@@ -117,7 +115,6 @@
               <exclude>org.apache.cassandra:java-driver-query-builder</exclude>
               <exclude>org.apache.cassandra:java-driver-mapper-runtime</exclude>
               <!-- Don't reinclude dependencies that core also has -->
-              <exclude>com.datastax.oss:java-driver-shaded-guava</exclude>
               <exclude>com.github.stephenc.jcip:jcip-annotations</exclude>
               <exclude>com.github.spotbugs:spotbugs-annotations</exclude>
             </excludes>

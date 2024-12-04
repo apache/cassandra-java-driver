@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.internal.querybuilder.schema.compaction;
 
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.CompactionStrategy;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 import net.jcip.annotations.Immutable;

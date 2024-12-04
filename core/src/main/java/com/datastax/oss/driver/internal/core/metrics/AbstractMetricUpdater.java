@@ -29,7 +29,7 @@ import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
 import com.datastax.oss.driver.internal.core.session.throttling.ConcurrencyLimitingRequestThrottler;
 import com.datastax.oss.driver.internal.core.session.throttling.RateLimitingRequestThrottler;
-import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
+import com.google.common.cache.Cache;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.netty.util.Timeout;
 import java.time.Duration;

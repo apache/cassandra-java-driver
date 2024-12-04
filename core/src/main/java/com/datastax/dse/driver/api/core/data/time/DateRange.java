@@ -17,8 +17,8 @@
  */
 package com.datastax.dse.driver.api.core.data.time;
 
-import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
-import com.datastax.oss.driver.shaded.guava.common.base.Strings;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.Serializable;

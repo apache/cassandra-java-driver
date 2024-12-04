@@ -26,7 +26,7 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +50,7 @@ public class DefaultDaoReturnTypeParser implements DaoReturnTypeParser {
    * The return types that can be inferred directly from {@link TypeMirror#getKind()} (void and
    * primitives).
    */
-  protected static final Map<TypeKind, DaoReturnType> DEFAULT_TYPE_KIND_MATCHES =
+  protected static final ImmutableMap<TypeKind, DaoReturnType> DEFAULT_TYPE_KIND_MATCHES =
       ImmutableMap.<TypeKind, DaoReturnType>builder()
           .put(TypeKind.VOID, DaoReturnType.VOID)
           .put(TypeKind.BOOLEAN, DaoReturnType.BOOLEAN)
@@ -58,7 +58,7 @@ public class DefaultDaoReturnTypeParser implements DaoReturnTypeParser {
           .build();
 
   /** The return types that correspond directly to a non-generic Java class. */
-  protected static final Map<Class<?>, DaoReturnType> DEFAULT_CLASS_MATCHES =
+  protected static final ImmutableMap<Class<?>, DaoReturnType> DEFAULT_CLASS_MATCHES =
       ImmutableMap.<Class<?>, DaoReturnType>builder()
           .put(Boolean.class, DaoReturnType.BOOLEAN)
           .put(Long.class, DaoReturnType.LONG)
@@ -72,18 +72,21 @@ public class DefaultDaoReturnTypeParser implements DaoReturnTypeParser {
    * The return types that correspond to a generic class with a single type parameter that is an
    * entity class.
    */
-  protected static final Map<Class<?>, DaoReturnTypeKind> DEFAULT_ENTITY_CONTAINER_MATCHES =
-      ImmutableMap.<Class<?>, DaoReturnTypeKind>builder()
-          .put(Optional.class, DefaultDaoReturnTypeKind.OPTIONAL_ENTITY)
-          .put(CompletionStage.class, DefaultDaoReturnTypeKind.FUTURE_OF_ENTITY)
-          .put(CompletableFuture.class, DefaultDaoReturnTypeKind.FUTURE_OF_ENTITY)
-          .put(PagingIterable.class, DefaultDaoReturnTypeKind.PAGING_ITERABLE)
-          .put(Stream.class, DefaultDaoReturnTypeKind.STREAM)
-          .put(MappedReactiveResultSet.class, DefaultDaoReturnTypeKind.MAPPED_REACTIVE_RESULT_SET)
-          .build();
+  protected static final ImmutableMap<Class<?>, DaoReturnTypeKind>
+      DEFAULT_ENTITY_CONTAINER_MATCHES =
+          ImmutableMap.<Class<?>, DaoReturnTypeKind>builder()
+              .put(Optional.class, DefaultDaoReturnTypeKind.OPTIONAL_ENTITY)
+              .put(CompletionStage.class, DefaultDaoReturnTypeKind.FUTURE_OF_ENTITY)
+              .put(CompletableFuture.class, DefaultDaoReturnTypeKind.FUTURE_OF_ENTITY)
+              .put(PagingIterable.class, DefaultDaoReturnTypeKind.PAGING_ITERABLE)
+              .put(Stream.class, DefaultDaoReturnTypeKind.STREAM)
+              .put(
+                  MappedReactiveResultSet.class,
+                  DefaultDaoReturnTypeKind.MAPPED_REACTIVE_RESULT_SET)
+              .build();
 
   /** The return types that correspond to a future of a non-generic Java class. */
-  protected static final Map<Class<?>, DaoReturnType> DEFAULT_FUTURE_OF_CLASS_MATCHES =
+  protected static final ImmutableMap<Class<?>, DaoReturnType> DEFAULT_FUTURE_OF_CLASS_MATCHES =
       ImmutableMap.<Class<?>, DaoReturnType>builder()
           .put(Void.class, DaoReturnType.FUTURE_OF_VOID)
           .put(Boolean.class, DaoReturnType.FUTURE_OF_BOOLEAN)
@@ -96,7 +99,7 @@ public class DefaultDaoReturnTypeParser implements DaoReturnTypeParser {
    * The return types that correspond to a future of a generic class with a single type parameter
    * that is an entity class.
    */
-  protected static final Map<Class<?>, DaoReturnTypeKind>
+  protected static final ImmutableMap<Class<?>, DaoReturnTypeKind>
       DEFAULT_FUTURE_OF_ENTITY_CONTAINER_MATCHES =
           ImmutableMap.<Class<?>, DaoReturnTypeKind>builder()
               .put(Optional.class, DefaultDaoReturnTypeKind.FUTURE_OF_OPTIONAL_ENTITY)

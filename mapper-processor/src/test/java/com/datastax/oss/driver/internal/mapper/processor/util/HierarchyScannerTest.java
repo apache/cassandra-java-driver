@@ -21,8 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.mapper.annotations.HierarchyScanStrategy;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
-import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
-import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;

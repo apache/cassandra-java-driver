@@ -19,8 +19,8 @@ package com.datastax.oss.driver.internal.mapper.processor.util;
 
 import com.datastax.oss.driver.api.mapper.annotations.HierarchyScanStrategy;
 import com.datastax.oss.driver.internal.mapper.processor.ProcessorContext;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
-import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;

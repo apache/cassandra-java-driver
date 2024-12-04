@@ -17,7 +17,7 @@
  */
 package com.datastax.oss.driver.internal.querybuilder.schema;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 public class Utils {

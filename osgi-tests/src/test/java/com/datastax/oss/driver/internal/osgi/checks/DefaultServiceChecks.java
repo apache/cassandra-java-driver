@@ -21,6 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.osgi.service.MailboxMessage;
 import com.datastax.oss.driver.api.osgi.service.MailboxService;
+import com.datastax.oss.driver.api.osgi.service.TweetMessage;
+import com.datastax.oss.driver.api.osgi.service.TweetService;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,5 +49,9 @@ public class DefaultServiceChecks {
     } finally {
       service.clearMailbox(recipient);
     }
+  }
+
+  public static void checkService(TweetService service) throws Exception {
+    service.sendMessage(new TweetMessage("user@datastax.com", Instant.now(), "body"));
   }
 }

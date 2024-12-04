@@ -75,11 +75,6 @@
         <artifactId>native-protocol</artifactId>
         <version>1.5.1</version>
       </dependency>
-      <dependency>
-        <groupId>com.datastax.oss</groupId>
-        <artifactId>java-driver-shaded-guava</artifactId>
-        <version>25.1-jre-graal-sub-1</version>
-      </dependency>
     </dependencies>
   </dependencyManagement>
   <build>

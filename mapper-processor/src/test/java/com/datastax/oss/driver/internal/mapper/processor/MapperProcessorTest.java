@@ -19,7 +19,7 @@ package com.datastax.oss.driver.internal.mapper.processor;
 
 import static com.google.testing.compile.CompilationSubject.assertThat;
 
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList;
 import com.google.testing.compile.Compilation;
 import com.google.testing.compile.Compiler;
 import com.squareup.javapoet.JavaFile;

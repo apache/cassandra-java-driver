@@ -21,7 +21,7 @@ import com.datastax.dse.driver.internal.core.cql.reactive.FailedReactiveResultSe
 import com.datastax.dse.driver.internal.mapper.reactive.FailedMappedReactiveResultSet;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.mapper.processor.util.generation.GeneratedCodePatterns;
-import com.datastax.oss.driver.shaded.guava.common.base.Throwables;
+import com.google.common.base.Throwables;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 import java.util.Map;

@@ -17,8 +17,8 @@
  */
 package com.datastax.dse.driver.internal.core.insights;
 
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
-import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 

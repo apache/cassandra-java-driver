@@ -44,6 +44,7 @@ public class OsgiLz4IT {
         BundleOptions.driverQueryBuilderBundle(),
         BundleOptions.driverMapperRuntimeBundle(),
         BundleOptions.commonBundles(),
+        BundleOptions.guavaBundles(),
         BundleOptions.nettyBundles(),
         BundleOptions.jacksonBundles(),
         BundleOptions.lz4Bundle(),

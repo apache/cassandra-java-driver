@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.fail;
 import com.datastax.oss.driver.api.core.PagingIterable;
 import com.datastax.oss.driver.internal.core.MockAsyncPagingIterable;
 import com.datastax.oss.driver.internal.core.MockPagingIterable;
-import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
+import com.google.common.base.Splitter;
 import java.util.List;
 
 public class OffsetPagerTestFixture {

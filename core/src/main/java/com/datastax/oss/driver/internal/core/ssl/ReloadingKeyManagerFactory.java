@@ -17,7 +17,7 @@
  */
 package com.datastax.oss.driver.internal.core.ssl;
 
-import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;

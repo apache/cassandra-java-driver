@@ -19,7 +19,7 @@ package com.datastax.dse.driver.internal.core.graph;
 
 import com.datastax.dse.driver.api.core.graph.GraphNode;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.datastax.oss.driver.shaded.guava.common.base.Objects;
+import com.google.common.base.Objects;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

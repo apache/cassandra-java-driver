@@ -26,9 +26,9 @@ import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
-import com.datastax.oss.driver.shaded.guava.common.base.Charsets;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
-import com.datastax.oss.driver.shaded.guava.common.net.InetAddresses;
+import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.net.InetAddresses;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
@@ -38,7 +38,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -51,7 +50,7 @@ public abstract class ClassicGraphDataTypeITBase {
 
   private static final boolean IS_DSE50 =
       CcmBridge.VERSION.compareTo(Objects.requireNonNull(Version.parse("5.1"))) < 0;
-  private static final Set<String> TYPES_REQUIRING_DSE51 =
+  private static final ImmutableSet<String> TYPES_REQUIRING_DSE51 =
       ImmutableSet.of("Date()", "Time()", "Point()", "Linestring()", "Polygon()");
 
   private static final AtomicInteger SCHEMA_COUNTER = new AtomicInteger();
