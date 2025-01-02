@@ -39,9 +39,7 @@
     </modules>
 
     <build>
-
         <plugins>
-
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>clirr-maven-plugin</artifactId>
@@ -49,21 +47,18 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
-
             <plugin>
                 <artifactId>maven-source-plugin</artifactId>
                 <configuration>
                     <skipSource>true</skipSource>
                 </configuration>
             </plugin>
-
             <plugin>
                 <artifactId>maven-gpg-plugin</artifactId>
                 <configuration>
                     <skip>true</skip>
                 </configuration>
             </plugin>
-
             <plugin>
                 <artifactId>maven-install-plugin</artifactId>
                 <configuration>
@@ -77,13 +72,21 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
-
+            <plugin>
+                <groupId>net.nicoulaj.maven.plugins</groupId>
+                <artifactId>checksum-maven-plugin</artifactId>
+                <version>1.7</version>
+                <executions>
+                    <execution>
+                        <id>source-release-checksum</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
-
     </build>
 
     <profiles>
-
         <profile>
             <id>release</id>
             <build>
@@ -98,7 +101,6 @@
                 </plugins>
             </build>
         </profile>
-
     </profiles>
 
 </project>

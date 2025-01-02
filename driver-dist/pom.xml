@@ -34,30 +34,23 @@
 
     <!-- These dependencies are only here to ensure proper build order and proper inclusion of binaries in the final tarball -->
     <dependencies>
-
         <dependency>
             <groupId>org.apache.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.apache.cassandra</groupId>
             <artifactId>cassandra-driver-mapping</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.apache.cassandra</groupId>
             <artifactId>cassandra-driver-extras</artifactId>
         </dependency>
-
     </dependencies>
 
     <build>
-
         <finalName>apache-cassandra-java-driver-${project.version}</finalName>
-
         <plugins>
-
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
                 <!-- http://stackoverflow.com/questions/13218313/unable-to-disable-generation-of-empty-jar-maven-jar-plugin -->
@@ -68,34 +61,34 @@
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <artifactId>maven-source-plugin</artifactId>
                 <configuration>
                     <skipSource>true</skipSource>
                 </configuration>
             </plugin>
-
             <plugin>
                 <artifactId>maven-install-plugin</artifactId>
                 <configuration>
                     <skip>true</skip>
                 </configuration>
             </plugin>
-
             <plugin>
                 <artifactId>maven-deploy-plugin</artifactId>
                 <configuration>
                     <skip>true</skip>
                 </configuration>
             </plugin>
-
+            <plugin>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
         </plugins>
-
     </build>
 
     <profiles>
-
         <profile>
             <id>release</id>
             <build>
@@ -145,10 +138,15 @@
                         </algorithms>
                       </configuration>
                     </plugin>
+                    <plugin>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <configuration>
+                            <skip>false</skip>
+                        </configuration>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
-
     </profiles>
 
 </project>
