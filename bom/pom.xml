@@ -76,6 +76,11 @@
         <version>4.18.2-SNAPSHOT</version>
       </dependency>
       <dependency>
+        <groupId>org.apache.cassandra</groupId>
+        <artifactId>java-driver-open-telemetry</artifactId>
+        <version>4.18.2-SNAPSHOT</version>
+      </dependency>
+      <dependency>
         <groupId>com.datastax.oss</groupId>
         <artifactId>native-protocol</artifactId>
         <version>1.5.1</version>
