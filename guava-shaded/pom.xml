@@ -65,6 +65,32 @@
   <build>
     <plugins>
       <plugin>
+        <!--
+          Do not attempt to recompile the module if we are not running JVM 1.8.
+          Having additional Java source files and having to shade Guava will break
+          in CI environment, when we run 'mvn verify' on newer JVM and assume that
+          all classes have been compiled with JVM 1.8.
+        -->
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.12</version>
+        <executions>
+          <execution>
+            <id>regex-property</id>
+            <goals>
+              <goal>regex-property</goal>
+            </goals>
+            <configuration>
+              <name>maven.main.skip</name>
+              <value>${java.version}</value>
+              <regex>^(?!1.8).+</regex>
+              <replacement>true</replacement>
+              <failIfNoMatch>false</failIfNoMatch>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <artifactId>maven-shade-plugin</artifactId>
         <executions>
           <execution>
@@ -101,6 +127,12 @@
         </executions>
       </plugin>
       <plugin>
+        <!--
+          Cleaning up target directory is required, because module's Java source files
+          (e.g. LexicographicalComparatorHolderSubstitution) will be left with
+          their original Java package AND eventually shaded one. This plugin removes
+          the Java class from its unshaded package.
+        -->
         <artifactId>maven-clean-plugin</artifactId>
         <executions>
           <execution>
