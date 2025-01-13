@@ -37,14 +37,19 @@ import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
 import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
+import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import com.google.common.base.Functions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,23 +58,73 @@ import org.slf4j.LoggerFactory;
 public class CqlPrepareAsyncProcessor
     implements RequestProcessor<PrepareRequest, CompletionStage<PreparedStatement>> {
 
+  public class CacheEntry {
+
+    private CompletableFuture<PreparedStatement> result;
+    private Set<CompletableFuture<PreparedStatement>> futures;
+    private AtomicBoolean lock;
+
+    public CacheEntry() {
+
+      result = new CompletableFuture<>();
+      futures = Sets.newHashSet(result);
+      lock = new AtomicBoolean(false);
+    }
+
+    public void addFuture(CompletableFuture<PreparedStatement> future) {
+
+      futures.add(future);
+    }
+
+    public void tryStart(
+        PrepareRequest request,
+        DefaultSession session,
+        InternalDriverContext context,
+        String sessionLogPrefix) {
+      // Guarantee that we'll only create one CqlPrepareHandler for each cache entry
+      if (lock.compareAndSet(false, true)) {
+
+        new CqlPrepareHandler(request, session, context, sessionLogPrefix)
+            .handle()
+            .whenComplete(
+                (ps, t) -> {
+                  if (t == null) {
+                    for (CompletableFuture<PreparedStatement> future : futures) {
+                      future.complete(ps);
+                    }
+                  } else {
+                    cache.invalidate(request);
+                    for (CompletableFuture<PreparedStatement> future : futures) {
+                      future.completeExceptionally(t);
+                    }
+                  }
+                });
+      }
+    }
+
+    public PreparedStatement waitForResult() {
+      return this.result.join();
+    }
+  }
+
   private static final Logger LOG = LoggerFactory.getLogger(CqlPrepareAsyncProcessor.class);
 
-  protected final Cache<PrepareRequest, CompletableFuture<PreparedStatement>> cache;
+  protected final Cache<PrepareRequest, CacheEntry> cache;
 
   public CqlPrepareAsyncProcessor() {
     this(Optional.empty());
   }
 
   public CqlPrepareAsyncProcessor(@NonNull Optional<? extends DefaultDriverContext> context) {
-    this(CacheBuilder.newBuilder().weakValues().build(), context);
+    this(context, Functions.identity());
   }
 
   protected CqlPrepareAsyncProcessor(
-      Cache<PrepareRequest, CompletableFuture<PreparedStatement>> cache,
-      Optional<? extends DefaultDriverContext> context) {
+      Optional<? extends DefaultDriverContext> context,
+      Function<CacheBuilder<Object, Object>, CacheBuilder<Object, Object>> decorator) {
 
-    this.cache = cache;
+    CacheBuilder<Object, Object> baseCache = CacheBuilder.newBuilder().weakValues();
+    this.cache = decorator.apply(baseCache).build();
     context.ifPresent(
         (ctx) -> {
           LOG.info("Adding handler to invalidate cached prepared statements on type changes");
@@ -108,11 +163,10 @@ public class CqlPrepareAsyncProcessor
   }
 
   private void onTypeChanged(TypeChangeEvent event) {
-    for (Map.Entry<PrepareRequest, CompletableFuture<PreparedStatement>> entry :
-        this.cache.asMap().entrySet()) {
+    for (Map.Entry<PrepareRequest, CacheEntry> entry : this.cache.asMap().entrySet()) {
 
       try {
-        PreparedStatement stmt = entry.getValue().get();
+        PreparedStatement stmt = entry.getValue().waitForResult();
         if (Iterables.any(
                 stmt.getResultSetDefinitions(), (def) -> typeMatches(event.oldType, def.getType()))
             || Iterables.any(
@@ -141,25 +195,23 @@ public class CqlPrepareAsyncProcessor
       String sessionLogPrefix) {
 
     try {
-      CompletableFuture<PreparedStatement> result = cache.getIfPresent(request);
-      if (result == null) {
-        CompletableFuture<PreparedStatement> mine = new CompletableFuture<>();
-        result = cache.get(request, () -> mine);
-        if (result == mine) {
-          new CqlPrepareHandler(request, session, context, sessionLogPrefix)
-              .handle()
-              .whenComplete(
-                  (preparedStatement, error) -> {
-                    if (error != null) {
-                      mine.completeExceptionally(error);
-                      cache.invalidate(request); // Make sure failure isn't cached indefinitely
-                    } else {
-                      mine.complete(preparedStatement);
-                    }
-                  });
-        }
-      }
-      return result;
+      CompletableFuture<PreparedStatement> rv = new CompletableFuture<>();
+      CacheEntry entry =
+          cache.get(
+              request,
+              () -> {
+                CacheEntry newEntry = new CacheEntry();
+                newEntry.addFuture(rv);
+                newEntry.tryStart(request, session, context, sessionLogPrefix);
+                return newEntry;
+              });
+
+      // We don't know whether we're dealing with a newly-created entry or one that was
+      // already cached so try the future insert again.  We wind up duoing an extra hash op
+      // on the initial insert this way but that's a relatively small price to pay.
+      entry.addFuture(rv);
+
+      return rv;
     } catch (ExecutionException e) {
       return CompletableFutures.failedFuture(e.getCause());
     }
@@ -170,7 +222,7 @@ public class CqlPrepareAsyncProcessor
     return CompletableFutures.failedFuture(error);
   }
 
-  public Cache<PrepareRequest, CompletableFuture<PreparedStatement>> getCache() {
+  public Cache<PrepareRequest, CacheEntry> getCache() {
     return cache;
   }
 }
