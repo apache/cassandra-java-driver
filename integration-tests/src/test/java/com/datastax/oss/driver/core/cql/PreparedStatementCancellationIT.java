@@ -104,8 +104,8 @@ public class PreparedStatementCancellationIT {
 
     // Waiting for results on the cache entry should prevent us from continuing until the CacheEntry
     // future returns
-    assertThat(cf1.isDone());
-    assertThat(cf2.isDone());
+    assertThat(cf1.isDone()).isTrue();
+    assertThat(cf2.isDone()).isTrue();
 
     assertThat(cf1.join()).isEqualTo(stmt);
     assertThat(cf2.join()).isEqualTo(stmt);
@@ -157,13 +157,10 @@ public class PreparedStatementCancellationIT {
     assertThat(cache.size()).isEqualTo(1);
     CqlPrepareAsyncProcessor.CacheEntry entry =
         (CqlPrepareAsyncProcessor.CacheEntry) Iterables.get(cache.asMap().values(), 0);
-    try {
-      PreparedStatement rv = entry.waitForResult();
-      assertThat(rv).isNotNull();
-      assertThat(rv.getQuery()).isEqualTo(cql);
-    } catch (Exception e) {
-      fail("Unexpected exception when waiting on cache CompletableFuture");
-    }
+
+    PreparedStatement rv = entry.waitForResult();
+    assertThat(rv).isNotNull();
+    assertThat(rv.getQuery()).isEqualTo(cql);
     assertThat(cache.size()).isEqualTo(1);
   }
 }
