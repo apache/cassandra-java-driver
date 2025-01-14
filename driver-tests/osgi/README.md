@@ -28,7 +28,7 @@ It is _not_ meant as an example application.
 If you are looking for examples demonstrating usage of the driver in an OSGi
 environment, please refer to our [OSGi examples repository].
 
-[OSGi examples repository]:https://github.com/datastax/java-driver-examples-osgi
+[OSGi examples repository]:https://github.com/apache/cassandra-java-driver-examples-osgi
 
 ## Usage
 

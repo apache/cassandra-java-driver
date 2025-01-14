@@ -40,7 +40,7 @@ public class StartupOptionTest extends CCMTestsSupport {
 
     for (Row row : result) {
       assertThat(row.getString("driver_version")).isEqualTo(Cluster.getDriverVersion());
-      assertThat(row.getString("driver_name")).isEqualTo("Java Driver");
+      assertThat(row.getString("driver_name")).isEqualTo("Apache Cassandra Java Driver");
     }
   }
 }

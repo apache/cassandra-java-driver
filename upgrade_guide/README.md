@@ -71,7 +71,7 @@ versions of the Java Driver.
     
 [JAVA-1752]:https://datastax-oss.atlassian.net/browse/JAVA-1752
 [JAVA-1376]:https://datastax-oss.atlassian.net/browse/JAVA-1376
-[online example]:https://github.com/datastax/java-driver/blob/3.x/driver-examples/src/main/java/com/datastax/driver/examples/retry/DowngradingRetry.java
+[online example]:https://github.com/apache/cassandra-java-driver/blob/3.x/driver-examples/src/main/java/com/datastax/driver/examples/retry/DowngradingRetry.java
 
 2.  The `TokenAwarePolicy` now has a new constructor that takes a `ReplicaOrdering` 
     argument, see [JAVA-1448]. 

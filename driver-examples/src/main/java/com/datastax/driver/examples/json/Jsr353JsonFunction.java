@@ -47,7 +47,7 @@ import javax.json.JsonStructure;
  *
  * <pre>{@code
  * <dependency>
- *     <groupId>com.datastax.cassandra</groupId>
+ *     <groupId>org.apache.cassandra</groupId>
  *     <artifactId>cassandra-driver-extras</artifactId>
  *     <version>${driver.version}</version>
  * </dependency>

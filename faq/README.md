@@ -176,7 +176,7 @@ and we've had many reports where the problem turned out to be in user code.
 
 See [Blobs.java] in the `driver-examples` module for some examples and explanations.
 
-[Blobs.java]: https://github.com/datastax/java-driver/tree/3.x/driver-examples/src/main/java/com/datastax/driver/examples/datatypes/Blobs.java
+[Blobs.java]: https://github.com/apache/cassandra-java-driver/tree/3.x/driver-examples/src/main/java/com/datastax/driver/examples/datatypes/Blobs.java
 
 
 ### How do I use the driver in an OSGi application?
@@ -308,7 +308,7 @@ version is available, you may want to reach out to the maintainer of that tool t
 an update with compatibility to this driver version.
 
 
-[Blobs.java]: https://github.com/datastax/java-driver/tree/3.11.5/driver-examples/src/main/java/com/datastax/driver/examples/datatypes/Blobs.java
+[Blobs.java]: https://github.com/apache/cassandra-java-driver/tree/3.12.0/driver-examples/src/main/java/com/datastax/driver/examples/datatypes/Blobs.java
 [CASSANDRA-7304]: https://issues.apache.org/jira/browse/CASSANDRA-7304
 [Parameters and Binding]: ../manual/statements/prepared/#parameters-and-binding
 [Mapper options]: ../manual/object_mapper/using/#mapper-options

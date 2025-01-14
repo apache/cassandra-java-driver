@@ -22,9 +22,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.datastax.cassandra</groupId>
+        <groupId>org.apache.cassandra</groupId>
         <artifactId>cassandra-driver-parent</artifactId>
-        <version>3.11.6-SNAPSHOT</version>
+        <version>3.12.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>cassandra-driver-examples</artifactId>
@@ -36,12 +36,12 @@
         <!-- driver dependencies -->
 
         <dependency>
-            <groupId>com.datastax.cassandra</groupId>
+            <groupId>org.apache.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>com.datastax.cassandra</groupId>
+            <groupId>org.apache.cassandra</groupId>
             <artifactId>cassandra-driver-extras</artifactId>
             <optional>true</optional>
         </dependency>
@@ -143,8 +143,10 @@
             <resource>
                 <directory>${project.basedir}/..</directory>
                 <includes>
+                    <include>LICENSE_binary</include>
                     <include>LICENSE</include>
                     <include>NOTICE_binary.txt</include>
+                    <include>NOTICE.txt</include>
                 </includes>
                 <targetPath>META-INF</targetPath>
             </resource>
@@ -163,13 +165,6 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>clirr-maven-plugin</artifactId>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
                     <skip>true</skip>
                 </configuration>

@@ -359,9 +359,9 @@ public class Host {
    * {@code null}, and the caller should always be aware of this possibility.
    *
    * @return the DSE workload the host is running.
-   * @deprecated Please use the <a href="https://github.com/datastax/java-driver-dse">Java Driver
-   *     for DSE</a> if you are connecting to a DataStax Enterprise (DSE) cluster. This method might
-   *     not function properly with future versions of DSE.
+   * @deprecated Please use the <a href="https://github.com/apache/cassandra-java-driver-dse">Java
+   *     Driver for DSE</a> if you are connecting to a DataStax Enterprise (DSE) cluster. This
+   *     method might not function properly with future versions of DSE.
    */
   @Deprecated
   public String getDseWorkload() {
@@ -372,9 +372,9 @@ public class Host {
    * Returns whether the host is running DSE Graph.
    *
    * @return whether the node is running DSE Graph.
-   * @deprecated Please use the <a href="https://github.com/datastax/java-driver-dse">Java Driver
-   *     for DSE</a> if you are connecting to a DataStax Enterprise (DSE) cluster. This method might
-   *     not function properly with future versions of DSE.
+   * @deprecated Please use the <a href="https://github.com/apache/cassandra-java-driver-dse">Java
+   *     Driver for DSE</a> if you are connecting to a DataStax Enterprise (DSE) cluster. This
+   *     method might not function properly with future versions of DSE.
    */
   @Deprecated
   public boolean isDseGraphEnabled() {

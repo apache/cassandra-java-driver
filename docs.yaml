@@ -50,7 +50,7 @@ sections:
         files: 'faq/**/*.md'
 links:
   - title: Code
-    href:  https://github.com/datastax/java-driver/
+    href:  https://github.com/apache/cassandra-java-driver/
   - title: Docs
     href:  http://docs.datastax.com/en/developer/java-driver/
   - title: Issues

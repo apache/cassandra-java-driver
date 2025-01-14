@@ -49,7 +49,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  *
  * <pre>{@code
  * <dependency>
- *     <groupId>com.datastax.cassandra</groupId>
+ *     <groupId>org.apache.cassandra</groupId>
  *     <artifactId>cassandra-driver-extras</artifactId>
  *     <version>${driver.version}</version>
  * </dependency>

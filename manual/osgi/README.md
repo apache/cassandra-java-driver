@@ -31,7 +31,7 @@ the following Maven artifacts are actually valid OSGi bundles:
 We have complete examples demonstrating usage of the driver in an OSGi
 environment; please refer to our [OSGi examples repository].
 
-[OSGi examples repository]:https://github.com/datastax/java-driver-examples-osgi
+[OSGi examples repository]:https://github.com/apache/cassandra-java-driver-examples-osgi
 
 ## Troubleshooting OSGi applications
 

@@ -1,11 +1,13 @@
 # Java Driver for Apache Cassandra®
 
+:warning: The java-driver has recently been donated by Datastax to The Apache Software Foundation and the Apache Cassandra project.  Bear with us as we move assets and coordinates.
+
 *If you're reading this on github.com, please note that this is the readme
 for the development version and that some features described here might
 not yet have been released. You can find the documentation for the latest
 version through the [Java Driver
 docs](http://docs.datastax.com/en/developer/java-driver/3.11/index.html) or via the release tags,
-[e.g. 3.11.5](https://github.com/datastax/java-driver/tree/3.11.5).*
+[e.g. 3.12.0](https://github.com/apache/cassandra-java-driver/tree/3.12.0).*
 
 A modern, [feature-rich](manual/) and highly tunable Java client
 library for Apache Cassandra (2.1+) and using exclusively Cassandra's binary protocol 
@@ -42,17 +44,12 @@ The driver contains the following modules:
 
 **Useful links:**
 
-- JIRA (bug tracking): https://datastax-oss.atlassian.net/browse/JAVA
-- MAILING LIST: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
-- DATASTAX ACADEMY SLACK: #datastax-drivers on https://academy.datastax.com/slack 
-- TWITTER: [@dsJavaDriver](https://twitter.com/dsJavaDriver) tweets Java
-  driver releases and important announcements (low frequency).
-  [@DataStaxEng](https://twitter.com/datastaxeng) has more news including
-  other drivers, Cassandra, and DSE.
+- JIRA (bug tracking): https://issues.apache.org/jira/projects/CASSJAVA
+- MAILING LIST: https://cassandra.apache.org/_/community.html#discussions
 - DOCS: the [manual](http://docs.datastax.com/en/developer/java-driver/3.11/manual/) has quick
   start material and technical details about the driver and its features.
 - API: https://docs.datastax.com/en/drivers/java/3.11
-- GITHUB REPOSITORY: https://github.com/datastax/java-driver
+- GITHUB REPOSITORY: https://github.com/apache/cassandra-java-driver
 - [changelog](changelog/)
 
 ## Getting the driver
@@ -63,9 +60,9 @@ using DataStax Enterprise, install the [DataStax Enterprise Java Driver][dse-dri
 
 ```xml
 <dependency>
-  <groupId>com.datastax.cassandra</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>3.11.5</version>
+  <version>3.12.0</version>
 </dependency>
 ```
 
@@ -73,9 +70,9 @@ Note that the object mapper is published as a separate artifact:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.cassandra</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>cassandra-driver-mapping</artifactId>
-  <version>3.11.5</version>
+  <version>3.12.0</version>
 </dependency>
 ```
 
@@ -83,9 +80,9 @@ The 'extras' module is also published as a separate artifact:
 
 ```xml
 <dependency>
-  <groupId>com.datastax.cassandra</groupId>
+  <groupId>org.apache.cassandra</groupId>
   <artifactId>cassandra-driver-extras</artifactId>
-  <version>3.11.5/version>
+  <version>3.12.0/version>
 </dependency>
 ```
 
@@ -94,55 +91,31 @@ We also provide a [shaded JAR](manual/shaded_jar/)
 to avoid the explicit dependency to Netty.
 
 If you can't use a dependency management tool, a
-[binary tarball](https://github.com/datastax/java-driver/releases/3.11.5)
+[binary tarball](https://cassandra.apache.org/_/download.html)
 is available for download.
 
 ## Compatibility
 
-The Java client driver 3.11.5 ([branch 3.x](https://github.com/datastax/java-driver/tree/3.x)) is compatible with Apache
+The Java client driver 3.12.0 ([branch 3.x](https://github.com/apache/cassandra-java-driver/tree/3.x)) is compatible with Apache
 Cassandra 2.1, 2.2 and 3.0+ (see [this page](http://docs.datastax.com/en/developer/java-driver/3.11/manual/native_protocol/) for
 the most up-to-date compatibility information).
 
 UDT and tuple support is available only when using Apache Cassandra 2.1 or higher (see [CQL improvements in Cassandra 2.1](http://www.datastax.com/dev/blog/cql-in-2-1)).
 
 Other features are available only when using Apache Cassandra 2.0 or higher (e.g. result set paging,
-[BatchStatement](https://github.com/datastax/java-driver/blob/3.x/driver-core/src/main/java/com/datastax/driver/core/BatchStatement.java),
+[BatchStatement](https://github.com/apache/cassandra-java-driver/blob/3.x/driver-core/src/main/java/com/datastax/driver/core/BatchStatement.java),
 [lightweight transactions](http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_ltweight_transaction_t.html) 
 -- see [What's new in Cassandra 2.0](http://www.datastax.com/documentation/cassandra/2.0/cassandra/features/features_key_c.html)). 
 Trying to use these with a cluster running Cassandra 1.2 will result in 
-an [UnsupportedFeatureException](https://github.com/datastax/java-driver/blob/3.x/driver-core/src/main/java/com/datastax/driver/core/exceptions/UnsupportedFeatureException.java) being thrown.
+an [UnsupportedFeatureException](https://github.com/apache/cassandra-java-driver/blob/3.x/driver-core/src/main/java/com/datastax/driver/core/exceptions/UnsupportedFeatureException.java) being thrown.
 
 The java driver supports Java JDK versions 6 and above.
-
-If using _DataStax Enterprise_, the [DataStax Enterprise Java Driver][dse-driver] provides 
-more features and better compatibility.
-
-__Disclaimer__: Some _DataStax/DataStax Enterprise_ products might partially work on 
-big-endian systems, but _DataStax_ does not officially support these systems.
 
 ## Upgrading from previous versions
 
 If you are upgrading from a previous version of the driver, be sure to have a look at
 the [upgrade guide](/upgrade_guide/).
 
-If you are upgrading to _DataStax Enterprise_, use the [DataStax Enterprise Java Driver][dse-driver] for more
-features and better compatibility.
-
-## License
-
-&copy; The Apache Software Foundation
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
 
 ----
 
@@ -150,4 +123,5 @@ Apache Cassandra, Apache, Tomcat, Lucene, Solr, Hadoop, Spark, TinkerPop, and Ca
 trademarks of the [Apache Software Foundation](http://www.apache.org/) or its subsidiaries in
 Canada, the United States and/or other countries. 
 
-[dse-driver]: http://docs.datastax.com/en/developer/java-driver-dse/latest/
+
+Binary artifacts of this product bundle Java Native Runtime libraries, which is available under the Eclipse Public License version 2.0.
