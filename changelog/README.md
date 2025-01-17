@@ -24,6 +24,10 @@ under the License.
   3.x versions get published.
 -->
 
+## 3.12.1
+- [improvement] CASSJAVA-55: Remove setting "Host" header for metadata requests.
+- [bug] JAVA-3125: Match broadcast RPC for control connection and Astra events
+
 ## 3.12.0
 - [improvement] CASSANDRA-18971: Switch all archs to netty-tcnative-boringssl-static
 - [improvement] CASSJAVA-58: Update 3.x DRIVER_NAME to match 4.x Java driver

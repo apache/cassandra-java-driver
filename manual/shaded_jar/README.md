@@ -31,7 +31,7 @@ package name:
 <dependency>
   <groupId>org.apache.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>3.12.0</version>
+  <version>3.12.1</version>
   <classifier>shaded</classifier>
   <!-- Because the shaded JAR uses the original POM, you still need
        to exclude this dependency explicitly: -->
@@ -55,7 +55,7 @@ non-shaded JAR:
 <dependency>
   <groupId>org.apache.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>3.12.0</version>
+  <version>3.12.1</version>
   <classifier>shaded</classifier>
   <exclusions>
     <exclusion>
@@ -71,7 +71,7 @@ non-shaded JAR:
 <dependency>
   <groupId>org.apache.cassandra</groupId>
   <artifactId>cassandra-driver-mapping</artifactId>
-  <version>3.12.0</version>
+  <version>3.12.1</version>
   <exclusions>
     <exclusion>
       <groupId>org.apache.cassandra</groupId>

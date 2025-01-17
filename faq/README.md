@@ -308,7 +308,7 @@ version is available, you may want to reach out to the maintainer of that tool t
 an update with compatibility to this driver version.
 
 
-[Blobs.java]: https://github.com/apache/cassandra-java-driver/tree/3.12.0/driver-examples/src/main/java/com/datastax/driver/examples/datatypes/Blobs.java
+[Blobs.java]: https://github.com/apache/cassandra-java-driver/tree/3.12.1/driver-examples/src/main/java/com/datastax/driver/examples/datatypes/Blobs.java
 [CASSANDRA-7304]: https://issues.apache.org/jira/browse/CASSANDRA-7304
 [Parameters and Binding]: ../manual/statements/prepared/#parameters-and-binding
 [Mapper options]: ../manual/object_mapper/using/#mapper-options

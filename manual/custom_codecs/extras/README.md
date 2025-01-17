@@ -29,7 +29,7 @@ The module is published as a separate Maven artifact:
 <dependency>
   <groupId>org.apache.cassandra</groupId>
   <artifactId>cassandra-driver-extras</artifactId>
-  <version>3.12.0</version>
+  <version>3.12.1</version>
 </dependency>
 ```
 
