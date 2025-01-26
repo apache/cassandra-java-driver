@@ -49,6 +49,7 @@ package com.datastax.oss.driver.internal.core.type.util;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * Variable length encoding inspired from Google <a
@@ -174,10 +175,84 @@ public class VIntCoding {
   }
 
   /** Compute the number of bytes that would be needed to encode an unsigned varint. */
-  private static int computeUnsignedVIntSize(final long value) {
+  public static int computeUnsignedVIntSize(final long value) {
     int magnitude =
         Long.numberOfLeadingZeros(
             value | 1); // | with 1 to ensure magnitude <= 63, so (63 - 1) / 7 <= 8
     return (639 - magnitude * 9) >> 6;
+  }
+
+  public static void writeUnsignedVInt32(int value, ByteBuffer output) {
+    writeUnsignedVInt((long) value, output);
+  }
+
+  public static void writeUnsignedVInt(long value, ByteBuffer output) {
+    int size = VIntCoding.computeUnsignedVIntSize(value);
+    if (size == 1) {
+      output.put((byte) value);
+      return;
+    }
+
+    output.put(VIntCoding.encodeVInt(value, size), 0, size);
+  }
+
+  /**
+   * Read up to a 32-bit integer back, using the unsigned (no zigzag) encoding.
+   *
+   * <p>Note this method is the same as {@link #readUnsignedVInt(DataInput)}, except that we do
+   * *not* block if there are not enough bytes in the buffer to reconstruct the value.
+   *
+   * @throws VIntOutOfRangeException If the vint doesn't fit into a 32-bit integer
+   */
+  public static int getUnsignedVInt32(ByteBuffer input, int readerIndex) {
+    return checkedCast(getUnsignedVInt(input, readerIndex));
+  }
+
+  public static long getUnsignedVInt(ByteBuffer input, int readerIndex) {
+    return getUnsignedVInt(input, readerIndex, input.limit());
+  }
+
+  public static long getUnsignedVInt(ByteBuffer input, int readerIndex, int readerLimit) {
+    if (readerIndex < 0)
+      throw new IllegalArgumentException(
+          "Reader index should be non-negative, but was " + readerIndex);
+
+    if (readerIndex >= readerLimit) return -1;
+
+    int firstByte = input.get(readerIndex++);
+
+    // Bail out early if this is one byte, necessary or it fails later
+    if (firstByte >= 0) return firstByte;
+
+    int size = numberOfExtraBytesToRead(firstByte);
+    if (readerIndex + size > readerLimit) return -1;
+
+    long retval = firstByte & firstByteValueMask(size);
+    for (int ii = 0; ii < size; ii++) {
+      byte b = input.get(readerIndex++);
+      retval <<= 8;
+      retval |= b & 0xff;
+    }
+
+    return retval;
+  }
+
+  public static int checkedCast(long value) {
+    int result = (int) value;
+    if ((long) result != value) throw new VIntOutOfRangeException(value);
+    return result;
+  }
+
+  /**
+   * Throw when attempting to decode a vint and the output type doesn't have enough space to fit the
+   * value that was decoded
+   */
+  public static class VIntOutOfRangeException extends RuntimeException {
+    public final long value;
+
+    private VIntOutOfRangeException(long value) {
+      super(value + " is out of range for a 32-bit integer");
+      this.value = value;
+    }
   }
 }

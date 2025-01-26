@@ -572,7 +572,7 @@ public interface SettableByName<SelfT extends SettableByName<SelfT>>
    */
   @NonNull
   @CheckReturnValue
-  default <ElementT extends Number> SelfT setVector(
+  default <ElementT> SelfT setVector(
       @NonNull String name,
       @Nullable CqlVector<ElementT> v,
       @NonNull Class<ElementT> elementsClass) {

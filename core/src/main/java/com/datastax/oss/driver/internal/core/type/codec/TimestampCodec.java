@@ -33,6 +33,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.Optional;
 import java.util.TimeZone;
 import net.jcip.annotations.ThreadSafe;
 
@@ -292,5 +293,11 @@ public class TimestampCodec implements TypeCodec<Instant> {
       throw new IllegalArgumentException(
           String.format("Cannot parse timestamp value from \"%s\"", value));
     }
+  }
+
+  @NonNull
+  @Override
+  public Optional<Integer> serializedSize() {
+    return Optional.of(8);
   }
 }

@@ -24,7 +24,7 @@ import com.datastax.oss.driver.api.core.type.VectorType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.internal.core.type.DefaultVectorType;
-import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
+import com.datastax.oss.driver.internal.core.type.util.VIntCoding;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
@@ -32,8 +32,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-public class VectorCodec<SubtypeT extends Number> implements TypeCodec<CqlVector<SubtypeT>> {
+public class VectorCodec<SubtypeT> implements TypeCodec<CqlVector<SubtypeT>> {
 
   private final VectorType cqlType;
   private final GenericType<CqlVector<SubtypeT>> javaType;
@@ -57,6 +59,14 @@ public class VectorCodec<SubtypeT extends Number> implements TypeCodec<CqlVector
 
   @NonNull
   @Override
+  public Optional<Integer> serializedSize() {
+    return subtypeCodec.serializedSize().isPresent()
+        ? Optional.of(subtypeCodec.serializedSize().get() * cqlType.getDimensions())
+        : Optional.empty();
+  }
+
+  @NonNull
+  @Override
   public DataType getCqlType() {
     return this.cqlType;
   }
@@ -65,6 +75,7 @@ public class VectorCodec<SubtypeT extends Number> implements TypeCodec<CqlVector
   @Override
   public ByteBuffer encode(
       @Nullable CqlVector<SubtypeT> value, @NonNull ProtocolVersion protocolVersion) {
+    boolean isVarSized = !subtypeCodec.serializedSize().isPresent();
     if (value == null || cqlType.getDimensions() <= 0) {
       return null;
     }
@@ -92,14 +103,28 @@ public class VectorCodec<SubtypeT extends Number> implements TypeCodec<CqlVector
       if (valueBuff == null) {
         throw new NullPointerException("Vector elements cannot encode to CQL NULL");
       }
-      allValueBuffsSize += valueBuff.limit();
+      int elementSize = valueBuff.limit();
+      if (isVarSized) {
+        allValueBuffsSize += VIntCoding.computeVIntSize(elementSize);
+      }
+      allValueBuffsSize += elementSize;
       valueBuff.rewind();
       valueBuffs[i] = valueBuff;
+    }
+    // if too many elements, throw
+    if (values.hasNext()) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Too many elements; must provide elements for %d dimensions",
+              cqlType.getDimensions()));
     }
     /* Since we already did an early return for <= 0 dimensions above */
     assert valueBuffs.length > 0;
     ByteBuffer rv = ByteBuffer.allocate(allValueBuffsSize);
     for (int i = 0; i < cqlType.getDimensions(); ++i) {
+      if (isVarSized) {
+        VIntCoding.writeUnsignedVInt32(valueBuffs[i].remaining(), rv);
+      }
       rv.put(valueBuffs[i]);
     }
     rv.flip();
@@ -114,30 +139,48 @@ public class VectorCodec<SubtypeT extends Number> implements TypeCodec<CqlVector
       return null;
     }
 
-    /* Determine element size by dividing count of remaining bytes by number of elements.  This should have a remainder
-    of zero if we assume all elements are of uniform size (which is really a terrible assumption).
-
-    TODO: We should probably tweak serialization format for vectors if we're going to allow them for arbitrary subtypes.
-     Elements should at least precede themselves with their size (along the lines of what lists do). */
-    int elementSize = Math.floorDiv(bytes.remaining(), cqlType.getDimensions());
-    if (!(bytes.remaining() % cqlType.getDimensions() == 0)) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Expected elements of uniform size, observed %d elements with total bytes %d",
-              cqlType.getDimensions(), bytes.remaining()));
-    }
-
+    // Upfront check for fixed-size types only
+    subtypeCodec
+        .serializedSize()
+        .ifPresent(
+            (fixed_size) -> {
+              if (bytes.remaining() != cqlType.getDimensions() * fixed_size) {
+                throw new IllegalArgumentException(
+                    String.format(
+                        "Expected elements of uniform size, observed %d elements with total bytes %d",
+                        cqlType.getDimensions(), bytes.remaining()));
+              }
+            });
+    ;
     ByteBuffer slice = bytes.slice();
     List<SubtypeT> rv = new ArrayList<SubtypeT>(cqlType.getDimensions());
     for (int i = 0; i < cqlType.getDimensions(); ++i) {
-      // Set the limit for the current element
+
+      int size =
+          subtypeCodec
+              .serializedSize()
+              .orElseGet(() -> VIntCoding.getUnsignedVInt32(slice, slice.position()));
+      // If we aren't dealing with a fixed-size type we need to move the current slice position
+      // beyond the vint-encoded size of the current element.  Ideally this would be
+      // serializedSize().ifNotPresent(Consumer) but the Optional API isn't doing us any favors
+      // there.
+      if (!subtypeCodec.serializedSize().isPresent())
+        slice.position(slice.position() + VIntCoding.computeUnsignedVIntSize(size));
       int originalPosition = slice.position();
-      slice.limit(originalPosition + elementSize);
+      slice.limit(originalPosition + size);
       rv.add(this.subtypeCodec.decode(slice, protocolVersion));
       // Move to the start of the next element
-      slice.position(originalPosition + elementSize);
+      slice.position(originalPosition + size);
       // Reset the limit to the end of the buffer
       slice.limit(slice.capacity());
+    }
+
+    // if too many elements, throw
+    if (slice.hasRemaining()) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Too many elements; must provide elements for %d dimensions",
+              cqlType.getDimensions()));
     }
 
     return CqlVector.newInstance(rv);
@@ -145,8 +188,9 @@ public class VectorCodec<SubtypeT extends Number> implements TypeCodec<CqlVector
 
   @NonNull
   @Override
-  public String format(@Nullable CqlVector<SubtypeT> value) {
-    return value == null ? "NULL" : Iterables.toString(value);
+  public String format(CqlVector<SubtypeT> value) {
+    if (value == null) return "NULL";
+    return value.stream().map(subtypeCodec::format).collect(Collectors.joining(", ", "[", "]"));
   }
 
   @Nullable

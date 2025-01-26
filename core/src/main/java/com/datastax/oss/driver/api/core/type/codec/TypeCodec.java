@@ -28,6 +28,7 @@ import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import java.util.Optional;
 
 /**
  * Manages the two-way conversion between a CQL type and a Java type.
@@ -234,4 +235,9 @@ public interface TypeCodec<JavaTypeT> {
    */
   @Nullable
   JavaTypeT parse(@Nullable String value);
+
+  @NonNull
+  default Optional<Integer> serializedSize() {
+    return Optional.empty();
+  }
 }

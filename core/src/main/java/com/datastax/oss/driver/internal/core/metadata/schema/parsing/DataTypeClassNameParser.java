@@ -34,6 +34,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.util.Bytes;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -162,6 +163,13 @@ public class DataTypeClassNameParser implements DataTypeParser {
         componentTypesBuilder.add(parse(rawType, userTypes, attachmentPoint, logPrefix));
       }
       return new DefaultTupleType(componentTypesBuilder.build(), attachmentPoint);
+    }
+
+    if (next.startsWith("org.apache.cassandra.db.marshal.VectorType")) {
+      Iterator<String> rawTypes = parser.getTypeParameters().iterator();
+      DataType subtype = parse(rawTypes.next(), userTypes, attachmentPoint, logPrefix);
+      int dimensions = Integer.parseInt(rawTypes.next());
+      return DataTypes.vectorOf(subtype, dimensions);
     }
 
     DataType type = NATIVE_TYPES_BY_CLASS_NAME.get(next);
