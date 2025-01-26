@@ -54,6 +54,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Collectors;
 import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -222,6 +223,14 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
               }
             }
           }
+
+          if (LOG.isTraceEnabled()) {
+            LOG.trace(
+                "[{}] Full system-table node list: [{}]",
+                logPrefix,
+                nodeInfos.stream().map(Objects::toString).collect(Collectors.joining(", ")));
+          }
+
           return nodeInfos;
         });
   }
@@ -283,8 +292,16 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
       if (isPeerValid(row)) {
         return Optional.ofNullable(getBroadcastRpcAddress(row, localEndPoint))
             .map(
-                broadcastRpcAddress ->
-                    nodeInfoBuilder(row, broadcastRpcAddress, localEndPoint).build());
+                broadcastRpcAddress -> {
+                  DefaultNodeInfo nodeInfo =
+                      nodeInfoBuilder(row, broadcastRpcAddress, localEndPoint).build();
+
+                  if (LOG.isTraceEnabled()) {
+                    LOG.trace("[{}] System-table node entry: {}", logPrefix, nodeInfo);
+                  }
+
+                  return nodeInfo;
+                });
       }
     }
     return Optional.empty();
@@ -447,7 +464,11 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
       if (broadcastRpcAddress != null
           && broadcastRpcAddress.equals(broadcastRpcAddressToFind)
           && isPeerValid(row)) {
-        return Optional.of(nodeInfoBuilder(row, broadcastRpcAddress, localEndPoint).build());
+        DefaultNodeInfo nodeInfo = nodeInfoBuilder(row, broadcastRpcAddress, localEndPoint).build();
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("[{}] System-table node entry: {}", logPrefix, nodeInfo);
+        }
+        return Optional.of(nodeInfo);
       }
     }
     LOG.debug("[{}] Could not find any peer row matching {}", logPrefix, broadcastRpcAddressToFind);
@@ -464,8 +485,14 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
       if (hostId != null && hostId.equals(hostIdToFind) && isPeerValid(row)) {
         return Optional.ofNullable(getBroadcastRpcAddress(row, localEndPoint))
             .map(
-                broadcastRpcAddress ->
-                    nodeInfoBuilder(row, broadcastRpcAddress, localEndPoint).build());
+                broadcastRpcAddress -> {
+                  DefaultNodeInfo nodeInfo =
+                      nodeInfoBuilder(row, broadcastRpcAddress, localEndPoint).build();
+                  if (LOG.isTraceEnabled()) {
+                    LOG.trace("[{}] System-table node entry: {}", logPrefix, nodeInfo);
+                  }
+                  return nodeInfo;
+                });
       }
     }
     LOG.debug("[{}] Could not find any peer row matching {}", logPrefix, hostIdToFind);

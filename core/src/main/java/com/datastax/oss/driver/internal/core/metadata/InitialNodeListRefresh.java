@@ -77,9 +77,17 @@ class InitialNodeListRefresh extends NodesRefresh {
         DefaultNode node = findIn(contactPoints, endPoint);
         if (node == null) {
           node = new DefaultNode(endPoint, context);
-          LOG.debug("[{}] Adding new node {}", logPrefix, node);
+          LOG.debug(
+              "[{}] Adding new node {} with system-table address {}",
+              logPrefix,
+              node,
+              nodeInfo.getBroadcastRpcAddress().orElse(null));
         } else {
-          LOG.debug("[{}] Copying contact point {}", logPrefix, node);
+          LOG.debug(
+              "[{}] Copying contact point {} with system-table address {}",
+              logPrefix,
+              node,
+              nodeInfo.getBroadcastRpcAddress().orElse(null));
         }
         if (tokenMapEnabled && tokenFactory == null && nodeInfo.getPartitioner() != null) {
           tokenFactory = tokenFactoryRegistry.tokenFactoryFor(nodeInfo.getPartitioner());
