@@ -18,14 +18,16 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
-import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactoryRegistry;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -63,22 +65,31 @@ class InitialNodeListRefresh extends NodesRefresh {
     TokenFactory tokenFactory = null;
 
     Map<UUID, DefaultNode> newNodes = new HashMap<>();
+    // Contact point nodes don't have host ID as well as other info yet, so we fill them with node
+    // info found on first match by endpoint
+    Set<EndPoint> matchedContactPoints = new HashSet<>();
+    List<DefaultNode> addedNodes = new ArrayList<>();
 
     for (NodeInfo nodeInfo : nodeInfos) {
       UUID hostId = nodeInfo.getHostId();
       if (newNodes.containsKey(hostId)) {
         LOG.warn(
             "[{}] Found duplicate entries with host_id {} in system.peers, "
-                + "keeping only the first one",
+                + "keeping only the first one {}",
             logPrefix,
-            hostId);
+            hostId,
+            newNodes.get(hostId));
       } else {
         EndPoint endPoint = nodeInfo.getEndPoint();
-        DefaultNode node = findIn(contactPoints, endPoint);
-        if (node == null) {
+        DefaultNode contactPointNode = findContactPointNode(endPoint);
+        DefaultNode node;
+        if (contactPointNode == null || matchedContactPoints.contains(endPoint)) {
           node = new DefaultNode(endPoint, context);
+          addedNodes.add(node);
           LOG.debug("[{}] Adding new node {}", logPrefix, node);
         } else {
+          matchedContactPoints.add(contactPointNode.getEndPoint());
+          node = contactPointNode;
           LOG.debug("[{}] Copying contact point {}", logPrefix, node);
         }
         if (tokenMapEnabled && tokenFactory == null && nodeInfo.getPartitioner() != null) {
@@ -90,14 +101,11 @@ class InitialNodeListRefresh extends NodesRefresh {
     }
 
     ImmutableList.Builder<Object> eventsBuilder = ImmutableList.builder();
-
-    for (DefaultNode newNode : newNodes.values()) {
-      if (findIn(contactPoints, newNode.getEndPoint()) == null) {
-        eventsBuilder.add(NodeStateEvent.added(newNode));
-      }
+    for (DefaultNode addedNode : addedNodes) {
+      eventsBuilder.add(NodeStateEvent.added(addedNode));
     }
     for (DefaultNode contactPoint : contactPoints) {
-      if (findIn(newNodes.values(), contactPoint.getEndPoint()) == null) {
+      if (!matchedContactPoints.contains(contactPoint.getEndPoint())) {
         eventsBuilder.add(NodeStateEvent.removed(contactPoint));
       }
     }
@@ -108,10 +116,10 @@ class InitialNodeListRefresh extends NodesRefresh {
         eventsBuilder.build());
   }
 
-  private DefaultNode findIn(Iterable<? extends Node> nodes, EndPoint endPoint) {
-    for (Node node : nodes) {
+  private DefaultNode findContactPointNode(EndPoint endPoint) {
+    for (DefaultNode node : contactPoints) {
       if (node.getEndPoint().equals(endPoint)) {
-        return (DefaultNode) node;
+        return node;
       }
     }
     return null;
