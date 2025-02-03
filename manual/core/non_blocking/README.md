@@ -152,15 +152,13 @@ should not be used if strict lock-freedom is enforced.
 
 [`SafeInitNodeStateListener`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/metadata/SafeInitNodeStateListener.html
 
-The same is valid for both built-in [request throttlers]:
+The `RateLimitingRequestThrottler` is currently blocking. The `ConcurrencyLimitingRequestThrottler`
+is lock-free.
 
-* `ConcurrencyLimitingRequestThrottler`
-* `RateLimitingRequestThrottler`
-
-See the section about [throttling](../throttling) for details about these components. Again, they 
-use locks internally, and depending on how many requests are being executed in parallel, the thread
-contention on these locks can be high: in short, if your application enforces strict lock-freedom, 
-then these components should not be used.
+See the section about [throttling](../throttling) for details about these components. Depending on
+how many requests are being executed in parallel, the thread contention on these locks can be high:
+in short, if your application enforces strict lock-freedom, then you should not use the
+`RateLimitingRequestThrottler`.
 
 [request throttlers]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/throttling/RequestThrottler.html
 

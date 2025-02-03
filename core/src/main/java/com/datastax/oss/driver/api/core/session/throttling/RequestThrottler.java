@@ -23,10 +23,10 @@ import java.io.Closeable;
 /**
  * Limits the number of concurrent requests executed by the driver.
  *
- * <p>Usage in non-blocking applications: beware that all built-in implementations of this interface
- * use locks for internal coordination, and do not qualify as lock-free, with the obvious exception
- * of {@code PassThroughRequestThrottler}. If your application enforces strict lock-freedom, then
- * request throttling should not be enabled.
+ * <p>Usage in non-blocking applications: beware that some implementations of this interface use
+ * locks for internal coordination, and do not qualify as lock-free. If your application enforces
+ * strict lock-freedom, then you should use the {@code PassThroughRequestThrottler} or the {@code
+ * ConcurrencyLimitingRequestThrottler}.
  */
 public interface RequestThrottler extends Closeable {
 
