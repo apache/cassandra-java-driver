@@ -66,6 +66,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-api</artifactId>
+      <version>1.36.0</version>
+    </dependency>
+    <dependency>
       <groupId>com.tngtech.java</groupId>
       <artifactId>junit-dataprovider</artifactId>
       <scope>test</scope>

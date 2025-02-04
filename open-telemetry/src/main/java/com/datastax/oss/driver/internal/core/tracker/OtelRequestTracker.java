@@ -26,7 +26,8 @@ import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.datastax.oss.driver.internal.core.cql.CqlRequestHandler;
+import com.datastax.oss.driver.shaded.guava.common.util.concurrent.ThreadFactoryBuilder;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
@@ -61,16 +62,16 @@ public class OtelRequestTracker implements RequestTracker {
   public OtelRequestTracker(OpenTelemetry openTelemetry) {
     //    this.openTelemetry = openTelemetry;
     this.tracer =
-            openTelemetry.getTracer("com.datastax.oss.driver.internal.core.tracker.OtelRequestTracker");
+        openTelemetry.getTracer("com.datastax.oss.driver.internal.core.tracker.OtelRequestTracker");
     this.threadPool =
-            new ThreadPoolExecutor(
-                    1,
-                    Math.max(Runtime.getRuntime().availableProcessors(), 1),
-                    10,
-                    TimeUnit.SECONDS,
-                    new ArrayBlockingQueue<>(1000),
-                    new ThreadFactoryBuilder().setNameFormat("otel-thread-%d").build(),
-                    new ThreadPoolExecutor.AbortPolicy());
+        new ThreadPoolExecutor(
+            1,
+            Math.max(Runtime.getRuntime().availableProcessors(), 1),
+            10,
+            TimeUnit.SECONDS,
+            new ArrayBlockingQueue<>(1000),
+            new ThreadFactoryBuilder().setNameFormat("otel-thread-%d").build(),
+            new ThreadPoolExecutor.AbortPolicy());
   }
 
   @Override
@@ -82,9 +83,9 @@ public class OtelRequestTracker implements RequestTracker {
 
   @Override
   public void onRequestCreated(
-          @NonNull Request request,
-          @NonNull DriverExecutionProfile executionProfile,
-          @NonNull String requestLogPrefix) {
+      @NonNull Request request,
+      @NonNull DriverExecutionProfile executionProfile,
+      @NonNull String requestLogPrefix) {
     Span parentSpan = tracer.spanBuilder("Cassandra Java Driver").startSpan();
     TracingInfo tracingInfo = new TracingInfo(parentSpan);
     logPrefixToTracingInfoMap.put(requestLogPrefix, tracingInfo);
@@ -94,82 +95,82 @@ public class OtelRequestTracker implements RequestTracker {
 
   @Override
   public void onRequestCreatedForNode(
-          @NonNull Request request,
-          @NonNull DriverExecutionProfile executionProfile,
-          @NonNull Node node,
-          @NonNull String requestLogPrefix) {
+      @NonNull Request request,
+      @NonNull DriverExecutionProfile executionProfile,
+      @NonNull Node node,
+      @NonNull String requestLogPrefix) {
 
     logPrefixToTracingInfoMap.computeIfPresent(
-            nodePrefixToRequestPrefix(requestLogPrefix),
-            (k, v) -> {
-              Span parentSpan = v.parentSpan;
-              Span span =
-                      tracer
-                              .spanBuilder("Cassandra Java Driver")
-                              .setParent(Context.current().with(parentSpan))
-                              .startSpan();
-              addRequestAttributesToSpan(request, span);
-              return v;
-            });
+        nodePrefixToRequestPrefix(requestLogPrefix),
+        (k, v) -> {
+          Span parentSpan = v.parentSpan;
+          Span span =
+              tracer
+                  .spanBuilder("Cassandra Java Driver")
+                  .setParent(Context.current().with(parentSpan))
+                  .startSpan();
+          addRequestAttributesToSpan(request, span);
+          return v;
+        });
     LOG.debug("Request created for node: {}", requestLogPrefix);
   }
 
   @Override
   public void onSuccess(
-          long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String requestLogPrefix) {
+      long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String requestLogPrefix) {
     logPrefixToTracingInfoMap.computeIfPresent(
-            requestLogPrefix,
-            (k, v) -> {
-              Span span = v.parentSpan;
-              span.setStatus(StatusCode.OK);
-              span.end();
-              return null;
-            });
+        requestLogPrefix,
+        (k, v) -> {
+          Span span = v.parentSpan;
+          span.setStatus(StatusCode.OK);
+          span.end();
+          return null;
+        });
   }
 
   @Override
   public void onError(
-          long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String requestLogPrefix) {
+      long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String requestLogPrefix) {
     logPrefixToTracingInfoMap.computeIfPresent(
-            requestLogPrefix,
-            (k, v) -> {
-              Span span = v.parentSpan;
-              if (!executionInfo.getErrors().isEmpty()) {
-                span.recordException(executionInfo.getErrors().get(0).getValue());
-              }
-              span.setStatus(StatusCode.ERROR);
-              span.end();
-              return null;
-            });
+        requestLogPrefix,
+        (k, v) -> {
+          Span span = v.parentSpan;
+          if (!executionInfo.getErrors().isEmpty()) {
+            span.recordException(executionInfo.getErrors().get(0).getValue());
+          }
+          span.setStatus(StatusCode.ERROR);
+          span.end();
+          return null;
+        });
   }
 
   @Override
   public void onNodeSuccess(
-          long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String requestLogPrefix) {
+      long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String requestLogPrefix) {
     logPrefixToTracingInfoMap.computeIfPresent(
-            nodePrefixToRequestPrefix(requestLogPrefix),
-            (k, v) -> {
-              Span span = v.parentSpan;
-              span.setStatus(StatusCode.OK);
-              span.end();
-              return null;
-            });
+        nodePrefixToRequestPrefix(requestLogPrefix),
+        (k, v) -> {
+          Span span = v.parentSpan;
+          span.setStatus(StatusCode.OK);
+          span.end();
+          return null;
+        });
   }
 
   @Override
   public void onNodeError(
-          long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String requestLogPrefix) {
+      long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String requestLogPrefix) {
     logPrefixToTracingInfoMap.computeIfPresent(
-            nodePrefixToRequestPrefix(requestLogPrefix),
-            (k, v) -> {
-              Span span = v.parentSpan;
-              if (!executionInfo.getErrors().isEmpty()) {
-                span.recordException(executionInfo.getErrors().get(0).getValue());
-              }
-              span.setStatus(StatusCode.ERROR);
-              span.end();
-              return null;
-            });
+        nodePrefixToRequestPrefix(requestLogPrefix),
+        (k, v) -> {
+          Span span = v.parentSpan;
+          if (!executionInfo.getErrors().isEmpty()) {
+            span.recordException(executionInfo.getErrors().get(0).getValue());
+          }
+          span.setStatus(StatusCode.ERROR);
+          span.end();
+          return null;
+        });
   }
 
   @Override
@@ -198,20 +199,20 @@ public class OtelRequestTracker implements RequestTracker {
     StringBuilder builder = new StringBuilder();
     assert this.formatter != null;
     this.formatter.appendQueryString(
-            request, RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_QUERY_LENGTH, builder);
+        request, RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_QUERY_LENGTH, builder);
     this.formatter.appendValues(
-            request,
-            RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_VALUES,
-            RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_VALUE_LENGTH,
-            true,
-            builder);
+        request,
+        RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_VALUES,
+        RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_VALUE_LENGTH,
+        true,
+        builder);
     return builder.toString();
   }
 
   /**
    * This depends on the implementation of {@link
-   * com.datastax.oss.driver.internal.core.cql.CqlRequestHandler.NodeResponseCallback#NodeResponseCallback(Statement,
-   * Node, Queue, DriverChannel, int, int, boolean, String) NodeResponseCallback}
+   * CqlRequestHandler.NodeResponseCallback#NodeResponseCallback(Statement, Node, Queue,
+   * DriverChannel, int, int, boolean, String) NodeResponseCallback}
    *
    * @param nodePrefix s0|1716164115|0
    * @return the request prefix, like s0|1716164115
