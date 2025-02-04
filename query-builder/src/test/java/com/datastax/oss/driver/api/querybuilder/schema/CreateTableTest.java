@@ -314,4 +314,13 @@ public class CreateTableTest {
         .hasCql(
             "CREATE TABLE bar (k int PRIMARY KEY,v text) WITH compaction={'class':'TimeWindowCompactionStrategy','compaction_window_size':10,'compaction_window_unit':'DAYS','timestamp_resolution':'MICROSECONDS','unsafe_aggressive_sstable_expiration':false}");
   }
+
+  @Test
+  public void should_generate_vector_column() {
+    assertThat(
+            createTable("foo")
+                .withPartitionKey("k", DataTypes.INT)
+                .withColumn("v", DataTypes.vectorOf(DataTypes.FLOAT, 3)))
+        .hasCql("CREATE TABLE foo (k int PRIMARY KEY,v vector<float, 3>)");
+  }
 }

@@ -22,6 +22,7 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.deleteFrom;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 
+import com.datastax.oss.driver.api.core.data.CqlVector;
 import org.junit.Test;
 
 public class DeleteSelectorTest {
@@ -32,6 +33,16 @@ public class DeleteSelectorTest {
         .hasCql("DELETE v FROM foo WHERE k=?");
     assertThat(deleteFrom("ks", "foo").column("v").whereColumn("k").isEqualTo(bindMarker()))
         .hasCql("DELETE v FROM ks.foo WHERE k=?");
+  }
+
+  @Test
+  public void should_generate_vector_deletion() {
+    assertThat(
+            deleteFrom("foo")
+                .column("v")
+                .whereColumn("k")
+                .isEqualTo(literal(CqlVector.newInstance(0.1, 0.2))))
+        .hasCql("DELETE v FROM foo WHERE k=[0.1, 0.2]");
   }
 
   @Test

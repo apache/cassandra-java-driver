@@ -83,4 +83,13 @@ public class CreateTypeTest {
                 .withField("map", DataTypes.mapOf(DataTypes.INT, DataTypes.TEXT)))
         .hasCql("CREATE TYPE ks1.type (map map<int, text>)");
   }
+
+  @Test
+  public void should_create_type_with_vector() {
+    assertThat(
+            createType("ks1", "type")
+                .withField("c1", DataTypes.INT)
+                .withField("vec", DataTypes.vectorOf(DataTypes.FLOAT, 3)))
+        .hasCql("CREATE TYPE ks1.type (c1 int,vec vector<float, 3>)");
+  }
 }

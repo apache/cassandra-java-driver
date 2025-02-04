@@ -18,11 +18,10 @@
 package com.datastax.oss.driver.api.core.data;
 
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
+import com.datastax.oss.driver.internal.core.type.codec.ParseUtils;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.base.Predicates;
-import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
-import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 import java.io.InvalidObjectException;
@@ -35,7 +34,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -52,7 +50,7 @@ import java.util.stream.Stream;
  * where possible we've tried to make the API of this class similar to the equivalent methods on
  * {@link List}.
  */
-public class CqlVector<T extends Number> implements Iterable<T>, Serializable {
+public class CqlVector<T> implements Iterable<T>, Serializable {
 
   /**
    * Create a new CqlVector containing the specified values.
@@ -60,7 +58,7 @@ public class CqlVector<T extends Number> implements Iterable<T>, Serializable {
    * @param vals the collection of values to wrap.
    * @return a CqlVector wrapping those values
    */
-  public static <V extends Number> CqlVector<V> newInstance(V... vals) {
+  public static <V> CqlVector<V> newInstance(V... vals) {
 
     // Note that Array.asList() guarantees the return of an array which implements RandomAccess
     return new CqlVector(Arrays.asList(vals));
@@ -73,29 +71,64 @@ public class CqlVector<T extends Number> implements Iterable<T>, Serializable {
    * @param list the collection of values to wrap.
    * @return a CqlVector wrapping those values
    */
-  public static <V extends Number> CqlVector<V> newInstance(List<V> list) {
+  public static <V> CqlVector<V> newInstance(List<V> list) {
     Preconditions.checkArgument(list != null, "Input list should not be null");
     return new CqlVector(list);
   }
 
   /**
-   * Create a new CqlVector instance from the specified string representation. Note that this method
-   * is intended to mirror {@link #toString()}; passing this method the output from a <code>toString
-   * </code> call on some CqlVector should return a CqlVector that is equal to the origin instance.
+   * Create a new CqlVector instance from the specified string representation.
    *
    * @param str a String representation of a CqlVector
    * @param subtypeCodec
    * @return a new CqlVector built from the String representation
    */
-  public static <V extends Number> CqlVector<V> from(
-      @NonNull String str, @NonNull TypeCodec<V> subtypeCodec) {
+  public static <V> CqlVector<V> from(@NonNull String str, @NonNull TypeCodec<V> subtypeCodec) {
     Preconditions.checkArgument(str != null, "Cannot create CqlVector from null string");
     Preconditions.checkArgument(!str.isEmpty(), "Cannot create CqlVector from empty string");
-    ArrayList<V> vals =
-        Streams.stream(Splitter.on(", ").split(str.substring(1, str.length() - 1)))
-            .map(subtypeCodec::parse)
-            .collect(Collectors.toCollection(ArrayList::new));
-    return new CqlVector(vals);
+    if (str.equalsIgnoreCase("NULL")) return null;
+
+    int idx = ParseUtils.skipSpaces(str, 0);
+    if (str.charAt(idx++) != '[')
+      throw new IllegalArgumentException(
+          String.format(
+              "Cannot parse vector value from \"%s\", at character %d expecting '[' but got '%c'",
+              str, idx, str.charAt(idx)));
+
+    idx = ParseUtils.skipSpaces(str, idx);
+
+    if (str.charAt(idx) == ']') {
+      return new CqlVector<>(new ArrayList<>());
+    }
+
+    List<V> list = new ArrayList<>();
+    while (idx < str.length()) {
+      int n;
+      try {
+        n = ParseUtils.skipCQLValue(str, idx);
+      } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException(
+            String.format(
+                "Cannot parse vector value from \"%s\", invalid CQL value at character %d",
+                str, idx),
+            e);
+      }
+
+      list.add(subtypeCodec.parse(str.substring(idx, n)));
+      idx = n;
+
+      idx = ParseUtils.skipSpaces(str, idx);
+      if (str.charAt(idx) == ']') return new CqlVector<>(list);
+      if (str.charAt(idx++) != ',')
+        throw new IllegalArgumentException(
+            String.format(
+                "Cannot parse vector value from \"%s\", at character %d expecting ',' but got '%c'",
+                str, idx, str.charAt(idx)));
+
+      idx = ParseUtils.skipSpaces(str, idx);
+    }
+    throw new IllegalArgumentException(
+        String.format("Malformed vector value \"%s\", missing closing ']'", str));
   }
 
   private final List<T> list;
@@ -194,6 +227,11 @@ public class CqlVector<T extends Number> implements Iterable<T>, Serializable {
     return Objects.hash(list);
   }
 
+  /**
+   * The string representation of the vector. Elements, like strings, may not be properly quoted.
+   *
+   * @return the string representation
+   */
   @Override
   public String toString() {
     return Iterables.toString(this.list);
@@ -205,7 +243,7 @@ public class CqlVector<T extends Number> implements Iterable<T>, Serializable {
    *
    * @param <T> inner type of CqlVector, assume Number is always Serializable.
    */
-  private static class SerializationProxy<T extends Number> implements Serializable {
+  private static class SerializationProxy<T> implements Serializable {
 
     private static final long serialVersionUID = 1;
 

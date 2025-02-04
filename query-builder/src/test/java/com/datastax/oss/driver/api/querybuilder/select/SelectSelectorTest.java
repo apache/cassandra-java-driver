@@ -22,6 +22,7 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.raw;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 
+import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.querybuilder.CharsetCodec;
@@ -228,6 +229,48 @@ public class SelectSelectorTest {
 
     assertThat(selectFrom("foo").selectors(Selector.column("bar"), raw("baz")))
         .hasCql("SELECT bar,baz FROM foo");
+  }
+
+  @Test
+  public void should_generate_similarity_functions() {
+    Select similarity_cosine_clause =
+        selectFrom("cycling", "comments_vs")
+            .column("comment")
+            .function(
+                "similarity_cosine",
+                Selector.column("comment_vector"),
+                literal(CqlVector.newInstance(0.2, 0.15, 0.3, 0.2, 0.05)))
+            .orderByAnnOf("comment_vector", CqlVector.newInstance(0.1, 0.15, 0.3, 0.12, 0.05))
+            .limit(1);
+    assertThat(similarity_cosine_clause)
+        .hasCql(
+            "SELECT comment,similarity_cosine(comment_vector,[0.2, 0.15, 0.3, 0.2, 0.05]) FROM cycling.comments_vs ORDER BY comment_vector ANN OF [0.1, 0.15, 0.3, 0.12, 0.05] LIMIT 1");
+
+    Select similarity_euclidean_clause =
+        selectFrom("cycling", "comments_vs")
+            .column("comment")
+            .function(
+                "similarity_euclidean",
+                Selector.column("comment_vector"),
+                literal(CqlVector.newInstance(0.2, 0.15, 0.3, 0.2, 0.05)))
+            .orderByAnnOf("comment_vector", CqlVector.newInstance(0.1, 0.15, 0.3, 0.12, 0.05))
+            .limit(1);
+    assertThat(similarity_euclidean_clause)
+        .hasCql(
+            "SELECT comment,similarity_euclidean(comment_vector,[0.2, 0.15, 0.3, 0.2, 0.05]) FROM cycling.comments_vs ORDER BY comment_vector ANN OF [0.1, 0.15, 0.3, 0.12, 0.05] LIMIT 1");
+
+    Select similarity_dot_product_clause =
+        selectFrom("cycling", "comments_vs")
+            .column("comment")
+            .function(
+                "similarity_dot_product",
+                Selector.column("comment_vector"),
+                literal(CqlVector.newInstance(0.2, 0.15, 0.3, 0.2, 0.05)))
+            .orderByAnnOf("comment_vector", CqlVector.newInstance(0.1, 0.15, 0.3, 0.12, 0.05))
+            .limit(1);
+    assertThat(similarity_dot_product_clause)
+        .hasCql(
+            "SELECT comment,similarity_dot_product(comment_vector,[0.2, 0.15, 0.3, 0.2, 0.05]) FROM cycling.comments_vs ORDER BY comment_vector ANN OF [0.1, 0.15, 0.3, 0.12, 0.05] LIMIT 1");
   }
 
   @Test

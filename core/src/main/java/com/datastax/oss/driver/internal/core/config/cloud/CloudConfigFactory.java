@@ -229,7 +229,6 @@ public class CloudConfigFactory {
       HttpsURLConnection connection = (HttpsURLConnection) metadataServiceUrl.openConnection();
       connection.setSSLSocketFactory(sslContext.getSocketFactory());
       connection.setRequestMethod("GET");
-      connection.setRequestProperty("host", "localhost");
       return new BufferedReader(
           new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
     } catch (ConnectException e) {

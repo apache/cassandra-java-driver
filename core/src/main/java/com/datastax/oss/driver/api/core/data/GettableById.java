@@ -531,7 +531,7 @@ public interface GettableById extends GettableByIndex, AccessibleById {
    * @throws IllegalArgumentException if the id is invalid.
    */
   @Nullable
-  default <ElementT extends Number> CqlVector<ElementT> getVector(
+  default <ElementT> CqlVector<ElementT> getVector(
       @NonNull CqlIdentifier id, @NonNull Class<ElementT> elementsClass) {
     return getVector(firstIndexOf(id), elementsClass);
   }

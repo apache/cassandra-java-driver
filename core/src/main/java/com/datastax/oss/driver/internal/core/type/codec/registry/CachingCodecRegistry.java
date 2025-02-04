@@ -394,10 +394,9 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
               "Can't infer vector codec because the first element is null "
                   + "(note that CQL does not allow null values in collections)");
         }
-        GenericType<? extends Number> elementType =
-            (GenericType<? extends Number>)
-                inspectType(
-                    firstElement, cqlType == null ? null : ((VectorType) cqlType).getElementType());
+        GenericType<?> elementType =
+            inspectType(
+                firstElement, cqlType == null ? null : ((VectorType) cqlType).getElementType());
         return GenericType.vectorOf(elementType);
       }
     } else {
@@ -421,8 +420,7 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
           inferJavaTypeFromCqlType(keyType), inferJavaTypeFromCqlType(valueType));
     } else if (cqlType instanceof VectorType) {
       DataType elementType = ((VectorType) cqlType).getElementType();
-      GenericType<? extends Number> numberType =
-          (GenericType<? extends Number>) inferJavaTypeFromCqlType(elementType);
+      GenericType<?> numberType = inferJavaTypeFromCqlType(elementType);
       return GenericType.vectorOf(numberType);
     }
     switch (cqlType.getProtocolCode()) {
@@ -657,7 +655,7 @@ public abstract class CachingCodecRegistry implements MutableCodecRegistry {
         /* For a vector type we'll always get back an instance of TypeCodec<? extends Number> due to the
          * type of CqlVector... but getElementCodecForCqlAndJavaType() is a generalized function that can't
          * return this more precise type.  Thus the cast here. */
-        TypeCodec<? extends Number> elementCodec =
+        TypeCodec<?> elementCodec =
             uncheckedCast(getElementCodecForCqlAndJavaType(vectorType, token, isJavaCovariant));
         return TypeCodecs.vectorOf(vectorType, elementCodec);
       } else if (cqlType instanceof CustomType

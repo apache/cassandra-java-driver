@@ -81,7 +81,8 @@ public class TestSubscriber<T> implements Subscriber<T> {
   }
 
   public void awaitTermination() {
-    Uninterruptibles.awaitUninterruptibly(latch, 1, TimeUnit.MINUTES);
-    if (latch.getCount() > 0) fail("subscriber not terminated");
+    if (!Uninterruptibles.awaitUninterruptibly(latch, 1, TimeUnit.MINUTES)) {
+      fail("subscriber not terminated");
+    }
   }
 }

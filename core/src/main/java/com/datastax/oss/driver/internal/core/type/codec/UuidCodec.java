@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import java.util.Optional;
 import java.util.UUID;
 import net.jcip.annotations.ThreadSafe;
 
@@ -94,5 +95,11 @@ public class UuidCodec implements TypeCodec<UUID> {
       throw new IllegalArgumentException(
           String.format("Cannot parse UUID value from \"%s\"", value), e);
     }
+  }
+
+  @NonNull
+  @Override
+  public Optional<Integer> serializedSize() {
+    return Optional.of(16);
   }
 }

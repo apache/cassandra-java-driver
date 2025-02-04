@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
+import java.util.Optional;
 import net.jcip.annotations.ThreadSafe;
 
 @ThreadSafe
@@ -89,5 +90,11 @@ public class FloatCodec implements PrimitiveFloatCodec {
       throw new IllegalArgumentException(
           String.format("Cannot parse 32-bits float value from \"%s\"", value));
     }
+  }
+
+  @NonNull
+  @Override
+  public Optional<Integer> serializedSize() {
+    return Optional.of(4);
   }
 }

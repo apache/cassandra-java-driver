@@ -31,6 +31,7 @@ import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Objects;
+import java.util.Optional;
 import net.jcip.annotations.Immutable;
 
 /**
@@ -113,5 +114,11 @@ public class TimestampMillisCodec implements PrimitiveLongCodec {
   public String format(@Nullable Long value) {
     Instant instant = value == null ? null : Instant.ofEpochMilli(value);
     return timestampCodec.format(instant);
+  }
+
+  @NonNull
+  @Override
+  public Optional<Integer> serializedSize() {
+    return Optional.of(8);
   }
 }
