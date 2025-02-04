@@ -21,6 +21,30 @@ under the License.
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.19.0
+
+- [bug] JAVA-3055: Prevent PreparedStatement cache to be polluted if a request is cancelled.
+- [bug] JAVA-3168: Copy node info for contact points on initial node refresh only from first match by endpoint
+- [improvement] JAVA-3143: Extend driver vector support to arbitrary subtypes and fix handling of variable length types (OSS C* 5.0)
+- [improvement] CASSJAVA-53: Update Guava version used in cassandra-java-driver
+- [improvement] JAVA-3118: Add support for vector data type in Schema Builder, QueryBuilder
+- [bug] CASSJAVA-55: Remove setting "Host" header for metadata requests
+- [bug] JAVA-3057: Allow decoding a UDT that has more fields than expected
+- [improvement] CASSJAVA-52: Bring java-driver-shaded-guava into the repo as a submodule
+- [bug] CASSJAVA-2: TableMetadata#describe produces invalid CQL when a type of a column is a vector
+- [bug] JAVA-3051: Memory leak in DefaultLoadBalancingPolicy measurement of response times
+- [improvement] CASSJAVA-14: Query builder support for NOT CQL syntax
+- [bug] CASSJAVA-12: DefaultSslEngineFactory missing null check on close
+- [improvement] CASSJAVA-46: Expose table extensions via schema builders
+- [bug] PR 1938: Fix uncaught exception during graceful channel shutdown after exceeding max orphan ids
+- [improvement] PR 1607: Annotate BatchStatement, Statement, SimpleStatement methods with CheckReturnValue
+- [improvement] CASSJAVA-41: Reduce lock held duration in ConcurrencyLimitingRequestThrottler
+- [bug] JAVA-3149: Async Query Cancellation Not Propagated To RequestThrottler
+- [bug] JAVA-3167: CompletableFutures.allSuccessful() may return never completed future
+- [bug] PR 1620: Don't return empty routing key when partition key is unbound
+- [improvement] PR 1623: Limit calls to Conversions.resolveExecutionProfile
+- [improvement] CASSJAVA-29: Update target Cassandra versions for integration tests, support new 5.0.x
+
 ### 4.18.1
 
 - [improvement] JAVA-3142: Ability to specify ordering of remote local dc's via new configuration for graceful automatic failovers
