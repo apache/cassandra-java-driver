@@ -21,19 +21,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 import com.datastax.oss.driver.api.core.CqlSession;
-import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
-import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.categories.IsolatedTests;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor;
 import com.datastax.oss.driver.shaded.guava.common.base.Predicates;
 import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
-import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import org.junit.After;
 import org.junit.Before;
@@ -43,19 +41,12 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@Category(ParallelizableTests.class)
+@Category(IsolatedTests.class)
 public class PreparedStatementCancellationIT {
 
   private CustomCcmRule ccmRule = CustomCcmRule.builder().build();
 
-  private SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule)
-          .withConfigLoader(
-              SessionUtils.configLoaderBuilder()
-                  .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 2)
-                  .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
-                  .build())
-          .build();
+  private SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
 
   @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
