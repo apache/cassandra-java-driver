@@ -33,7 +33,6 @@ import com.datastax.oss.driver.shaded.guava.common.base.Predicates;
 import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
 import java.util.concurrent.CompletableFuture;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -43,7 +42,8 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
-@Ignore("Disabling until we can determine why this test leads to OSGi test failures on Jenkins runs")
+@Ignore(
+    "Disabling until we can determine why this test leads to OSGi test failures on Jenkins runs")
 @Category(IsolatedTests.class)
 public class PreparedStatementCancellationIT {
 
