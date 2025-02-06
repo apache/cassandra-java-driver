@@ -98,7 +98,6 @@ public class OtelRequestTracker implements RequestTracker {
       AttributeKey.stringKey("server.address");
 
   public OtelRequestTracker(OpenTelemetry openTelemetry) {
-    //    this.openTelemetry = openTelemetry;
     this.tracer =
         openTelemetry.getTracer("com.datastax.oss.driver.internal.core.tracker.OtelRequestTracker");
     this.threadPool =
@@ -124,10 +123,10 @@ public class OtelRequestTracker implements RequestTracker {
       @NonNull Request request,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull String requestLogPrefix) {
-    Span parentSpan = tracer.spanBuilder("Cassandra Java Driver").startSpan();
+    Span parentSpan = tracer.spanBuilder("Cassandra Java Driver Session Request").startSpan();
     TracingInfo tracingInfo = new TracingInfo(parentSpan);
     logPrefixToTracingInfoMap.put(requestLogPrefix, tracingInfo);
-    addRequestAttributesToSpan(request, parentSpan);
+    addRequestAttributesToSpan(request, parentSpan, false);
     LOG.debug("Request created: {}", requestLogPrefix);
   }
 
@@ -143,10 +142,11 @@ public class OtelRequestTracker implements RequestTracker {
           Span parentSpan = v.parentSpan;
           Span span =
               tracer
-                  .spanBuilder("Cassandra Java Driver")
+                  .spanBuilder("Cassandra Java Driver Node Request")
                   .setParent(Context.current().with(parentSpan))
                   .startSpan();
-          addRequestAttributesToSpan(request, span);
+          addRequestAttributesToSpan(request, span, true);
+          v.addNodeSpan(requestLogPrefix, span);
           return v;
         });
     LOG.debug("Request created for node: {}", requestLogPrefix);
@@ -160,7 +160,7 @@ public class OtelRequestTracker implements RequestTracker {
         (k, v) -> {
           Span span = v.parentSpan;
           span.setStatus(StatusCode.OK);
-          addRequestAttributesToSpan(executionInfo.getRequest(), span);
+          addRequestAttributesToSpan(executionInfo.getRequest(), span, false);
           addExecutionInfoToSpan(executionInfo, span);
           span.end();
           return null;
@@ -178,7 +178,7 @@ public class OtelRequestTracker implements RequestTracker {
             span.recordException(executionInfo.getErrors().get(0).getValue());
           }
           span.setStatus(StatusCode.ERROR);
-          addRequestAttributesToSpan(executionInfo.getRequest(), span);
+          addRequestAttributesToSpan(executionInfo.getRequest(), span, false);
           addExecutionInfoToSpan(executionInfo, span);
           span.end();
           return null;
@@ -191,12 +191,12 @@ public class OtelRequestTracker implements RequestTracker {
     logPrefixToTracingInfoMap.computeIfPresent(
         nodePrefixToRequestPrefix(requestLogPrefix),
         (k, v) -> {
-          Span span = v.parentSpan;
+          Span span = v.getNodeSpan(requestLogPrefix);
           span.setStatus(StatusCode.OK);
-          addRequestAttributesToSpan(executionInfo.getRequest(), span);
+          addRequestAttributesToSpan(executionInfo.getRequest(), span, true);
           addExecutionInfoToSpan(executionInfo, span);
           span.end();
-          return null;
+          return v;
         });
   }
 
@@ -206,7 +206,7 @@ public class OtelRequestTracker implements RequestTracker {
     logPrefixToTracingInfoMap.computeIfPresent(
         nodePrefixToRequestPrefix(requestLogPrefix),
         (k, v) -> {
-          Span span = v.parentSpan;
+          Span span = v.getNodeSpan(requestLogPrefix);
           if (!executionInfo.getErrors().isEmpty()) {
             /*
              Find the first error for this node. Because a node can appear twice in the errors list due
@@ -226,10 +226,10 @@ public class OtelRequestTracker implements RequestTracker {
                     });
           }
           span.setStatus(StatusCode.ERROR);
-          addRequestAttributesToSpan(executionInfo.getRequest(), span);
+          addRequestAttributesToSpan(executionInfo.getRequest(), span, true);
           addExecutionInfoToSpan(executionInfo, span);
           span.end();
-          return null;
+          return v;
         });
   }
 
@@ -241,41 +241,55 @@ public class OtelRequestTracker implements RequestTracker {
 
   private static class TracingInfo {
     private final Span parentSpan;
+    private final Map<String, Span> nodeSpans = new ConcurrentHashMap<>(); // logPrefix -> span
 
     private TracingInfo(Span parentSpan) {
       this.parentSpan = parentSpan;
     }
+
+    private void addNodeSpan(String logPrefix, Span span) {
+      nodeSpans.put(logPrefix, span);
+    }
+
+    private Span getNodeSpan(String logPrefix) {
+      return nodeSpans.get(logPrefix);
+    }
   }
 
-  private void addRequestAttributesToSpan(Request request, Span span) {
-    assert request instanceof Statement;
+  private void addRequestAttributesToSpan(Request request, Span span, boolean isNodeRequest) {
     span.setAttribute(DB_SYSTEM_NAME, "cassandra");
-    span.setAttribute(DB_OPERATION_NAME, request.getClass().getSimpleName());
+    String operationName =
+        String.format(
+            "%s(%s)",
+            isNodeRequest ? "Node_Request" : "Session_Request", request.getClass().getSimpleName());
+    span.setAttribute(DB_OPERATION_NAME, operationName);
     if (request.getKeyspace() != null)
       span.setAttribute(DB_NAMESPACE, request.getKeyspace().asCql(true));
 
-    String consistencyLevel;
-    if (((Statement<?>) request).getConsistencyLevel() != null) {
-      consistencyLevel = ((Statement<?>) request).getConsistencyLevel().name();
-    } else {
-      consistencyLevel =
-          context
-              .getConfig()
-              .getDefaultProfile()
-              .getString(DefaultDriverOption.REQUEST_CONSISTENCY);
-    }
-    span.setAttribute(CASSANDRA_CONSISTENCY_LEVEL, consistencyLevel);
+    if (request instanceof Statement<?>) {
+      String consistencyLevel;
+      if (((Statement<?>) request).getConsistencyLevel() != null) {
+        consistencyLevel = ((Statement<?>) request).getConsistencyLevel().name();
+      } else {
+        consistencyLevel =
+            context
+                .getConfig()
+                .getDefaultProfile()
+                .getString(DefaultDriverOption.REQUEST_CONSISTENCY);
+      }
+      span.setAttribute(CASSANDRA_CONSISTENCY_LEVEL, consistencyLevel);
 
-    int pageSize;
-    if (((Statement<?>) request).getPageSize() > 0) {
-      pageSize = ((Statement<?>) request).getPageSize();
-    } else {
-      pageSize =
-          context.getConfig().getDefaultProfile().getInt(DefaultDriverOption.REQUEST_PAGE_SIZE);
+      int pageSize;
+      if (((Statement<?>) request).getPageSize() > 0) {
+        pageSize = ((Statement<?>) request).getPageSize();
+      } else {
+        pageSize =
+            context.getConfig().getDefaultProfile().getInt(DefaultDriverOption.REQUEST_PAGE_SIZE);
+      }
+      span.setAttribute(CASSANDRA_PAGE_SIZE, pageSize);
     }
-    span.setAttribute(CASSANDRA_PAGE_SIZE, pageSize);
 
-    span.setAttribute(DB_QUERY_TEXT, statementToString(request));
+    span.setAttribute(DB_QUERY_TEXT, requestToString(request));
     if (request.isIdempotent() != null)
       span.setAttribute(CASSANDRA_QUERY_IDEMPOTENT, request.isIdempotent());
 
@@ -310,7 +324,7 @@ public class OtelRequestTracker implements RequestTracker {
         CASSANDRA_SPECULATIVE_EXECUTION_COUNT, executionInfo.getSpeculativeExecutionCount());
   }
 
-  private String statementToString(Request request) {
+  private String requestToString(Request request) {
     StringBuilder builder = new StringBuilder();
     assert this.formatter != null;
     this.formatter.appendQueryString(
