@@ -46,6 +46,7 @@
           <artifactId>error_prone_annotations</artifactId>
         </exclusion>
       </exclusions>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.graalvm.nativeimage</groupId>
