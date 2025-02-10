@@ -19,20 +19,31 @@ package com.datastax.oss.driver.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.awaitility.Awaitility.await;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.QueryTrace;
+import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.util.Strings;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -46,8 +57,17 @@ public class QueryTraceIT {
 
   private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
+  private static final SessionRule<CqlSession> SESSION_RULE_SINGLE_TRACE =
+      SessionRule.builder(CCM_RULE)
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withBoolean(DefaultDriverOption.REQUEST_TRACE_REPORT_EVERY_PAGE_FETCH, false)
+                  .build())
+          .build();
+
   @ClassRule
-  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
+  public static final TestRule CHAIN =
+      RuleChain.outerRule(CCM_RULE).around(SESSION_RULE).around(SESSION_RULE_SINGLE_TRACE);
 
   @Test
   public void should_not_have_tracing_id_when_tracing_disabled() {
@@ -130,5 +150,79 @@ public class QueryTraceIT {
     } else {
       assertThat(sourceAddress0.getPort()).isEqualTo(0);
     }
+  }
+
+  @Test
+  public void should_report_trace_once_during_pagination() {
+    testTraceDuringPagination(SESSION_RULE_SINGLE_TRACE, 1);
+  }
+
+  @Test
+  public void should_report_trace_multiple_during_pagination() {
+    testTraceDuringPagination(SESSION_RULE, 6);
+  }
+
+  private void testTraceDuringPagination(
+      SessionRule<CqlSession> sessionRule, int traceEventsCount) {
+    String key = setupPaginationTable(sessionRule);
+
+    String cql = "SELECT v0, v1 FROM trace_pagination WHERE k = ?";
+    SimpleStatement query = SimpleStatement.builder(cql).setTracing().setPageSize(2).build();
+    PreparedStatement preparedStatement = sessionRule.session().prepare(query);
+    ResultSet resultSet = sessionRule.session().execute(preparedStatement.bind(key));
+
+    ExecutionInfo executionInfo = resultSet.getExecutionInfo();
+    assertThat(executionInfo.getTracingId()).isNotNull();
+    QueryTrace queryTrace = executionInfo.getQueryTrace();
+    assertThat(queryTrace.getTracingId()).isEqualTo(executionInfo.getTracingId());
+    assertThat(queryTrace.getRequestType()).isEqualTo("Execute CQL3 prepared query");
+
+    Iterator<Row> iterator = resultSet.iterator();
+    while (iterator.hasNext()) {
+      iterator.next(); // iterate over several pages
+    }
+
+    // assert that only one event for tracing has been recorded
+    await()
+        .untilAsserted(
+            () -> {
+              List<Row> rows =
+                  sessionRule.session().execute("SELECT * FROM system_traces.sessions").all()
+                      .stream()
+                      .filter(row -> isTraceForQuery(row, cql, key))
+                      .collect(Collectors.toList());
+              assertThat(rows).hasSize(traceEventsCount);
+            });
+  }
+
+  private String setupPaginationTable(SessionRule<CqlSession> sessionRule) {
+    String key = UUID.randomUUID().toString();
+    sessionRule
+        .session()
+        .execute(
+            SimpleStatement.builder(
+                    "CREATE TABLE IF NOT EXISTS trace_pagination (k text, v0 int, v1 int, PRIMARY KEY(k, v0))")
+                .setExecutionProfile(sessionRule.slowProfile())
+                .build());
+    for (int i = 0; i < 10; i++) {
+      sessionRule
+          .session()
+          .execute(
+              SimpleStatement.builder("INSERT INTO trace_pagination (k, v0, v1) VALUES (?, ?, ?)")
+                  .addPositionalValues(key, i, i)
+                  .build());
+    }
+    return key;
+  }
+
+  private static boolean isTraceForQuery(Row row, String cql, String key) {
+    if (!row.getColumnDefinitions().contains("parameters")) {
+      return false;
+    }
+    Map<String, String> queryParams = row.getMap("parameters", String.class, String.class);
+    if (queryParams == null || !queryParams.containsKey("query")) {
+      return false;
+    }
+    return queryParams.get("query").contains(cql) && queryParams.containsValue(Strings.quote(key));
   }
 }

@@ -29,6 +29,7 @@ import com.datastax.dse.driver.DseTestFixtures;
 import com.datastax.dse.driver.api.core.cql.reactive.ReactiveResultSet;
 import com.datastax.dse.driver.api.core.cql.reactive.ReactiveRow;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
@@ -135,6 +136,7 @@ public class CqlRequestReactiveProcessorTest extends CqlRequestHandlerTestBase {
       CompletableFuture<AsyncResultSet> page2Future = new CompletableFuture<>();
       when(session.executeAsync(any(Statement.class))).thenAnswer(invocation -> page2Future);
       ExecutionInfo mockInfo = mock(ExecutionInfo.class);
+      DriverExecutionProfile mockExecutionProfile = mock(DriverExecutionProfile.class);
 
       ReactiveResultSet publisher =
           new CqlRequestReactiveProcessor(new CqlRequestAsyncProcessor())
@@ -152,7 +154,8 @@ public class CqlRequestReactiveProcessorTest extends CqlRequestHandlerTestBase {
               DseTestFixtures.tenDseRows(2, true),
               mockInfo,
               harness.getSession(),
-              harness.getContext()));
+              harness.getContext(),
+              mockExecutionProfile));
 
       List<ReactiveRow> rows = rowsPublisher.toList().blockingGet();
       assertThat(rows).hasSize(20);

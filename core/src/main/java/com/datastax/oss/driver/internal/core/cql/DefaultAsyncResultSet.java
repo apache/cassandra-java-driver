@@ -18,6 +18,8 @@
 package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
@@ -43,6 +45,7 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
 
   private final ColumnDefinitions definitions;
   private final ExecutionInfo executionInfo;
+  private final DriverExecutionProfile executionProfile;
   private final CqlSession session;
   private final CountingIterator<Row> iterator;
   private final Iterable<Row> currentPage;
@@ -52,9 +55,11 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
       ExecutionInfo executionInfo,
       Queue<List<ByteBuffer>> data,
       CqlSession session,
-      InternalDriverContext context) {
+      InternalDriverContext context,
+      DriverExecutionProfile executionProfile) {
     this.definitions = definitions;
     this.executionInfo = executionInfo;
+    this.executionProfile = executionProfile;
     this.session = session;
     this.iterator =
         new CountingIterator<Row>(data.size()) {
@@ -106,6 +111,11 @@ public class DefaultAsyncResultSet implements AsyncResultSet {
     Statement<?> statement = (Statement<?>) executionInfo.getRequest();
     LOG.trace("Fetching next page for {}", statement);
     Statement<?> nextStatement = statement.copy(nextState);
+    if (!executionProfile.getBoolean(DefaultDriverOption.REQUEST_TRACE_REPORT_EVERY_PAGE_FETCH)
+        && nextStatement.isTracing()) {
+      // report traces only for first page
+      nextStatement = nextStatement.setTracing(false);
+    }
     return session.executeAsync(nextStatement);
   }
 
