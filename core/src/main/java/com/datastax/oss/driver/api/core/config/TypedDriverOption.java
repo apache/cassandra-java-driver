@@ -229,6 +229,10 @@ public class TypedDriverOption<ValueT> {
    */
   public static final TypedDriverOption<Boolean> SSL_HOSTNAME_VALIDATION =
       new TypedDriverOption<>(DefaultDriverOption.SSL_HOSTNAME_VALIDATION, GenericType.BOOLEAN);
+
+  public static final TypedDriverOption<Boolean> SSL_ALLOW_DNS_REVERSE_LOOKUP_SAN =
+      new TypedDriverOption<>(
+          DefaultDriverOption.SSL_ALLOW_DNS_REVERSE_LOOKUP_SAN, GenericType.BOOLEAN);
   /** The location of the keystore file. */
   public static final TypedDriverOption<String> SSL_KEYSTORE_PATH =
       new TypedDriverOption<>(DefaultDriverOption.SSL_KEYSTORE_PATH, GenericType.STRING);

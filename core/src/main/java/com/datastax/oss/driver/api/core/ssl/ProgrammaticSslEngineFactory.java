@@ -45,6 +45,7 @@ public class ProgrammaticSslEngineFactory implements SslEngineFactory {
   protected final SSLContext sslContext;
   protected final String[] cipherSuites;
   protected final boolean requireHostnameValidation;
+  protected final boolean allowDnsReverseLookupSan;
 
   /**
    * Creates an instance with the given {@link SSLContext}, default cipher suites and no host name
@@ -80,9 +81,28 @@ public class ProgrammaticSslEngineFactory implements SslEngineFactory {
       @NonNull SSLContext sslContext,
       @Nullable String[] cipherSuites,
       boolean requireHostnameValidation) {
+    this(sslContext, cipherSuites, requireHostnameValidation, true);
+  }
+
+  /**
+   * Creates an instance with the given {@link SSLContext}, cipher suites and host name validation.
+   *
+   * @param sslContext the {@link SSLContext} to use.
+   * @param cipherSuites the cipher suites to use, or null to use the default ones.
+   * @param requireHostnameValidation whether to enable host name validation. If enabled, host name
+   *     validation will be done using HTTPS algorithm.
+   * @param allowDnsReverseLookupSan whether to allow raw server IPs to be DNS reverse-resolved to
+   *     choose the appropriate Subject Alternative Name.
+   */
+  public ProgrammaticSslEngineFactory(
+      @NonNull SSLContext sslContext,
+      @Nullable String[] cipherSuites,
+      boolean requireHostnameValidation,
+      boolean allowDnsReverseLookupSan) {
     this.sslContext = sslContext;
     this.cipherSuites = cipherSuites;
     this.requireHostnameValidation = requireHostnameValidation;
+    this.allowDnsReverseLookupSan = allowDnsReverseLookupSan;
   }
 
   @NonNull
@@ -92,7 +112,12 @@ public class ProgrammaticSslEngineFactory implements SslEngineFactory {
     SocketAddress remoteAddress = remoteEndpoint.resolve();
     if (remoteAddress instanceof InetSocketAddress) {
       InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
-      engine = sslContext.createSSLEngine(socketAddress.getHostName(), socketAddress.getPort());
+      engine =
+          sslContext.createSSLEngine(
+              allowDnsReverseLookupSan
+                  ? socketAddress.getHostName()
+                  : socketAddress.getHostString(),
+              socketAddress.getPort());
     } else {
       engine = sslContext.createSSLEngine();
     }

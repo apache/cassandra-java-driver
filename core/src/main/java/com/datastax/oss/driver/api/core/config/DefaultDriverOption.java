@@ -244,6 +244,12 @@ public enum DefaultDriverOption implements DriverOption {
    */
   SSL_HOSTNAME_VALIDATION("advanced.ssl-engine-factory.hostname-validation"),
   /**
+   * Whether or not to do a DNS reverse-lookup of provided server addresses for SAN addresses.
+   *
+   * <p>Value-type: boolean
+   */
+  SSL_ALLOW_DNS_REVERSE_LOOKUP_SAN("advanced.ssl-engine-factory.allow-dns-reverse-lookup-san"),
+  /**
    * The location of the keystore file.
    *
    * <p>Value-type: {@link String}

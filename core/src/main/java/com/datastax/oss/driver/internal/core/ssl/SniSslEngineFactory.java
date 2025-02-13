@@ -38,9 +38,15 @@ public class SniSslEngineFactory implements SslEngineFactory {
 
   private final SSLContext sslContext;
   private final CopyOnWriteArrayList<String> fakePorts = new CopyOnWriteArrayList<>();
+  private final boolean allowDnsReverseLookupSan;
 
   public SniSslEngineFactory(SSLContext sslContext) {
+    this(sslContext, true);
+  }
+
+  public SniSslEngineFactory(SSLContext sslContext, boolean allowDnsReverseLookupSan) {
     this.sslContext = sslContext;
+    this.allowDnsReverseLookupSan = allowDnsReverseLookupSan;
   }
 
   @NonNull
@@ -71,8 +77,8 @@ public class SniSslEngineFactory implements SslEngineFactory {
     // To avoid that, we create a unique "fake" port for every node. We still get session reuse for
     // a given node, but not across nodes. This is safe because the advisory port is only used for
     // session caching.
-    SSLEngine engine =
-        sslContext.createSSLEngine(address.getHostName(), getFakePort(sniServerName));
+    String peerHost = allowDnsReverseLookupSan ? address.getHostName() : address.getHostString();
+    SSLEngine engine = sslContext.createSSLEngine(peerHost, getFakePort(sniServerName));
     engine.setUseClientMode(true);
     SSLParameters parameters = engine.getSSLParameters();
     parameters.setServerNames(ImmutableList.of(new SNIHostName(sniServerName)));

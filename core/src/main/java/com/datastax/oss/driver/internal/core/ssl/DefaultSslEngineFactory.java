@@ -22,6 +22,7 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -69,6 +70,7 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
   private final SSLContext sslContext;
   private final String[] cipherSuites;
   private final boolean requireHostnameValidation;
+  private final boolean allowDnsReverseLookupSan;
   private ReloadingKeyManagerFactory kmf;
 
   /** Builds a new instance from the driver configuration. */
@@ -88,6 +90,28 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
     }
     this.requireHostnameValidation =
         config.getBoolean(DefaultDriverOption.SSL_HOSTNAME_VALIDATION, true);
+    this.allowDnsReverseLookupSan =
+        config.getBoolean(DefaultDriverOption.SSL_ALLOW_DNS_REVERSE_LOOKUP_SAN, true);
+  }
+
+  @VisibleForTesting
+  protected String hostname(InetSocketAddress addr) {
+    return allowDnsReverseLookupSan ? hostMaybeFromDnsReverseLookup(addr) : hostNoLookup(addr);
+  }
+
+  @VisibleForTesting
+  protected String hostMaybeFromDnsReverseLookup(InetSocketAddress addr) {
+    // See java.net.InetSocketAddress.getHostName:
+    // "This method may trigger a name service reverse lookup if the address was created with a
+    // literal IP address."
+    return addr.getHostName();
+  }
+
+  @VisibleForTesting
+  protected String hostNoLookup(InetSocketAddress addr) {
+    // See java.net.InetSocketAddress.getHostString:
+    // "This has the benefit of not attempting a reverse lookup"
+    return addr.getHostString();
   }
 
   @NonNull
@@ -97,7 +121,7 @@ public class DefaultSslEngineFactory implements SslEngineFactory {
     SocketAddress remoteAddress = remoteEndpoint.resolve();
     if (remoteAddress instanceof InetSocketAddress) {
       InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
-      engine = sslContext.createSSLEngine(socketAddress.getHostName(), socketAddress.getPort());
+      engine = sslContext.createSSLEngine(hostname(socketAddress), socketAddress.getPort());
     } else {
       engine = sslContext.createSSLEngine();
     }
