@@ -20,13 +20,17 @@ package com.datastax.oss.driver.internal.core.tracker;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
+import com.datastax.oss.driver.api.core.cql.QueryTrace;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
+import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestHandler;
@@ -42,7 +46,11 @@ import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.context.Context;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.time.Instant;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -89,6 +97,8 @@ public class OtelRequestTracker implements RequestTracker {
       AttributeKey.longKey("cassandra.page.size");
   private static final AttributeKey<Boolean> CASSANDRA_QUERY_IDEMPOTENT =
       AttributeKey.booleanKey("cassandra.query.idempotent");
+  private static final AttributeKey<String> CASSANDRA_QUERY_ID =
+      AttributeKey.stringKey("cassandra.query.id");
   private static final AttributeKey<Long> CASSANDRA_SPECULATIVE_EXECUTION_COUNT =
       AttributeKey.longKey("cassandra.speculative_execution.count");
   private static final AttributeKey<Long> DB_OPERATION_BATCH_SIZE =
@@ -159,6 +169,7 @@ public class OtelRequestTracker implements RequestTracker {
         requestLogPrefix,
         (k, v) -> {
           Span span = v.parentSpan;
+          span.setAttribute(CASSANDRA_QUERY_ID, requestLogPrefix);
           span.setStatus(StatusCode.OK);
           addRequestAttributesToSpan(executionInfo.getRequest(), span, false);
           addExecutionInfoToSpan(executionInfo, span);
@@ -174,6 +185,7 @@ public class OtelRequestTracker implements RequestTracker {
         requestLogPrefix,
         (k, v) -> {
           Span span = v.parentSpan;
+          span.setAttribute(CASSANDRA_QUERY_ID, requestLogPrefix);
           if (!executionInfo.getErrors().isEmpty()) {
             span.recordException(executionInfo.getErrors().get(0).getValue());
           }
@@ -192,10 +204,18 @@ public class OtelRequestTracker implements RequestTracker {
         nodePrefixToRequestPrefix(requestLogPrefix),
         (k, v) -> {
           Span span = v.getNodeSpan(requestLogPrefix);
+          span.setAttribute(CASSANDRA_QUERY_ID, requestLogPrefix);
           span.setStatus(StatusCode.OK);
           addRequestAttributesToSpan(executionInfo.getRequest(), span, true);
           addExecutionInfoToSpan(executionInfo, span);
           span.end();
+          if (executionInfo.getTracingId() != null) {
+            threadPool.submit(
+                () -> {
+                  QueryTrace queryTrace = executionInfo.getQueryTrace();
+                  addCassandraQueryTraceToSpan(span, queryTrace);
+                });
+          }
           return v;
         });
   }
@@ -207,6 +227,7 @@ public class OtelRequestTracker implements RequestTracker {
         nodePrefixToRequestPrefix(requestLogPrefix),
         (k, v) -> {
           Span span = v.getNodeSpan(requestLogPrefix);
+          span.setAttribute(CASSANDRA_QUERY_ID, requestLogPrefix);
           if (!executionInfo.getErrors().isEmpty()) {
             /*
              Find the first error for this node. Because a node can appear twice in the errors list due
@@ -229,6 +250,13 @@ public class OtelRequestTracker implements RequestTracker {
           addRequestAttributesToSpan(executionInfo.getRequest(), span, true);
           addExecutionInfoToSpan(executionInfo, span);
           span.end();
+          if (executionInfo.getTracingId() != null) {
+            threadPool.submit(
+                () -> {
+                  QueryTrace queryTrace = executionInfo.getQueryTrace();
+                  addCassandraQueryTraceToSpan(span, queryTrace);
+                });
+          }
           return v;
         });
   }
@@ -296,6 +324,10 @@ public class OtelRequestTracker implements RequestTracker {
     if (request instanceof BatchStatement) {
       span.setAttribute(DB_OPERATION_BATCH_SIZE, ((BatchStatement) request).size());
     }
+
+    if (request instanceof BoundStatement) {
+      addParametersOfBoundStatementToSpan(span, (BoundStatement) request);
+    }
   }
 
   private void addExecutionInfoToSpan(ExecutionInfo executionInfo, Span span) {
@@ -338,6 +370,25 @@ public class OtelRequestTracker implements RequestTracker {
     return builder.toString();
   }
 
+  private void addParametersOfBoundStatementToSpan(Span span, BoundStatement statement) {
+    ColumnDefinitions definitions = statement.getPreparedStatement().getVariableDefinitions();
+    List<ByteBuffer> values = statement.getValues();
+    assert definitions.size() == values.size();
+    for (int i = 0; i < definitions.size(); i++) {
+      String key = "db.operation.parameter." + definitions.get(i).getName().asCql(true);
+      StringBuilder valueBuilder = new StringBuilder();
+      if (!statement.isSet(i)) {
+        valueBuilder.append("<UNSET>");
+      } else {
+        ByteBuffer value = values.get(i);
+        DataType type = definitions.get(i).getType();
+        this.formatter.appendValue(
+            value, type, RequestLogger.DEFAULT_REQUEST_LOGGER_MAX_VALUE_LENGTH, valueBuilder);
+      }
+      span.setAttribute(key, valueBuilder.toString());
+    }
+  }
+
   private void addServerAddressAndPortToSpan(Span span, Node coordinator) {
     EndPoint endPoint = coordinator.getEndPoint();
     if (endPoint instanceof DefaultEndPoint) {
@@ -369,7 +420,7 @@ public class OtelRequestTracker implements RequestTracker {
    * @param nodePrefix s0|1716164115|0
    * @return the request prefix, like s0|1716164115
    */
-  private String nodePrefixToRequestPrefix(String nodePrefix) {
+  private static String nodePrefixToRequestPrefix(String nodePrefix) {
     int lastSeparatorIndex = nodePrefix.lastIndexOf("|");
     return nodePrefix.substring(0, lastSeparatorIndex);
   }
@@ -383,5 +434,26 @@ public class OtelRequestTracker implements RequestTracker {
     } catch (Exception e) {
       return null;
     }
+  }
+
+  private void addCassandraQueryTraceToSpan(Span parentSpan, QueryTrace queryTrace) {
+    Span span =
+        this.tracer
+            .spanBuilder("Cassandra Internal")
+            .setStartTimestamp(Instant.ofEpochMilli(queryTrace.getStartedAt()))
+            .setParent(Context.current().with(parentSpan))
+            .startSpan();
+    queryTrace
+        .getEvents()
+        .forEach(
+            event -> {
+              span.addEvent(
+                  Objects.requireNonNull(event.getActivity()),
+                  // Why are these timestamps later than the span's end time?
+                  Instant.ofEpochMilli(event.getTimestamp()));
+            });
+
+    span.end(
+        Instant.ofEpochMilli(queryTrace.getStartedAt() + queryTrace.getDurationMicros() / 1000));
   }
 }
