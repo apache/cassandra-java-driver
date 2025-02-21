@@ -36,6 +36,7 @@ import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.cql.CqlRequestHandler;
 import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
 import com.datastax.oss.driver.internal.core.metadata.SniEndPoint;
+import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
 import com.datastax.oss.driver.shaded.guava.common.util.concurrent.ThreadFactoryBuilder;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.opentelemetry.api.OpenTelemetry;
@@ -69,7 +70,7 @@ public class OtelRequestTracker implements RequestTracker {
 
   private final Logger LOG = LoggerFactory.getLogger(OtelRequestTracker.class);
 
-  private final ExecutorService threadPool;
+  private final LazyReference<ExecutorService> threadPool;
 
   private RequestLogFormatter formatter;
   private DefaultDriverContext context;
@@ -111,20 +112,22 @@ public class OtelRequestTracker implements RequestTracker {
     this.tracer =
         openTelemetry.getTracer("com.datastax.oss.driver.internal.core.tracker.OtelRequestTracker");
     this.threadPool =
-        new ThreadPoolExecutor(
-            1,
-            Math.max(Runtime.getRuntime().availableProcessors(), 1),
-            10,
-            TimeUnit.SECONDS,
-            new ArrayBlockingQueue<>(1000),
-            new ThreadFactoryBuilder().setNameFormat("otel-thread-%d").build(),
-            new ThreadPoolExecutor.AbortPolicy());
+        new LazyReference<>(
+            () ->
+                new ThreadPoolExecutor(
+                    1,
+                    Math.max(Runtime.getRuntime().availableProcessors(), 1),
+                    10,
+                    TimeUnit.SECONDS,
+                    new ArrayBlockingQueue<>(1000),
+                    new ThreadFactoryBuilder().setNameFormat("otel-thread-%d").build(),
+                    new ThreadPoolExecutor.AbortPolicy()));
   }
 
   @Override
   public void close() throws Exception {
-    threadPool.shutdown();
-    threadPool.awaitTermination(10, TimeUnit.SECONDS);
+    threadPool.get().shutdown();
+    threadPool.get().awaitTermination(10, TimeUnit.SECONDS);
     logPrefixToTracingInfoMap.clear();
   }
 
@@ -210,11 +213,13 @@ public class OtelRequestTracker implements RequestTracker {
           addExecutionInfoToSpan(executionInfo, span);
           span.end();
           if (executionInfo.getTracingId() != null) {
-            threadPool.submit(
-                () -> {
-                  QueryTrace queryTrace = executionInfo.getQueryTrace();
-                  addCassandraQueryTraceToSpan(span, queryTrace);
-                });
+            threadPool
+                .get()
+                .submit(
+                    () -> {
+                      QueryTrace queryTrace = executionInfo.getQueryTrace();
+                      addCassandraQueryTraceToSpan(span, queryTrace);
+                    });
           }
           return v;
         });
@@ -251,11 +256,13 @@ public class OtelRequestTracker implements RequestTracker {
           addExecutionInfoToSpan(executionInfo, span);
           span.end();
           if (executionInfo.getTracingId() != null) {
-            threadPool.submit(
-                () -> {
-                  QueryTrace queryTrace = executionInfo.getQueryTrace();
-                  addCassandraQueryTraceToSpan(span, queryTrace);
-                });
+            threadPool
+                .get()
+                .submit(
+                    () -> {
+                      QueryTrace queryTrace = executionInfo.getQueryTrace();
+                      addCassandraQueryTraceToSpan(span, queryTrace);
+                    });
           }
           return v;
         });
