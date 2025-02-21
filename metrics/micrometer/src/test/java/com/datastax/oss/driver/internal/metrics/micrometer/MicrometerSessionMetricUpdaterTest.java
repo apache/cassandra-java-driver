@@ -170,6 +170,14 @@ public class MicrometerSessionMetricUpdaterTest {
         DefaultDriverOption.METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES,
       },
       {
+        DefaultSessionMetric.SEND_LATENCY,
+        DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_LOWEST,
+        DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_HIGHEST,
+        DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_DIGITS,
+        DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_SLO,
+        DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_PUBLISH_PERCENTILES,
+      },
+      {
         DseSessionMetric.GRAPH_REQUESTS,
         DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_LOWEST,
         DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_HIGHEST,

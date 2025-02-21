@@ -39,6 +39,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import java.util.concurrent.TimeUnit;
 import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
 
@@ -77,6 +78,9 @@ public class MicrometerMetricsIT extends MetricsITBase {
     MetricIdGenerator metricIdGenerator =
         ((InternalDriverContext) session.getContext()).getMetricIdGenerator();
 
+    double cqlRequestsTotal = 0;
+    double sendLatencyTotal = 0;
+
     for (DefaultSessionMetric metric : ENABLED_SESSION_METRICS) {
       MetricId id = metricIdGenerator.sessionMetricId(metric);
       Iterable<Tag> tags = MicrometerTags.toMicrometerTags(id.getTags());
@@ -89,7 +93,15 @@ public class MicrometerMetricsIT extends MetricsITBase {
           break;
         case CQL_REQUESTS:
           assertThat(m).isInstanceOf(Timer.class);
-          await().untilAsserted(() -> assertThat(((Timer) m).count()).isEqualTo(30));
+          Timer tr = (Timer) m;
+          await().untilAsserted(() -> assertThat(tr.count()).isEqualTo(30));
+          cqlRequestsTotal = tr.totalTime(TimeUnit.NANOSECONDS);
+          break;
+        case SEND_LATENCY:
+          assertThat(m).isInstanceOf(Timer.class);
+          Timer tl = (Timer) m;
+          await().untilAsserted(() -> assertThat(tl.count()).isEqualTo(30));
+          sendLatencyTotal = tl.totalTime(TimeUnit.NANOSECONDS);
           break;
         case CQL_PREPARED_CACHE_SIZE:
           assertThat(m).isInstanceOf(Gauge.class);
@@ -115,6 +127,8 @@ public class MicrometerMetricsIT extends MetricsITBase {
           break;
       }
     }
+
+    assertThat(sendLatencyTotal).isLessThanOrEqualTo(cqlRequestsTotal);
 
     for (Node node : session.getMetadata().getNodes().values()) {
 

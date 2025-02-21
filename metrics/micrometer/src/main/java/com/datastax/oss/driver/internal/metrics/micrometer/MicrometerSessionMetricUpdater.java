@@ -53,6 +53,7 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
 
     initializeTimer(DefaultSessionMetric.CQL_REQUESTS, profile);
     initializeTimer(DefaultSessionMetric.THROTTLING_DELAY, profile);
+    initializeTimer(DefaultSessionMetric.SEND_LATENCY, profile);
     initializeTimer(DseSessionMetric.CONTINUOUS_CQL_REQUESTS, profile);
     initializeTimer(DseSessionMetric.GRAPH_REQUESTS, profile);
   }
@@ -149,6 +150,25 @@ public class MicrometerSessionMetricUpdater extends MicrometerMetricUpdater<Sess
 
       configurePercentilesPublishIfDefined(
           builder, profile, DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_PUBLISH_PERCENTILES);
+    } else if (metric == DefaultSessionMetric.SEND_LATENCY) {
+      builder
+          .minimumExpectedValue(
+              profile.getDuration(DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_LOWEST))
+          .maximumExpectedValue(
+              profile.getDuration(DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_HIGHEST))
+          .serviceLevelObjectives(
+              profile.isDefined(DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_SLO)
+                  ? profile
+                      .getDurationList(DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_SLO)
+                      .toArray(new Duration[0])
+                  : null)
+          .percentilePrecision(
+              profile.isDefined(DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_DIGITS)
+                  ? profile.getInt(DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_DIGITS)
+                  : null);
+
+      configurePercentilesPublishIfDefined(
+          builder, profile, DefaultDriverOption.METRICS_SESSION_SEND_LATENCY_PUBLISH_PERCENTILES);
     }
     return builder;
   }

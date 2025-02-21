@@ -312,6 +312,10 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.METRICS_SESSION_CQL_REQUESTS_LOWEST, Duration.ofMillis(1));
     map.put(TypedDriverOption.METRICS_SESSION_CQL_REQUESTS_DIGITS, 3);
     map.put(TypedDriverOption.METRICS_SESSION_CQL_REQUESTS_INTERVAL, Duration.ofMinutes(5));
+    map.put(TypedDriverOption.METRICS_SESSION_SEND_LATENCY_HIGHEST, Duration.ofSeconds(3));
+    map.put(TypedDriverOption.METRICS_SESSION_SEND_LATENCY_LOWEST, Duration.ofMillis(1));
+    map.put(TypedDriverOption.METRICS_SESSION_SEND_LATENCY_DIGITS, 3);
+    map.put(TypedDriverOption.METRICS_SESSION_SEND_LATENCY_INTERVAL, Duration.ofMinutes(5));
     map.put(TypedDriverOption.METRICS_SESSION_THROTTLING_HIGHEST, Duration.ofSeconds(3));
     map.put(TypedDriverOption.METRICS_SESSION_THROTTLING_LOWEST, Duration.ofMillis(1));
     map.put(TypedDriverOption.METRICS_SESSION_THROTTLING_DIGITS, 3);

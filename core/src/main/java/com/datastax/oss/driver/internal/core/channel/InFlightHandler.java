@@ -150,6 +150,7 @@ public class InFlightHandler extends ChannelDuplexHandler {
             message.request);
 
     inFlight.put(streamId, message.responseCallback);
+    message.responseCallback.onRequestSent(frame);
     ChannelFuture writeFuture = ctx.write(frame, promise);
     writeFuture.addListener(
         future -> {
