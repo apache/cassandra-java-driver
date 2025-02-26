@@ -457,21 +457,21 @@ public class DefaultSelect implements SelectFrom, Select {
       }
     }
 
-    if (limit != null) {
-      builder.append(" LIMIT ");
-      if (limit instanceof BindMarker) {
-        ((BindMarker) limit).appendTo(builder);
-      } else {
-        builder.append(limit);
-      }
-    }
-
     if (perPartitionLimit != null) {
       builder.append(" PER PARTITION LIMIT ");
       if (perPartitionLimit instanceof BindMarker) {
         ((BindMarker) perPartitionLimit).appendTo(builder);
       } else {
         builder.append(perPartitionLimit);
+      }
+    }
+
+    if (limit != null) {
+      builder.append(" LIMIT ");
+      if (limit instanceof BindMarker) {
+        ((BindMarker) limit).appendTo(builder);
+      } else {
+        builder.append(limit);
       }
     }
 

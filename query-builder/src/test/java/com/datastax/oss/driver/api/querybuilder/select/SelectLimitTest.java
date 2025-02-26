@@ -49,4 +49,10 @@ public class SelectLimitTest {
     assertThat(selectFrom("foo").all().perPartitionLimit(1).perPartitionLimit(2))
         .hasCql("SELECT * FROM foo PER PARTITION LIMIT 2");
   }
+
+  @Test
+  public void should_put_limit_after_partition_limit() {
+    assertThat(selectFrom("foo").all().perPartitionLimit(1).limit(1))
+        .hasCql("SELECT * FROM foo PER PARTITION LIMIT 1 LIMIT 1");
+  }
 }
