@@ -274,8 +274,13 @@ abstract class Message {
     protected void decode(ChannelHandlerContext ctx, Frame frame, List<Object> out)
         throws Exception {
       boolean isTracing = frame.header.flags.contains(Frame.Header.Flag.TRACING);
+      boolean hasWarnings = frame.header.flags.contains(Frame.Header.Flag.WARNING);
       boolean isCustomPayload = frame.header.flags.contains(Frame.Header.Flag.CUSTOM_PAYLOAD);
       UUID tracingId = isTracing ? CBUtil.readUUID(frame.body) : null;
+
+      List<String> warnings =
+          hasWarnings ? CBUtil.readStringList(frame.body) : Collections.<String>emptyList();
+
       Map<String, ByteBuffer> customPayload =
           isCustomPayload ? CBUtil.readBytesMap(frame.body) : null;
 
@@ -285,10 +290,6 @@ abstract class Message {
             printPayload(customPayload),
             CBUtil.sizeOfBytesMap(customPayload));
       }
-
-      boolean hasWarnings = frame.header.flags.contains(Frame.Header.Flag.WARNING);
-      List<String> warnings =
-          hasWarnings ? CBUtil.readStringList(frame.body) : Collections.<String>emptyList();
 
       try {
         CodecRegistry codecRegistry = ctx.channel().attr(CODEC_REGISTRY_ATTRIBUTE_KEY).get();
