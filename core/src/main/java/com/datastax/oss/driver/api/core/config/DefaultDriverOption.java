@@ -244,12 +244,6 @@ public enum DefaultDriverOption implements DriverOption {
    */
   SSL_HOSTNAME_VALIDATION("advanced.ssl-engine-factory.hostname-validation"),
   /**
-   * Whether or not to do a DNS reverse-lookup of provided server addresses for SAN addresses.
-   *
-   * <p>Value-type: boolean
-   */
-  SSL_ALLOW_DNS_REVERSE_LOOKUP_SAN("advanced.ssl-engine-factory.allow-dns-reverse-lookup-san"),
-  /**
    * The location of the keystore file.
    *
    * <p>Value-type: {@link String}
@@ -994,7 +988,13 @@ public enum DefaultDriverOption implements DriverOption {
    * <p>Value type: {@link java.util.List List}&#60;{@link String}&#62;
    */
   LOAD_BALANCING_DC_FAILOVER_PREFERRED_REMOTE_DCS(
-      "advanced.load-balancing-policy.dc-failover.preferred-remote-dcs");
+      "advanced.load-balancing-policy.dc-failover.preferred-remote-dcs"),
+  /**
+   * Whether or not to do a DNS reverse-lookup of provided server addresses for SAN addresses.
+   *
+   * <p>Value-type: boolean
+   */
+  SSL_ALLOW_DNS_REVERSE_LOOKUP_SAN("advanced.ssl-engine-factory.allow-dns-reverse-lookup-san");
 
   private final String path;
 
