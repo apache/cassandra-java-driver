@@ -23,6 +23,7 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
@@ -112,7 +113,7 @@ public class MetadataManager implements AsyncAutoCloseable {
             || !keyspacesBefore.equals(refreshedKeyspaces)
             || (!tokenMapEnabledBefore && tokenMapEnabled))
         && isSchemaEnabled()) {
-      refreshSchema(null, false, true)
+      refreshSchema(null, false, true, null)
           .whenComplete(
               (metadata, error) -> {
                 if (error != null) {
@@ -226,10 +227,11 @@ public class MetadataManager implements AsyncAutoCloseable {
    *     request)
    * @param flushNow bypass the debouncer and force an immediate refresh (used to avoid a delay at
    *     startup)
+   * @param channel
    */
   public CompletionStage<RefreshSchemaResult> refreshSchema(
-      String keyspace, boolean evenIfDisabled, boolean flushNow) {
-    CompletableFuture<RefreshSchemaResult> future = new CompletableFuture<>();
+      String keyspace, boolean evenIfDisabled, boolean flushNow, DriverChannel channel) {
+    ChannelFuture<RefreshSchemaResult> future = new ChannelFuture<>(channel);
     RunOrSchedule.on(
         adminExecutor,
         () -> singleThreaded.refreshSchema(keyspace, evenIfDisabled, flushNow, future));
@@ -271,7 +273,7 @@ public class MetadataManager implements AsyncAutoCloseable {
     boolean wasEnabledBefore = isSchemaEnabled();
     schemaEnabledProgrammatically = newValue;
     if (!wasEnabledBefore && isSchemaEnabled()) {
-      return refreshSchema(null, false, true).thenApply(RefreshSchemaResult::getMetadata);
+      return refreshSchema(null, false, true, null).thenApply(RefreshSchemaResult::getMetadata);
     } else {
       return CompletableFuture.completedFuture(metadata);
     }
@@ -296,20 +298,38 @@ public class MetadataManager implements AsyncAutoCloseable {
     return this.closeAsync();
   }
 
+  private static class ChannelFuture<T> extends CompletableFuture<T> {
+    private DriverChannel channel;
+
+    public ChannelFuture(DriverChannel channel) {
+      this.channel = channel;
+    }
+
+    public DriverChannel getChannel() {
+      return channel;
+    }
+
+    public static <T> void completeFrom(ChannelFuture<T> source, ChannelFuture<T> target) {
+      if (source.getChannel() == null) {
+        source.channel = target.getChannel();
+      }
+      CompletableFutures.completeFrom(source, target);
+    }
+  }
+
   private class SingleThreaded {
     private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
     private boolean closeWasCalled;
     private final CompletableFuture<Void> firstSchemaRefreshFuture = new CompletableFuture<>();
-    private final Debouncer<
-            CompletableFuture<RefreshSchemaResult>, CompletableFuture<RefreshSchemaResult>>
+    private final Debouncer<ChannelFuture<RefreshSchemaResult>, ChannelFuture<RefreshSchemaResult>>
         schemaRefreshDebouncer;
     private final SchemaQueriesFactory schemaQueriesFactory;
     private final SchemaParserFactory schemaParserFactory;
 
     // We don't allow concurrent schema refreshes. If one is already running, the next one is queued
     // (and the ones after that are merged with the queued one).
-    private CompletableFuture<RefreshSchemaResult> currentSchemaRefresh;
-    private CompletableFuture<RefreshSchemaResult> queuedSchemaRefresh;
+    private ChannelFuture<RefreshSchemaResult> currentSchemaRefresh;
+    private ChannelFuture<RefreshSchemaResult> queuedSchemaRefresh;
 
     private boolean didFirstNodeListRefresh;
 
@@ -369,7 +389,7 @@ public class MetadataManager implements AsyncAutoCloseable {
         String keyspace,
         boolean evenIfDisabled,
         boolean flushNow,
-        CompletableFuture<RefreshSchemaResult> future) {
+        ChannelFuture<RefreshSchemaResult> future) {
 
       if (!didFirstNodeListRefresh) {
         // This happen if the control connection receives a schema event during init. We can't
@@ -390,8 +410,7 @@ public class MetadataManager implements AsyncAutoCloseable {
     }
 
     // An external component has requested a schema refresh, feed it to the debouncer.
-    private void acceptSchemaRequest(
-        CompletableFuture<RefreshSchemaResult> future, boolean flushNow) {
+    private void acceptSchemaRequest(ChannelFuture<RefreshSchemaResult> future, boolean flushNow) {
       assert adminExecutor.inEventLoop();
       if (closeWasCalled) {
         future.complete(new RefreshSchemaResult(metadata));
@@ -404,24 +423,24 @@ public class MetadataManager implements AsyncAutoCloseable {
     }
 
     // Multiple requests have arrived within the debouncer window, coalesce them.
-    private CompletableFuture<RefreshSchemaResult> coalesceSchemaRequests(
-        List<CompletableFuture<RefreshSchemaResult>> futures) {
+    private ChannelFuture<RefreshSchemaResult> coalesceSchemaRequests(
+        List<ChannelFuture<RefreshSchemaResult>> futures) {
       assert adminExecutor.inEventLoop();
       assert !futures.isEmpty();
       // Keep only one, but ensure that the discarded ones will still be completed when we're done
-      CompletableFuture<RefreshSchemaResult> result = null;
-      for (CompletableFuture<RefreshSchemaResult> future : futures) {
+      ChannelFuture<RefreshSchemaResult> result = null;
+      for (ChannelFuture<RefreshSchemaResult> future : futures) {
         if (result == null) {
           result = future;
         } else {
-          CompletableFutures.completeFrom(result, future);
+          ChannelFuture.completeFrom(result, future);
         }
       }
       return result;
     }
 
     // The debouncer has flushed, start the actual work.
-    private void startSchemaRequest(CompletableFuture<RefreshSchemaResult> refreshFuture) {
+    private void startSchemaRequest(ChannelFuture<RefreshSchemaResult> refreshFuture) {
       assert adminExecutor.inEventLoop();
       if (closeWasCalled) {
         refreshFuture.complete(new RefreshSchemaResult(metadata));
@@ -431,7 +450,8 @@ public class MetadataManager implements AsyncAutoCloseable {
         currentSchemaRefresh = refreshFuture;
         LOG.debug("[{}] Starting schema refresh", logPrefix);
         initControlConnectionForSchema()
-            .thenCompose(v -> context.getTopologyMonitor().checkSchemaAgreement())
+            .thenCompose(
+                v -> context.getTopologyMonitor().checkSchemaAgreement(refreshFuture.getChannel()))
             .whenComplete(
                 (schemaInAgreement, agreementError) -> {
                   if (agreementError != null) {
@@ -456,8 +476,7 @@ public class MetadataManager implements AsyncAutoCloseable {
                                 currentSchemaRefresh = null;
                                 // If another refresh was enqueued during this one, run it now
                                 if (queuedSchemaRefresh != null) {
-                                  CompletableFuture<RefreshSchemaResult> tmp =
-                                      this.queuedSchemaRefresh;
+                                  ChannelFuture<RefreshSchemaResult> tmp = this.queuedSchemaRefresh;
                                   this.queuedSchemaRefresh = null;
                                   startSchemaRequest(tmp);
                                 }

@@ -178,7 +178,7 @@ public class DefaultSession implements CqlSession {
   @Override
   public CompletionStage<Metadata> refreshSchemaAsync() {
     return metadataManager
-        .refreshSchema(null, true, true)
+        .refreshSchema(null, true, true, null)
         .thenApply(RefreshSchemaResult::getMetadata);
   }
 
@@ -453,7 +453,7 @@ public class DefaultSession implements CqlSession {
     private CompletionStage<RefreshSchemaResult> initialSchemaRefresh() {
       try {
         return metadataManager
-            .refreshSchema(null, false, true)
+            .refreshSchema(null, false, true, null)
             .exceptionally(
                 error -> {
                   Loggers.warnWithException(

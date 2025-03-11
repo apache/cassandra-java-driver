@@ -615,7 +615,7 @@ public class CqlRequestHandler implements Throttled {
           SchemaChange schemaChange = (SchemaChange) responseMessage;
           context
               .getMetadataManager()
-              .refreshSchema(schemaChange.keyspace, false, false)
+              .refreshSchema(schemaChange.keyspace, false, false, channel)
               .whenComplete(
                   (result, error) -> {
                     boolean schemaInAgreement;
