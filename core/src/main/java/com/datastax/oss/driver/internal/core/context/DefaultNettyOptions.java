@@ -200,7 +200,7 @@ public class DefaultNettyOptions implements NettyOptions {
   }
 
   @Override
-  public synchronized Timer getTimer() {
+  public Timer getTimer() {
     return timer;
   }
 }
