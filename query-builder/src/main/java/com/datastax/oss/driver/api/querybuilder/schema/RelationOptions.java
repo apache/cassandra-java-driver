@@ -59,6 +59,18 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
   }
 
   /**
+   * Defines the crc check chance.
+   *
+   * <p>Note that using this option with a version of Apache Cassandra less than 3.0 will raise a
+   * syntax error.
+   */
+  @NonNull
+  @CheckReturnValue
+  default SelfT withCRCCheckChance(double crcCheckChance) {
+    return withOption("crc_check_chance", crcCheckChance);
+  }
+
+  /**
    * Defines the caching criteria.
    *
    * <p>If no call is made to this method, the default value is determined by the global caching
@@ -97,11 +109,10 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
   }
 
   /**
-   * Configures compression using the LZ4 algorithm with the given chunk length and crc check
-   * chance.
-   *
-   * @see #withCompression(String, int, double)
+   * @deprecated This method only exists for backward compatibility. Will not work with Apache
+   *     Cassandra 5.0 or later. Use {@link #withLZ4Compression(int)} instead.
    */
+  @Deprecated
   @NonNull
   @CheckReturnValue
   default SelfT withLZ4Compression(int chunkLengthKB, double crcCheckChance) {
@@ -109,10 +120,21 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
   }
 
   /**
-   * Configures compression using the LZ4 algorithm using the default configuration (64kb
-   * chunk_length, and 1.0 crc_check_chance).
+   * Configures compression using the LZ4 algorithm with the given chunk length.
    *
-   * @see #withCompression(String, int, double)
+   * @see #withCompression(String, int)
+   */
+  @NonNull
+  @CheckReturnValue
+  default SelfT withLZ4Compression(int chunkLengthKB) {
+    return withCompression("LZ4Compressor", chunkLengthKB);
+  }
+
+  /**
+   * Configures compression using the LZ4 algorithm using the default configuration (64kb
+   * chunk_length).
+   *
+   * @see #withCompression(String, int)
    */
   @NonNull
   @CheckReturnValue
@@ -121,11 +143,35 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
   }
 
   /**
-   * Configures compression using the Snappy algorithm with the given chunk length and crc check
-   * chance.
+   * Configures compression using the Zstd algorithm with the given chunk length.
    *
-   * @see #withCompression(String, int, double)
+   * @see #withCompression(String, int)
    */
+  @NonNull
+  @CheckReturnValue
+  default SelfT withZstdCompression(int chunkLengthKB) {
+    return withCompression("ZstdCompressor", chunkLengthKB);
+  }
+
+  /**
+   * Configures compression using the Zstd algorithm using the default configuration (64kb
+   * chunk_length).
+   *
+   * @see #withCompression(String, int)
+   */
+  @NonNull
+  @CheckReturnValue
+  default SelfT withZstdCompression() {
+    return withCompression("ZstdCompressor");
+  }
+
+  /**
+   * @deprecated This method only exists for backward compatibility. Will not work with Apache
+   *     Cassandra 5.0 or later due to removal of deprecated table properties (<a
+   *     href="https://issues.apache.org/jira/browse/CASSANDRA-18742">CASSANDRA-18742</a>). Use
+   *     {@link #withSnappyCompression(int)} instead.
+   */
+  @Deprecated
   @NonNull
   @CheckReturnValue
   default SelfT withSnappyCompression(int chunkLengthKB, double crcCheckChance) {
@@ -133,10 +179,21 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
   }
 
   /**
-   * Configures compression using the Snappy algorithm using the default configuration (64kb
-   * chunk_length, and 1.0 crc_check_chance).
+   * Configures compression using the Snappy algorithm with the given chunk length.
    *
-   * @see #withCompression(String, int, double)
+   * @see #withCompression(String, int)
+   */
+  @NonNull
+  @CheckReturnValue
+  default SelfT withSnappyCompression(int chunkLengthKB) {
+    return withCompression("SnappyCompressor", chunkLengthKB);
+  }
+
+  /**
+   * Configures compression using the Snappy algorithm using the default configuration (64kb
+   * chunk_length).
+   *
+   * @see #withCompression(String, int)
    */
   @NonNull
   @CheckReturnValue
@@ -145,11 +202,12 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
   }
 
   /**
-   * Configures compression using the Deflate algorithm with the given chunk length and crc check
-   * chance.
-   *
-   * @see #withCompression(String, int, double)
+   * @deprecated This method only exists for backward compatibility. Will not work with Apache
+   *     Cassandra 5.0 or later due to removal of deprecated table properties (<a
+   *     href="https://issues.apache.org/jira/browse/CASSANDRA-18742">CASSANDRA-18742</a>). Use
+   *     {@link #withDeflateCompression(int)} instead.
    */
+  @Deprecated
   @NonNull
   @CheckReturnValue
   default SelfT withDeflateCompression(int chunkLengthKB, double crcCheckChance) {
@@ -157,10 +215,21 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
   }
 
   /**
-   * Configures compression using the Deflate algorithm using the default configuration (64kb
-   * chunk_length, and 1.0 crc_check_chance).
+   * Configures compression using the Deflate algorithm with the given chunk length.
    *
-   * @see #withCompression(String, int, double)
+   * @see #withCompression(String, int)
+   */
+  @NonNull
+  @CheckReturnValue
+  default SelfT withDeflateCompression(int chunkLengthKB) {
+    return withCompression("DeflateCompressor", chunkLengthKB);
+  }
+
+  /**
+   * Configures compression using the Deflate algorithm using the default configuration (64kb
+   * chunk_length).
+   *
+   * @see #withCompression(String, int)
    */
   @NonNull
   @CheckReturnValue
@@ -170,13 +239,13 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
 
   /**
    * Configures compression using the given algorithm using the default configuration (64kb
-   * chunk_length, and 1.0 crc_check_chance).
+   * chunk_length).
    *
    * <p>Unless specifying a custom compression algorithm implementation, it is recommended to use
    * {@link #withLZ4Compression()}, {@link #withSnappyCompression()}, or {@link
    * #withDeflateCompression()}.
    *
-   * @see #withCompression(String, int, double)
+   * @see #withCompression(String, int)
    */
   @NonNull
   @CheckReturnValue
@@ -185,7 +254,7 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
   }
 
   /**
-   * Configures compression using the given algorithm, chunk length and crc check chance.
+   * Configures compression using the given algorithm, chunk length.
    *
    * <p>Unless specifying a custom compression algorithm implementation, it is recommended to use
    * {@link #withLZ4Compression()}, {@link #withSnappyCompression()}, or {@link
@@ -193,11 +262,24 @@ public interface RelationOptions<SelfT extends RelationOptions<SelfT>>
    *
    * @param compressionAlgorithmName The class name of the compression algorithm.
    * @param chunkLengthKB The chunk length in KB of compression blocks. Defaults to 64.
-   * @param crcCheckChance The probability (0.0 to 1.0) that checksum will be checked on each read.
-   *     Defaults to 1.0.
    */
   @NonNull
   @CheckReturnValue
+  default SelfT withCompression(@NonNull String compressionAlgorithmName, int chunkLengthKB) {
+    return withOption(
+        "compression",
+        ImmutableMap.of("class", compressionAlgorithmName, "chunk_length_in_kb", chunkLengthKB));
+  }
+
+  /**
+   * @deprecated This method only exists for backward compatibility. Will not work with Apache
+   *     Cassandra 5.0 or later due to removal of deprecated table properties (<a
+   *     href="https://issues.apache.org/jira/browse/CASSANDRA-18742">CASSANDRA-18742</a>). Use
+   *     {@link #withCompression(String, int)} instead.
+   */
+  @NonNull
+  @CheckReturnValue
+  @Deprecated
   default SelfT withCompression(
       @NonNull String compressionAlgorithmName, int chunkLengthKB, double crcCheckChance) {
     return withOption(

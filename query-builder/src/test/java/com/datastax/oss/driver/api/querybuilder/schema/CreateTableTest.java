@@ -203,9 +203,42 @@ public class CreateTableTest {
             createTable("bar")
                 .withPartitionKey("k", DataTypes.INT)
                 .withColumn("v", DataTypes.TEXT)
+                .withLZ4Compression(1024))
+        .hasCql(
+            "CREATE TABLE bar (k int PRIMARY KEY,v text) WITH compression={'class':'LZ4Compressor','chunk_length_in_kb':1024}");
+  }
+
+  @Test
+  public void should_generate_create_table_lz4_compression_options_crc() {
+    assertThat(
+            createTable("bar")
+                .withPartitionKey("k", DataTypes.INT)
+                .withColumn("v", DataTypes.TEXT)
                 .withLZ4Compression(1024, .5))
         .hasCql(
             "CREATE TABLE bar (k int PRIMARY KEY,v text) WITH compression={'class':'LZ4Compressor','chunk_length_kb':1024,'crc_check_chance':0.5}");
+  }
+
+  @Test
+  public void should_generate_create_table_zstd_compression() {
+    assertThat(
+            createTable("bar")
+                .withPartitionKey("k", DataTypes.INT)
+                .withColumn("v", DataTypes.TEXT)
+                .withZstdCompression())
+        .hasCql(
+            "CREATE TABLE bar (k int PRIMARY KEY,v text) WITH compression={'class':'ZstdCompressor'}");
+  }
+
+  @Test
+  public void should_generate_create_table_zstd_compression_options() {
+    assertThat(
+            createTable("bar")
+                .withPartitionKey("k", DataTypes.INT)
+                .withColumn("v", DataTypes.TEXT)
+                .withZstdCompression(1024))
+        .hasCql(
+            "CREATE TABLE bar (k int PRIMARY KEY,v text) WITH compression={'class':'ZstdCompressor','chunk_length_in_kb':1024}");
   }
 
   @Test
@@ -221,6 +254,17 @@ public class CreateTableTest {
 
   @Test
   public void should_generate_create_table_snappy_compression_options() {
+    assertThat(
+            createTable("bar")
+                .withPartitionKey("k", DataTypes.INT)
+                .withColumn("v", DataTypes.TEXT)
+                .withSnappyCompression(2048))
+        .hasCql(
+            "CREATE TABLE bar (k int PRIMARY KEY,v text) WITH compression={'class':'SnappyCompressor','chunk_length_in_kb':2048}");
+  }
+
+  @Test
+  public void should_generate_create_table_snappy_compression_options_crc() {
     assertThat(
             createTable("bar")
                 .withPartitionKey("k", DataTypes.INT)
@@ -243,6 +287,17 @@ public class CreateTableTest {
 
   @Test
   public void should_generate_create_table_deflate_compression_options() {
+    assertThat(
+            createTable("bar")
+                .withPartitionKey("k", DataTypes.INT)
+                .withColumn("v", DataTypes.TEXT)
+                .withDeflateCompression(4096))
+        .hasCql(
+            "CREATE TABLE bar (k int PRIMARY KEY,v text) WITH compression={'class':'DeflateCompressor','chunk_length_in_kb':4096}");
+  }
+
+  @Test
+  public void should_generate_create_table_deflate_compression_options_crc() {
     assertThat(
             createTable("bar")
                 .withPartitionKey("k", DataTypes.INT)
