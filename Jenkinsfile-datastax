@@ -19,22 +19,15 @@
  */
 
 def initializeEnvironment() {
-  env.DRIVER_DISPLAY_NAME = 'CassandraⓇ Java Driver'
+  env.DRIVER_DISPLAY_NAME = 'Java Driver for Apache CassandraⓇ'
   env.DRIVER_METRIC_TYPE = 'oss'
-  if (env.GIT_URL.contains('riptano/java-driver')) {
-    env.DRIVER_DISPLAY_NAME = 'private ' + env.DRIVER_DISPLAY_NAME
-    env.DRIVER_METRIC_TYPE = 'oss-private'
-  } else if (env.GIT_URL.contains('java-dse-driver')) {
-    env.DRIVER_DISPLAY_NAME = 'DSE Java Driver'
-    env.DRIVER_METRIC_TYPE = 'dse'
-  }
 
   env.GIT_SHA = "${env.GIT_COMMIT.take(7)}"
   env.GITHUB_PROJECT_URL = "https://${GIT_URL.replaceFirst(/(git@|http:\/\/|https:\/\/)/, '').replace(':', '/').replace('.git', '')}"
   env.GITHUB_BRANCH_URL = "${GITHUB_PROJECT_URL}/tree/${env.BRANCH_NAME}"
   env.GITHUB_COMMIT_URL = "${GITHUB_PROJECT_URL}/commit/${env.GIT_COMMIT}"
 
-  env.MAVEN_HOME = "${env.HOME}/.mvn/apache-maven-3.3.9"
+  env.MAVEN_HOME = "${env.HOME}/.mvn/apache-maven-3.6.3"
   env.PATH = "${env.MAVEN_HOME}/bin:${env.PATH}"
 
   /*
@@ -335,14 +328,12 @@ pipeline {
                       </table>''')
     choice(
       name: 'ADHOC_BUILD_AND_EXECUTE_TESTS_JABBA_VERSION',
-      choices: ['1.8',           // Oracle JDK version 1.8 (current default)
-                'openjdk@1.9',   // OpenJDK version 9
-                'openjdk@1.10',  // OpenJDK version 10
+      choices: [
+                '1.8',           // Oracle JDK version 1.8 (current default)
                 'openjdk@1.11',  // OpenJDK version 11
-                'openjdk@1.12',  // OpenJDK version 12
-                'openjdk@1.13',  // OpenJDK version 13
-                'openjdk@1.14',  // OpenJDK version 14
-                'openjdk@1.17'], // OpenJDK version 17
+                'openjdk@1.17',  // OpenJDK version 17
+                'openjdk@1.21'   // OpenJDK version 21
+                ],
       description: '''JDK version to use for <b>TESTING</b> when running adhoc <b>BUILD-AND-EXECUTE-TESTS</b> builds. <i>All builds will use JDK8 for building the driver</i>
                       <table style="width:100%">
                         <col width="15%">
@@ -356,32 +347,16 @@ pipeline {
                           <td>Oracle JDK version 1.8 (<i>Used for compiling regardless of choice</i>)</td>
                         </tr>
                         <tr>
-                          <td><strong>openjdk@1.9</strong></td>
-                          <td>OpenJDK version 9</td>
-                        </tr>
-                        <tr>
-                          <td><strong>openjdk@1.10</strong></td>
-                          <td>OpenJDK version 10</td>
-                        </tr>
-                        <tr>
                           <td><strong>openjdk@1.11</strong></td>
                           <td>OpenJDK version 11</td>
                         </tr>
                         <tr>
-                          <td><strong>openjdk@1.12</strong></td>
-                          <td>OpenJDK version 12</td>
-                        </tr>
-                        <tr>
-                          <td><strong>openjdk@1.13</strong></td>
-                          <td>OpenJDK version 13</td>
-                        </tr>
-                        <tr>
-                          <td><strong>openjdk@1.14</strong></td>
-                          <td>OpenJDK version 14</td>
-                        </tr>
-                        <tr>
                           <td><strong>openjdk@1.17</strong></td>
                           <td>OpenJDK version 17</td>
+                        </tr>
+                        <tr>
+                          <td><strong>openjdk@1.21</strong></td>
+                          <td>OpenJDK version 21</td>
                         </tr>
                       </table>''')
     booleanParam(
@@ -466,7 +441,8 @@ pipeline {
             name 'JABBA_VERSION'
             values '1.8',           // jdk8
                    'openjdk@1.11',  // jdk11
-                   'openjdk@1.17'   // jdk17
+                   'openjdk@1.17',  // jdk17
+                   'openjdk@1.21'   // jdk21
           }
         }
 
