@@ -18,6 +18,7 @@
 package com.datastax.oss.driver.internal.core.util;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class ArrayUtils {
@@ -77,7 +78,7 @@ public class ArrayUtils {
    *     Fisher-Yates shuffle</a>
    */
   public static <ElementT> void shuffleHead(
-      @NonNull ElementT[] elements, int n, @NonNull ThreadLocalRandom random) {
+      @NonNull ElementT[] elements, int n, @NonNull Random random) {
     if (n > elements.length) {
       throw new ArrayIndexOutOfBoundsException(
           String.format(

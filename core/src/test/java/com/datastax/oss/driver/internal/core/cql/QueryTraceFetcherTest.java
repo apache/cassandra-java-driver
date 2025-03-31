@@ -79,7 +79,7 @@ public class QueryTraceFetcherTest {
   @Mock private NettyOptions nettyOptions;
   @Mock private EventExecutorGroup adminEventExecutorGroup;
   @Mock private EventExecutor eventExecutor;
-  @Mock private InetAddress address;
+  private InetAddress address = InetAddress.getLoopbackAddress();
 
   @Captor private ArgumentCaptor<SimpleStatement> statementCaptor;
 

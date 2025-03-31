@@ -1016,6 +1016,19 @@ limitations under the License.]]></inlineHeader>
         <mockitoopens.argline>--add-opens java.base/jdk.internal.util.random=ALL-UNNAMED</mockitoopens.argline>
       </properties>
     </profile>
+    <profile>
+      <!-- workarounds for running tests with JDK21 -->
+      <id>test-jdk-21</id>
+      <activation>
+        <jdk>[21,)</jdk>
+      </activation>
+      <properties>
+        <!-- for DriverBlockHoundIntegrationIT when using JDK 13+, see https://github.com/reactor/BlockHound/issues/33 -->
+        <blockhound.argline>-XX:+AllowRedefinitionToAddDeleteMethods</blockhound.argline>
+        <!-- allow deep reflection for mockito when using JDK 17+, see https://stackoverflow.com/questions/70993863/mockito-can-not-mock-random-in-java-17 -->
+        <mockitoopens.argline>--add-opens=java.base/jdk.internal.util.random=ALL-UNNAMED</mockitoopens.argline>
+      </properties>
+    </profile>
   </profiles>
   <licenses>
     <license>
