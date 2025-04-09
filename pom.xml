@@ -575,7 +575,7 @@
             </analysisConfiguration>
             <oldArtifacts>
               <!-- The previous release used DataStax groupId, remove this after the next release -->
-              <artifact>com.datastax.oss:${project.artifactId}:RELEASE</artifact>
+              <artifact>${project.groupId}:${project.artifactId}:RELEASE</artifact>
             </oldArtifacts>
           </configuration>
           <dependencies>
