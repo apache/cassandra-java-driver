@@ -294,7 +294,7 @@ public class InsightsClient {
     return pools.entrySet().stream()
         .collect(
             Collectors.toMap(
-                entry -> AddressFormatter.nullSafeToString(entry.getKey().getEndPoint().resolve()),
+                entry -> AddressFormatter.nullSafeToString(entry.getKey().getEndPoint().retrieve()),
                 this::constructSessionStateForNode));
   }
 
@@ -315,7 +315,7 @@ public class InsightsClient {
         .withContactPoints(
             getResolvedContactPoints(
                 driverContext.getMetadataManager().getContactPoints().stream()
-                    .map(n -> n.getEndPoint().resolve())
+                    .map(n -> n.getEndPoint().retrieve())
                     .filter(InetSocketAddress.class::isInstance)
                     .map(InetSocketAddress.class::cast)
                     .collect(Collectors.toSet())))
@@ -456,7 +456,7 @@ public class InsightsClient {
   }
 
   private String getControlConnectionSocketAddress() {
-    SocketAddress controlConnectionAddress = controlConnection.channel().getEndPoint().resolve();
+    SocketAddress controlConnectionAddress = controlConnection.channel().getEndPoint().retrieve();
     return AddressFormatter.nullSafeToString(controlConnectionAddress);
   }
 

@@ -119,7 +119,7 @@ public class AddNodeRefreshTest {
         new DefaultMetadata(
             ImmutableMap.of(node1.getHostId(), node1), Collections.emptyMap(), null, null);
     DefaultEndPoint newEndPoint = TestNodeFactory.newEndPoint(2);
-    InetSocketAddress newBroadcastRpcAddress = newEndPoint.resolve();
+    InetSocketAddress newBroadcastRpcAddress = newEndPoint.retrieve();
     UUID newSchemaVersion = Uuids.random();
     DefaultNodeInfo newNodeInfo =
         DefaultNodeInfo.builder()

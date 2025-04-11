@@ -41,6 +41,14 @@ public interface EndPoint {
   SocketAddress resolve();
 
   /**
+   * Returns a possibly unresolved instance to a socket address.
+   *
+   * <p>This should be called when the address does not need to be proactively resolved. For example
+   * if the node hostname or port number is needed.
+   */
+  @NonNull
+  SocketAddress retrieve();
+  /**
    * Returns an alternate string representation for use in node-level metric names.
    *
    * <p>Because metrics names are path-like, dot-separated strings, raw IP addresses don't make very

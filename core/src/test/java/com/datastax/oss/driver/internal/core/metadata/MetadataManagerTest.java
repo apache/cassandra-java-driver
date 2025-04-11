@@ -223,7 +223,7 @@ public class MetadataManagerTest {
   @Test
   public void should_add_node() {
     // Given
-    InetSocketAddress broadcastRpcAddress = ((InetSocketAddress) END_POINT2.resolve());
+    InetSocketAddress broadcastRpcAddress = ((InetSocketAddress) END_POINT2.retrieve());
     NodeInfo info = mock(NodeInfo.class);
     when(info.getBroadcastRpcAddress()).thenReturn(Optional.of(broadcastRpcAddress));
     when(topologyMonitor.getNewNodeInfo(broadcastRpcAddress))
@@ -242,8 +242,8 @@ public class MetadataManagerTest {
   @Test
   public void should_not_add_node_if_broadcast_rpc_address_does_not_match() {
     // Given
-    InetSocketAddress broadcastRpcAddress2 = ((InetSocketAddress) END_POINT2.resolve());
-    InetSocketAddress broadcastRpcAddress3 = ((InetSocketAddress) END_POINT3.resolve());
+    InetSocketAddress broadcastRpcAddress2 = ((InetSocketAddress) END_POINT2.retrieve());
+    InetSocketAddress broadcastRpcAddress3 = ((InetSocketAddress) END_POINT3.retrieve());
     NodeInfo info = mock(NodeInfo.class);
     when(topologyMonitor.getNewNodeInfo(broadcastRpcAddress2))
         .thenReturn(CompletableFuture.completedFuture(Optional.of(info)));
@@ -263,7 +263,7 @@ public class MetadataManagerTest {
   @Test
   public void should_not_add_node_if_topology_monitor_does_not_have_info() {
     // Given
-    InetSocketAddress broadcastRpcAddress2 = ((InetSocketAddress) END_POINT2.resolve());
+    InetSocketAddress broadcastRpcAddress2 = ((InetSocketAddress) END_POINT2.retrieve());
     when(topologyMonitor.getNewNodeInfo(broadcastRpcAddress2))
         .thenReturn(CompletableFuture.completedFuture(Optional.empty()));
 
@@ -278,7 +278,7 @@ public class MetadataManagerTest {
   @Test
   public void should_remove_node() {
     // Given
-    InetSocketAddress broadcastRpcAddress2 = ((InetSocketAddress) END_POINT2.resolve());
+    InetSocketAddress broadcastRpcAddress2 = ((InetSocketAddress) END_POINT2.retrieve());
 
     // When
     metadataManager.removeNode(broadcastRpcAddress2);

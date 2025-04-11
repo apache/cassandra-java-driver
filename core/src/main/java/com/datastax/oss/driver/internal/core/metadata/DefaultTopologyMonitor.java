@@ -477,7 +477,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
   // We save it the first time we get a control connection channel.
   private void savePort(DriverChannel channel) {
     if (port < 0) {
-      SocketAddress address = channel.getEndPoint().resolve();
+      SocketAddress address = channel.getEndPoint().retrieve();
       if (address instanceof InetSocketAddress) {
         port = ((InetSocketAddress) address).getPort();
       }
@@ -560,7 +560,7 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
 
     InetSocketAddress broadcastRpcAddress =
         new InetSocketAddress(broadcastRpcInetAddress, broadcastRpcPort);
-    if (row.contains("peer") && broadcastRpcAddress.equals(localEndPoint.resolve())) {
+    if (row.contains("peer") && broadcastRpcAddress.equals(localEndPoint.retrieve())) {
       // JAVA-2303: if the peer is actually the control node, ignore that peer as it is likely
       // a misconfiguration problem.
       LOG.warn(

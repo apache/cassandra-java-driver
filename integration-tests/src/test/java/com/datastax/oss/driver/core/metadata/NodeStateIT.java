@@ -640,7 +640,7 @@ public class NodeStateIT {
 
   // Generates an endpoint that is not the connect address of one of the nodes in the cluster
   private EndPoint withUnusedPort(EndPoint endPoint) {
-    InetSocketAddress address = (InetSocketAddress) endPoint.resolve();
+    InetSocketAddress address = (InetSocketAddress) endPoint.retrieve();
     return new DefaultEndPoint(new InetSocketAddress(address.getAddress(), findAvailablePort()));
   }
 

@@ -96,7 +96,7 @@ public class ExceptionIT {
             exception -> {
               ExecutionInfo info = ((InvalidQueryException) exception).getExecutionInfo();
               assertThat(info).isNotNull();
-              assertThat(info.getCoordinator().getEndPoint().resolve())
+              assertThat(info.getCoordinator().getEndPoint().retrieve())
                   .isEqualTo(SIMULACRON_RULE.cluster().node(1).inetSocketAddress());
               assertThat(((SimpleStatement) info.getRequest()).getQuery()).isEqualTo(QUERY_STRING);
 
@@ -116,7 +116,7 @@ public class ExceptionIT {
               List<Map.Entry<Node, Throwable>> errors = info.getErrors();
               assertThat(errors).hasSize(1);
               Map.Entry<Node, Throwable> entry0 = errors.get(0);
-              assertThat(entry0.getKey().getEndPoint().resolve())
+              assertThat(entry0.getKey().getEndPoint().retrieve())
                   .isEqualTo(SIMULACRON_RULE.cluster().node(0).inetSocketAddress());
               Throwable node0Exception = entry0.getValue();
               assertThat(node0Exception).isInstanceOf(UnavailableException.class);

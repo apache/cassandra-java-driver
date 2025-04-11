@@ -80,7 +80,7 @@ public class QueryTraceIT {
     assertThat(executionInfo.getTracingId()).isNotNull();
 
     EndPoint contactPoint = CCM_RULE.getContactPoints().iterator().next();
-    InetAddress nodeAddress = ((InetSocketAddress) contactPoint.resolve()).getAddress();
+    InetAddress nodeAddress = ((InetSocketAddress) contactPoint.retrieve()).getAddress();
     boolean expectPorts =
         CCM_RULE.getCassandraVersion().nextStable().compareTo(Version.V4_0_0) >= 0
             && !CCM_RULE.isDistributionOf(BackendType.DSE);
