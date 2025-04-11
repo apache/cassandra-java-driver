@@ -26,10 +26,10 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SniEndPoint implements EndPoint {
-  private static final AtomicLong OFFSET = new AtomicLong();
+  private static final AtomicInteger OFFSET = new AtomicInteger();
 
   private final InetSocketAddress proxyAddress;
   private final String serverName;
@@ -64,7 +64,10 @@ public class SniEndPoint implements EndPoint {
       // The order of the returned address is unspecified. Sort by IP to make sure we get a true
       // round-robin
       Arrays.sort(aRecords, IP_COMPARATOR);
-      int index = (aRecords.length == 1) ? 0 : (int) OFFSET.getAndIncrement() % aRecords.length;
+      int index =
+          (aRecords.length == 1)
+              ? 0
+              : OFFSET.getAndUpdate(x -> x == Integer.MAX_VALUE ? 0 : x + 1) % aRecords.length;
       return new InetSocketAddress(aRecords[index], proxyAddress.getPort());
     } catch (UnknownHostException e) {
       throw new IllegalArgumentException(
