@@ -19,23 +19,33 @@ package com.datastax.oss.driver.internal.core.context;
 
 import com.datastax.dse.driver.api.core.config.DseDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.request.Startup;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import net.jcip.annotations.Immutable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Immutable
 public class StartupOptionsBuilder {
 
   public static final String DRIVER_NAME_KEY = "DRIVER_NAME";
   public static final String DRIVER_VERSION_KEY = "DRIVER_VERSION";
+  public static final String DRIVER_BAGGAGE = "DRIVER_BAGGAGE";
   public static final String APPLICATION_NAME_KEY = "APPLICATION_NAME";
   public static final String APPLICATION_VERSION_KEY = "APPLICATION_VERSION";
   public static final String CLIENT_ID_KEY = "CLIENT_ID";
+
+  private static final Logger LOG = LoggerFactory.getLogger(StartupOptionsBuilder.class);
+  private static final ObjectMapper mapper = new ObjectMapper();
 
   protected final InternalDriverContext context;
   private UUID clientId;
@@ -119,6 +129,7 @@ public class StartupOptionsBuilder {
     if (applicationVersion != null) {
       builder.put(APPLICATION_VERSION_KEY, applicationVersion);
     }
+    driverBaggage().ifPresent(s -> builder.put(DRIVER_BAGGAGE, s));
 
     return builder.build();
   }
@@ -141,5 +152,22 @@ public class StartupOptionsBuilder {
    */
   protected String getDriverVersion() {
     return Session.OSS_DRIVER_COORDINATES.getVersion().toString();
+  }
+
+  private Optional<String> driverBaggage() {
+    ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
+    for (Map.Entry<String, LoadBalancingPolicy> entry :
+        context.getLoadBalancingPolicies().entrySet()) {
+      Map<String, ?> config = entry.getValue().getStartupConfiguration();
+      if (!config.isEmpty()) {
+        builder.put(entry.getKey(), config);
+      }
+    }
+    try {
+      return Optional.of(mapper.writeValueAsString(builder.build()));
+    } catch (Exception e) {
+      LOG.warn("Failed to construct startup driver baggage", e);
+      return Optional.empty();
+    }
   }
 }

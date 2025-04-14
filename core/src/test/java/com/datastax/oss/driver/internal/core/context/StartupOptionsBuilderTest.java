@@ -26,10 +26,10 @@ import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.request.Startup;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
-import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -41,7 +41,8 @@ public class StartupOptionsBuilderTest {
     DriverExecutionProfile defaultProfile = mock(DriverExecutionProfile.class);
     when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none"))
         .thenReturn(compression);
-    return MockedDriverContextFactory.defaultDriverContext(Optional.of(defaultProfile));
+    when(defaultProfile.getName()).thenReturn(DriverExecutionProfile.DEFAULT_NAME);
+    return MockedDriverContextFactory.defaultDriverContext(defaultProfile);
   }
 
   private void assertDefaultStartupOptions(Startup startup) {
@@ -93,5 +94,45 @@ public class StartupOptionsBuilderTest {
               DefaultDriverContext ctx = buildMockedContext("foobar");
               new Startup(ctx.getStartupOptions());
             });
+  }
+
+  @Test
+  public void should_include_all_local_dcs_in_startup_message() {
+
+    DefaultDriverContext ctx =
+        MockedDriverContextFactory.defaultDriverContext(
+            MockedDriverContextFactory.defaultProfile("us-west-2"),
+            MockedDriverContextFactory.createProfile("oltp", "us-east-2"),
+            MockedDriverContextFactory.createProfile("olap", "eu-central-1"));
+    Startup startup = new Startup(ctx.getStartupOptions());
+    assertThat(startup.options)
+        .containsEntry(
+            StartupOptionsBuilder.DRIVER_BAGGAGE,
+            "{\"default\":{\"DefaultLoadBalancingPolicy\":{\"localDc\":\"us-west-2\"}},"
+                + "\"oltp\":{\"DefaultLoadBalancingPolicy\":{\"localDc\":\"us-east-2\"}},"
+                + "\"olap\":{\"DefaultLoadBalancingPolicy\":{\"localDc\":\"eu-central-1\"}}}");
+  }
+
+  @Test
+  public void should_include_all_lbp_details_in_startup_message() {
+
+    DriverExecutionProfile defaultProfile = MockedDriverContextFactory.defaultProfile("dc1");
+    DriverExecutionProfile oltpProfile = MockedDriverContextFactory.createProfile("oltp", "dc1");
+    MockedDriverContextFactory.allowRemoteDcConnectivity(
+        oltpProfile, 2, true, ImmutableList.of("dc2", "dc3"));
+    DefaultDriverContext ctx =
+        MockedDriverContextFactory.defaultDriverContext(defaultProfile, oltpProfile);
+
+    Startup startup = new Startup(ctx.getStartupOptions());
+
+    assertThat(startup.options)
+        .containsEntry(
+            StartupOptionsBuilder.DRIVER_BAGGAGE,
+            "{\"default\":{\"DefaultLoadBalancingPolicy\":{\"localDc\":\"dc1\"}},"
+                + "\"oltp\":{\"DefaultLoadBalancingPolicy\":{"
+                + "\"localDc\":\"dc1\","
+                + "\"preferredRemoteDcs\":[\"dc2\",\"dc3\"],"
+                + "\"allowDcFailoverForLocalCl\":true,"
+                + "\"maxNodesPerRemoteDc\":2}}}");
   }
 }

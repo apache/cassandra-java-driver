@@ -30,7 +30,6 @@ import com.datastax.oss.driver.internal.core.context.MockedDriverContextFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.Optional;
 import org.junit.Test;
 
 @SuppressWarnings("resource")
@@ -148,6 +147,6 @@ public class SubnetAddressTranslatorTest {
   private static DefaultDriverContext context(Map<String, String> subnetAddresses) {
     DriverExecutionProfile profile = mock(DriverExecutionProfile.class);
     when(profile.getStringMap(ADDRESS_TRANSLATOR_SUBNET_ADDRESSES)).thenReturn(subnetAddresses);
-    return MockedDriverContextFactory.defaultDriverContext(Optional.of(profile));
+    return MockedDriverContextFactory.defaultDriverContext(profile);
   }
 }

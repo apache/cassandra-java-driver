@@ -216,8 +216,8 @@ public class DefaultDriverContext implements InternalDriverContext {
       new LazyReference<>("metricIdGenerator", this::buildMetricIdGenerator, cycleDetector);
   private final LazyReference<RequestThrottler> requestThrottlerRef =
       new LazyReference<>("requestThrottler", this::buildRequestThrottler, cycleDetector);
-  private final LazyReference<Map<String, String>> startupOptionsRef =
-      new LazyReference<>("startupOptions", this::buildStartupOptions, cycleDetector);
+  private final LazyReference<StartupOptionsBuilder> startupOptionsRef =
+      new LazyReference<>("startupOptionsFactory", this::buildStartupOptionsFactory, cycleDetector);
   private final LazyReference<NodeStateListener> nodeStateListenerRef;
   private final LazyReference<SchemaChangeListener> schemaChangeListenerRef;
   private final LazyReference<RequestTracker> requestTrackerRef;
@@ -335,16 +335,15 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   /**
-   * Builds a map of options to send in a Startup message.
+   * Returns builder of options to send in a Startup message.
    *
    * @see #getStartupOptions()
    */
-  protected Map<String, String> buildStartupOptions() {
+  protected StartupOptionsBuilder buildStartupOptionsFactory() {
     return new StartupOptionsBuilder(this)
         .withClientId(startupClientId)
         .withApplicationName(startupApplicationName)
-        .withApplicationVersion(startupApplicationVersion)
-        .build();
+        .withApplicationVersion(startupApplicationVersion);
   }
 
   protected Map<String, LoadBalancingPolicy> buildLoadBalancingPolicies() {
@@ -1013,7 +1012,8 @@ public class DefaultDriverContext implements InternalDriverContext {
   @NonNull
   @Override
   public Map<String, String> getStartupOptions() {
-    return startupOptionsRef.get();
+    // startup options are calculated dynamically and may vary per connection
+    return startupOptionsRef.get().build();
   }
 
   protected RequestLogFormatter buildRequestLogFormatter() {

@@ -26,7 +26,6 @@ import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.context.MockedDriverContextFactory;
 import java.net.InetSocketAddress;
-import java.util.Optional;
 import org.junit.Test;
 
 public class FixedHostNameAddressTranslatorTest {
@@ -36,7 +35,7 @@ public class FixedHostNameAddressTranslatorTest {
     DriverExecutionProfile defaultProfile = mock(DriverExecutionProfile.class);
     when(defaultProfile.getString(ADDRESS_TRANSLATOR_ADVERTISED_HOSTNAME)).thenReturn("myaddress");
     DefaultDriverContext defaultDriverContext =
-        MockedDriverContextFactory.defaultDriverContext(Optional.of(defaultProfile));
+        MockedDriverContextFactory.defaultDriverContext(defaultProfile);
 
     FixedHostNameAddressTranslator translator =
         new FixedHostNameAddressTranslator(defaultDriverContext);

@@ -42,7 +42,7 @@ public class DefaultDriverContextTest {
     DriverExecutionProfile defaultProfile = mock(DriverExecutionProfile.class);
     when(defaultProfile.getString(DefaultDriverOption.PROTOCOL_COMPRESSION, "none"))
         .thenReturn(compressionOption.orElse("none"));
-    return MockedDriverContextFactory.defaultDriverContext(Optional.of(defaultProfile));
+    return MockedDriverContextFactory.defaultDriverContext(defaultProfile);
   }
 
   private void doCreateCompressorTest(Optional<String> configVal, Class<?> expectedClz) {

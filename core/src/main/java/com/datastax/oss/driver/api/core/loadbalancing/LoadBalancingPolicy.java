@@ -24,6 +24,7 @@ import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
@@ -75,6 +76,12 @@ public interface LoadBalancingPolicy extends AutoCloseable {
    *     change distances dynamically over time).
    */
   void init(@NonNull Map<UUID, Node> nodes, @NonNull DistanceReporter distanceReporter);
+
+  /** Returns map containing details that impact C* node connectivity. */
+  @NonNull
+  default Map<String, ?> getStartupConfiguration() {
+    return Collections.emptyMap();
+  }
 
   /**
    * Returns the coordinators to use for a new query.

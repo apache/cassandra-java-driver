@@ -65,20 +65,14 @@ public class OptionalLocalDcHelper implements LocalDcHelper {
   @Override
   @NonNull
   public Optional<String> discoverLocalDc(@NonNull Map<UUID, Node> nodes) {
-    String localDc = context.getLocalDatacenter(profile.getName());
-    if (localDc != null) {
-      LOG.debug("[{}] Local DC set programmatically: {}", logPrefix, localDc);
-      checkLocalDatacenterCompatibility(localDc, context.getMetadataManager().getContactPoints());
-      return Optional.of(localDc);
-    } else if (profile.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)) {
-      localDc = profile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER);
-      LOG.debug("[{}] Local DC set from configuration: {}", logPrefix, localDc);
-      checkLocalDatacenterCompatibility(localDc, context.getMetadataManager().getContactPoints());
-      return Optional.of(localDc);
+    Optional<String> localDc = configuredLocalDc();
+    if (localDc.isPresent()) {
+      checkLocalDatacenterCompatibility(
+          localDc.get(), context.getMetadataManager().getContactPoints());
     } else {
       LOG.debug("[{}] Local DC not set, DC awareness will be disabled", logPrefix);
-      return Optional.empty();
     }
+    return localDc;
   }
 
   /**
@@ -137,5 +131,20 @@ public class OptionalLocalDcHelper implements LocalDcHelper {
       }
     }
     return String.join(", ", new TreeSet<>(l));
+  }
+
+  /** @return Local data center set programmatically or from configuration file. */
+  @NonNull
+  public Optional<String> configuredLocalDc() {
+    String localDc = context.getLocalDatacenter(profile.getName());
+    if (localDc != null) {
+      LOG.debug("[{}] Local DC set programmatically: {}", logPrefix, localDc);
+      return Optional.of(localDc);
+    } else if (profile.isDefined(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)) {
+      localDc = profile.getString(DefaultDriverOption.LOAD_BALANCING_LOCAL_DATACENTER);
+      LOG.debug("[{}] Local DC set from configuration: {}", logPrefix, localDc);
+      return Optional.of(localDc);
+    }
+    return Optional.empty();
   }
 }
