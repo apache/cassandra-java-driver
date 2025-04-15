@@ -33,6 +33,7 @@ import com.datastax.oss.driver.api.core.session.throttling.RequestThrottler;
 import com.datastax.oss.driver.api.core.specex.SpeculativeExecutionPolicy;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
 import com.datastax.oss.driver.api.core.time.TimestampGenerator;
+import com.datastax.oss.driver.api.core.tracker.RequestIdGenerator;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
@@ -138,6 +139,10 @@ public interface DriverContext extends AttachmentPoint {
   /** @return The driver's request tracker; never {@code null}. */
   @NonNull
   RequestTracker getRequestTracker();
+
+  /** @return The driver's request ID generator; never {@code null}. */
+  @NonNull
+  Optional<RequestIdGenerator> getRequestIdGenerator();
 
   /** @return The driver's request throttler; never {@code null}. */
   @NonNull

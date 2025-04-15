@@ -35,6 +35,7 @@ import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.ssl.ProgrammaticSslEngineFactory;
 import com.datastax.oss.driver.api.core.ssl.SslEngineFactory;
+import com.datastax.oss.driver.api.core.tracker.RequestIdGenerator;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.MutableCodecRegistry;
@@ -47,6 +48,7 @@ import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
+import com.datastax.oss.driver.internal.core.tracker.W3CContextRequestIdGenerator;
 import com.datastax.oss.driver.internal.core.util.concurrent.BlockingOperation;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -82,6 +84,8 @@ import org.slf4j.LoggerFactory;
  */
 @NotThreadSafe
 public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
+
+  public static final String ASTRA_PAYLOAD_KEY = "traceparent";
 
   private static final Logger LOG = LoggerFactory.getLogger(SessionBuilder.class);
 
@@ -315,6 +319,17 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
   @NonNull
   public SelfT addRequestTracker(@NonNull RequestTracker requestTracker) {
     programmaticArgumentsBuilder.addRequestTracker(requestTracker);
+    return self;
+  }
+
+  /**
+   * Registers a request ID generator. The driver will use the generated ID in the logs and
+   * optionally add to the custom payload so that users can correlate logs about the same request
+   * from the Cassandra side.
+   */
+  @NonNull
+  public SelfT withRequestIdGenerator(@NonNull RequestIdGenerator requestIdGenerator) {
+    this.programmaticArgumentsBuilder.withRequestIdGenerator(requestIdGenerator);
     return self;
   }
 
@@ -861,6 +876,13 @@ public abstract class SessionBuilder<SelfT extends SessionBuilder, SessionT> {
       List<String> configContactPoints =
           defaultConfig.getStringList(DefaultDriverOption.CONTACT_POINTS, Collections.emptyList());
       if (cloudConfigInputStream != null) {
+        // override request id generator, unless user has already set it
+        if (programmaticArguments.getRequestIdGenerator() == null) {
+          programmaticArgumentsBuilder.withRequestIdGenerator(
+              new W3CContextRequestIdGenerator(ASTRA_PAYLOAD_KEY));
+          LOG.debug(
+              "A secure connect bundle is provided, using W3CContextRequestIdGenerator as request ID generator.");
+        }
         if (!programmaticContactPoints.isEmpty() || !configContactPoints.isEmpty()) {
           LOG.info(
               "Both a secure connect bundle and contact points were provided. These are mutually exclusive. The contact points from the secure bundle will have priority.");

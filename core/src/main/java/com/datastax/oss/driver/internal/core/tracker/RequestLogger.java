@@ -86,7 +86,7 @@ public class RequestLogger implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix) {
+      @NonNull String sessionRequestLogPrefix) {
 
     boolean successEnabled =
         executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED, false);
@@ -129,7 +129,7 @@ public class RequestLogger implements RequestTracker {
         showValues,
         maxValues,
         maxValueLength,
-        logPrefix);
+        sessionRequestLogPrefix);
   }
 
   @Override
@@ -139,7 +139,7 @@ public class RequestLogger implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       Node node,
-      @NonNull String logPrefix) {
+      @NonNull String sessionRequestLogPrefix) {
 
     if (!executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED, false)) {
       return;
@@ -173,7 +173,7 @@ public class RequestLogger implements RequestTracker {
         maxValues,
         maxValueLength,
         showStackTraces,
-        logPrefix);
+        sessionRequestLogPrefix);
   }
 
   @Override
@@ -183,7 +183,7 @@ public class RequestLogger implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix) {
+      @NonNull String nodeRequestLogPrefix) {
     // Nothing to do
   }
 
@@ -193,7 +193,7 @@ public class RequestLogger implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix) {
+      @NonNull String nodeRequestLogPrefix) {
     // Nothing to do
   }
 

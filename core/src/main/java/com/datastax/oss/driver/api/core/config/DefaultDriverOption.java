@@ -996,6 +996,12 @@ public enum DefaultDriverOption implements DriverOption {
    */
   SSL_ALLOW_DNS_REVERSE_LOOKUP_SAN("advanced.ssl-engine-factory.allow-dns-reverse-lookup-san"),
   /**
+   * The class of session-wide component that generates request IDs.
+   *
+   * <p>Value-type: {@link String}
+   */
+  REQUEST_ID_GENERATOR_CLASS("advanced.request-id.generator.class"),
+  /**
    * An address to always translate all node addresses to that same proxy hostname no matter what IP
    * address a node has, but still using its native transport port.
    *

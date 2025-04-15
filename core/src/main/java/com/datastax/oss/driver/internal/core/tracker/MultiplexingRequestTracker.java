@@ -82,10 +82,12 @@ public class MultiplexingRequestTracker implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix) {
+      @NonNull String sessionRequestLogPrefix) {
     invokeTrackers(
-        tracker -> tracker.onSuccess(request, latencyNanos, executionProfile, node, logPrefix),
-        logPrefix,
+        tracker ->
+            tracker.onSuccess(
+                request, latencyNanos, executionProfile, node, sessionRequestLogPrefix),
+        sessionRequestLogPrefix,
         "onSuccess");
   }
 
@@ -96,10 +98,12 @@ public class MultiplexingRequestTracker implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @Nullable Node node,
-      @NonNull String logPrefix) {
+      @NonNull String sessionRequestLogPrefix) {
     invokeTrackers(
-        tracker -> tracker.onError(request, error, latencyNanos, executionProfile, node, logPrefix),
-        logPrefix,
+        tracker ->
+            tracker.onError(
+                request, error, latencyNanos, executionProfile, node, sessionRequestLogPrefix),
+        sessionRequestLogPrefix,
         "onError");
   }
 
@@ -109,10 +113,12 @@ public class MultiplexingRequestTracker implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix) {
+      @NonNull String nodeRequestLogPrefix) {
     invokeTrackers(
-        tracker -> tracker.onNodeSuccess(request, latencyNanos, executionProfile, node, logPrefix),
-        logPrefix,
+        tracker ->
+            tracker.onNodeSuccess(
+                request, latencyNanos, executionProfile, node, nodeRequestLogPrefix),
+        nodeRequestLogPrefix,
         "onNodeSuccess");
   }
 
@@ -123,11 +129,12 @@ public class MultiplexingRequestTracker implements RequestTracker {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix) {
+      @NonNull String nodeRequestLogPrefix) {
     invokeTrackers(
         tracker ->
-            tracker.onNodeError(request, error, latencyNanos, executionProfile, node, logPrefix),
-        logPrefix,
+            tracker.onNodeError(
+                request, error, latencyNanos, executionProfile, node, nodeRequestLogPrefix),
+        nodeRequestLogPrefix,
         "onNodeError");
   }
 

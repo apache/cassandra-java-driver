@@ -7407,6 +7407,11 @@
       {
         "code": "java.method.varargOverloadsOnlyDifferInVarargParameter",
         "justification": "CASSJAVA-102: Migrate revapi config into dedicated config files, ported from pom.xml"
+      },
+      {
+        "code": "java.method.addedToInterface",
+        "new": "method java.util.Optional<com.datastax.oss.driver.api.core.tracker.RequestIdGenerator> com.datastax.oss.driver.api.core.context.DriverContext::getRequestIdGenerator()",
+        "justification": "CASSJAVA-97: Let users inject an ID for each request and write to the custom payload"
       }
     ]
   }

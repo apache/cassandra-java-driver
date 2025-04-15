@@ -47,21 +47,22 @@ public interface RequestTracker extends AutoCloseable {
       @NonNull Node node) {}
 
   /**
-   * Invoked each time a request succeeds.
+   * Invoked each time a session request succeeds. A session request is a `session.execute()` call
    *
    * @param latencyNanos the overall execution time (from the {@link Session#execute(Request,
    *     GenericType) session.execute} call until the result is made available to the client).
    * @param executionProfile the execution profile of this request.
    * @param node the node that returned the successful response.
-   * @param requestLogPrefix the dedicated log prefix for this request
+   * @param sessionRequestLogPrefix the dedicated log prefix for this request
    */
   default void onSuccess(
       @NonNull Request request,
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String requestLogPrefix) {
-    // If client doesn't override onSuccess with requestLogPrefix delegate call to the old method
+      @NonNull String sessionRequestLogPrefix) {
+    // If client doesn't override onSuccess with sessionRequestLogPrefix delegate call to the old
+    // method
     onSuccess(request, latencyNanos, executionProfile, node);
   }
 
@@ -78,13 +79,13 @@ public interface RequestTracker extends AutoCloseable {
       @Nullable Node node) {}
 
   /**
-   * Invoked each time a request fails.
+   * Invoked each time a session request fails. A session request is a `session.execute()` call
    *
    * @param latencyNanos the overall execution time (from the {@link Session#execute(Request,
    *     GenericType) session.execute} call until the error is propagated to the client).
    * @param executionProfile the execution profile of this request.
    * @param node the node that returned the error response, or {@code null} if the error occurred
-   * @param requestLogPrefix the dedicated log prefix for this request
+   * @param sessionRequestLogPrefix the dedicated log prefix for this request
    */
   default void onError(
       @NonNull Request request,
@@ -92,8 +93,9 @@ public interface RequestTracker extends AutoCloseable {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @Nullable Node node,
-      @NonNull String requestLogPrefix) {
-    // If client doesn't override onError with requestLogPrefix delegate call to the old method
+      @NonNull String sessionRequestLogPrefix) {
+    // If client doesn't override onError with sessionRequestLogPrefix delegate call to the old
+    // method
     onError(request, error, latencyNanos, executionProfile, node);
   }
 
@@ -110,14 +112,15 @@ public interface RequestTracker extends AutoCloseable {
       @NonNull Node node) {}
 
   /**
-   * Invoked each time a request fails at the node level. Similar to {@link #onError(Request,
-   * Throwable, long, DriverExecutionProfile, Node, String)} but at a per node level.
+   * Invoked each time a node request fails. A node request is a CQL request sent to a particular
+   * node. There can be one or more node requests for a single session request, due to retries or
+   * speculative executions.
    *
    * @param latencyNanos the overall execution time (from the {@link Session#execute(Request,
    *     GenericType) session.execute} call until the error is propagated to the client).
    * @param executionProfile the execution profile of this request.
    * @param node the node that returned the error response.
-   * @param requestLogPrefix the dedicated log prefix for this request
+   * @param nodeRequestLogPrefix the dedicated log prefix for this request
    */
   default void onNodeError(
       @NonNull Request request,
@@ -125,8 +128,9 @@ public interface RequestTracker extends AutoCloseable {
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String requestLogPrefix) {
-    // If client doesn't override onNodeError with requestLogPrefix delegate call to the old method
+      @NonNull String nodeRequestLogPrefix) {
+    // If client doesn't override onNodeError with nodeRequestLogPrefix delegate call to the old
+    // method
     onNodeError(request, error, latencyNanos, executionProfile, node);
   }
 
@@ -142,22 +146,23 @@ public interface RequestTracker extends AutoCloseable {
       @NonNull Node node) {}
 
   /**
-   * Invoked each time a request succeeds at the node level. Similar to {@link #onSuccess(Request,
-   * long, DriverExecutionProfile, Node, String)} but at per node level.
+   * Invoked each time a node request succeeds. A node request is a CQL request sent to a particular
+   * node. There can be one or more node requests for a single session request, due to retries or
+   * speculative executions.
    *
    * @param latencyNanos the overall execution time (from the {@link Session#execute(Request,
    *     GenericType) session.execute} call until the result is made available to the client).
    * @param executionProfile the execution profile of this request.
    * @param node the node that returned the successful response.
-   * @param requestLogPrefix the dedicated log prefix for this request
+   * @param nodeRequestLogPrefix the dedicated log prefix for this request
    */
   default void onNodeSuccess(
       @NonNull Request request,
       long latencyNanos,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String requestLogPrefix) {
-    // If client doesn't override onNodeSuccess with requestLogPrefix delegate call to the old
+      @NonNull String nodeRequestLogPrefix) {
+    // If client doesn't override onNodeSuccess with nodeRequestLogPrefix delegate call to the old
     // method
     onNodeSuccess(request, latencyNanos, executionProfile, node);
   }
