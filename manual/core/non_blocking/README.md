@@ -256,10 +256,6 @@ When connecting to clusters running recent DSE versions, the driver automaticall
 status reporting. When preparing the status report, the driver has to hit the local filesystem, and
 because of that, the status reporting process does not qualify as lock-free.
 
-If lock-freedom is being enforced, then automatic status reporting must be disabled by setting the
-`datastax-java-driver.advanced.monitor-reporting.enabled` property to false in the driver 
-configuration.
-
 ### Driver mechanism for detection of blocking calls
 
 The driver has its own mechanism for detecting blocking calls happening on an internal driver 

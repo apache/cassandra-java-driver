@@ -66,9 +66,6 @@ public class DriverBlockHoundIntegrationCcmIT extends ContinuousPagingITBase {
 
   private static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().build();
 
-  // Note: Insights monitoring will be detected by BlockHound, but the error is swallowed and
-  // logged by DefaultSession.SingleThreaded.notifyListeners, so it's not necessary to explicitly
-  // disable Insights here.
   private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
