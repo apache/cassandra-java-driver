@@ -17,19 +17,14 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
-import com.datastax.dse.driver.api.core.config.DseDriverOption;
-import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.session.Session;
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.protocol.internal.request.Startup;
 import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import net.jcip.annotations.Immutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,53 +35,14 @@ public class StartupOptionsBuilder {
   public static final String DRIVER_NAME_KEY = "DRIVER_NAME";
   public static final String DRIVER_VERSION_KEY = "DRIVER_VERSION";
   public static final String DRIVER_BAGGAGE = "DRIVER_BAGGAGE";
-  public static final String APPLICATION_NAME_KEY = "APPLICATION_NAME";
-  public static final String APPLICATION_VERSION_KEY = "APPLICATION_VERSION";
-  public static final String CLIENT_ID_KEY = "CLIENT_ID";
 
   private static final Logger LOG = LoggerFactory.getLogger(StartupOptionsBuilder.class);
   private static final ObjectMapper mapper = new ObjectMapper();
 
   protected final InternalDriverContext context;
-  private UUID clientId;
-  private String applicationName;
-  private String applicationVersion;
 
   public StartupOptionsBuilder(InternalDriverContext context) {
     this.context = context;
-  }
-
-  /**
-   * Sets the client ID to be sent in the Startup message options.
-   *
-   * <p>If this method is not invoked, or the id passed in is null, a random {@link UUID} will be
-   * generated and used by default.
-   */
-  public StartupOptionsBuilder withClientId(@Nullable UUID clientId) {
-    this.clientId = clientId;
-    return this;
-  }
-
-  /**
-   * Sets the client application name to be sent in the Startup message options.
-   *
-   * <p>If this method is not invoked, or the name passed in is null, no application name option
-   * will be sent in the startup message options.
-   */
-  public StartupOptionsBuilder withApplicationName(@Nullable String applicationName) {
-    this.applicationName = applicationName;
-    return this;
-  }
-
-  /**
-   * Sets the client application version to be sent in the Startup message options.
-   *
-   * <p>If this method is not invoked, or the name passed in is null, no application version option
-   * will be sent in the startup message options.
-   */
-  public StartupOptionsBuilder withApplicationVersion(@Nullable String applicationVersion) {
-    this.applicationVersion = applicationVersion;
-    return this;
   }
 
   /**
@@ -102,8 +58,6 @@ public class StartupOptionsBuilder {
    * @return Map of Startup Options.
    */
   public Map<String, String> build() {
-    DriverExecutionProfile config = context.getConfig().getDefaultProfile();
-
     NullAllowingImmutableMap.Builder<String, String> builder = NullAllowingImmutableMap.builder(3);
     // add compression (if configured) and driver name and version
     String compressionAlgorithm = context.getCompressor().algorithm();
@@ -112,23 +66,6 @@ public class StartupOptionsBuilder {
     }
     builder.put(DRIVER_NAME_KEY, getDriverName()).put(DRIVER_VERSION_KEY, getDriverVersion());
 
-    // Add Insights entries, falling back to generation / config if no programmatic values provided:
-    if (clientId == null) {
-      clientId = Uuids.random();
-    }
-    builder.put(CLIENT_ID_KEY, clientId.toString());
-    if (applicationName == null) {
-      applicationName = config.getString(DseDriverOption.APPLICATION_NAME, null);
-    }
-    if (applicationName != null) {
-      builder.put(APPLICATION_NAME_KEY, applicationName);
-    }
-    if (applicationVersion == null) {
-      applicationVersion = config.getString(DseDriverOption.APPLICATION_VERSION, null);
-    }
-    if (applicationVersion != null) {
-      builder.put(APPLICATION_VERSION_KEY, applicationVersion);
-    }
     driverBaggage().ifPresent(s -> builder.put(DRIVER_BAGGAGE, s));
 
     return builder.build();
