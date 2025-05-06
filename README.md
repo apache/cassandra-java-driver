@@ -76,7 +76,7 @@ See the [upgrade guide](upgrade_guide/) for details.
 
 [API docs]: https://docs.datastax.com/en/drivers/java/4.17
 [JIRA]: https://issues.apache.org/jira/issues/?jql=project%20%3D%20CASSJAVA%20ORDER%20BY%20key%20DESC
-[Mailing list]: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
+[Mailing list]: https://lists.apache.org/list.html?user@cassandra.apache.org
 [Changelog]: changelog/
 [FAQ]: faq/
 

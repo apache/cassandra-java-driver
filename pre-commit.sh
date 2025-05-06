@@ -19,7 +19,11 @@
 # STASH_NAME="pre-commit-$(date +%s)"
 # git stash save --keep-index $STASH_NAME
 
-mvn clean test
+mvn fmt:format
+mvn xml-format:xml-format
+mvn license:format
+mvn clean install -DskipTests
+mvn test
 RESULT=$?
 
 # STASHES=$(git stash list)

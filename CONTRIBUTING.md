@@ -17,42 +17,174 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-# Contributing guidelines
+# Contributing to the Apache Cassandra Java Driver
 
-## Code formatting
+Thank you for your interest in contributing!  
 
-### Java
+## Table of Contents
+- [Ways to Contribute](#ways-to-contribute)
+- [Contribution Process](#contribution-process)
+  - [Reporting Issues](#reporting-issues)
+  - [Submitting Changes (Pull Requests)](#submitting-changes-pull-requests)
+- [Development Setup](#development-setup)
+  - [Prerequisites](#prerequisites)
+  - [Building the Project](#building-the-project)
+  - [Running Tests](#running-tests)
+- [Coding Guidelines](#coding-guidelines)
+  - [General](#general)
+  - [Code Formatting and License Headers](#code-formatting-and-license-headers)
+  - [Javadoc](#javadoc)
+  - [Logging](#logging)
+  - [Don't abuse the stream API](#dont-abuse-the-stream-api)
+  - [Never assume a specific format for toString()](#never-assume-a-specific-format-for-tostring)
+  - [Concurrency annotations](#concurrency-annotations)
+  - [Nullability annotations](#nullability-annotations)
+- [Coding Guidelines for Tests](#coding-guidelines-for-tests)
+  - [Coding style -- test code](#coding-style----test-code)
+  - [Unit tests](#unit-tests)
+  - [Integration tests](#integration-tests)
 
-We follow the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html). See
-https://github.com/google/google-java-format for IDE plugins. The rules are not configurable.
+## Ways to Contribute
 
-The build will fail if the code is not formatted. To format all files from the command line, run:
- 
+There are many ways to contribute, including:
+
+- **Bug Reports**: Identify incorrect behavior, inconsistencies, or regressions in the driver. Provide reproduction steps when possible.
+- **Feature Requests**: Propose improvements or new functionality. Please describe the use case (not just a proposed API).
+- **Documentation Improvements**: Enhance guides, examples, javadocs, or configuration explanations.
+- **Pull Requests**: Submit fixes, enhancements, performance improvements, or refactorings.
+- **Testing Contributions**: Add missing tests, improve coverage, or enhance test infrastructure.
+- **Support & Triage**: Help evaluate reported issues or contribute to discussions.
+- **Verify Releases**: Verify the release artifacts work correctly in your environment, when a release is proposed in the mailing list.
+
+### Communication
+1. **Mailing Lists**: Mail to user-subscribe@cassandra.apache.org or dev-subscribe@cassandra.apache.org to join the user@cassandra.apache.org or dev@cassandra.apache.org mailing lists.
+2. **Slack**: [#cassandra-drivers](https://the-asf.slack.com/archives/C05LPRVNZV1) channel in the Apache Software Foundation [Slack](https://infra.apache.org/slack.html). You can ask for an invite to the ASF Slack workspace in the mailing lists.
+3. **JIRA**: https://issues.apache.org/jira/projects/CASSJAVA
+4. **GitHub Repository**: https://github.com/apache/cassandra-java-driver
+
+
+## Contribution Process
+
+### Reporting Issues
+
+All issues must be tracked in **Apache JIRA**:  
+<https://issues.apache.org/jira/projects/CASSJAVA>
+
+When filing an issue:
+
+- Clearly describe the problem, expected behavior, and actual behavior.
+- Include driver version, Java version, and Cassandra cluster details.
+- Add reproduction steps or a minimal test case if possible.
+- Use the appropriate issue type (Bug, Improvement, New Feature, etc.).
+- Set the correct components (e.g., `core`, `mapper-runtime`, `quarkus`).
+
+Committers will help refine the ticket if needed.
+
+### Submitting Changes (Pull Requests)
+
+All code changes require:
+
+1. **A corresponding JIRA ticket** unless it's a ninja fix.  
+   Include the JIRA key in the PR title, e.g.:  
+   `CASSJAVA-40: Driver testing against Java 21`
+   
+2. **A pull request on GitHub**  
+   Repository: <https://github.com/apache/cassandra-java-driver>
+
+3. **Tests**  
+   Every fix or feature should include or update tests. PRs without tests are rarely accepted.
+
+4. **Documentation updates**  
+   Update manual, javadocs, examples, or reference docs when applicable.
+
+5. **Passing CI**  
+   PRs must pass all CI jobs unless reviewers explicitly allow exceptions.
+
+6. **Code review**  
+   Committers will review your changes. 2 approvals from committers are required for merging.
+
+7. **Squash**
+   When the PR is ready to merge, use `git rebase -i` to squash your changes into a single commit before merging.
+   The commit message should follow the format of
+    ```txt
+    <JIRA number> <JIRA title>
+    patch by <Name>; reviewed by <Name> and <Name>
+    ```
+   For example,
+    ```txt
+    CASSJAVA-108 Update ESRI (and remove org.json) dependencies
+    patch by Bret McGuire; reviewed by Bret McGuire and Lukasz Antoniak
+    ```
+
+**Do not** mix unrelated changes in one PR—keep contributions focused.
+
+**Do not** base a PR on another one.
+
+**Do not** squash commits before the PR is ready to merge.
+
+---
+
+## Development Setup
+
+### Prerequisites
+
+- **Java 8+** 
+- **Maven 3.8.1+** 
+
+### Building the Project
+
+- Ensure Maven is installed and you are using Java 8.
+- Build the project with:
+  ```
+  mvn clean package -DskipTests
+  ```
+- If using an IDE like IntelliJ and encountering issues with guava-shaded classes:
+   - Run:
+     ```
+     mvn clean install -DskipTests
+     ```
+   - If IntelliJ uses a different Maven version, use the Maven window in IntelliJ: under `Lifecycle`, click `clean` and then `install`.
+
+### Running Tests
+
+#### Unit Tests
+
+```bash
+mvn clean install -DskipTests
+mvn test
 ```
-mvn fmt:format
-```
 
-Some aspects are not covered by the formatter: braces must be used with `if`, `else`, `for`, `do`
-and `while` statements, even when the body is empty or contains only a single statement.
+#### Integration Tests
 
-### XML
+1. Install Cassandra Cluster Manager (CCM) following its [README](https://github.com/apache/cassandra-ccm).
+2.  **MacOS only**, for CCM and Simulacron-based tests, enable loopback aliases:
+    ```shell
+    for i in {2..255}; do sudo ifconfig lo0 alias 127.0.0.$i up; done
+    ```
+   Note: This may slow down networking. To remove the aliases after testing:
+   ```shell
+   for i in {2..255}; do sudo ifconfig lo0 -alias 127.0.0.$i up; done
+   ```
+3. **MacOS Apple Silicon only**, for some Cassandra versions, you might need to work around the JNA 5.6.0 version, which is incompatible to Apple Silicon.
+    ```shell
+    mvn dependency:get -Dartifact=net.java.dev.jna:jna:5.10.0
+    cp ~/.m2/repository/net/java/dev/jna/jna/5.10.0/jna-5.10.0.jar ~/.ccm/repository/4.0.19/lib/jna-5.6.0.jar
+    ```
+4. Run integration tests:
+   ```
+   mvn clean verify
+   ```
+   To target a specific Cassandra version or distribution:
+   ```
+   mvn verify -Dccm.version=3.11.0
+   mvn verify -Dccm.distribution=dse -Dccm.version=6.8.0
+   ```
 
-The build will fail if XML files are not formatted correctly. Run the following command before you
-commit:
+---
 
-```java
-mvn xml-format:xml-format
-```
+## Coding Guidelines
 
-The formatter does not enforce a maximum line length, but please try to keep it below 100 characters
-to keep files readable across all mediums (IDE, terminal, Github...).
-
-### Other text files (markdown, etc)
-
-Similarly, enforce a right margin of 100 characters in those files. Editors and IDEs generally have
-a way to configure this (for IDEA, install the "Wrap to column" plugin).
-
-## Coding style -- production code
+### General
 
 Do not use static imports. They make things harder to understand when you look at the code 
 someplace where you don't have IDE support, like Github's code view.
@@ -65,6 +197,19 @@ understood cases (like `i` for a loop index).
 Keep source files short. Short files are easy to understand and test. The average should probably 
 be around 200-300 lines. 
 
+### Code Formatting and License Headers
+
+- We follow the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html). See [google-java-format](https://github.com/google/google-java-format) for IDE plugins.
+- To format code:
+  ```
+  # Java files
+  mvn fmt:format
+  # XML files
+  mvn xml-format:xml-format
+  # License headers
+  mvn license:format
+  ```
+
 ### Javadoc
 
 All types in "API" packages must be documented. For "internal" packages, documentation is optional,
@@ -73,6 +218,7 @@ where the component fits in the architecture, and anything else that you feel is
 
 You don't need to document every parameter or return type, or even every method. Don't document 
 something if it is completely obvious, we don't want to end up with this:
+
 
 ```java
 /**
@@ -102,7 +248,7 @@ in the documented item's signature.
 Builder withLimit(int limit) {
 ```
 
-### Logs
+### Logging
 
 We use SLF4J; loggers are declared like this:
 
@@ -115,7 +261,7 @@ Logs are intended for two personae:
 * Ops who manage the application in production.
 * Developers (maybe you) who debug a particular issue.
 
-The first 3 log levels are for ops:
+#### Log levels
 
 * `ERROR`: something that renders the driver -- or a part of it -- completely unusable. An action is
   required to fix it: bouncing the client, applying a patch, etc.
@@ -144,16 +290,8 @@ perspective (think about debugging an issue remotely, and all you have are the l
 Note that `DEBUG` and `TRACE` can coexist within the same component, for example the LBP
 initializing is a one-time event, but returning a query plan is a per-request event.
 
-Logs statements start with a prefix that identifies its origin, for example:
-
-* for components that are unique to the cluster instance, just the cluster name: `[c0]`.
-* for sessions, the cluster name + a generated unique identifier: `[c0|s0]`.
-* for channel pools, the session identifier + the address of the node: `[c0|s0|/127.0.0.2:9042]`.
-* for channels, the identifier of the owner (session or control connection) + the Netty identifier,
-  which indicates the local and remote ports:
-  `[c0|s0|id: 0xf9ef0b15, L:/127.0.0.1:51482 - R:/127.0.0.1:9042]`.
-* for request handlers, the session identifier, a unique identifier, and the index of the 
-  speculative execution: `[c0|s0|1077199500|0]`.
+**Log prefix** shows origin, e.g.:  
+`[s0|90232530|0]` (session name | hash code of the CqlRequestHandler instance | number of request attempts)
 
 Tests run with the configuration defined in `src/test/resources/logback-test.xml`. The default level
 for driver classes is `WARN`, but you can override it with a system property: `-DdriverLevel=DEBUG`.
@@ -224,7 +362,7 @@ Please annotate any new class or interface with the appropriate annotations: `@N
 the types from `edu.umd.cs.findbugs.annotations`, there are homonyms in the classpath.
 
 
-## Coding style -- test code
+## Coding Guidelines for Tests
 
 Static imports are permitted in a couple of places:
 * All AssertJ methods, e.g.:
@@ -340,6 +478,10 @@ Do not mix `CcmRule` and `SimulacronRule` in the same test. It makes things hard
 can be inefficient (if the `SimulacronRule` is method-level, it will create a Simulacron cluster for
 every test method, even those that only need CCM).
 
+Use the `@BackendRequirement` annotation to restrict the backend type and version. 
+Specify the Cassandra Distribution, CASSANDRA/DSE/HCD, and the version requirement.
+For example, `@BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "2.2")`
+
 ##### Class-level rules
 
 Rules annotated with `@ClassRule` wrap the whole test class, and are reused across methods. Try to
@@ -371,7 +513,7 @@ public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
 Only use this for:
 
-* CCM tests that use `@CassandraRequirement` or `@DseRequirement` restrictions at the method level
+* CCM tests that use `@BackendRequirement` restrictions at the method level
   (ex: `BatchStatementIT`).
 * tests where you *really* need to restart from a clean state for every method.
 
@@ -379,156 +521,3 @@ Only use this for:
 
 It's also possible to use a `@ClassRule` for CCM / Simulacron, and a `@Rule` for the session rule.
 In that case, you don't need to use a rule chain.
-
-## Running the tests
-
-### Unit tests
-
-    mvn clean test
-    
-This currently takes about 30 seconds. The goal is to keep it within a couple of minutes (it runs
-for each commit if you enable the pre-commit hook -- see below).
-
-### Integration tests
-
-    mvn clean verify
-
-This currently takes about 9 minutes. We don't have a hard limit, but ideally it should stay within
-30 minutes to 1 hour.
-
-You can skip test categories individually with `-DskipParallelizableITs`, `-DskipSerialITs` and
-`-DskipIsolatedITs` (`-DskipITs` still works to skip them all at once).
-
-### Configuring MacOS for Simulacron
-
-Simulacron (used in integration tests) relies on loopback aliases to simulate multiple nodes. On
-Linux or Windows, you shouldn't have anything to do. On MacOS, run this script:
-
-```
-#!/bin/bash
-for sub in {0..4}; do
-    echo "Opening for 127.0.$sub"
-    for i in {0..255}; do sudo ifconfig lo0 alias 127.0.$sub.$i up; done
-done
-```
-
-Note that this is known to cause temporary increased CPU usage in OS X initially while mDNSResponder
-acclimates itself to the presence of added IP addresses. This lasts several minutes. Also, this does
-not survive reboots.
-
-
-## License headers
-
-The build will fail if some license headers are missing. To update all files from the command line,
-run:
-
-```
-mvn license:format
-```
-
-## Pre-commit hook (highly recommended)
- 
-Ensure `pre-commit.sh` is executable, then run:
-
-```
-ln -s ../../pre-commit.sh .git/hooks/pre-commit
-```
-
-This will only allow commits if the tests pass. It is also a good reminder to keep the test suite
-short.
-
-Note: the tests run on the current state of the working directory. I tried to add a `git stash` in
-the script to only test what's actually being committed, but I couldn't get it to run reliably
-(it's still in there but commented). Keep this in mind when you commit, and don't forget to re-add
-the changes if the first attempt failed and you fixed the tests.
-
-## Speeding up the build for local tests
-
-If you need to install something in your local repository quickly, you can use the `fast` profile to
-skip all "non-essential" checks (licenses, formatting, tests, etc):
-
-```
-mvn clean install -Pfast
-```
-
-You can speed things up even more by targeting specific modules with the `-pl` option:
-
-```
-mvn clean install -Pfast -pl core,query-builder,mapper-runtime,mapper-processor,bom
-```
-
-Please run the normal build at least once before you push your changes.
-
-## Commits
-
-Keep your changes **focused**. Each commit should have a single, clear purpose expressed in its 
-message.
-
-Resist the urge to "fix" cosmetic issues (add/remove blank lines, move methods, etc.) in existing
-code. This adds cognitive load for reviewers, who have to figure out which changes are relevant to
-the actual issue. If you see legitimate issues, like typos, address them in a separate commit (it's
-fine to group multiple typo fixes in a single commit).
-
-Isolate trivial refactorings into separate commits. For example, a method rename that affects dozens
-of call sites can be reviewed in a few seconds, but if it's part of a larger diff it gets mixed up
-with more complex changes (that might affect the same lines), and reviewers have to check every
-line.
-
-Commit message subjects start with a capital letter, use the imperative form and do **not** end
-with a period:
-
-* correct: "Add test for CQL request handler"
-* incorrect: "~~Added test for CQL request handler~~"
-* incorrect: "~~New test for CQL request handler~~"
-
-Avoid catch-all messages like "Minor cleanup", "Various fixes", etc. They don't provide any useful
-information to reviewers, and might be a sign that your commit contains unrelated changes.
- 
-We don't enforce a particular subject line length limit, but try to keep it short.
-
-You can add more details after the subject line, separated by a blank line. The following pattern
-(inspired by [Netty](http://netty.io/wiki/writing-a-commit-message.html)) is not mandatory, but
-welcome for complex changes:
-
-```
-One line description of your change
- 
-Motivation:
-
-Explain here the context, and why you're making that change.
-What is the problem you're trying to solve.
- 
-Modifications:
-
-Describe the modifications you've done.
- 
-Result:
-
-After your change, what will change.
-```
-
-## Pull requests
-
-Like commits, pull requests should be focused on a single, clearly stated goal.
-
-Don't base a pull request onto another one, it's too complicated to follow two branches that evolve
-at the same time. If a ticket depends on another, wait for the first one to be merged. 
-
-If you have to address feedback, avoid rewriting the history (e.g. squashing or amending commits):
-this makes the reviewers' job harder, because they have to re-read the full diff and figure out
-where your new changes are. Instead, push a new commit on top of the existing history; it will be
-squashed later when the PR gets merged. If the history is complex, it's a good idea to indicate in
-the message where the changes should be squashed:
-
-```
-* 20c88f4 - Address feedback (to squash with "Add metadata parsing logic") (36 minutes ago)
-* 7044739 - Fix various typos in Javadocs (2 days ago)
-* 574dd08 - Add metadata parsing logic (2 days ago)
-```
-
-(Note that the message refers to the other commit's subject line, not the SHA-1. This way it's still
-relevant if there are intermediary rebases.)
-
-If you need new stuff from the base branch, it's fine to rebase and force-push, as long as you don't
-rewrite the history. Just give a heads up to the reviewers beforehand. Don't push a merge commit to
-a pull request.
