@@ -561,28 +561,23 @@
         <plugin>
           <groupId>org.revapi</groupId>
           <artifactId>revapi-maven-plugin</artifactId>
-          <version>0.10.5</version>
+          <version>0.15.1</version>
           <configuration>
             <outputNonIdentifyingDifferenceInfo>false</outputNonIdentifyingDifferenceInfo>
             <versionFormat>\d+\.\d+\.\d+</versionFormat>
-            <analysisConfiguration>
-              <revapi.ignore>
-                <item>
-                  <!-- We don't consider this a problem -->
-                  <code>java.class.externalClassExposedInAPI</code>
-                </item>
-              </revapi.ignore>
-            </analysisConfiguration>
             <oldArtifacts>
               <!-- The previous release used DataStax groupId, remove this after the next release -->
               <artifact>${project.groupId}:${project.artifactId}:RELEASE</artifact>
             </oldArtifacts>
+            <analysisConfigurationFiles>
+              <file>revapi.json</file>
+            </analysisConfigurationFiles>
           </configuration>
           <dependencies>
             <dependency>
               <groupId>org.revapi</groupId>
               <artifactId>revapi-java</artifactId>
-              <version>0.22.1</version>
+              <version>0.28.4</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -596,9 +591,33 @@
           <artifactId>flatten-maven-plugin</artifactId>
           <version>1.2.1</version>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>3.5.0</version>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
+      <plugin>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>enforce-maven</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion>
+                  <!-- revapi 0.15.1 requires Maven version 3.8.1 -->
+                  <version>[3.8.1,)</version>
+                </requireMavenVersion>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
@@ -901,12 +920,6 @@ limitations under the License.]]></inlineHeader>
             <goals>
               <goal>check</goal>
             </goals>
-            <configuration>
-              <analysisConfigurationFiles>
-                <!-- Present at the root of each module that doesn't skip this goal -->
-                <analysisConfigurationFile>revapi.json</analysisConfigurationFile>
-              </analysisConfigurationFiles>
-            </configuration>
           </execution>
         </executions>
       </plugin>

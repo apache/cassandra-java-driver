@@ -1,5 +1,3 @@
-// Configures Revapi (https://revapi.org/getting-started.html) to check API compatibility between
-// successive driver versions.
 {
   "revapi": {
     "java": {
@@ -12,7 +10,7 @@
             "com\\.datastax\\.oss\\.driver\\.shaded(\\..+)?",
             "com\\.datastax\\.oss\\.simulacron(\\..+)?",
             "org\\.assertj(\\..+)?",
-            // Don't re-check sibling modules that this module depends on
+            "// Don't re-check sibling modules that this module depends on",
             "com\\.datastax\\.(oss|dse)\\.driver\\.api\\.core(\\..+)?"
           ]
         }
