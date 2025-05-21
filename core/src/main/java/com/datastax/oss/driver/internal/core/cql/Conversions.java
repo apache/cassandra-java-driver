@@ -320,13 +320,14 @@ public class Conversions {
       Result result,
       ExecutionInfo executionInfo,
       CqlSession session,
-      InternalDriverContext context) {
+      InternalDriverContext context,
+      DriverExecutionProfile executionProfile) {
     if (result instanceof Rows) {
       Rows rows = (Rows) result;
       Statement<?> statement = (Statement<?>) executionInfo.getRequest();
       ColumnDefinitions columnDefinitions = getResultDefinitions(rows, statement, context);
       return new DefaultAsyncResultSet(
-          columnDefinitions, executionInfo, rows.getData(), session, context);
+          columnDefinitions, executionInfo, rows.getData(), session, context, executionProfile);
     } else if (result instanceof Prepared) {
       // This should never happen
       throw new IllegalArgumentException("Unexpected PREPARED response to a CQL query");

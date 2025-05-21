@@ -289,6 +289,7 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.REQUEST_WARN_IF_SET_KEYSPACE, true);
     map.put(TypedDriverOption.REQUEST_TRACE_ATTEMPTS, 5);
     map.put(TypedDriverOption.REQUEST_TRACE_INTERVAL, Duration.ofMillis(3));
+    map.put(TypedDriverOption.REQUEST_TRACE_REPORT_EVERY_PAGE_FETCH, true);
     map.put(TypedDriverOption.REQUEST_TRACE_CONSISTENCY, "ONE");
     map.put(TypedDriverOption.REQUEST_LOG_WARNINGS, true);
     map.put(TypedDriverOption.GRAPH_PAGING_ENABLED, "AUTO");

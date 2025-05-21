@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
@@ -55,6 +56,7 @@ public class DefaultAsyncResultSetTest {
   @Mock private Statement<?> statement;
   @Mock private CqlSession session;
   @Mock private InternalDriverContext context;
+  @Mock private DriverExecutionProfile executionProfile;
 
   @Before
   public void setup() {
@@ -73,7 +75,12 @@ public class DefaultAsyncResultSetTest {
     // When
     DefaultAsyncResultSet resultSet =
         new DefaultAsyncResultSet(
-            columnDefinitions, executionInfo, new ArrayDeque<>(), session, context);
+            columnDefinitions,
+            executionInfo,
+            new ArrayDeque<>(),
+            session,
+            context,
+            executionProfile);
 
     // Then
     assertThat(resultSet.hasMorePages()).isFalse();
@@ -95,7 +102,12 @@ public class DefaultAsyncResultSetTest {
     // When
     DefaultAsyncResultSet resultSet =
         new DefaultAsyncResultSet(
-            columnDefinitions, executionInfo, new ArrayDeque<>(), session, context);
+            columnDefinitions,
+            executionInfo,
+            new ArrayDeque<>(),
+            session,
+            context,
+            executionProfile);
     assertThat(resultSet.hasMorePages()).isTrue();
     CompletionStage<AsyncResultSet> nextPageFuture = resultSet.fetchNextPage();
 
@@ -113,7 +125,12 @@ public class DefaultAsyncResultSetTest {
     // When
     DefaultAsyncResultSet resultSet =
         new DefaultAsyncResultSet(
-            columnDefinitions, executionInfo, new ArrayDeque<>(), session, context);
+            columnDefinitions,
+            executionInfo,
+            new ArrayDeque<>(),
+            session,
+            context,
+            executionProfile);
 
     // Then
     assertThat(resultSet.wasApplied()).isTrue();
@@ -128,7 +145,8 @@ public class DefaultAsyncResultSetTest {
 
     // When
     DefaultAsyncResultSet resultSet =
-        new DefaultAsyncResultSet(columnDefinitions, executionInfo, data, session, context);
+        new DefaultAsyncResultSet(
+            columnDefinitions, executionInfo, data, session, context, executionProfile);
 
     // Then
     assertThat(resultSet.wasApplied()).isTrue();
@@ -149,7 +167,8 @@ public class DefaultAsyncResultSetTest {
 
     // When
     DefaultAsyncResultSet resultSet =
-        new DefaultAsyncResultSet(columnDefinitions, executionInfo, data, session, context);
+        new DefaultAsyncResultSet(
+            columnDefinitions, executionInfo, data, session, context, executionProfile);
 
     // Then
     assertThat(resultSet.wasApplied()).isFalse();
@@ -170,7 +189,8 @@ public class DefaultAsyncResultSetTest {
 
     // When
     DefaultAsyncResultSet resultSet =
-        new DefaultAsyncResultSet(columnDefinitions, executionInfo, data, session, context);
+        new DefaultAsyncResultSet(
+            columnDefinitions, executionInfo, data, session, context, executionProfile);
 
     // Then
     assertThat(resultSet.wasApplied()).isTrue();
@@ -187,7 +207,12 @@ public class DefaultAsyncResultSetTest {
     // When
     DefaultAsyncResultSet resultSet =
         new DefaultAsyncResultSet(
-            columnDefinitions, executionInfo, new ArrayDeque<>(), session, context);
+            columnDefinitions,
+            executionInfo,
+            new ArrayDeque<>(),
+            session,
+            context,
+            executionProfile);
 
     // Then
     resultSet.wasApplied();

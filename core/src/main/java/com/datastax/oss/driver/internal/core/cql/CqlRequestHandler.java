@@ -321,7 +321,7 @@ public class CqlRequestHandler implements Throttled {
       ExecutionInfo executionInfo =
           buildExecutionInfo(callback, resultMessage, responseFrame, schemaInAgreement);
       AsyncResultSet resultSet =
-          Conversions.toResultSet(resultMessage, executionInfo, session, context);
+          Conversions.toResultSet(resultMessage, executionInfo, session, context, executionProfile);
       if (result.complete(resultSet)) {
         cancelScheduledTasks();
         throttler.signalSuccess(this);

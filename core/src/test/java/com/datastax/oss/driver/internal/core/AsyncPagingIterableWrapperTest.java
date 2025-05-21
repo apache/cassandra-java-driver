@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.MappedAsyncPagingIterable;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinition;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
@@ -50,6 +51,7 @@ public class AsyncPagingIterableWrapperTest {
   @Mock private Statement<?> statement;
   @Mock private CqlSession session;
   @Mock private InternalDriverContext context;
+  @Mock private DriverExecutionProfile executionProfile;
 
   @Before
   public void setup() {
@@ -74,10 +76,15 @@ public class AsyncPagingIterableWrapperTest {
     ExecutionInfo executionInfo1 = mockExecutionInfo();
     DefaultAsyncResultSet resultSet1 =
         new DefaultAsyncResultSet(
-            columnDefinitions, executionInfo1, mockData(0, 5), session, context);
+            columnDefinitions, executionInfo1, mockData(0, 5), session, context, executionProfile);
     DefaultAsyncResultSet resultSet2 =
         new DefaultAsyncResultSet(
-            columnDefinitions, mockExecutionInfo(), mockData(5, 10), session, context);
+            columnDefinitions,
+            mockExecutionInfo(),
+            mockData(5, 10),
+            session,
+            context,
+            executionProfile);
     // chain them together:
     ByteBuffer mockPagingState = ByteBuffer.allocate(0);
     when(executionInfo1.getPagingState()).thenReturn(mockPagingState);
@@ -111,7 +118,12 @@ public class AsyncPagingIterableWrapperTest {
     // Given
     DefaultAsyncResultSet resultSet =
         new DefaultAsyncResultSet(
-            columnDefinitions, mockExecutionInfo(), mockData(0, 10), session, context);
+            columnDefinitions,
+            mockExecutionInfo(),
+            mockData(0, 10),
+            session,
+            context,
+            executionProfile);
 
     // When
     MappedAsyncPagingIterable<Integer> iterable = resultSet.map(row -> row.getInt("i"));

@@ -994,7 +994,14 @@ public enum DefaultDriverOption implements DriverOption {
    *
    * <p>Value-type: boolean
    */
-  SSL_ALLOW_DNS_REVERSE_LOOKUP_SAN("advanced.ssl-engine-factory.allow-dns-reverse-lookup-san");
+  SSL_ALLOW_DNS_REVERSE_LOOKUP_SAN("advanced.ssl-engine-factory.allow-dns-reverse-lookup-san"),
+
+  /**
+   * Report trace for every page fetch request
+   *
+   * <p>Value-type: {@link Boolean}
+   */
+  REQUEST_TRACE_REPORT_EVERY_PAGE_FETCH("advanced.request.trace.report-every-page-fetch");
 
   private final String path;
 
