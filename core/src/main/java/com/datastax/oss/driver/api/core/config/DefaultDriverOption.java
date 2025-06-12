@@ -994,7 +994,48 @@ public enum DefaultDriverOption implements DriverOption {
    *
    * <p>Value-type: boolean
    */
-  SSL_ALLOW_DNS_REVERSE_LOOKUP_SAN("advanced.ssl-engine-factory.allow-dns-reverse-lookup-san");
+  SSL_ALLOW_DNS_REVERSE_LOOKUP_SAN("advanced.ssl-engine-factory.allow-dns-reverse-lookup-san"),
+  /**
+   * An address to always translate all node addresses to that same proxy hostname no matter what IP
+   * address a node has, but still using its native transport port.
+   *
+   * <p>Value-Type: {@link String}
+   */
+  ADDRESS_TRANSLATOR_ADVERTISED_HOSTNAME("advanced.address-translator.advertised-hostname"),
+  /**
+   * A map of Cassandra node subnets (CIDR notations) to target addresses, for example (note quoted
+   * keys):
+   *
+   * <pre>
+   * advanced.address-translator.subnet-addresses {
+   *   "100.64.0.0/15" = "cassandra.datacenter1.com:9042"
+   *   "100.66.0.0/15" = "cassandra.datacenter2.com:9042"
+   *   # IPv6 example:
+   *   # "::ffff:6440:0/111" = "cassandra.datacenter1.com:9042"
+   *   # "::ffff:6442:0/111" = "cassandra.datacenter2.com:9042"
+   * }
+   * </pre>
+   *
+   * Note: subnets must be represented as prefix blocks, see {@link
+   * inet.ipaddr.Address#isPrefixBlock()}.
+   *
+   * <p>Value type: {@link java.util.Map Map}&#60;{@link String},{@link String}&#62;
+   */
+  ADDRESS_TRANSLATOR_SUBNET_ADDRESSES("advanced.address-translator.subnet-addresses"),
+  /**
+   * A default address to fallback to if Cassandra node IP isn't contained in any of the configured
+   * subnets.
+   *
+   * <p>Value-Type: {@link String}
+   */
+  ADDRESS_TRANSLATOR_DEFAULT_ADDRESS("advanced.address-translator.default-address"),
+  /**
+   * Whether to resolve the addresses on initialization (if true) or on each node (re-)connection
+   * (if false). Defaults to false.
+   *
+   * <p>Value-Type: boolean
+   */
+  ADDRESS_TRANSLATOR_RESOLVE_ADDRESSES("advanced.address-translator.resolve-addresses");
 
   private final String path;
 

@@ -121,7 +121,7 @@ public class ContactPointsTest {
         ContactPoints.merge(Collections.emptySet(), ImmutableList.of("foobar"), true);
 
     assertThat(endPoints).isEmpty();
-    assertLog(Level.WARN, "Ignoring invalid contact point foobar (expecting host:port)");
+    assertLog(Level.WARN, "Ignoring invalid contact point foobar (expecting format host:port)");
   }
 
   @Test
@@ -132,7 +132,7 @@ public class ContactPointsTest {
     assertThat(endPoints).isEmpty();
     assertLog(
         Level.WARN,
-        "Ignoring invalid contact point 127.0.0.1:foobar (expecting a number, got foobar)");
+        "Ignoring invalid contact point 127.0.0.1:foobar (expecting port to be a number, got foobar)");
   }
 
   @Test

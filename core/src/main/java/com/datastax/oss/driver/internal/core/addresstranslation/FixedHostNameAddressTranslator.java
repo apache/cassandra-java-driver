@@ -17,8 +17,9 @@
  */
 package com.datastax.oss.driver.internal.core.addresstranslation;
 
+import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.ADDRESS_TRANSLATOR_ADVERTISED_HOSTNAME;
+
 import com.datastax.oss.driver.api.core.addresstranslation.AddressTranslator;
-import com.datastax.oss.driver.api.core.config.DriverOption;
 import com.datastax.oss.driver.api.core.context.DriverContext;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.net.InetSocketAddress;
@@ -37,28 +38,13 @@ public class FixedHostNameAddressTranslator implements AddressTranslator {
 
   private static final Logger LOG = LoggerFactory.getLogger(FixedHostNameAddressTranslator.class);
 
-  public static final String ADDRESS_TRANSLATOR_ADVERTISED_HOSTNAME =
-      "advanced.address-translator.advertised-hostname";
-
-  public static DriverOption ADDRESS_TRANSLATOR_ADVERTISED_HOSTNAME_OPTION =
-      new DriverOption() {
-        @NonNull
-        @Override
-        public String getPath() {
-          return ADDRESS_TRANSLATOR_ADVERTISED_HOSTNAME;
-        }
-      };
-
   private final String advertisedHostname;
   private final String logPrefix;
 
   public FixedHostNameAddressTranslator(@NonNull DriverContext context) {
     logPrefix = context.getSessionName();
     advertisedHostname =
-        context
-            .getConfig()
-            .getDefaultProfile()
-            .getString(ADDRESS_TRANSLATOR_ADVERTISED_HOSTNAME_OPTION);
+        context.getConfig().getDefaultProfile().getString(ADDRESS_TRANSLATOR_ADVERTISED_HOSTNAME);
   }
 
   @NonNull

@@ -118,6 +118,55 @@ datastax-java-driver.advanced.address-translator.class = com.mycompany.MyAddress
 Note: the contact points provided while creating the `CqlSession` are not translated, only addresses
 retrieved from or sent by Cassandra nodes are.
 
+### Fixed proxy hostname
+
+If your client applications access Cassandra through some kind of proxy (eg. with AWS PrivateLink when all Cassandra
+nodes are exposed via one hostname pointing to AWS Endpoint), you can configure driver with
+`FixedHostNameAddressTranslator` to always translate all node addresses to that same proxy hostname, no matter what IP
+address a node has but still using its native transport port.
+
+To use it, specify the following in the [configuration](../configuration):
+
+```
+datastax-java-driver.advanced.address-translator.class = FixedHostNameAddressTranslator
+advertised-hostname = proxyhostname
+```
+
+### Fixed proxy hostname per subnet
+
+When running Cassandra in a private network and accessing it from outside of that private network via some kind of
+proxy, we have an option to use `FixedHostNameAddressTranslator`. But for multi-datacenter Cassandra deployments, we
+want to have more control over routing queries to a specific datacenter (eg. for optimizing latencies), which requires
+setting up a separate proxy per datacenter.
+
+Normally, each Cassandra datacenter nodes are deployed to a different subnet to support internode communications in the
+cluster and avoid IP address collisions. So when Cassandra broadcasts its nodes IP addresses, we can determine which
+datacenter that node belongs to by checking its IP address against the given datacenter subnet.
+
+For such scenarios you can use `SubnetAddressTranslator` to translate node IPs to the datacenter proxy address
+associated with it. 
+
+To use it, specify the following in the [configuration](../configuration):
+```
+datastax-java-driver.advanced.address-translator {
+  class = SubnetAddressTranslator
+  subnet-addresses {
+    "100.64.0.0/15" = "cassandra.datacenter1.com:9042"
+    "100.66.0.0/15" = "cassandra.datacenter2.com:9042"
+    # IPv6 example:
+    # "::ffff:6440:0/111" = "cassandra.datacenter1.com:9042"
+    # "::ffff:6442:0/111" = "cassandra.datacenter2.com:9042"
+  }
+  # Optional. When configured, addresses not matching the configured subnets are translated to this address.
+  default-address = "cassandra.datacenter1.com:9042"
+  # Whether to resolve the addresses once on initialization (if true) or on each node (re-)connection (if false).
+  # If not configured, defaults to false.
+  resolve-addresses = false
+}
+```
+
+Such setup is common for running Cassandra on Kubernetes with [k8ssandra](https://docs.k8ssandra.io/).
+
 ### EC2 multi-region
 
 If you deploy both Cassandra and client applications on Amazon EC2, and your cluster spans multiple regions, you'll have

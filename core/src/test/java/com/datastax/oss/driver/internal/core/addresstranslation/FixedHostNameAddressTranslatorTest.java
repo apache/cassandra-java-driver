@@ -17,6 +17,7 @@
  */
 package com.datastax.oss.driver.internal.core.addresstranslation;
 
+import static com.datastax.oss.driver.api.core.config.DefaultDriverOption.ADDRESS_TRANSLATOR_ADVERTISED_HOSTNAME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -33,9 +34,7 @@ public class FixedHostNameAddressTranslatorTest {
   @Test
   public void should_translate_address() {
     DriverExecutionProfile defaultProfile = mock(DriverExecutionProfile.class);
-    when(defaultProfile.getString(
-            FixedHostNameAddressTranslator.ADDRESS_TRANSLATOR_ADVERTISED_HOSTNAME_OPTION))
-        .thenReturn("myaddress");
+    when(defaultProfile.getString(ADDRESS_TRANSLATOR_ADVERTISED_HOSTNAME)).thenReturn("myaddress");
     DefaultDriverContext defaultDriverContext =
         MockedDriverContextFactory.defaultDriverContext(Optional.of(defaultProfile));
 

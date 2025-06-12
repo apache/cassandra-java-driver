@@ -896,6 +896,20 @@ public class TypedDriverOption<ValueT> {
               DefaultDriverOption.LOAD_BALANCING_DC_FAILOVER_ALLOW_FOR_LOCAL_CONSISTENCY_LEVELS,
               GenericType.BOOLEAN);
 
+  public static final TypedDriverOption<String> ADDRESS_TRANSLATOR_ADVERTISED_HOSTNAME =
+      new TypedDriverOption<>(
+          DefaultDriverOption.ADDRESS_TRANSLATOR_ADVERTISED_HOSTNAME, GenericType.STRING);
+  public static final TypedDriverOption<Map<String, String>> ADDRESS_TRANSLATOR_SUBNET_ADDRESSES =
+      new TypedDriverOption<>(
+          DefaultDriverOption.ADDRESS_TRANSLATOR_SUBNET_ADDRESSES,
+          GenericType.mapOf(GenericType.STRING, GenericType.STRING));
+  public static final TypedDriverOption<String> ADDRESS_TRANSLATOR_DEFAULT_ADDRESS =
+      new TypedDriverOption<>(
+          DefaultDriverOption.ADDRESS_TRANSLATOR_DEFAULT_ADDRESS, GenericType.STRING);
+  public static final TypedDriverOption<Boolean> ADDRESS_TRANSLATOR_RESOLVE_ADDRESSES =
+      new TypedDriverOption<>(
+          DefaultDriverOption.ADDRESS_TRANSLATOR_RESOLVE_ADDRESSES, GenericType.BOOLEAN);
+
   /**
    * Ordered preference list of remote dcs optionally supplied for automatic failover and included
    * in query plan. This feature is enabled only when max-nodes-per-remote-dc is greater than 0.

@@ -101,12 +101,24 @@ public class TypesafeDriverConfigTest {
         parse(
             "int1 = 42 \n auth_provider { auth_thing_one= one \n auth_thing_two = two \n auth_thing_three = three}");
     DriverExecutionProfile base = config.getDefaultProfile();
-    base.getStringMap(MockOptions.AUTH_PROVIDER);
     Map<String, String> map = base.getStringMap(MockOptions.AUTH_PROVIDER);
     assertThat(map.entrySet().size()).isEqualTo(3);
     assertThat(map.get("auth_thing_one")).isEqualTo("one");
     assertThat(map.get("auth_thing_two")).isEqualTo("two");
     assertThat(map.get("auth_thing_three")).isEqualTo("three");
+  }
+
+  @Test
+  public void should_fetch_string_map_with_forward_slash_in_keys() {
+    TypesafeDriverConfig config =
+        parse(
+            "subnet_addresses { 100.64.0.0/15 = \"cassandra.datacenter1.com:9042\" \n \"100.66.0.0/15\" = \"cassandra.datacenter2.com\" \n \"::ffff:6440:0/111\" = \"cassandra.datacenter3.com:19042\" }");
+    DriverExecutionProfile base = config.getDefaultProfile();
+    Map<String, String> map = base.getStringMap(MockOptions.SUBNET_ADDRESSES);
+    assertThat(map.entrySet().size()).isEqualTo(3);
+    assertThat(map.get("100.64.0.\"0/15\"")).isEqualTo("cassandra.datacenter1.com:9042");
+    assertThat(map.get("\"100.66.0.0/15\"")).isEqualTo("cassandra.datacenter2.com");
+    assertThat(map.get("\"::ffff:6440:0/111\"")).isEqualTo("cassandra.datacenter3.com:19042");
   }
 
   @Test

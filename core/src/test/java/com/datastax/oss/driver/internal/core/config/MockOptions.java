@@ -24,6 +24,7 @@ public enum MockOptions implements DriverOption {
   INT1("int1"),
   INT2("int2"),
   AUTH_PROVIDER("auth_provider"),
+  SUBNET_ADDRESSES("subnet_addresses"),
   ;
 
   private final String path;
