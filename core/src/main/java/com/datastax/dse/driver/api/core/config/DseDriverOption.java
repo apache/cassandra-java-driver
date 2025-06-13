@@ -170,13 +170,6 @@ public enum DseDriverOption implements DriverOption {
   GRAPH_TIMEOUT("basic.graph.timeout"),
 
   /**
-   * Whether to send events for Insights monitoring.
-   *
-   * <p>Value type: boolean
-   */
-  MONITOR_REPORTING_ENABLED("advanced.monitor-reporting.enabled"),
-
-  /**
    * Whether to enable paging for Graph queries.
    *
    * <p>Value type: {@link String}

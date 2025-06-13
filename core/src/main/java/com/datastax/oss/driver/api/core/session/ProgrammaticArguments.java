@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.function.Predicate;
 
 /**
@@ -66,9 +65,6 @@ public class ProgrammaticArguments {
   private final AuthProvider authProvider;
   private final SslEngineFactory sslEngineFactory;
   private final InetSocketAddress cloudProxyAddress;
-  private final UUID startupClientId;
-  private final String startupApplicationName;
-  private final String startupApplicationVersion;
   private final MutableCodecRegistry codecRegistry;
   private final Object metricRegistry;
 
@@ -84,9 +80,6 @@ public class ProgrammaticArguments {
       @Nullable AuthProvider authProvider,
       @Nullable SslEngineFactory sslEngineFactory,
       @Nullable InetSocketAddress cloudProxyAddress,
-      @Nullable UUID startupClientId,
-      @Nullable String startupApplicationName,
-      @Nullable String startupApplicationVersion,
       @Nullable MutableCodecRegistry codecRegistry,
       @Nullable Object metricRegistry) {
 
@@ -101,9 +94,6 @@ public class ProgrammaticArguments {
     this.authProvider = authProvider;
     this.sslEngineFactory = sslEngineFactory;
     this.cloudProxyAddress = cloudProxyAddress;
-    this.startupClientId = startupClientId;
-    this.startupApplicationName = startupApplicationName;
-    this.startupApplicationVersion = startupApplicationVersion;
     this.codecRegistry = codecRegistry;
     this.metricRegistry = metricRegistry;
   }
@@ -166,21 +156,6 @@ public class ProgrammaticArguments {
   }
 
   @Nullable
-  public UUID getStartupClientId() {
-    return startupClientId;
-  }
-
-  @Nullable
-  public String getStartupApplicationName() {
-    return startupApplicationName;
-  }
-
-  @Nullable
-  public String getStartupApplicationVersion() {
-    return startupApplicationVersion;
-  }
-
-  @Nullable
   public MutableCodecRegistry getCodecRegistry() {
     return codecRegistry;
   }
@@ -205,9 +180,6 @@ public class ProgrammaticArguments {
     private AuthProvider authProvider;
     private SslEngineFactory sslEngineFactory;
     private InetSocketAddress cloudProxyAddress;
-    private UUID startupClientId;
-    private String startupApplicationName;
-    private String startupApplicationVersion;
     private MutableCodecRegistry codecRegistry;
     private Object metricRegistry;
 
@@ -381,24 +353,6 @@ public class ProgrammaticArguments {
     }
 
     @NonNull
-    public Builder withStartupClientId(@Nullable UUID startupClientId) {
-      this.startupClientId = startupClientId;
-      return this;
-    }
-
-    @NonNull
-    public Builder withStartupApplicationName(@Nullable String startupApplicationName) {
-      this.startupApplicationName = startupApplicationName;
-      return this;
-    }
-
-    @NonNull
-    public Builder withStartupApplicationVersion(@Nullable String startupApplicationVersion) {
-      this.startupApplicationVersion = startupApplicationVersion;
-      return this;
-    }
-
-    @NonNull
     public Builder withCodecRegistry(@Nullable MutableCodecRegistry codecRegistry) {
       this.codecRegistry = codecRegistry;
       return this;
@@ -424,9 +378,6 @@ public class ProgrammaticArguments {
           authProvider,
           sslEngineFactory,
           cloudProxyAddress,
-          startupClientId,
-          startupApplicationName,
-          startupApplicationVersion,
           codecRegistry,
           metricRegistry);
     }

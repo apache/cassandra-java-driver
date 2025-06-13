@@ -7386,6 +7386,163 @@
         "old": "method <T extends java.lang.Number> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(java.lang.Class<T>)",
         "new": "method <T> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(java.lang.Class<T>)",
         "justification": "JAVA-3143: Extend driver vector support to arbitrary subtypes and fix handling of variable length types (OSS C* 5.0)"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_LOWEST",
+        "new": "field com.datastax.dse.driver.api.core.config.DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_LOWEST",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_SLO",
+        "new": "field com.datastax.dse.driver.api.core.config.DseDriverOption.CONTINUOUS_PAGING_METRICS_SESSION_CQL_REQUESTS_SLO",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES",
+        "new": "field com.datastax.dse.driver.api.core.config.DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_ENQUEUED_PAGES",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_PAGES",
+        "new": "field com.datastax.dse.driver.api.core.config.DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_PAGES",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_PAGES_PER_SECOND",
+        "new": "field com.datastax.dse.driver.api.core.config.DseDriverOption.GRAPH_CONTINUOUS_PAGING_MAX_PAGES_PER_SECOND",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.GRAPH_CONTINUOUS_PAGING_PAGE_SIZE",
+        "new": "field com.datastax.dse.driver.api.core.config.DseDriverOption.GRAPH_CONTINUOUS_PAGING_PAGE_SIZE",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.GRAPH_PAGING_ENABLED",
+        "new": "field com.datastax.dse.driver.api.core.config.DseDriverOption.GRAPH_PAGING_ENABLED",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_DIGITS",
+        "new": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_DIGITS",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_HIGHEST",
+        "new": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_HIGHEST",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_INTERVAL",
+        "new": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_INTERVAL",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_LOWEST",
+        "new": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_LOWEST",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_SLO",
+        "new": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_SLO",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_DIGITS",
+        "new": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_DIGITS",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_HIGHEST",
+        "new": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_HIGHEST",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_INTERVAL",
+        "new": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_INTERVAL",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_LOWEST",
+        "new": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_LOWEST",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.enumConstantOrderChanged",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_SLO",
+        "new": "field com.datastax.dse.driver.api.core.config.DseDriverOption.METRICS_SESSION_GRAPH_REQUESTS_SLO",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.removed",
+        "old": "field com.datastax.dse.driver.api.core.config.DseDriverOption.MONITOR_REPORTING_ENABLED",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.field.removed",
+        "old": "field com.datastax.oss.driver.api.core.config.TypedDriverOption<ValueT>.MONITOR_REPORTING_ENABLED",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method com.datastax.oss.driver.api.core.session.ProgrammaticArguments.Builder com.datastax.oss.driver.api.core.session.ProgrammaticArguments.Builder::withStartupApplicationName(java.lang.String)",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method com.datastax.oss.driver.api.core.session.ProgrammaticArguments.Builder com.datastax.oss.driver.api.core.session.ProgrammaticArguments.Builder::withStartupApplicationVersion(java.lang.String)",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method com.datastax.oss.driver.api.core.session.ProgrammaticArguments.Builder com.datastax.oss.driver.api.core.session.ProgrammaticArguments.Builder::withStartupClientId(java.util.UUID)",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method java.lang.String com.datastax.oss.driver.api.core.session.ProgrammaticArguments::getStartupApplicationName()",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method java.lang.String com.datastax.oss.driver.api.core.session.ProgrammaticArguments::getStartupApplicationVersion()",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method java.util.UUID com.datastax.oss.driver.api.core.session.ProgrammaticArguments::getStartupClientId()",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.session.SessionBuilder<SelfT extends com.datastax.oss.driver.api.core.session.SessionBuilder, SessionT>::withApplicationName(java.lang.String)",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.session.SessionBuilder<SelfT extends com.datastax.oss.driver.api.core.session.SessionBuilder, SessionT>::withApplicationVersion(java.lang.String)",
+        "justification": "CASSJAVA-73: Remove Insights support"
+      },
+      {
+        "code": "java.method.removed",
+        "old": "method SelfT com.datastax.oss.driver.api.core.session.SessionBuilder<SelfT extends com.datastax.oss.driver.api.core.session.SessionBuilder, SessionT>::withClientId(java.util.UUID)",
+        "justification": "CASSJAVA-73: Remove Insights support"
       }
     ]
   }
