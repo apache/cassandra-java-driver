@@ -34,12 +34,14 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.cql.EmptyColumnDefinitions;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.reactivex.Flowable;
+import java.time.Duration;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -58,7 +60,14 @@ public class DefaultReactiveResultSetIT {
 
   private static CcmRule ccmRule = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
+  private static SessionRule<CqlSession> sessionRule =
+      SessionRule.builder(ccmRule)
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withDuration(
+                      DefaultDriverOption.METADATA_SCHEMA_REQUEST_TIMEOUT, Duration.ofSeconds(20))
+                  .build())
+          .build();
 
   @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
