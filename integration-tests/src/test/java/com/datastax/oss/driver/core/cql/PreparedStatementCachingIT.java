@@ -266,6 +266,8 @@ public class PreparedStatementCachingIT {
       // alter test_type_2 to trigger cache invalidation and above events
       session.execute("ALTER TYPE test_type_2 add i blob");
 
+      session.checkSchemaAgreement();
+
       // wait for latches and fail if they don't reach zero before timeout
       assertThat(
               Uninterruptibles.awaitUninterruptibly(
