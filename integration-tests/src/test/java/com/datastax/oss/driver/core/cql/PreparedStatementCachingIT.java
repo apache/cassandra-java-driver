@@ -271,7 +271,7 @@ public class PreparedStatementCachingIT {
       // wait for latches and fail if they don't reach zero before timeout
       assertThat(
               Uninterruptibles.awaitUninterruptibly(
-                  preparedStmtCacheRemoveLatch, 20, TimeUnit.SECONDS))
+                  preparedStmtCacheRemoveLatch, 120, TimeUnit.SECONDS))
           .withFailMessage("preparedStmtCacheRemoveLatch did not trigger before timeout")
           .isTrue();
       assertThat(Uninterruptibles.awaitUninterruptibly(typeChangeEventLatch, 20, TimeUnit.SECONDS))

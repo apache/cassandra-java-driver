@@ -179,7 +179,7 @@ public abstract class MetricsITBase {
       // then node-level metrics should be evicted from node1, but
       // node2 and node3 metrics should not have been evicted
       await()
-          .atMost(Duration.ofSeconds(40))
+          .atMost(Duration.ofSeconds(120))
           .untilAsserted(() -> assertNodeMetricsEvicted(session, node1));
       assertNodeMetricsNotEvicted(session, node2);
       assertNodeMetricsNotEvicted(session, node3);

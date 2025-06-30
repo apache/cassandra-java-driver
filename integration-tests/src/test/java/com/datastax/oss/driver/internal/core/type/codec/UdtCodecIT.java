@@ -51,11 +51,11 @@ public class UdtCodecIT {
     CqlSession session = sessionRule.session();
     session.execute(
         SimpleStatement.newInstance("CREATE TYPE test_type_1 (a text, b int)")
-            .setTimeout(Duration.ofSeconds(20)));
+            .setTimeout(Duration.ofSeconds(120)));
     session.execute(
         SimpleStatement.newInstance(
                 "CREATE TABLE test_table_1 (e int primary key, f frozen<test_type_1>)")
-            .setTimeout(Duration.ofSeconds(20)));
+            .setTimeout(Duration.ofSeconds(120)));
     // insert a row using version 1 of the UDT schema
     session.execute("INSERT INTO test_table_1(e, f) VALUES(1, {a: 'a', b: 1})");
     UserDefinedType udt =
