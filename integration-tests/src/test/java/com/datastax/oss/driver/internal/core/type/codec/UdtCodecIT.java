@@ -50,29 +50,30 @@ public class UdtCodecIT {
   public void should_decoding_udt_be_backward_compatible() {
     CqlSession session = sessionRule.session();
     session.execute(
-        SimpleStatement.newInstance("CREATE TYPE test_type_1 (a text, b int)")
-            .setTimeout(Duration.ofSeconds(120)));
+        SimpleStatement.newInstance("CREATE TYPE test_type_udt_1 (a text, b int)")
+            .setTimeout(Duration.ofSeconds(20)));
     session.execute(
         SimpleStatement.newInstance(
-                "CREATE TABLE test_table_1 (e int primary key, f frozen<test_type_1>)")
-            .setTimeout(Duration.ofSeconds(120)));
+                "CREATE TABLE test_table_udt_1 (e int primary key, f frozen<test_type_udt_1>)")
+            .setTimeout(Duration.ofSeconds(20)));
     // insert a row using version 1 of the UDT schema
-    session.execute("INSERT INTO test_table_1(e, f) VALUES(1, {a: 'a', b: 1})");
+    session.execute("INSERT INTO test_table_udt_1(e, f) VALUES(1, {a: 'a', b: 1})");
     UserDefinedType udt =
         session
             .getMetadata()
             .getKeyspace(sessionRule.keyspace())
-            .flatMap(ks -> ks.getUserDefinedType("test_type_1"))
+            .flatMap(ks -> ks.getUserDefinedType("test_type_udt_1"))
             .orElseThrow(IllegalStateException::new);
     TypeCodec<?> oldCodec = session.getContext().getCodecRegistry().codecFor(udt);
     // update UDT schema
     session.execute(
-        SimpleStatement.newInstance("ALTER TYPE test_type_1 add i text")
+        SimpleStatement.newInstance("ALTER TYPE test_type_udt_1 add i text")
             .setTimeout(Duration.ofSeconds(20)));
     // insert a row using version 2 of the UDT schema
-    session.execute("INSERT INTO test_table_1(e, f) VALUES(2, {a: 'b', b: 2, i: 'b'})");
+    session.execute("INSERT INTO test_table_udt_1(e, f) VALUES(2, {a: 'b', b: 2, i: 'b'})");
     Row row =
-        Objects.requireNonNull(session.execute("SELECT f FROM test_table_1 WHERE e = ?", 2).one());
+        Objects.requireNonNull(
+            session.execute("SELECT f FROM test_table_udt_1 WHERE e = ?", 2).one());
     // Try to read new row with old codec. Using row.getUdtValue() would not cause any issues,
     // because new codec will be automatically registered (using all 3 attributes).
     // If application leverages generic row.get(String, Codec) method, data reading with old codec
