@@ -27,7 +27,7 @@ def initializeEnvironment() {
   env.GITHUB_BRANCH_URL = "${GITHUB_PROJECT_URL}/tree/${env.BRANCH_NAME}"
   env.GITHUB_COMMIT_URL = "${GITHUB_PROJECT_URL}/commit/${env.GIT_COMMIT}"
 
-  env.MAVEN_HOME = "${env.HOME}/.mvn/apache-maven-3.6.3"
+  env.MAVEN_HOME = "${env.HOME}/.mvn/apache-maven-3.8.8"
   env.PATH = "${env.MAVEN_HOME}/bin:${env.PATH}"
 
   /*

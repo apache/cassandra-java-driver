@@ -1,5 +1,3 @@
-// Configures Revapi (https://revapi.org/getting-started.html) to check API compatibility between
-// successive driver versions.
 {
   "revapi": {
     "java": {
@@ -7386,6 +7384,29 @@
         "old": "method <T extends java.lang.Number> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(java.lang.Class<T>)",
         "new": "method <T> com.datastax.oss.driver.api.core.type.reflect.GenericType<com.datastax.oss.driver.api.core.data.CqlVector<T>> com.datastax.oss.driver.api.core.type.reflect.GenericType<T>::vectorOf(java.lang.Class<T>)",
         "justification": "JAVA-3143: Extend driver vector support to arbitrary subtypes and fix handling of variable length types (OSS C* 5.0)"
+      },
+      {
+        "code": "java.class.nonPublicPartOfAPI",
+        "old": "class com.datastax.oss.driver.internal.core.config.typesafe.TypesafeDriverExecutionProfile.Base",
+        "justification": "CASSJAVA-102: Fix spurious complaints about optional dependencies"
+      },
+      {
+        "code": "java.class.nonPublicPartOfAPI",
+        "old": "class com.fasterxml.jackson.databind.type.TypeParser.MyTokenizer",
+        "justification": "CASSJAVA-102: Fix spurious complaints about optional dependencies"
+      },
+      {
+        "code": "java.class.nonPublicPartOfAPI",
+        "old": "class org.apache.tinkerpop.shaded.jackson.databind.type.TypeParser.MyTokenizer",
+        "justification": "CASSJAVA-102: Fix spurious complaints about optional dependencies"
+      },
+      {
+        "code": "java.class.externalClassExposedInAPI",
+        "justification": "CASSJAVA-102: Migrate revapi config into dedicated config files, ported from pom.xml"
+      },
+      {
+        "code": "java.method.varargOverloadsOnlyDifferInVarargParameter",
+        "justification": "CASSJAVA-102: Migrate revapi config into dedicated config files, ported from pom.xml"
       }
     ]
   }

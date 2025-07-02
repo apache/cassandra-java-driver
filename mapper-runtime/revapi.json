@@ -1,5 +1,3 @@
-// Configures Revapi (https://revapi.org/getting-started.html) to check API compatibility between
-// successive driver versions.
 {
   "revapi": {
     "java": {
@@ -11,7 +9,7 @@
             "com\\.datastax\\.(oss|dse)\\.driver\\.internal(\\..+)?",
             "com\\.datastax\\.oss\\.driver\\.shaded(\\..+)?",
             "com\\.datastax\\.oss\\.simulacron(\\..+)?",
-            // Don't re-check sibling modules that this module depends on
+            "// Don't re-check sibling modules that this module depends on",
             "com\\.datastax\\.(oss|dse)\\.driver\\.api\\.core(\\..+)?",
             "com\\.datastax\\.(oss|dse)\\.driver\\.api\\.querybuilder(\\..+)?"
           ]
@@ -22,7 +20,7 @@
       {
         "regex": true,
         "code": "java.annotation.attributeValueChanged",
-        "old": "@interface com\.datastax\.oss\.driver\.api\.mapper\.annotations\..*",
+        "old": "@interface com\\.datastax\\.oss\\.driver\\.api\\.mapper\\.annotations\\..*",
         "annotationType": "java.lang.annotation.Retention",
         "attribute": "value",
         "oldValue": "java.lang.annotation.RetentionPolicy.CLASS",
