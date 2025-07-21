@@ -86,12 +86,25 @@ public class SelectOrderingTest {
         .hasCql("SELECT * FROM foo WHERE k=1 ORDER BY c1 ANN OF [0.1, 0.2, 0.3]");
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void should_fail_when_provided_ann_with_other_orderings() {
-    selectFrom("foo")
-        .all()
-        .where(Relation.column("k").isEqualTo(literal(1)))
-        .orderBy("c1", ASC)
-        .orderByAnnOf("c2", CqlVector.newInstance(0.1, 0.2, 0.3));
+  @Test
+  public void should_replace_columns_ordering_with_ann() {
+    assertThat(
+            selectFrom("foo")
+                .all()
+                .where(Relation.column("k").isEqualTo(literal(1)))
+                .orderBy("c1", ASC)
+                .orderByAnnOf("c2", CqlVector.newInstance(0.1, 0.2, 0.3)))
+        .hasCql("SELECT * FROM foo WHERE k=1 ORDER BY c2 ANN OF [0.1, 0.2, 0.3]");
+  }
+
+  @Test
+  public void should_replace_ann_ordering_with_columns() {
+    assertThat(
+            selectFrom("foo")
+                .all()
+                .where(Relation.column("k").isEqualTo(literal(1)))
+                .orderByAnnOf("c1", CqlVector.newInstance(0.1, 0.2, 0.3))
+                .orderBy("c2", ASC))
+        .hasCql("SELECT * FROM foo WHERE k=1 ORDER BY c2 ASC");
   }
 }

@@ -23,8 +23,10 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.datastax.oss.driver.api.core.data.CqlVector;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.querybuilder.BindMarker;
-import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
+import com.datastax.oss.driver.api.querybuilder.select.AnnOrderingClause;
+import com.datastax.oss.driver.api.querybuilder.select.ColumnsOrderingClause;
+import com.datastax.oss.driver.api.querybuilder.select.OrderingClause;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
 import com.datastax.oss.driver.api.querybuilder.select.SelectFrom;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
@@ -32,10 +34,10 @@ import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
+import java.util.Optional;
 import net.jcip.annotations.Immutable;
 
 @Immutable
@@ -50,8 +52,7 @@ public class DefaultSelect implements SelectFrom, Select {
   private final ImmutableList<Selector> selectors;
   private final ImmutableList<Relation> relations;
   private final ImmutableList<Selector> groupByClauses;
-  private final ImmutableMap<CqlIdentifier, ClusteringOrder> orderings;
-  private final Ann ann;
+  private final Optional<OrderingClause> orderingClause;
   private final Object limit;
   private final Object perPartitionLimit;
   private final boolean allowsFiltering;
@@ -65,8 +66,7 @@ public class DefaultSelect implements SelectFrom, Select {
         ImmutableList.of(),
         ImmutableList.of(),
         ImmutableList.of(),
-        ImmutableMap.of(),
-        null,
+        Optional.empty(),
         null,
         null,
         false);
@@ -78,8 +78,6 @@ public class DefaultSelect implements SelectFrom, Select {
    * @param selectors if it contains {@link AllSelector#INSTANCE}, that must be the only element.
    *     This isn't re-checked because methods that call this constructor internally already do it,
    *     make sure you do it yourself.
-   * @param ann Approximate nearest neighbor. ANN ordering does not support secondary ordering or
-   *     ASC order.
    */
   public DefaultSelect(
       @Nullable CqlIdentifier keyspace,
@@ -89,21 +87,17 @@ public class DefaultSelect implements SelectFrom, Select {
       @NonNull ImmutableList<Selector> selectors,
       @NonNull ImmutableList<Relation> relations,
       @NonNull ImmutableList<Selector> groupByClauses,
-      @NonNull ImmutableMap<CqlIdentifier, ClusteringOrder> orderings,
-      @Nullable Ann ann,
+      @NonNull Optional<OrderingClause> orderingClause,
       @Nullable Object limit,
       @Nullable Object perPartitionLimit,
       boolean allowsFiltering) {
     this.groupByClauses = groupByClauses;
-    this.orderings = orderings;
+    this.orderingClause = orderingClause;
     Preconditions.checkArgument(
         limit == null
             || (limit instanceof Integer && (Integer) limit > 0)
             || limit instanceof BindMarker,
         "limit must be a strictly positive integer or a bind marker");
-    Preconditions.checkArgument(
-        orderings.isEmpty() || ann == null, "ANN ordering does not support secondary ordering");
-    this.ann = ann;
     this.keyspace = keyspace;
     this.table = table;
     this.isJson = isJson;
@@ -126,8 +120,7 @@ public class DefaultSelect implements SelectFrom, Select {
         selectors,
         relations,
         groupByClauses,
-        orderings,
-        ann,
+        orderingClause,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -144,8 +137,7 @@ public class DefaultSelect implements SelectFrom, Select {
         selectors,
         relations,
         groupByClauses,
-        orderings,
-        ann,
+        orderingClause,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -204,8 +196,7 @@ public class DefaultSelect implements SelectFrom, Select {
         newSelectors,
         relations,
         groupByClauses,
-        orderings,
-        ann,
+        orderingClause,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -233,8 +224,7 @@ public class DefaultSelect implements SelectFrom, Select {
         selectors,
         newRelations,
         groupByClauses,
-        orderings,
-        ann,
+        orderingClause,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -262,39 +252,54 @@ public class DefaultSelect implements SelectFrom, Select {
         selectors,
         relations,
         newGroupByClauses,
-        orderings,
-        ann,
+        orderingClause,
         limit,
         perPartitionLimit,
         allowsFiltering);
+  }
+
+  /**
+   * Retrieve the current {@link OrderingClause} as a {@link ColumnsOrderingClause} if it exists and
+   * is an instance of this class, Otherwise create a new one.
+   *
+   * @return the current OrderingClause if it's a ColumnsOrderingClause or a new one otherwise
+   */
+  private ColumnsOrderingClause getColumnOrderingClause() {
+    return (ColumnsOrderingClause)
+        orderingClause
+            .map(
+                (oc) -> (oc instanceof ColumnsOrderingClause) ? oc : ColumnsOrderingClause.create())
+            .orElseGet(() -> ColumnsOrderingClause.create());
   }
 
   @NonNull
   @Override
   public Select orderBy(@NonNull CqlIdentifier columnId, @NonNull ClusteringOrder order) {
-    return withOrderings(ImmutableCollections.append(orderings, columnId, order));
+    ColumnsOrderingClause coc = getColumnOrderingClause();
+    return withOrderingClause(coc.add(columnId, order));
   }
 
   @NonNull
   @Override
   public Select orderByAnnOf(@NonNull String columnName, @NonNull CqlVector<?> ann) {
-    return withAnn(new Ann(CqlIdentifier.fromCql(columnName), ann));
+    return withOrderingClause(AnnOrderingClause.create(CqlIdentifier.fromCql(columnName), ann));
   }
 
   @NonNull
   @Override
   public Select orderByAnnOf(@NonNull CqlIdentifier columnId, @NonNull CqlVector<?> ann) {
-    return withAnn(new Ann(columnId, ann));
+    return withOrderingClause(AnnOrderingClause.create(columnId, ann));
   }
 
   @NonNull
   @Override
   public Select orderByIds(@NonNull Map<CqlIdentifier, ClusteringOrder> newOrderings) {
-    return withOrderings(ImmutableCollections.concat(orderings, newOrderings));
+    ColumnsOrderingClause coc = getColumnOrderingClause();
+    return withOrderingClause(coc.add(newOrderings));
   }
 
   @NonNull
-  public Select withOrderings(@NonNull ImmutableMap<CqlIdentifier, ClusteringOrder> newOrderings) {
+  public Select withOrderingClause(@NonNull OrderingClause newOrderingClause) {
     return new DefaultSelect(
         keyspace,
         table,
@@ -303,25 +308,7 @@ public class DefaultSelect implements SelectFrom, Select {
         selectors,
         relations,
         groupByClauses,
-        newOrderings,
-        ann,
-        limit,
-        perPartitionLimit,
-        allowsFiltering);
-  }
-
-  @NonNull
-  Select withAnn(@NonNull Ann ann) {
-    return new DefaultSelect(
-        keyspace,
-        table,
-        isJson,
-        isDistinct,
-        selectors,
-        relations,
-        groupByClauses,
-        orderings,
-        ann,
+        Optional.of(newOrderingClause),
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -339,8 +326,7 @@ public class DefaultSelect implements SelectFrom, Select {
         selectors,
         relations,
         groupByClauses,
-        orderings,
-        ann,
+        orderingClause,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -357,8 +343,7 @@ public class DefaultSelect implements SelectFrom, Select {
         selectors,
         relations,
         groupByClauses,
-        orderings,
-        ann,
+        orderingClause,
         bindMarker,
         perPartitionLimit,
         allowsFiltering);
@@ -377,8 +362,7 @@ public class DefaultSelect implements SelectFrom, Select {
         selectors,
         relations,
         groupByClauses,
-        orderings,
-        ann,
+        orderingClause,
         limit,
         perPartitionLimit,
         allowsFiltering);
@@ -395,8 +379,7 @@ public class DefaultSelect implements SelectFrom, Select {
         selectors,
         relations,
         groupByClauses,
-        orderings,
-        ann,
+        orderingClause,
         limit,
         bindMarker,
         allowsFiltering);
@@ -413,8 +396,7 @@ public class DefaultSelect implements SelectFrom, Select {
         selectors,
         relations,
         groupByClauses,
-        orderings,
-        ann,
+        orderingClause,
         limit,
         perPartitionLimit,
         true);
@@ -441,21 +423,7 @@ public class DefaultSelect implements SelectFrom, Select {
     CqlHelper.append(relations, builder, " WHERE ", " AND ", null);
     CqlHelper.append(groupByClauses, builder, " GROUP BY ", ",", null);
 
-    if (ann != null) {
-      builder.append(" ORDER BY ").append(this.ann.columnId.asCql(true)).append(" ANN OF ");
-      QueryBuilder.literal(ann.vector).appendTo(builder);
-    } else {
-      boolean first = true;
-      for (Map.Entry<CqlIdentifier, ClusteringOrder> entry : orderings.entrySet()) {
-        if (first) {
-          builder.append(" ORDER BY ");
-          first = false;
-        } else {
-          builder.append(",");
-        }
-        builder.append(entry.getKey().asCql(true)).append(" ").append(entry.getValue().name());
-      }
-    }
+    orderingClause.ifPresent(c -> c.appendTo(builder));
 
     if (limit != null) {
       builder.append(" LIMIT ");
@@ -545,18 +513,13 @@ public class DefaultSelect implements SelectFrom, Select {
   }
 
   @NonNull
-  public ImmutableMap<CqlIdentifier, ClusteringOrder> getOrderings() {
-    return orderings;
+  public Optional<OrderingClause> getOrderingClause() {
+    return orderingClause;
   }
 
   @Nullable
   public Object getLimit() {
     return limit;
-  }
-
-  @Nullable
-  public Ann getAnn() {
-    return ann;
   }
 
   @Nullable
@@ -571,15 +534,5 @@ public class DefaultSelect implements SelectFrom, Select {
   @Override
   public String toString() {
     return asCql();
-  }
-
-  public static class Ann {
-    private final CqlVector<?> vector;
-    private final CqlIdentifier columnId;
-
-    private Ann(CqlIdentifier columnId, CqlVector<?> vector) {
-      this.vector = vector;
-      this.columnId = columnId;
-    }
   }
 }
