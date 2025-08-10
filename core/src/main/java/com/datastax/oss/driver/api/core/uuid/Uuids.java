@@ -141,9 +141,8 @@ public final class Uuids {
       if (!initialized) {
         synchronized (ClockSeqAndNodeContainer.class) {
           if (!initialized) {
-
-            initialized = true;
             val = makeClockSeqAndNode();
+            initialized = true;
           }
         }
       }
