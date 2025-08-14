@@ -102,6 +102,16 @@ public class BundleOptions {
         options(
             mavenBundle("ch.qos.logback", "logback-classic").versionAsInProject(),
             mavenBundle("ch.qos.logback", "logback-core").versionAsInProject(),
+
+            // slf4j 2.x requires spifly in order to operate in an OSGi context
+            mavenBundle("org.apache.aries.spifly", "org.apache.aries.spifly.dynamic.bundle")
+                .version("1.3.7"),
+            mavenBundle("org.apache.aries", "org.apache.aries.util").version("1.1.1"),
+            mavenBundle("org.ow2.asm", "asm").version("9.6"),
+            mavenBundle("org.ow2.asm", "asm-commons").version("9.6"),
+            mavenBundle("org.ow2.asm", "asm-util").version("9.6"),
+            mavenBundle("org.ow2.asm", "asm-tree").version("9.6"),
+            mavenBundle("org.ow2.asm", "asm-analysis").version("9.6"),
             systemProperty("logback.configurationFile")
                 .value("file:src/test/resources/logback-test.xml"));
   }
