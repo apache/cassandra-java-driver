@@ -21,7 +21,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
 import com.datastax.dse.driver.api.core.data.geometry.Point;
+import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
 import com.esri.core.geometry.ogc.OGCPoint;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import org.junit.Test;
@@ -83,8 +87,19 @@ public class DefaultPointTest {
   }
 
   @Test
-  public void should_convert_to_geo_json() {
-    assertThat(point.asGeoJson()).isEqualTo(json);
+  public void should_convert_to_geo_json() throws Exception {
+
+    ObjectMapper mapper = new ObjectMapper();
+    JsonNode root = mapper.readTree(point.asGeoJson());
+    assertThat(root.get("type").toString()).isEqualTo("\"Point\"");
+
+    double expected[] = {1.1, 2.2};
+    JsonNode coordinatesNode = root.get("coordinates");
+    assertThat(coordinatesNode.isArray()).isTrue();
+    ArrayNode coordinatesArray = (ArrayNode) coordinatesNode;
+    double[] arr =
+        Streams.stream(coordinatesArray.elements()).mapToDouble(JsonNode::asDouble).toArray();
+    assertThat(arr).isEqualTo(expected);
   }
 
   @Test

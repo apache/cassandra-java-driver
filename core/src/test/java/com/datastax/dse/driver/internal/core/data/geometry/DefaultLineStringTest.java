@@ -22,7 +22,11 @@ import static org.assertj.core.api.Fail.fail;
 
 import com.datastax.dse.driver.api.core.data.geometry.LineString;
 import com.datastax.dse.driver.api.core.data.geometry.Point;
+import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
 import com.esri.core.geometry.ogc.OGCLineString;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import org.junit.Test;
@@ -101,8 +105,25 @@ public class DefaultLineStringTest {
   }
 
   @Test
-  public void should_convert_to_geo_json() {
-    assertThat(lineString.asGeoJson()).isEqualTo(json);
+  public void should_convert_to_geo_json() throws Exception {
+
+    ObjectMapper mapper = new ObjectMapper();
+    JsonNode root = mapper.readTree(lineString.asGeoJson());
+    assertThat(root.get("type").toString()).isEqualTo("\"LineString\"");
+
+    double expected[][] = {{30.0, 10.0}, {10.0, 30.0}, {40.0, 40.0}};
+    JsonNode coordinatesNode = root.get("coordinates");
+    assertThat(coordinatesNode.isArray()).isTrue();
+    ArrayNode coordinatesArray = (ArrayNode) coordinatesNode;
+    assertThat(coordinatesArray.size()).isEqualTo(3);
+    for (int i = 0; i < expected.length; ++i) {
+
+      JsonNode elemNode = coordinatesArray.get(i);
+      assertThat(elemNode.isArray()).isTrue();
+      ArrayNode elemArray = (ArrayNode) elemNode;
+      double[] arr = Streams.stream(elemArray.elements()).mapToDouble(JsonNode::asDouble).toArray();
+      assertThat(arr).isEqualTo(expected[i]);
+    }
   }
 
   @Test

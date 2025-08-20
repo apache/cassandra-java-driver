@@ -82,7 +82,6 @@ public class PlatformInfoFinderTest {
     expected.put("com.github.jnr:jffi", withUnverifiedRuntimeVersion("1.2.16"));
     expected.put("io.netty:netty-buffer", withUnverifiedRuntimeVersion("4.0.56.Final"));
     expected.put("org.ow2.asm:asm-commons", withUnverifiedRuntimeVersion("5.0.3"));
-    expected.put("org.json:json", withUnverifiedRuntimeVersion("20090211"));
     expected.put("org.ow2.asm:asm-util", withUnverifiedRuntimeVersion("5.0.3"));
     expected.put("com.github.jnr:jnr-ffi", withUnverifiedRuntimeVersion("2.1.7"));
 
@@ -91,7 +90,7 @@ public class PlatformInfoFinderTest {
         new PlatformInfoFinder(this::nullUrlProvider).fetchDependenciesFromFile(inputStream);
 
     // then
-    assertThat(stringStringMap).hasSize(28);
+    assertThat(stringStringMap).hasSize(27);
     assertThat(stringStringMap).isEqualTo(expected);
   }
 
