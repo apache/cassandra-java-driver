@@ -27,5 +27,4 @@ The following files have been resolved:
    org.ow2.asm:asm-analysis:jar:5.0.3:compile
    com.github.jnr:jnr-x86asm:jar:1.0.2:compile
    io.netty:netty-codec:jar:4.0.56.Final:compile
-   org.json:json:jar:20090211:compile
    com.github.jnr:jffi:jar:native:1.2.16:runtime

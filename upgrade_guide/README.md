@@ -19,6 +19,15 @@ under the License.
 
 ## Upgrade guide
 
+### 4.19.3
+
+#### Ordering of points in DefaultPolygon
+
+This version includes an update to the ESRI dependency which appears to be more strict about following the OGC
+requirement that points of a polygon should be returned in counter-clockwise order.  It's possible that
+previous versions of the driver could have returned these points in a different order so if your application
+relies on the ordering of points in a polygon make sure to test this behaviour when upgrading.
+
 ### 4.18.1
 
 #### Keystore reloading in DefaultSslEngineFactory

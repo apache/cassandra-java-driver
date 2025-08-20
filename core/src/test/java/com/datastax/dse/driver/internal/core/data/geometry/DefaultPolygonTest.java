@@ -23,7 +23,11 @@ import static org.assertj.core.api.Fail.fail;
 import com.datastax.dse.driver.api.core.data.geometry.LineString;
 import com.datastax.dse.driver.api.core.data.geometry.Point;
 import com.datastax.dse.driver.api.core.data.geometry.Polygon;
+import com.datastax.oss.driver.shaded.guava.common.collect.Streams;
 import com.esri.core.geometry.ogc.OGCPolygon;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import org.junit.Test;
@@ -109,8 +113,43 @@ public class DefaultPolygonTest {
   }
 
   @Test
-  public void should_convert_to_geo_json() {
-    assertThat(polygon.asGeoJson()).isEqualTo(json);
+  public void should_convert_to_geo_json() throws Exception {
+
+    ObjectMapper mapper = new ObjectMapper();
+    JsonNode root = mapper.readTree(polygon.asGeoJson());
+    assertThat(root.get("type").toString()).isEqualTo("\"Polygon\"");
+
+    /*
+     Note that the order of values in expected differs from the order of insertion when creating
+     the Polygon.  OGC expects the "exterior" ring of the polygon to be listed in counter-clockwise
+     order... and that's what this sequence represents (draw it out on a graph if you don't believe me).
+
+     Weirdly this is the opposite of the order used for this test when we were using ESRI 1.2.1.
+     That fact (combined with the fact that only ESRI classes are used for serialization here) makes me
+     think that the earlier version was just doing it wrong... or at least doing it in a way that
+     didn't agree with the spec.  Either way it is clearly correct that we should go counter-clockwise...
+     so that's what we're doing.
+    */
+    double expected[][] = {{30.0, 10.0}, {40.0, 40.0}, {20.0, 40.0}, {10.0, 20.0}, {30.0, 10.0}};
+    JsonNode coordinatesNode = root.get("coordinates");
+    assertThat(coordinatesNode.isArray()).isTrue();
+    ArrayNode coordinatesArray = (ArrayNode) coordinatesNode;
+
+    // There's an extra layer here, presumably indicating the bounds of the polygon
+    assertThat(coordinatesArray.size()).isEqualTo(1);
+    JsonNode polygonNode = coordinatesArray.get(0);
+    assertThat(polygonNode.isArray()).isTrue();
+    ArrayNode polygonArray = (ArrayNode) polygonNode;
+
+    assertThat(polygonArray.size()).isEqualTo(5);
+    for (int i = 0; i < expected.length; ++i) {
+
+      JsonNode elemNode = polygonArray.get(i);
+      assertThat(elemNode.isArray()).isTrue();
+      ArrayNode elemArray = (ArrayNode) elemNode;
+      double[] arr = Streams.stream(elemArray.elements()).mapToDouble(JsonNode::asDouble).toArray();
+      assertThat(arr).isEqualTo(expected[i]);
+    }
   }
 
   @Test
