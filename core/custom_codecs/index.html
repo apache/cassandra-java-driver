@@ -1,0 +1,3422 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Java Driver for Apache Cassandra® Documentation">
+      
+      
+      
+        <link rel="canonical" href="https://github.com/apache/cassandra-java-driver/core/custom_codecs/">
+      
+      
+        <link rel="prev" href="../reactive/">
+      
+      
+        <link rel="next" href="../temporal_types/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.17">
+    
+    
+      
+        <title>Custom Codecs - Java Driver for Apache Cassandra</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#custom-codecs" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Java Driver for Apache Cassandra" class="md-header__button md-logo" aria-label="Java Driver for Apache Cassandra" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Java Driver for Apache Cassandra
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Custom Codecs
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/apache/cassandra-java-driver" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    apache/cassandra-java-driver
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../HOME-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API References
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../faq-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  FAQ
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../upgrade-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Upgrade Guide
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Java Driver for Apache Cassandra" class="md-nav__button md-logo" aria-label="Java Driver for Apache Cassandra" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Java Driver for Apache Cassandra
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/apache/cassandra-java-driver" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    apache/cassandra-java-driver
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../HOME-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Conventions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../case_sensitivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Case Sensitivity
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cloud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cloud
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Core
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Core
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authentication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ssl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load_balancing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Load Balancing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pooling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pooling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reconnection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Reconnection
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../retries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Retries
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../speculative_execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Speculative Execution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Logging
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../statements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Statements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../paging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Paging
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../async/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Async Programming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reactive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Reactive Streams
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Custom Codecs
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Custom Codecs
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#custom-codecs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom codecs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Custom codecs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick overview
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-alternative-codecs-provided-by-the-driver" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using alternative codecs provided by the driver
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using alternative codecs provided by the driver">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mapping-cql-blobs-to-java-arrays" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping CQL blobs to Java arrays
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapping-cql-lists-to-java-arrays" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping CQL lists to Java arrays
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapping-cql-timestamps-to-java-instant-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping CQL timestamps to Java "instant" types
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapping-cql-timestamps-to-zoneddatetime" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping CQL timestamps to ZonedDateTime
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapping-cql-timestamps-to-localdatetime" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping CQL timestamps to LocalDateTime
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storing-the-time-zone-in-cassandra" class="md-nav__link">
+    <span class="md-ellipsis">
+      Storing the time zone in Cassandra
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapping-to-optional-instead-of-null" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping to Optional instead of null
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapping-java-enums" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping Java Enums
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapping-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping Json
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapping-cql-vectors-to-java-array" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping CQL vectors to Java array
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writing-codecs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Writing codecs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-codecs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using codecs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-custom-java-to-cql-mappings-with-mappingcodec" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating custom Java-to-CQL mappings with MappingCodec
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subtype-polymorphism" class="md-nav__link">
+    <span class="md-ellipsis">
+      Subtype polymorphism
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-codec-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      The codec registry
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../temporal_types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Temporal Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tuples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tuples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../udts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    UDTs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compression/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Compression
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../address_resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Address Resolution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../request_tracker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Request Tracker
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../throttling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Throttling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tracing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tracing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Performance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metadata/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metadata
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../control_connection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Control Connection
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../native_protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Native Protocol
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../non_blocking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Non-blocking
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_timestamps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Query Timestamps
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../idempotence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Idempotence
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../detachable_types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Detachable Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    DSE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../graalvm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GraalVM
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../shaded_jar/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Shaded JAR
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bom/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    BOM
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Query Builder
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Query Builder
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/select/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Select
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/insert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Insert
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Update
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/delete/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Delete
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Schema
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/truncate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Truncate
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/condition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Condition
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/relation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Relation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/term/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Term
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/idempotence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Idempotence
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Mapper
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Mapper
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/entities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    DAOs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/mapper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mapper
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_8" id="__nav_2_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Developer
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            Developer
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/common/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Common
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/native_protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Native Protocol
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/netty_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Netty Pipeline
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/request_execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Request Execution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/admin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../osgi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OSGi
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API References
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    FAQ
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Changelog
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../upgrade-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Upgrade Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#custom-codecs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom codecs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Custom codecs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick overview
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-alternative-codecs-provided-by-the-driver" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using alternative codecs provided by the driver
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using alternative codecs provided by the driver">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mapping-cql-blobs-to-java-arrays" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping CQL blobs to Java arrays
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapping-cql-lists-to-java-arrays" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping CQL lists to Java arrays
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapping-cql-timestamps-to-java-instant-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping CQL timestamps to Java "instant" types
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapping-cql-timestamps-to-zoneddatetime" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping CQL timestamps to ZonedDateTime
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapping-cql-timestamps-to-localdatetime" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping CQL timestamps to LocalDateTime
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storing-the-time-zone-in-cassandra" class="md-nav__link">
+    <span class="md-ellipsis">
+      Storing the time zone in Cassandra
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapping-to-optional-instead-of-null" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping to Optional instead of null
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapping-java-enums" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping Java Enums
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapping-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping Json
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapping-cql-vectors-to-java-array" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapping CQL vectors to Java array
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#writing-codecs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Writing codecs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-codecs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using codecs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-custom-java-to-cql-mappings-with-mappingcodec" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating custom Java-to-CQL mappings with MappingCodec
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subtype-polymorphism" class="md-nav__link">
+    <span class="md-ellipsis">
+      Subtype polymorphism
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-codec-registry" class="md-nav__link">
+    <span class="md-ellipsis">
+      The codec registry
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+  <h1>Custom Codecs</h1>
+
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<h2 id="custom-codecs">Custom codecs<a class="headerlink" href="#custom-codecs" title="Permanent link">&para;</a></h2>
+<h3 id="quick-overview">Quick overview<a class="headerlink" href="#quick-overview" title="Permanent link">&para;</a></h3>
+<p>Define custom Java to CQL mappings.</p>
+<ul>
+<li>implement the <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html">TypeCodec</a> interface, or use one of the alternative codecs in <code>ExtraTypeCodecs</code>.</li>
+<li>registering a codec:</li>
+<li>at init time: <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/SessionBuilder.html#addTypeCodecs-com.datastax.oss.driver.api.core.type.codec.TypeCodec...-">CqlSession.builder().addTypeCodecs()</a></li>
+<li>
+<p>at runtime:</p>
+<p><div class="highlight"><pre><span></span><code><span class="n">MutableCodecRegistry</span><span class="w"> </span><span class="n">registry</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="p">(</span><span class="n">MutableCodecRegistry</span><span class="p">)</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">getContext</span><span class="p">().</span><span class="na">getCodecRegistry</span><span class="p">();</span><span class="w">    </span>
+<span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="n">myCodec</span><span class="p">);</span>
+</code></pre></div>
+* using a codec:
+  * if already registered: <code>row.get("columnName", MyCustomType.class)</code>
+  * otherwise: <code>row.get("columnName", myCodec)</code></p>
+</li>
+</ul>
+<hr />
+<p>Out of the box, the driver comes with <a href="../#cql-to-java-type-mapping">default CQL to Java mappings</a>.
+For example, if you read a CQL <code>text</code> column, it is mapped to its natural counterpart
+<code>java.lang.String</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// cqlsh:ks&gt; desc table test;</span>
+<span class="c1">// CREATE TABLE ks.test (k int PRIMARY KEY, v text)...</span>
+<span class="n">ResultSet</span><span class="w"> </span><span class="n">rs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="s">&quot;SELECT * FROM ks.test WHERE k = 1&quot;</span><span class="p">);</span>
+<span class="n">String</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rs</span><span class="p">.</span><span class="na">one</span><span class="p">().</span><span class="na">getString</span><span class="p">(</span><span class="s">&quot;v&quot;</span><span class="p">);</span>
+</code></pre></div>
+<p>Sometimes you might want to use different mappings, for example:</p>
+<ul>
+<li>read a text column as a Java enum;</li>
+<li>map an <code>address</code> UDT to a custom <code>Address</code> class in your application;</li>
+<li>manipulate CQL collections as arrays in performance-intensive applications.</li>
+</ul>
+<p>Custom codecs allow you to define those dedicated mappings, and plug them into your session.</p>
+<h3 id="using-alternative-codecs-provided-by-the-driver">Using alternative codecs provided by the driver<a class="headerlink" href="#using-alternative-codecs-provided-by-the-driver" title="Permanent link">&para;</a></h3>
+<p>The first thing you can do is use one of the many alternative codecs shipped with the driver. They
+are exposed on the <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html">ExtraTypeCodecs</a> class. In this section we are going to introduce these codecs,
+then you will see how to register and use them in the next sections.</p>
+<h4 id="mapping-cql-blobs-to-java-arrays">Mapping CQL blobs to Java arrays<a class="headerlink" href="#mapping-cql-blobs-to-java-arrays" title="Permanent link">&para;</a></h4>
+<p>The driver default is <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#BLOB">TypeCodecs.BLOB</a>, which maps CQL <code>blob</code> to Java's <a href="https://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html">java.nio.ByteBuffer</a>.
+Check out our <a href="https://github.com/datastax/java-driver/blob/4.x/examples/src/main/java/com/datastax/oss/driver/examples/datatypes/Blobs.java">CQL blob example</a> to understand how to manipulate the <code>ByteBuffer</code> API correctly.</p>
+<p>If the <code>ByteBuffer</code> API is too cumbersome for you, an alternative is to use
+<a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#BLOB_TO_ARRAY">ExtraTypeCodecs.BLOB_TO_ARRAY</a> which maps CQL blobs to Java's <code>byte[]</code>.</p>
+<h4 id="mapping-cql-lists-to-java-arrays">Mapping CQL lists to Java arrays<a class="headerlink" href="#mapping-cql-lists-to-java-arrays" title="Permanent link">&para;</a></h4>
+<p>By default, the driver maps CQL <code>list</code> to Java's <a href="https://docs.oracle.com/javase/8/docs/api/java/util/List.html">java.util.List</a>. If you prefer to deal with 
+arrays, the driver offers the following codecs:</p>
+<ol>
+<li>
+<p>For primitive types:</p>
+<table>
+<thead>
+<tr>
+<th>Codec</th>
+<th>CQL type</th>
+<th>Java type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#BOOLEAN_LIST_TO_ARRAY">ExtraTypeCodecs.BOOLEAN_LIST_TO_ARRAY</a></td>
+<td><code>list&lt;boolean&gt;</code></td>
+<td><code>boolean[]</code></td>
+</tr>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#BYTE_LIST_TO_ARRAY">ExtraTypeCodecs.BYTE_LIST_TO_ARRAY</a></td>
+<td><code>list&lt;tinyint&gt;</code></td>
+<td><code>byte[]</code></td>
+</tr>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#SHORT_LIST_TO_ARRAY">ExtraTypeCodecs.SHORT_LIST_TO_ARRAY</a></td>
+<td><code>list&lt;smallint&gt;</code></td>
+<td><code>short[]</code></td>
+</tr>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#INT_LIST_TO_ARRAY">ExtraTypeCodecs.INT_LIST_TO_ARRAY</a></td>
+<td><code>list&lt;int&gt;</code></td>
+<td><code>int[]</code></td>
+</tr>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#LONG_LIST_TO_ARRAY">ExtraTypeCodecs.LONG_LIST_TO_ARRAY</a></td>
+<td><code>list&lt;bigint&gt;</code></td>
+<td><code>long[]</code></td>
+</tr>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#FLOAT_LIST_TO_ARRAY">ExtraTypeCodecs.FLOAT_LIST_TO_ARRAY</a></td>
+<td><code>list&lt;float&gt;</code></td>
+<td><code>float[]</code></td>
+</tr>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#DOUBLE_LIST_TO_ARRAY">ExtraTypeCodecs.DOUBLE_LIST_TO_ARRAY</a></td>
+<td><code>list&lt;double&gt;</code></td>
+<td><code>double[]</code></td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p>For other types, you should use <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#listToArrayOf-com.datastax.oss.driver.api.core.type.codec.TypeCodec-">ExtraTypeCodecs.listToArrayOf(TypeCodec)</a>; for example, to map
+   CQL <code>list&lt;text&gt;</code> to <code>String[]</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">TypeCodec</span><span class="o">&lt;</span><span class="n">String</span><span class="o">[]&gt;</span><span class="w"> </span><span class="n">stringArrayCodec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ExtraTypeCodecs</span><span class="p">.</span><span class="na">listToArrayOf</span><span class="p">(</span><span class="n">TypeCodecs</span><span class="p">.</span><span class="na">TEXT</span><span class="p">);</span>
+</code></pre></div>
+</li>
+</ol>
+<h4 id="mapping-cql-timestamps-to-java-instant-types">Mapping CQL timestamps to Java "instant" types<a class="headerlink" href="#mapping-cql-timestamps-to-java-instant-types" title="Permanent link">&para;</a></h4>
+<p>By default, the driver maps CQL <code>timestamp</code> to Java's <a href="https://docs.oracle.com/javase/8/docs/api/java/time/Instant.html">java.time.Instant</a> (using
+<a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#TIMESTAMP">TypeCodecs.TIMESTAMP</a>). This is the most natural mapping, since neither type contains any time zone
+information: they just represent absolute points in time.</p>
+<p>The driver also provides codecs to map to a Java <code>long</code> representing the number of milliseconds
+since the epoch (this is the raw form return by <code>Instant.toEpochMilli</code>, and also how Cassandra
+stores the value internally).</p>
+<p>In either case, you can pick the time zone that the codec will use for its <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html#format-JavaTypeT-">format()</a> and <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html#parse-java.lang.String-">parse()</a>
+methods. Note that this is only relevant for these two methods (follow the links for more
+explanations on how the driver uses them); for regular encoding and decoding, like setting a value
+on a bound statement or reading a column from a row, the time zone does not matter.</p>
+<table>
+<thead>
+<tr>
+<th>Codec</th>
+<th>CQL type</th>
+<th>Java type</th>
+<th>Time zone used by <code>format()</code> and <code>parse()</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/TypeCodecs.html#TIMESTAMP">TypeCodecs.TIMESTAMP</a></td>
+<td><code>timestamp</code></td>
+<td><code>Instant</code></td>
+<td>System default</td>
+</tr>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#TIMESTAMP_UTC">ExtraTypeCodecs.TIMESTAMP_UTC</a></td>
+<td><code>timestamp</code></td>
+<td><code>Instant</code></td>
+<td>UTC</td>
+</tr>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#timestampAt-java.time.ZoneId-">ExtraTypeCodecs.timestampAt(ZoneId)</a></td>
+<td><code>timestamp</code></td>
+<td><code>Instant</code></td>
+<td>User-provided</td>
+</tr>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#TIMESTAMP_MILLIS_SYSTEM">ExtraTypeCodecs.TIMESTAMP_MILLIS_SYSTEM</a></td>
+<td><code>timestamp</code></td>
+<td><code>long</code></td>
+<td>System default</td>
+</tr>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#TIMESTAMP_MILLIS_UTC">ExtraTypeCodecs.TIMESTAMP_MILLIS_UTC</a></td>
+<td><code>timestamp</code></td>
+<td><code>long</code></td>
+<td>UTC</td>
+</tr>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#timestampMillisAt-java.time.ZoneId-">ExtraTypeCodecs.timestampMillisAt(ZoneId)</a></td>
+<td><code>timestamp</code></td>
+<td><code>long</code></td>
+<td>User-provided</td>
+</tr>
+</tbody>
+</table>
+<p>For example, given the schema:</p>
+<div class="highlight"><pre><span></span><code>CREATE TABLE example (k int PRIMARY KEY, ts timestamp);
+INSERT INTO example(k, ts) VALUES (1, 0);
+</code></pre></div>
+<p>When reading column <code>ts</code>, all <code>Instant</code> codecs return <code>Instant.ofEpochMilli(0)</code>. But if asked to
+format it, they behave differently:</p>
+<ul>
+<li><code>ExtraTypeCodecs.TIMESTAMP_UTC</code> returns <code>'1970-01-01T00:00:00.000Z'</code></li>
+<li><code>ExtraTypeCodecs.timestampAt(ZoneId.of("Europe/Paris")</code> returns <code>'1970-01-01T01:00:00.000+01:00'</code></li>
+</ul>
+<h4 id="mapping-cql-timestamps-to-zoneddatetime">Mapping CQL timestamps to <code>ZonedDateTime</code><a class="headerlink" href="#mapping-cql-timestamps-to-zoneddatetime" title="Permanent link">&para;</a></h4>
+<p>If your application works with one single, pre-determined time zone, then you probably would like
+the driver to map <code>timestamp</code> to <a href="https://docs.oracle.com/javase/8/docs/api/java/time/ZonedDateTime.html">java.time.ZonedDateTime</a> with a fixed zone. Use one of the
+following codecs:</p>
+<table>
+<thead>
+<tr>
+<th>Codec</th>
+<th>CQL type</th>
+<th>Java type</th>
+<th>Time zone used by all codec operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#ZONED_TIMESTAMP_SYSTEM">ExtraTypeCodecs.ZONED_TIMESTAMP_SYSTEM</a></td>
+<td><code>timestamp</code></td>
+<td><code>ZonedDateTime</code></td>
+<td>System default</td>
+</tr>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#ZONED_TIMESTAMP_UTC">ExtraTypeCodecs.ZONED_TIMESTAMP_UTC</a></td>
+<td><code>timestamp</code></td>
+<td><code>ZonedDateTime</code></td>
+<td>UTC</td>
+</tr>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#zonedTimestampAt-java.time.ZoneId-">ExtraTypeCodecs.zonedTimestampAt(ZoneId)</a></td>
+<td><code>timestamp</code></td>
+<td><code>ZonedDateTime</code></td>
+<td>User-provided</td>
+</tr>
+</tbody>
+</table>
+<p>This time, the zone matters for all codec operations, including encoding and decoding. For example,
+given the schema:</p>
+<div class="highlight"><pre><span></span><code>CREATE TABLE example (k int PRIMARY KEY, ts timestamp);
+INSERT INTO example(k, ts) VALUES (1, 0);
+</code></pre></div>
+<p>When reading column <code>ts</code>:</p>
+<ul>
+<li><code>ExtraTypeCodecs.ZONED_TIMESTAMP_UTC</code> returns the same value as
+  <code>ZonedDateTime.parse("1970-01-01T00:00Z")</code></li>
+<li><code>ExtraTypeCodecs.zonedTimestampAt(ZoneId.of("Europe/Paris"))</code> returns the same value as
+  <code>ZonedDateTime.parse("1970-01-01T01:00+01:00[Europe/Paris]")</code></li>
+</ul>
+<p>These are two distinct <code>ZonedDateTime</code> instances: although they represent the same absolute point in
+time, they do not compare as equal.</p>
+<h4 id="mapping-cql-timestamps-to-localdatetime">Mapping CQL timestamps to <code>LocalDateTime</code><a class="headerlink" href="#mapping-cql-timestamps-to-localdatetime" title="Permanent link">&para;</a></h4>
+<p>If your application works with one single, pre-determined time zone, but only exposes local
+date-times, then you probably would like the driver to map timestamps to <a href="https://docs.oracle.com/javase/8/docs/api/java/time/LocalDateTime.html">java.time.LocalDateTime</a>
+obtained from a fixed zone. Use one of the following codecs:</p>
+<table>
+<thead>
+<tr>
+<th>Codec</th>
+<th>CQL type</th>
+<th>Java type</th>
+<th>Time zone used by all codec operations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#LOCAL_TIMESTAMP_SYSTEM">ExtraTypeCodecs.LOCAL_TIMESTAMP_SYSTEM</a></td>
+<td><code>timestamp</code></td>
+<td><code>LocalDateTime</code></td>
+<td>System default</td>
+</tr>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#LOCAL_TIMESTAMP_UTC">ExtraTypeCodecs.LOCAL_TIMESTAMP_UTC</a></td>
+<td><code>timestamp</code></td>
+<td><code>LocalDateTime</code></td>
+<td>UTC</td>
+</tr>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#localTimestampAt-java.time.ZoneId-">ExtraTypeCodecs.localTimestampAt(ZoneId)</a></td>
+<td><code>timestamp</code></td>
+<td><code>LocalDateTime</code></td>
+<td>User-provided</td>
+</tr>
+</tbody>
+</table>
+<p>Again, the zone matters for all codec operations, including encoding and decoding. For example,
+given the schema:</p>
+<div class="highlight"><pre><span></span><code>CREATE TABLE example (k int PRIMARY KEY, ts timestamp);
+INSERT INTO example(k, ts) VALUES (1, 0);
+</code></pre></div>
+<p>When reading column <code>ts</code>:</p>
+<ul>
+<li><code>ExtraTypeCodecs.LOCAL_TIMESTAMP_UTC</code> returns <code>LocalDateTime.of(1970, 1, 1, 0, 0)</code></li>
+<li><code>ExtraTypeCodecs.localTimestampAt(ZoneId.of("Europe/Paris"))</code> returns <code>LocalDateTime.of(1970, 1,
+  1, 1, 0)</code></li>
+</ul>
+<h4 id="storing-the-time-zone-in-cassandra">Storing the time zone in Cassandra<a class="headerlink" href="#storing-the-time-zone-in-cassandra" title="Permanent link">&para;</a></h4>
+<p>If your application needs to remember the time zone that each date was entered with, you need to
+store it in the database. We suggest using a <code>tuple&lt;timestamp, text&gt;</code>, where the second component
+holds the <a href="https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html">zone id</a>.</p>
+<p>If you follow this guideline, then you can use <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#ZONED_TIMESTAMP_PERSISTED">ExtraTypeCodecs.ZONED_TIMESTAMP_PERSISTED</a> to map
+the CQL tuple to <a href="https://docs.oracle.com/javase/8/docs/api/java/time/ZonedDateTime.html">java.time.ZonedDateTime</a>.</p>
+<p>For example, given the schema:</p>
+<div class="highlight"><pre><span></span><code>CREATE TABLE example(k int PRIMARY KEY, zts tuple&lt;timestamp, text&gt;);
+INSERT INTO example (k, zts) VALUES (1, (0, &#39;Z&#39;));
+INSERT INTO example (k, zts) VALUES (2, (-3600000, &#39;Europe/Paris&#39;));
+</code></pre></div>
+<p>When reading column <code>zts</code>, <code>ExtraTypeCodecs.ZONED_TIMESTAMP_PERSISTED</code> returns:</p>
+<ul>
+<li><code>ZonedDateTime.parse("1970-01-01T00:00Z")</code> for the first row</li>
+<li><code>ZonedDateTime.parse("1970-01-01T00:00+01:00[Europe/Paris]")</code> for the second row</li>
+</ul>
+<p>Each value is read back in the time zone that it was written with. But note that you can still
+compare rows on a absolute timeline with the <code>timestamp</code> component of the tuple.</p>
+<h4 id="mapping-to-optional-instead-of-null">Mapping to <code>Optional</code> instead of <code>null</code><a class="headerlink" href="#mapping-to-optional-instead-of-null" title="Permanent link">&para;</a></h4>
+<p>If you prefer to deal with <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html">java.util.Optional</a> in your application instead of nulls, then you can 
+use <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#optionalOf-com.datastax.oss.driver.api.core.type.codec.TypeCodec-">ExtraTypeCodecs.optionalOf(TypeCodec)</a>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">TypeCodec</span><span class="o">&lt;</span><span class="n">Optional</span><span class="o">&lt;</span><span class="n">UUID</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">optionalUuidCodec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ExtraTypeCodecs</span><span class="p">.</span><span class="na">optionalOf</span><span class="p">(</span><span class="n">TypeCodecs</span><span class="p">.</span><span class="na">UUID</span><span class="p">);</span>
+</code></pre></div>
+<p>Note that because the CQL native protocol does not distinguish empty collections from null 
+collection references, this codec will also map empty collections to <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html#empty--">Optional.empty()</a>.</p>
+<h4 id="mapping-java-enums">Mapping Java Enums<a class="headerlink" href="#mapping-java-enums" title="Permanent link">&para;</a></h4>
+<p>Java <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Enum.html">Enums</a> can be mapped to CQL in two ways:</p>
+<ol>
+<li>By name: <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#enumNamesOf-java.lang.Class-">ExtraTypeCodecs.enumNamesOf(Class)</a> will create a codec for a given <code>Enum</code> class that
+maps its constants to their <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Enum.html#name--">programmatic names</a>. The corresponding CQL column must be
+of type <code>text</code>. Note that this codec relies on the enum constant names; it is therefore vital that
+enum names never change.</li>
+<li>
+<p>By ordinal: <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#enumOrdinalsOf-java.lang.Class-">ExtraTypeCodecs.enumOrdinalsOf(Class)</a> will create a codec for a given <code>Enum</code> class
+that maps its constants to their <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Enum.html#ordinal--">ordinal value</a>. The corresponding CQL column must
+be of type <code>int</code>.</p>
+<p><strong>We strongly recommend against this approach.</strong> It is provided for compatibility with driver 3,
+but relying on ordinals is a bad practice: any reordering of the enum constants, or insertion
+of a new constant before the end, will change the ordinals. The codec won't fail, but it will
+insert different codes and corrupt your data.</p>
+<p>If you really want to use integer codes for storage efficiency, implement an explicit mapping
+(for example with a <code>toCode()</code> method on your enum type). It is then fairly straightforward to
+implement a codec with <a href="#creating-custom-java-to-cql-mappings-with-mapping-codec">MappingCodec</a>,
+using <code>TypeCodecs#INT</code> as the "inner" codec.</p>
+</li>
+</ol>
+<p>For example, assuming the following enum:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">enum</span><span class="w"> </span><span class="n">WeekDay</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">MONDAY</span><span class="p">,</span><span class="w"> </span><span class="n">TUESDAY</span><span class="p">,</span><span class="w"> </span><span class="n">WEDNESDAY</span><span class="p">,</span><span class="w"> </span><span class="n">THURSDAY</span><span class="p">,</span><span class="w"> </span><span class="n">FRIDAY</span><span class="p">,</span><span class="w"> </span><span class="n">SATURDAY</span><span class="p">,</span><span class="w"> </span><span class="n">SUNDAY</span><span class="w"> </span>
+<span class="p">}</span>
+</code></pre></div>
+<p>You can define codecs for it the following ways:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// MONDAY will be persisted as &quot;MONDAY&quot;, TUESDAY as &quot;TUESDAY&quot;, etc.</span>
+<span class="n">TypeCodec</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">weekDaysByNameCodec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ExtraTypeCodecs</span><span class="p">.</span><span class="na">enumNamesOf</span><span class="p">(</span><span class="n">WeekDay</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+
+<span class="c1">// MONDAY will be persisted as 0, TUESDAY as 1, etc.</span>
+<span class="n">TypeCodec</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span><span class="w"> </span><span class="n">weekDaysByNameCodec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ExtraTypeCodecs</span><span class="p">.</span><span class="na">enumOrdinalsOf</span><span class="p">(</span><span class="n">WeekDay</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+</code></pre></div>
+<h4 id="mapping-json">Mapping Json<a class="headerlink" href="#mapping-json" title="Permanent link">&para;</a></h4>
+<p>The driver provides out-of-the-box support for mapping Java objects to CQL <code>text</code> using the popular
+Jackson library. The method <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#json-java.lang.Class-">ExtraTypeCodecs.json(Class)</a> will create a codec for a given Java class
+that maps instances of that class to Json strings, using a newly-allocated, default <a href="http://fasterxml.github.io/jackson-databind/javadoc/2.10/com/fasterxml/jackson/databind/ObjectMapper.html">ObjectMapper</a>.
+It is also possible to pass a custom <code>ObjectMapper</code> instance using <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#json-java.lang.Class-com.fasterxml.jackson.databind.ObjectMapper-">ExtraTypeCodecs.json(Class,
+ObjectMapper)</a> instead.</p>
+<h4 id="mapping-cql-vectors-to-java-array">Mapping CQL vectors to Java array<a class="headerlink" href="#mapping-cql-vectors-to-java-array" title="Permanent link">&para;</a></h4>
+<p>By default, the driver maps CQL <code>vector</code> to the [CqlVector] value type. If you prefer to deal with
+arrays, the driver offers the following codec:</p>
+<table>
+<thead>
+<tr>
+<th>Codec</th>
+<th>CQL type</th>
+<th>Java type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/ExtraTypeCodecs.html#floatVectorToArray-int-">ExtraTypeCodecs.floatVectorToArray(int)</a></td>
+<td><code>vector&lt;float&gt;</code></td>
+<td><code>float[]</code></td>
+</tr>
+</tbody>
+</table>
+<p>This release only provides a codec for vectors containing float values.</p>
+<h3 id="writing-codecs">Writing codecs<a class="headerlink" href="#writing-codecs" title="Permanent link">&para;</a></h3>
+<p>If none of the driver built-in codecs above suits you, it is also possible to roll your own.</p>
+<p>To write a custom codec, implement the <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html">TypeCodec</a> interface. Here is an example that maps a CQL
+<code>int</code> to a Java string containing its textual representation:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CqlIntToStringCodec</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">TypeCodec</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">GenericType</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">getJavaType</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">GenericType</span><span class="p">.</span><span class="na">STRING</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">DataType</span><span class="w"> </span><span class="nf">getCqlType</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">DataTypes</span><span class="p">.</span><span class="na">INT</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">ByteBuffer</span><span class="w"> </span><span class="nf">encode</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="n">ProtocolVersion</span><span class="w"> </span><span class="n">protocolVersion</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">value</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kt">int</span><span class="w"> </span><span class="n">intValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Integer</span><span class="p">.</span><span class="na">parseInt</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="n">TypeCodecs</span><span class="p">.</span><span class="na">INT</span><span class="p">.</span><span class="na">encode</span><span class="p">(</span><span class="n">intValue</span><span class="p">,</span><span class="w"> </span><span class="n">protocolVersion</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">decode</span><span class="p">(</span><span class="n">ByteBuffer</span><span class="w"> </span><span class="n">bytes</span><span class="p">,</span><span class="w"> </span><span class="n">ProtocolVersion</span><span class="w"> </span><span class="n">protocolVersion</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Integer</span><span class="w"> </span><span class="n">intValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TypeCodecs</span><span class="p">.</span><span class="na">INT</span><span class="p">.</span><span class="na">decode</span><span class="p">(</span><span class="n">bytes</span><span class="p">,</span><span class="w"> </span><span class="n">protocolVersion</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">intValue</span><span class="p">.</span><span class="na">toString</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">format</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">intValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Integer</span><span class="p">.</span><span class="na">parseInt</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">TypeCodecs</span><span class="p">.</span><span class="na">INT</span><span class="p">.</span><span class="na">format</span><span class="p">(</span><span class="n">intValue</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Integer</span><span class="w"> </span><span class="n">intValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TypeCodecs</span><span class="p">.</span><span class="na">INT</span><span class="p">.</span><span class="na">parse</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">intValue</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">intValue</span><span class="p">.</span><span class="na">toString</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Admittedly, this is a trivial -- and maybe not very realistic -- example, but it illustrates a few
+important points:</p>
+<ul>
+<li>which methods to override. Refer to the <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/TypeCodec.html">TypeCodec</a> javadocs for additional information about each
+  of them; </li>
+<li>how to piggyback on a built-in codec, in this case <code>TypeCodecs.INT</code>. Very often, this is the best
+  approach to keep the code simple. If you want to handle the binary encoding yourself (maybe to
+  squeeze the last bit of performance), study the driver's
+  <a href="https://github.com/datastax/java-driver/tree/4.x/core/src/main/java/com/datastax/oss/driver/internal/core/type/codec">built-in codec implementations</a>. </li>
+</ul>
+<h3 id="using-codecs">Using codecs<a class="headerlink" href="#using-codecs" title="Permanent link">&para;</a></h3>
+<p>Once you have your codec, register it when building your session. The following example registers
+<code>CqlIntToStringCodec</code> along with a few driver-supplied alternative codecs:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">enum</span><span class="w"> </span><span class="n">WeekDay</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">MONDAY</span><span class="p">,</span><span class="w"> </span><span class="n">TUESDAY</span><span class="p">,</span><span class="w"> </span><span class="n">WEDNESDAY</span><span class="p">,</span><span class="w"> </span><span class="n">THURSDAY</span><span class="p">,</span><span class="w"> </span><span class="n">FRIDAY</span><span class="p">,</span><span class="w"> </span><span class="n">SATURDAY</span><span class="p">,</span><span class="w"> </span><span class="n">SUNDAY</span><span class="w"> </span><span class="p">};</span>
+<span class="kd">class</span> <span class="nc">Price</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="p">...</span><span class="w"> </span><span class="c1">// a custom POJO that will be serialized as JSON</span>
+<span class="p">}</span>
+
+<span class="n">CqlSession</span><span class="w"> </span><span class="n">session</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="n">CqlSession</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">addTypeCodecs</span><span class="p">(</span>
+<span class="w">      </span><span class="k">new</span><span class="w"> </span><span class="n">CqlIntToStringCodec</span><span class="p">(),</span><span class="w">                  </span><span class="c1">// user-created codec</span>
+<span class="w">      </span><span class="n">ExtraTypeCodecs</span><span class="p">.</span><span class="na">ZONED_TIMESTAMP_PERSISTED</span><span class="p">,</span><span class="w">  </span><span class="c1">// tuple&lt;timestamp,text&gt; &lt;-&gt; ZonedDateTime</span>
+<span class="w">      </span><span class="n">ExtraTypeCodecs</span><span class="p">.</span><span class="na">BLOB_TO_ARRAY</span><span class="p">,</span><span class="w">              </span><span class="c1">// blob &lt;-&gt; byte[]</span>
+<span class="w">      </span><span class="n">ExtraTypeCodecs</span><span class="p">.</span><span class="na">arrayOf</span><span class="p">(</span><span class="n">TypeCodecs</span><span class="p">.</span><span class="na">TEXT</span><span class="p">),</span><span class="w">   </span><span class="c1">// list&lt;text&gt; &lt;-&gt; String[]</span>
+<span class="w">      </span><span class="n">ExtraTypeCodecs</span><span class="p">.</span><span class="na">enumNamesOf</span><span class="p">(</span><span class="n">WeekDay</span><span class="p">.</span><span class="na">class</span><span class="p">),</span><span class="w"> </span><span class="c1">// text &lt;-&gt; WeekDay</span>
+<span class="w">      </span><span class="n">ExtraTypeCodecs</span><span class="p">.</span><span class="na">json</span><span class="p">(</span><span class="n">Price</span><span class="p">.</span><span class="na">class</span><span class="p">),</span><span class="w">          </span><span class="c1">// text &lt;-&gt; MyJsonPojo</span>
+<span class="w">      </span><span class="n">ExtraTypeCodecs</span><span class="p">.</span><span class="na">optionalOf</span><span class="p">(</span><span class="n">TypeCodecs</span><span class="p">.</span><span class="na">UUID</span><span class="p">)</span><span class="w"> </span><span class="c1">// uuid &lt;-&gt; Optional&lt;UUID&gt;</span>
+<span class="w">    </span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+</code></pre></div>
+<p>You may also add codecs to an existing session at runtime:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// The cast is required for backward compatibility reasons (registry mutability was introduced in</span>
+<span class="c1">// 4.3.0). It is safe as long as you didn&#39;t write a custom registry implementation.</span>
+<span class="n">MutableCodecRegistry</span><span class="w"> </span><span class="n">registry</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="p">(</span><span class="n">MutableCodecRegistry</span><span class="p">)</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">getContext</span><span class="p">().</span><span class="na">getCodecRegistry</span><span class="p">();</span>
+
+<span class="n">registry</span><span class="p">.</span><span class="na">register</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">CqlIntToStringCodec</span><span class="p">());</span>
+</code></pre></div>
+<p>You can now use the new mappings in your code:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// cqlsh:ks&gt; desc table test2;</span>
+<span class="c1">// CREATE TABLE ks.test2 (k int PRIMARY KEY, v int)...</span>
+<span class="n">ResultSet</span><span class="w"> </span><span class="n">rs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="s">&quot;SELECT * FROM ks.test2 WHERE k = 1&quot;</span><span class="p">);</span>
+<span class="n">String</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rs</span><span class="p">.</span><span class="na">one</span><span class="p">().</span><span class="na">getString</span><span class="p">(</span><span class="s">&quot;v&quot;</span><span class="p">);</span><span class="w"> </span><span class="c1">// read a CQL int as a java.lang.String</span>
+
+<span class="n">PreparedStatement</span><span class="w"> </span><span class="n">ps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">prepare</span><span class="p">(</span><span class="s">&quot;INSERT INTO ks.test2 (k, v) VALUES (?, ?)&quot;</span><span class="p">);</span>
+<span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span>
+<span class="w">    </span><span class="n">ps</span><span class="p">.</span><span class="na">boundStatementBuilder</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="na">setInt</span><span class="p">(</span><span class="s">&quot;k&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">setString</span><span class="p">(</span><span class="s">&quot;v&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;12&quot;</span><span class="p">)</span><span class="w"> </span><span class="c1">// write a java.lang.String as a CQL int</span>
+<span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">());</span>
+</code></pre></div>
+<p>In the above example, the driver will look up in the codec registry a codec for CQL <code>int</code> and Java
+String, and will transparently pick <code>CqlIntToStringCodec</code> for that.</p>
+<p>So far our examples have used a Java type with dedicated accessors in the driver: <code>getString</code> and
+<code>setString</code>. But sometimes you won't find suitable accessor methods; for example, there is no 
+accessor for <code>ZonedDateTime</code> or for <code>Optional&lt;UUID&gt;</code>, and yet we registered codecs for these types. </p>
+<p>When you want to retrieve such objects, you need a way to tell the driver which Java type you want.
+You do so by using one of the generic <code>get</code> and <code>set</code> methods:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Assuming that ExtraTypeCodecs.ZONED_TIMESTAMP_PERSISTED was registered</span>
+<span class="c1">// Assuming that ExtraTypeCodecs.BLOB_TO_ARRAY was registered</span>
+<span class="c1">// Assuming that ExtraTypeCodecs.arrayOf(TypeCodecs.TEXT) was registered</span>
+
+<span class="c1">// Reading</span>
+<span class="n">ZonedDateTime</span><span class="w"> </span><span class="n">v1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="s">&quot;v1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ZonedDateTime</span><span class="p">.</span><span class="na">class</span><span class="p">);</span><span class="w"> </span><span class="c1">// assuming column is of type timestamp</span>
+<span class="kt">byte</span><span class="o">[]</span><span class="w"> </span><span class="n">v2</span><span class="w">        </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="s">&quot;v2&quot;</span><span class="p">,</span><span class="w"> </span><span class="kt">byte</span><span class="o">[]</span><span class="p">.</span><span class="na">class</span><span class="p">);</span><span class="w">        </span><span class="c1">// assuming column is of type blob</span>
+<span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">v3</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="s">&quot;v3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">[]</span><span class="p">.</span><span class="na">class</span><span class="p">);</span><span class="w">      </span><span class="c1">// assuming column is of type list&lt;text&gt;</span>
+
+
+<span class="c1">// Writing</span>
+<span class="n">boundStatement</span><span class="p">.</span><span class="na">set</span><span class="p">(</span><span class="s">&quot;v1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">v1</span><span class="p">,</span><span class="w"> </span><span class="n">ZonedDateTime</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="n">boundStatement</span><span class="p">.</span><span class="na">set</span><span class="p">(</span><span class="s">&quot;v2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">v2</span><span class="p">,</span><span class="w"> </span><span class="kt">byte</span><span class="o">[]</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="n">boundStatement</span><span class="p">.</span><span class="na">set</span><span class="p">(</span><span class="s">&quot;v3&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">v3</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">[]</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+</code></pre></div>
+<p>This is also valid for arbitrary Java types. This is particularly useful when dealing with Enums and 
+JSON mappings, for example our <code>WeekDay</code> and <code>Price</code> types:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Assuming that TypeCodecs.enumNamesOf(WeekDay.class) was registered</span>
+<span class="c1">// Assuming that TypeCodecs.json(Price.class) was registered</span>
+
+<span class="c1">// Reading</span>
+<span class="n">WeekDay</span><span class="w"> </span><span class="n">v1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="s">&quot;v1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">WeekDay</span><span class="p">.</span><span class="na">class</span><span class="p">);</span><span class="w"> </span><span class="c1">// assuming column is of type text</span>
+<span class="n">Price</span><span class="w"> </span><span class="n">v2</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="s">&quot;v2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Price</span><span class="p">.</span><span class="na">class</span><span class="p">);</span><span class="w">   </span><span class="c1">// assuming column is of type text</span>
+
+<span class="c1">// Writing</span>
+<span class="n">boundStatement</span><span class="p">.</span><span class="na">set</span><span class="p">(</span><span class="s">&quot;v1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">v1</span><span class="p">,</span><span class="w"> </span><span class="n">WeekDay</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="n">boundStatement</span><span class="p">.</span><span class="na">set</span><span class="p">(</span><span class="s">&quot;v2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">v2</span><span class="p">,</span><span class="w"> </span><span class="n">Price</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+</code></pre></div>
+<p>Note that, because the underlying CQL type is <code>text</code> you can still retrieve the column's contents
+as a plain string:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Reading</span>
+<span class="n">String</span><span class="w"> </span><span class="n">enumName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">getString</span><span class="p">(</span><span class="s">&quot;v1&quot;</span><span class="p">);</span>
+<span class="n">String</span><span class="w"> </span><span class="n">priceJson</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">getString</span><span class="p">(</span><span class="s">&quot;v2&quot;</span><span class="p">);</span>
+
+<span class="c1">// Writing</span>
+<span class="n">boundStatement</span><span class="p">.</span><span class="na">setString</span><span class="p">(</span><span class="s">&quot;v1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">enumName</span><span class="p">);</span>
+<span class="n">boundStatement</span><span class="p">.</span><span class="na">setString</span><span class="p">(</span><span class="s">&quot;v2&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">priceJson</span><span class="p">);</span>
+</code></pre></div>
+<p>And finally, for <code>Optional&lt;UUID&gt;</code>, you will need the <code>get</code> and <code>set</code> methods with an extra <em>type 
+token</em> argument, because <code>Optional&lt;UUID&gt;</code> is a parameterized type:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Assuming that TypeCodecs.optionalOf(TypeCodecs.UUID) was registered</span>
+
+<span class="c1">// Reading</span>
+<span class="n">Optional</span><span class="o">&lt;</span><span class="n">UUID</span><span class="o">&gt;</span><span class="w"> </span><span class="n">opt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="s">&quot;v&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">GenericType</span><span class="p">.</span><span class="na">optionalOf</span><span class="p">(</span><span class="n">UUID</span><span class="p">.</span><span class="na">class</span><span class="p">));</span>
+
+<span class="c1">// Writing</span>
+<span class="n">boundStatement</span><span class="p">.</span><span class="na">set</span><span class="p">(</span><span class="s">&quot;v&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">opt</span><span class="p">,</span><span class="w"> </span><span class="n">GenericType</span><span class="p">.</span><span class="na">optionalOf</span><span class="p">(</span><span class="n">UUID</span><span class="p">.</span><span class="na">class</span><span class="p">));</span>
+</code></pre></div>
+<p>Type tokens are instances of <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/reflect/GenericType.html">GenericType</a>. They are immutable and thread-safe, you should store
+them as reusable constants. The <code>GenericType</code> class itself has constants and factory methods to help
+creating <code>GenericType</code> objects for common types. If you don't see the type you are looking for, a
+type token for any Java type can be created using the following pattern:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Notice the &#39;{}&#39;: this is an anonymous inner class</span>
+<span class="n">GenericType</span><span class="o">&lt;</span><span class="n">Foo</span><span class="o">&lt;</span><span class="n">Bar</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">fooBarType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">GenericType</span><span class="o">&lt;</span><span class="n">Foo</span><span class="o">&lt;</span><span class="n">Bar</span><span class="o">&gt;&gt;</span><span class="p">(){};</span>
+
+<span class="n">Foo</span><span class="o">&lt;</span><span class="n">Bar</span><span class="o">&gt;</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="s">&quot;v&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">fooBarType</span><span class="p">);</span>
+</code></pre></div>
+<p>Custom codecs are used not only for their base type, but also recursively in collections, tuples and
+UDTs. For example, once your Json codec for the <code>Price</code> class is registered, you can also read a CQL
+<code>list&lt;text&gt;</code> as a Java <code>List&lt;Price&gt;</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Assuming that TypeCodecs.json(Price.class) was registered</span>
+<span class="c1">// Assuming that each element of the list&lt;text&gt; column is a valid Json string</span>
+
+<span class="c1">// Reading</span>
+<span class="n">List</span><span class="o">&lt;</span><span class="n">Price</span><span class="o">&gt;</span><span class="w"> </span><span class="n">prices1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">getList</span><span class="p">(</span><span class="s">&quot;v&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Price</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="c1">// alternative method using the generic get method with type token argument:</span>
+<span class="n">List</span><span class="o">&lt;</span><span class="n">Price</span><span class="o">&gt;</span><span class="w"> </span><span class="n">prices2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="s">&quot;v&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">GenericType</span><span class="p">.</span><span class="na">listOf</span><span class="p">(</span><span class="n">Price</span><span class="p">.</span><span class="na">class</span><span class="p">));</span>
+
+<span class="c1">// Writing</span>
+<span class="n">boundStatement</span><span class="p">.</span><span class="na">setList</span><span class="p">(</span><span class="s">&quot;v&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">prices1</span><span class="p">,</span><span class="w"> </span><span class="n">Price</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="c1">// alternative method using the generic set method with type token argument:</span>
+<span class="n">boundStatement</span><span class="p">.</span><span class="na">set</span><span class="p">(</span><span class="s">&quot;v&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">prices2</span><span class="p">,</span><span class="w"> </span><span class="n">GenericType</span><span class="p">.</span><span class="na">listOf</span><span class="p">(</span><span class="n">Price</span><span class="p">.</span><span class="na">class</span><span class="p">));</span>
+</code></pre></div>
+<p>Whenever you read or write a value, the driver tries all the built-in mappings first, followed by
+custom codecs. If two codecs can process the same mapping, the one that was registered first is
+used. Note that this means that built-in mappings can't be overridden.</p>
+<p>In rare cases, you might have a codec registered in your application, but have a legitimate reason
+to use a different mapping in one particular place. In that case, you can pass a codec instance 
+to <code>get</code> / <code>set</code> instead of a type token:</p>
+<div class="highlight"><pre><span></span><code><span class="n">TypeCodec</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">defaultCodec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">CqlIntToStringCodec</span><span class="p">();</span>
+<span class="n">TypeCodec</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">specialCodec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...;</span><span class="w"> </span><span class="c1">// a different implementation</span>
+
+<span class="n">CqlSession</span><span class="w"> </span><span class="n">session</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">CqlSession</span><span class="p">.</span><span class="na">builder</span><span class="p">().</span><span class="na">addTypeCodecs</span><span class="p">(</span><span class="n">defaultCodec</span><span class="p">).</span><span class="na">build</span><span class="p">();</span>
+
+<span class="n">String</span><span class="w"> </span><span class="n">s1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">getString</span><span class="p">(</span><span class="s">&quot;anIntColumn&quot;</span><span class="p">);</span><span class="w">         </span><span class="c1">// int -&gt; String, will decode with defaultCodec</span>
+<span class="n">String</span><span class="w"> </span><span class="n">s2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="s">&quot;anIntColumn&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">specialCodec</span><span class="p">);</span><span class="w"> </span><span class="c1">// int -&gt; String, will decode with specialCodec</span>
+</code></pre></div>
+<p>By doing so, you bypass the codec registry completely and instruct the driver to use the given 
+codec. Note that it is your responsibility to ensure that the codec can handle the underlying CQL
+type (this cannot be enforced at compile-time).</p>
+<h3 id="creating-custom-java-to-cql-mappings-with-mappingcodec">Creating custom Java-to-CQL mappings with <code>MappingCodec</code><a class="headerlink" href="#creating-custom-java-to-cql-mappings-with-mappingcodec" title="Permanent link">&para;</a></h3>
+<p>The above example, <code>CqlIntToStringCodec</code>, could be rewritten to leverage <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/MappingCodec.html">MappingCodec</a>, an abstract 
+class that ships with the driver. This class has been designed for situations where we want to 
+represent a CQL type with a different Java type than the Java type natively supported by the driver,
+and the conversion between the former and the latter is straightforward. </p>
+<p>All you have to do is extend <code>MappingCodec</code> and implement two methods that perform the conversion 
+between the supported Java type -- or "inner" type -- and the target Java type -- or "outer" type:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CqlIntToStringCodec</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">MappingCodec</span><span class="o">&lt;</span><span class="n">Integer</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="nf">CqlIntToStringCodec</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">super</span><span class="p">(</span><span class="n">TypeCodecs</span><span class="p">.</span><span class="na">INT</span><span class="p">,</span><span class="w"> </span><span class="n">GenericType</span><span class="p">.</span><span class="na">STRING</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Nullable</span>
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">protected</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">innerToOuter</span><span class="p">(</span><span class="nd">@Nullable</span><span class="w"> </span><span class="n">Integer</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">value</span><span class="p">.</span><span class="na">toString</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Nullable</span>
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">protected</span><span class="w"> </span><span class="n">Integer</span><span class="w"> </span><span class="nf">outerToInner</span><span class="p">(</span><span class="nd">@Nullable</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">Integer</span><span class="p">.</span><span class="na">parseInt</span><span class="p">(</span><span class="n">value</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>This technique is especially useful when mapping user-defined types to Java objects. For example, 
+let's assume the following user-defined type:</p>
+<div class="highlight"><pre><span></span><code>CREATE TYPE coordinates (x int, y int);
+ ```
+
+And let&#39;s suppose that we want to map it to the following Java class:
+
+```java
+public class Coordinates {
+  public final int x;
+  public final int y;
+  public Coordinates(int x, int y) { this.x = x; this.y = y; }
+}
+</code></pre></div>
+<p>All  you have to do is create a <code>MappingCodec</code> subclass that piggybacks on an existing 
+<code>TypeCodec&lt;UdtValue&gt;</code> for the above user-defined type:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CoordinatesCodec</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">MappingCodec</span><span class="o">&lt;</span><span class="n">UdtValue</span><span class="p">,</span><span class="w"> </span><span class="n">Coordinates</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="nf">CoordinatesCodec</span><span class="p">(</span><span class="nd">@NonNull</span><span class="w"> </span><span class="n">TypeCodec</span><span class="o">&lt;</span><span class="n">UdtValue</span><span class="o">&gt;</span><span class="w"> </span><span class="n">innerCodec</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">super</span><span class="p">(</span><span class="n">innerCodec</span><span class="p">,</span><span class="w"> </span><span class="n">GenericType</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">Coordinates</span><span class="p">.</span><span class="na">class</span><span class="p">));</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@NonNull</span><span class="w"> </span><span class="nd">@Override</span><span class="w"> </span><span class="kd">public</span><span class="w"> </span><span class="n">UserDefinedType</span><span class="w"> </span><span class="nf">getCqlType</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="n">UserDefinedType</span><span class="p">)</span><span class="w"> </span><span class="kd">super</span><span class="p">.</span><span class="na">getCqlType</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Nullable</span><span class="w"> </span><span class="nd">@Override</span><span class="w"> </span><span class="kd">protected</span><span class="w"> </span><span class="n">Coordinates</span><span class="w"> </span><span class="nf">innerToOuter</span><span class="p">(</span><span class="nd">@Nullable</span><span class="w"> </span><span class="n">UdtValue</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Coordinates</span><span class="p">(</span><span class="n">value</span><span class="p">.</span><span class="na">getInt</span><span class="p">(</span><span class="s">&quot;x&quot;</span><span class="p">),</span><span class="w"> </span><span class="n">value</span><span class="p">.</span><span class="na">getInt</span><span class="p">(</span><span class="s">&quot;y&quot;</span><span class="p">));</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Nullable</span><span class="w"> </span><span class="nd">@Override</span><span class="w"> </span><span class="kd">protected</span><span class="w"> </span><span class="n">UdtValue</span><span class="w"> </span><span class="nf">outerToInner</span><span class="p">(</span><span class="nd">@Nullable</span><span class="w"> </span><span class="n">Coordinates</span><span class="w"> </span><span class="n">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">getCqlType</span><span class="p">().</span><span class="na">newValue</span><span class="p">().</span><span class="na">setInt</span><span class="p">(</span><span class="s">&quot;x&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">.</span><span class="na">x</span><span class="p">).</span><span class="na">setInt</span><span class="p">(</span><span class="s">&quot;y&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">.</span><span class="na">y</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Then the new mapping codec could be registered as follows:</p>
+<div class="highlight"><pre><span></span><code><span class="n">CqlSession</span><span class="w"> </span><span class="n">session</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...</span>
+<span class="n">CodecRegistry</span><span class="w"> </span><span class="n">codecRegistry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">getContext</span><span class="p">().</span><span class="na">getCodecRegistry</span><span class="p">();</span>
+<span class="c1">// The target user-defined type</span>
+<span class="n">UserDefinedType</span><span class="w"> </span><span class="n">coordinatesUdt</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">session</span>
+<span class="w">        </span><span class="p">.</span><span class="na">getMetadata</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="na">getKeyspace</span><span class="p">(</span><span class="s">&quot;...&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">flatMap</span><span class="p">(</span><span class="n">ks</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">ks</span><span class="p">.</span><span class="na">getUserDefinedType</span><span class="p">(</span><span class="s">&quot;coordinates&quot;</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">orElseThrow</span><span class="p">(</span><span class="n">IllegalStateException</span><span class="p">::</span><span class="k">new</span><span class="p">);</span>
+<span class="c1">// The &quot;inner&quot; codec that handles the conversions from CQL from/to UdtValue</span>
+<span class="n">TypeCodec</span><span class="o">&lt;</span><span class="n">UdtValue</span><span class="o">&gt;</span><span class="w"> </span><span class="n">innerCodec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">codecRegistry</span><span class="p">.</span><span class="na">codecFor</span><span class="p">(</span><span class="n">coordinatesUdt</span><span class="p">);</span>
+<span class="c1">// The mapping codec that will handle the conversions from/to UdtValue and Coordinates</span>
+<span class="n">CoordinatesCodec</span><span class="w"> </span><span class="n">coordinatesCodec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">CoordinatesCodec</span><span class="p">(</span><span class="n">innerCodec</span><span class="p">);</span>
+<span class="c1">// Register the new codec</span>
+<span class="p">((</span><span class="n">MutableCodecRegistry</span><span class="p">)</span><span class="w"> </span><span class="n">codecRegistry</span><span class="p">).</span><span class="na">register</span><span class="p">(</span><span class="n">coordinatesCodec</span><span class="p">);</span>
+</code></pre></div>
+<p>...and used just like explained above:</p>
+<div class="highlight"><pre><span></span><code><span class="n">BoundStatement</span><span class="w"> </span><span class="n">stmt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...;</span>
+<span class="n">stmt</span><span class="p">.</span><span class="na">set</span><span class="p">(</span><span class="s">&quot;coordinates&quot;</span><span class="p">,</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Coordinates</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">20</span><span class="p">),</span><span class="w"> </span><span class="n">Coordinates</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+
+<span class="n">Row</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...;</span>
+<span class="n">Coordinates</span><span class="w"> </span><span class="n">coordinates</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="s">&quot;coordinates&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Coordinates</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+</code></pre></div>
+<p>Note: if you need even more advanced mapping capabilities, consider adopting
+the driver's <a href="../../mapper/">object mapping framework</a>.</p>
+<h3 id="subtype-polymorphism">Subtype polymorphism<a class="headerlink" href="#subtype-polymorphism" title="Permanent link">&para;</a></h3>
+<p>Suppose the following class hierarchy:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">class</span> <span class="nc">Animal</span><span class="w"> </span><span class="p">{}</span>
+<span class="kd">class</span> <span class="nc">Cat</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">Animal</span><span class="w"> </span><span class="p">{}</span>
+</code></pre></div>
+<p>By default, a codec will accept to serialize any object that extends or implements its declared Java
+type: a codec such as <code>AnimalCodec extends TypeCodec&lt;Animal&gt;</code> will accept <code>Cat</code> instances as well.</p>
+<p>This allows a codec to handle interfaces and superclasses in a generic way, regardless of the actual
+implementation being used by client code; for example, the driver has a built-in codec that handles
+<code>List</code> instances, and this codec is capable of serializing any concrete <code>List</code> implementation.</p>
+<p>But this has one caveat: when setting or retrieving values with <code>get()</code> and <code>set()</code>, <em>you must pass
+the exact Java type the codec handles</em>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">BoundStatement</span><span class="w"> </span><span class="n">bs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...</span>
+<span class="n">bs</span><span class="p">.</span><span class="na">set</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Cat</span><span class="p">(),</span><span class="w"> </span><span class="n">Animal</span><span class="p">.</span><span class="na">class</span><span class="p">);</span><span class="w"> </span><span class="c1">// works</span>
+<span class="n">bs</span><span class="p">.</span><span class="na">set</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Cat</span><span class="p">(),</span><span class="w">    </span><span class="n">Cat</span><span class="p">.</span><span class="na">class</span><span class="p">);</span><span class="w"> </span><span class="c1">// throws CodecNotFoundException</span>
+
+<span class="n">Row</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...</span>
+<span class="n">Animal</span><span class="w"> </span><span class="n">animal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">Animal</span><span class="p">.</span><span class="na">class</span><span class="p">);</span><span class="w"> </span><span class="c1">// works</span>
+<span class="n">Cat</span><span class="w">    </span><span class="n">cat</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w">    </span><span class="n">Cat</span><span class="p">.</span><span class="na">class</span><span class="p">);</span><span class="w"> </span><span class="c1">// throws CodecNotFoundException</span>
+</code></pre></div>
+<h3 id="the-codec-registry">The codec registry<a class="headerlink" href="#the-codec-registry" title="Permanent link">&para;</a></h3>
+<p>The driver stores all codecs (built-in and custom) in an internal <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/registry/CodecRegistry.html">CodecRegistry</a>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">CodecRegistry</span><span class="w"> </span><span class="n">getCodecRegistry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">getContext</span><span class="p">().</span><span class="na">getCodecRegistry</span><span class="p">();</span>
+
+<span class="c1">// Get the custom codec we registered earlier:</span>
+<span class="n">TypeCodec</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">cqlIntToString</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">codecRegistry</span><span class="p">.</span><span class="na">codecFor</span><span class="p">(</span><span class="n">DataTypes</span><span class="p">.</span><span class="na">INT</span><span class="p">,</span><span class="w"> </span><span class="n">GenericType</span><span class="p">.</span><span class="na">STRING</span><span class="p">);</span>
+</code></pre></div>
+<p>If all you're doing is executing requests and reading responses, you probably won't ever need to
+access the registry directly. But it's useful if you do some kind of generic processing, for
+example printing out an arbitrary row when the schema is not known at compile time:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">formatRow</span><span class="p">(</span><span class="n">Row</span><span class="w"> </span><span class="n">row</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">StringBuilder</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuilder</span><span class="p">();</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">size</span><span class="p">();</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">getColumnDefinitions</span><span class="p">().</span><span class="na">get</span><span class="p">(</span><span class="n">i</span><span class="p">).</span><span class="na">getName</span><span class="p">().</span><span class="na">asCql</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Object</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">getObject</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+<span class="w">    </span><span class="n">DataType</span><span class="w"> </span><span class="n">cqlType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">getType</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Find the best codec to format this CQL type: </span>
+<span class="w">    </span><span class="n">TypeCodec</span><span class="o">&lt;</span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">codec</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">codecRegistry</span><span class="p">().</span><span class="na">codecFor</span><span class="p">(</span><span class="n">cqlType</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">result</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="s">&quot;, &quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="n">result</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="n">name</span><span class="p">).</span><span class="na">append</span><span class="p">(</span><span class="s">&quot; = &quot;</span><span class="p">).</span><span class="na">append</span><span class="p">(</span><span class="n">codec</span><span class="p">.</span><span class="na">format</span><span class="p">(</span><span class="n">value</span><span class="p">));</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">toString</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+    
+  </body>
+</html>

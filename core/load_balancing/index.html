@@ -1,0 +1,3099 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Java Driver for Apache Cassandra® Documentation">
+      
+      
+      
+        <link rel="canonical" href="https://github.com/apache/cassandra-java-driver/core/load_balancing/">
+      
+      
+        <link rel="prev" href="../ssl/">
+      
+      
+        <link rel="next" href="../pooling/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.17">
+    
+    
+      
+        <title>Load Balancing - Java Driver for Apache Cassandra</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#load-balancing" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Java Driver for Apache Cassandra" class="md-header__button md-logo" aria-label="Java Driver for Apache Cassandra" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Java Driver for Apache Cassandra
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Load Balancing
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/apache/cassandra-java-driver" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    apache/cassandra-java-driver
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../HOME-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API References
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../faq-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  FAQ
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../upgrade-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Upgrade Guide
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Java Driver for Apache Cassandra" class="md-nav__button md-logo" aria-label="Java Driver for Apache Cassandra" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Java Driver for Apache Cassandra
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/apache/cassandra-java-driver" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    apache/cassandra-java-driver
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../HOME-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Conventions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../case_sensitivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Case Sensitivity
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cloud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cloud
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Core
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Core
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authentication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ssl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Load Balancing
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Load Balancing
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#load-balancing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Load balancing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Load balancing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick overview
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Concepts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Concepts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#node-distance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Node distance
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      Query plan
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#built-in-policies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Built-in policies
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Built-in policies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#datacenter-locality" class="md-nav__link">
+    <span class="md-ellipsis">
+      Datacenter locality
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Datacenter locality">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-the-local-datacenter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding the local datacenter
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cross-datacenter-failover" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cross-datacenter failover
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cross-datacenter failover">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alternatives-to-driver-level-cross-datacenter-failover" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternatives to driver-level cross-datacenter failover
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-aware" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token-aware
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Token-aware">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#providing-routing-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      Providing routing information
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#policy-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      Policy behavior
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#customizing-node-distance-assignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Customizing node distance assignment
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom implementation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-multiple-policies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using multiple policies
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pooling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pooling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reconnection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Reconnection
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../retries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Retries
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../speculative_execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Speculative Execution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Logging
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../statements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Statements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../paging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Paging
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../async/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Async Programming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reactive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Reactive Streams
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../custom_codecs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Custom Codecs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../temporal_types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Temporal Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tuples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tuples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../udts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    UDTs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compression/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Compression
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../address_resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Address Resolution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../request_tracker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Request Tracker
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../throttling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Throttling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tracing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tracing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Performance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metadata/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metadata
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../control_connection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Control Connection
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../native_protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Native Protocol
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../non_blocking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Non-blocking
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_timestamps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Query Timestamps
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../idempotence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Idempotence
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../detachable_types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Detachable Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    DSE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../graalvm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GraalVM
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../shaded_jar/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Shaded JAR
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bom/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    BOM
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Query Builder
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Query Builder
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/select/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Select
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/insert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Insert
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Update
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/delete/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Delete
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Schema
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/truncate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Truncate
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/condition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Condition
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/relation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Relation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/term/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Term
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/idempotence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Idempotence
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Mapper
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Mapper
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/entities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    DAOs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/mapper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mapper
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_8" id="__nav_2_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Developer
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            Developer
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/common/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Common
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/native_protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Native Protocol
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/netty_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Netty Pipeline
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/request_execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Request Execution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/admin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../osgi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OSGi
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API References
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    FAQ
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Changelog
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../upgrade-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Upgrade Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#load-balancing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Load balancing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Load balancing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick overview
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Concepts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Concepts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#node-distance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Node distance
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      Query plan
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#built-in-policies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Built-in policies
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Built-in policies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#datacenter-locality" class="md-nav__link">
+    <span class="md-ellipsis">
+      Datacenter locality
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Datacenter locality">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-the-local-datacenter" class="md-nav__link">
+    <span class="md-ellipsis">
+      Finding the local datacenter
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cross-datacenter-failover" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cross-datacenter failover
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Cross-datacenter failover">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alternatives-to-driver-level-cross-datacenter-failover" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternatives to driver-level cross-datacenter failover
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-aware" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token-aware
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Token-aware">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#providing-routing-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      Providing routing information
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#policy-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      Policy behavior
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#customizing-node-distance-assignment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Customizing node distance assignment
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom implementation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-multiple-policies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using multiple policies
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+  <h1>Load Balancing</h1>
+
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<h2 id="load-balancing">Load balancing<a class="headerlink" href="#load-balancing" title="Permanent link">&para;</a></h2>
+<h3 id="quick-overview">Quick overview<a class="headerlink" href="#quick-overview" title="Permanent link">&para;</a></h3>
+<p>Which nodes the driver talks to, and in which order they are tried.</p>
+<ul>
+<li><code>basic.load-balancing-policy</code> in the configuration.</li>
+<li>defaults to <code>DefaultLoadBalancingPolicy</code> (opinionated best practices).</li>
+<li>can have per-profile policies. </li>
+</ul>
+<hr />
+<p>A Cassandra cluster is typically composed of multiple nodes; the <em>load balancing policy</em> (sometimes
+abbreviated LBP) is a central component that determines:</p>
+<ul>
+<li>which nodes the driver will communicate with;</li>
+<li>for each new query, which coordinator to pick, and which nodes to use as failover.</li>
+</ul>
+<p>It is defined in the <a href="../configuration/">configuration</a>:</p>
+<div class="highlight"><pre><span></span><code>datastax-java-driver.basic.load-balancing-policy {
+  class = DefaultLoadBalancingPolicy
+}
+</code></pre></div>
+<h3 id="concepts">Concepts<a class="headerlink" href="#concepts" title="Permanent link">&para;</a></h3>
+<h4 id="node-distance">Node distance<a class="headerlink" href="#node-distance" title="Permanent link">&para;</a></h4>
+<p>For each node, the policy computes a <em>distance</em> that determines how connections will be established:</p>
+<ul>
+<li><code>LOCAL</code> and <code>REMOTE</code> are "active" distances, meaning that the driver will keep open connections to
+  this node. <a href="../pooling/">Connection pools</a> can be sized independently for each distance.</li>
+<li><code>IGNORED</code> means that the driver will never attempt to connect.</li>
+</ul>
+<p>Typically, the distance will reflect network topology (e.g. local vs. remote datacenter), although
+that is entirely up to each policy implementation. It can also change over time.</p>
+<p>The driver built-in policies only ever assign the <code>LOCAL</code> or <code>IGNORED</code> distance, to avoid cross-
+datacenter traffic (see below to understand how to change this behavior).</p>
+<h4 id="query-plan">Query plan<a class="headerlink" href="#query-plan" title="Permanent link">&para;</a></h4>
+<p>Each time the driver executes a query, it asks the policy to compute a <em>query plan</em>, in other words
+a list of nodes. The driver then tries each node in sequence, moving down the plan according to the
+<a href="../retries/">retry policy</a> and <a href="../speculative_execution/">speculative execution policy</a>.</p>
+<p>The contents and order of query plans are entirely implementation-specific, but policies typically
+return plans that:</p>
+<ul>
+<li>are different for each query, in order to balance the load across the cluster;</li>
+<li>only contain nodes that are known to be able to process queries, i.e. neither ignored nor down;</li>
+<li>favor local nodes over remote ones.</li>
+</ul>
+<h3 id="built-in-policies">Built-in policies<a class="headerlink" href="#built-in-policies" title="Permanent link">&para;</a></h3>
+<p>In previous versions, the driver provided a wide variety of built-in load balancing policies; in
+addition, they could be nested into each other, yielding an even higher number of choices. In our
+experience, this has proven to be too complicated: it's not obvious which policy(ies) to choose for
+a given use case, and nested policies can sometimes affect each other's effects in subtle and hard-
+to-predict ways.  </p>
+<p>In driver 4+, we are taking a different approach: we provide only a handful of load balancing
+policies, that we consider the best choices for most cases:</p>
+<ul>
+<li><code>DefaultLoadBalancingPolicy</code> should almost always be used; it requires a local datacenter to be 
+  specified either programmatically when creating the session, or via the configuration (see below). 
+  It can also use a highly efficient slow replica avoidance mechanism, which is by default enabled.</li>
+<li><code>DcInferringLoadBalancingPolicy</code> is similar to <code>DefaultLoadBalancingPolicy</code>, but does not require 
+  a local datacenter to be defined, in which case it will attempt to infer the local datacenter from 
+  the provided contact points. If that's not possible, it will throw an error during session 
+  initialization. This policy is intended mostly for ETL tools and is not recommended for normal 
+  applications.</li>
+<li><code>BasicLoadBalancingPolicy</code> is similar to <code>DefaultLoadBalancingPolicy</code>, but does not have the slow 
+  replica avoidance mechanism. More importantly, it is the only policy capable of operating without 
+  local datacenter defined, in which case it will consider nodes in the cluster in a datacenter-
+  agnostic way. Beware that this could cause spikes in cross-datacenter traffic! This policy is 
+  provided mostly as a starting point for users wishing to implement their own load balancing 
+  policy; it should not be used as is in normal applications.</li>
+</ul>
+<p>You can still write a <a href="#custom-implementation">custom implementation</a> if you have special
+requirements.</p>
+<h4 id="datacenter-locality">Datacenter locality<a class="headerlink" href="#datacenter-locality" title="Permanent link">&para;</a></h4>
+<p>By default, both <code>DefaultLoadBalancingPolicy</code> and <code>DcInferringLoadBalancingPolicy</code> <strong>only connect to 
+a single datacenter</strong>. The rationale is that a typical multi-region deployment will collocate one or 
+more application instances with each Cassandra datacenter:</p>
+<div class="highlight"><pre><span></span><code>                  /----+----\
+                  | client  |
+                  \----+----/
+                       |
+                       v
+               /---------------\
+               | load balancer |
+               \-------+-------/
+                       |
+          +------------+------------+
+          |                         |
++---------|---------+     +---------|---------+
+| Region1 v         |     | Region2 v         |
+|    /---------\    |     |    /---------\    |
+|    |   app1  |    |     |    |   app2  |    |
+|    \----+----/    |     |    \----+----/    |
+|         |         |     |         |         |
+|         v         |     |         v         |
+|   +-----------+   |     |   +-----------+   |
+|   | {s}       |   |     |   | {s}       |   |
+|   | Cassandra +------=------+ Cassandra |   |
+|   |    DC1    |   |     |   |    DC2    |   |
+|   +-----------+   |     |   +-----------+   |
+|                   |     |                   |
++-------------------+     +-------------------+
+</code></pre></div>
+<p>When using these policies you <strong>must</strong> provide a local datacenter name, either in the configuration:</p>
+<div class="highlight"><pre><span></span><code>datastax-java-driver.basic.load-balancing-policy {
+  local-datacenter = datacenter1
+}
+</code></pre></div>
+<p>Or programmatically when building the session:</p>
+<div class="highlight"><pre><span></span><code><span class="n">CqlSession</span><span class="w"> </span><span class="n">session</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CqlSession</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">withLocalDatacenter</span><span class="p">(</span><span class="s">&quot;datacenter1&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+</code></pre></div>
+<p>If both are provided, the programmatic value takes precedence.</p>
+<p>For convenience, the local datacenter name may be omitted if no contact points were provided: in
+that case, the driver will connect to 127.0.0.1:9042, and use that node's datacenter. This is just
+for a better out-of-the-box experience for users who have just downloaded the driver; beyond that
+initial development phase, you should provide explicit contact points and a local datacenter.</p>
+<h5 id="finding-the-local-datacenter">Finding the local datacenter<a class="headerlink" href="#finding-the-local-datacenter" title="Permanent link">&para;</a></h5>
+<p>To check which datacenters are defined in a given cluster, you can run [<code>nodetool status</code>]. It will 
+print information about each node in the cluster, grouped by datacenters. Here is an example: </p>
+<div class="highlight"><pre><span></span><code>$ nodetool status
+Datacenter: DC1
+===============
+Status=Up/Down
+|/ State=Normal/Leaving/Joining/Moving
+--  Address    Load       Tokens  Owns  Host ID  Rack
+UN  &lt;IP1&gt;      1.5 TB     256     ?     &lt;ID1&gt;    rack1
+UN  &lt;IP2&gt;      1.5 TB     256     ?     &lt;ID2&gt;    rack2
+UN  &lt;IP3&gt;      1.5 TB     256     ?     &lt;ID3&gt;    rack3
+
+Datacenter: DC2
+===============
+Status=Up/Down
+|/ State=Normal/Leaving/Joining/Moving
+--  Address    Load       Tokens  Owns  Host ID  Rack
+UN  &lt;IP4&gt;      1.5 TB     256     ?     &lt;ID4&gt;    rack1
+UN  &lt;IP5&gt;      1.5 TB     256     ?     &lt;ID5&gt;    rack2
+UN  &lt;IP6&gt;      1.5 TB     256     ?     &lt;ID6&gt;    rack3
+</code></pre></div>
+<p>To find out which datacenter should be considered local, you need to first determine which nodes the 
+driver is going to be co-located with, then choose their datacenter as local. In case of doubt, you
+can also use <a href="https://docs.datastax.com/en/dse/6.7/cql/cql/cql_using/startCqlshStandalone.html">cqlsh</a>; if cqlsh is co-located too in the same datacenter, simply run the command 
+below:</p>
+<div class="highlight"><pre><span></span><code>cqlsh&gt; select data_center from system.local;
+
+data_center
+-------------
+DC1 
+</code></pre></div>
+<h4 id="cross-datacenter-failover">Cross-datacenter failover<a class="headerlink" href="#cross-datacenter-failover" title="Permanent link">&para;</a></h4>
+<p>Since the driver by default only contacts nodes in the local datacenter, what happens if the whole
+datacenter is down? Resuming the example shown in the diagram above, shouldn't the driver
+temporarily allow app1 to connect to the nodes in DC2?</p>
+<p>We believe that, while appealing by its simplicity, such ability is not the right way to handle a
+datacenter failure: resuming our example above, if the whole DC1 datacenter went down at once, it
+probably means a catastrophic failure happened in Region1, and the application node is down as well.
+Failover should be cross-region instead (handled by the load balancer in the above example).</p>
+<p>However, due to popular demand, starting with driver 4.10, we re-introduced cross-datacenter
+failover in the driver built-in load balancing policies.</p>
+<p>Cross-datacenter failover is enabled with the following configuration option:</p>
+<div class="highlight"><pre><span></span><code>datastax-java-driver.advanced.load-balancing-policy.dc-failover {
+  max-nodes-per-remote-dc = 2
+}
+</code></pre></div>
+<p>The default for <code>max-nodes-per-remote-dc</code> is zero, which means that failover is disabled. Setting
+this option to any value greater than zero will have the following effects:</p>
+<ul>
+<li>The load balancing policies will assign the <code>REMOTE</code> distance to that many nodes <em>in each remote
+  datacenter</em>.</li>
+<li>The driver will then attempt to open connections to those nodes. The actual number of connections
+  to open to each one of those nodes is configurable, see <a href="../pooling/">Connection pools</a> for
+  more details. By default, the driver opens only one connection to each node.</li>
+<li>Those remote nodes (and only those) will then become eligible for inclusion in query plans,
+  effectively enabling cross-datacenter failover.</li>
+</ul>
+<p>Beware that enabling such failover can result in cross-datacenter network traffic spikes, if the
+local datacenter is down or experiencing high latencies!</p>
+<p>Cross-datacenter failover can also have unexpected consequences when using local consistency levels
+(LOCAL_ONE, LOCAL_QUORUM and LOCAL_SERIAL). Indeed, a local consistency level may have different
+semantics depending on the replication factor (RF) in use in each datacenter: if the local DC has
+RF=3 for a given keyspace, but the remote DC has RF=1 for it, achieving LOCAL_QUORUM in the local DC
+means 2 replicas required, but in the remote DC, only one will be required.</p>
+<p>For this reason, cross-datacenter failover for local consistency levels is disabled by default. If
+you want to enable this and understand the consequences, then set the following option to true:</p>
+<div class="highlight"><pre><span></span><code>datastax-java-driver.advanced.load-balancing-policy.dc-failover {
+  allow-for-local-consistency-levels = true
+}
+</code></pre></div>
+<h5 id="alternatives-to-driver-level-cross-datacenter-failover">Alternatives to driver-level cross-datacenter failover<a class="headerlink" href="#alternatives-to-driver-level-cross-datacenter-failover" title="Permanent link">&para;</a></h5>
+<p>Before you jump into the failover technique explained above, please also consider the following
+alternatives:</p>
+<ol>
+<li>
+<p><strong>Application-level failover</strong>: instead of letting the driver do the failover, implement the
+failover logic in your application. Granted, this solution wouldn't be much better if the
+application servers are co-located with the Cassandra datacenter itself. It's also a bit more work,
+but at least, you would have full control over the failover procedure: you could for example decide,
+based on the exact error that prevented the local datacenter from fulfilling a given request,
+whether a failover would make sense, and which remote datacenter to use for that specific request.
+Such a fine-grained logic is not possible with a driver-level failover. Besides, if you opt for this
+approach, execution profiles can come in handy. See "Using multiple policies" below and also check
+our <a href="https://github.com/datastax/java-driver/blob/4.x/examples/src/main/java/com/datastax/oss/driver/examples/failover/CrossDatacenterFailover.java">application-level failover example</a> for a good starting point.</p>
+</li>
+<li>
+<p><strong>Infrastructure-level failover</strong>: in this scenario, the failover is handled by the
+infrastructure. To resume our example above, if Region1 goes down, the load balancers in your
+infrastructure would transparently switch all the traffic intended for that region to Region2,
+possibly scaling up its bandwidth to cope with the network traffic spike. This is by far the best
+solution for the cross-datacenter failover issue in general, but we acknowledge that it also
+requires a purpose-built infrastructure. To help you explore this option, read our <a href="https://www.datastax.com/sites/default/files/content/whitepaper/files/2019-09/Designing-Fault-Tolerant-Applications-DataStax.pdf">white paper</a>.</p>
+</li>
+</ol>
+<h4 id="token-aware">Token-aware<a class="headerlink" href="#token-aware" title="Permanent link">&para;</a></h4>
+<p>The default policy is <strong>token-aware</strong> by default: requests will be routed in priority to the
+replicas that own the data being queried.</p>
+<h5 id="providing-routing-information">Providing routing information<a class="headerlink" href="#providing-routing-information" title="Permanent link">&para;</a></h5>
+<p>First make sure that <a href="../metadata/token/#configuration">token metadata</a> is enabled.</p>
+<p>Then your statements need to provide:</p>
+<ul>
+<li>a keyspace: if you use a <a href="../statements/per_query_keyspace/">per-query keyspace</a>, then it will be
+  used for routing as well. Otherwise, the driver relies on <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKeyspace--">getRoutingKeyspace()</a>;</li>
+<li>a routing key: it can be provided either by <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/Request.html#getRoutingKey--">getRoutingKey()</a> (raw binary data) or
+  <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/Request.html#getRoutingToken--">getRoutingToken()</a> (already hashed as a token).</li>
+</ul>
+<p>Depending on the type of statement, some of this information may be computed automatically,
+otherwise you have to set it manually. The examples below assume the following CQL schema:</p>
+<div class="highlight"><pre><span></span><code>CREATE TABLE testKs.sensor_data(id int, year int, ts timestamp, data double,
+                                PRIMARY KEY ((id, year), ts));
+</code></pre></div>
+<p>For <a href="../statements/simple/">simple statements</a>, routing information is never computed
+automatically:</p>
+<div class="highlight"><pre><span></span><code><span class="n">SimpleStatement</span><span class="w"> </span><span class="n">statement</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">SimpleStatement</span><span class="p">.</span><span class="na">newInstance</span><span class="p">(</span>
+<span class="w">        </span><span class="s">&quot;SELECT * FROM testKs.sensor_data WHERE id = 1 and year = 2016&quot;</span><span class="p">);</span>
+
+<span class="c1">// No routing info available:</span>
+<span class="k">assert</span><span class="w"> </span><span class="n">statement</span><span class="p">.</span><span class="na">getRoutingKeyspace</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="k">assert</span><span class="w"> </span><span class="n">statement</span><span class="p">.</span><span class="na">getRoutingKey</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+
+<span class="c1">// Set the keyspace manually (skip this if using a per-query keyspace):</span>
+<span class="n">statement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">statement</span><span class="p">.</span><span class="na">setRoutingKeyspace</span><span class="p">(</span><span class="s">&quot;testKs&quot;</span><span class="p">);</span>
+
+<span class="c1">// Set the routing key manually: serialize each partition key component to its target CQL type</span>
+<span class="n">statement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">statement</span><span class="p">.</span><span class="na">setRoutingKey</span><span class="p">(</span>
+<span class="w">    </span><span class="n">TypeCodecs</span><span class="p">.</span><span class="na">INT</span><span class="p">.</span><span class="na">encodePrimitive</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">getContext</span><span class="p">().</span><span class="na">getProtocolVersion</span><span class="p">()),</span>
+<span class="w">    </span><span class="n">TypeCodecs</span><span class="p">.</span><span class="na">INT</span><span class="p">.</span><span class="na">encodePrimitive</span><span class="p">(</span><span class="mi">2016</span><span class="p">,</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">getContext</span><span class="p">().</span><span class="na">getProtocolVersion</span><span class="p">()));</span>
+
+<span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="n">statement</span><span class="p">);</span>
+</code></pre></div>
+<p>For <a href="../statements/prepared/">bound statements</a>, the keyspace is always available; the routing key
+is only available if all components of the partition key are bound as variables:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// All components bound: all info available</span>
+<span class="n">PreparedStatement</span><span class="w"> </span><span class="n">pst1</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">session</span><span class="p">.</span><span class="na">prepare</span><span class="p">(</span><span class="s">&quot;SELECT * FROM testKs.sensor_data WHERE id = :id and year = :year&quot;</span><span class="p">);</span>
+<span class="n">BoundStatement</span><span class="w"> </span><span class="n">statement1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pst1</span><span class="p">.</span><span class="na">bind</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">2016</span><span class="p">);</span>
+
+<span class="k">assert</span><span class="w"> </span><span class="n">statement1</span><span class="p">.</span><span class="na">getRoutingKeyspace</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="k">assert</span><span class="w"> </span><span class="n">statement1</span><span class="p">.</span><span class="na">getRoutingKey</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+
+<span class="c1">// &#39;id&#39; hard-coded, only &#39;year&#39; is bound: only keyspace available</span>
+<span class="n">PreparedStatement</span><span class="w"> </span><span class="n">pst2</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">session</span><span class="p">.</span><span class="na">prepare</span><span class="p">(</span><span class="s">&quot;SELECT * FROM testKs.sensor_data WHERE id = 1 and year = :year&quot;</span><span class="p">);</span>
+<span class="n">BoundStatement</span><span class="w"> </span><span class="n">statement2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pst2</span><span class="p">.</span><span class="na">bind</span><span class="p">(</span><span class="mi">2016</span><span class="p">);</span>
+
+<span class="k">assert</span><span class="w"> </span><span class="n">statement2</span><span class="p">.</span><span class="na">getRoutingKeyspace</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="k">assert</span><span class="w"> </span><span class="n">statement2</span><span class="p">.</span><span class="na">getRoutingKey</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+</code></pre></div>
+<p>For <a href="../statements/batch/">batch statements</a>, the routing information of each child statement is
+inspected; the first non-null keyspace is used as the keyspace of the batch, and the first non-null
+routing key as its routing key (the idea is that all children should have the same routing
+information, since batches are supposed to operate on a single partition). If no child has any
+routing information, you need to provide it manually.</p>
+<h5 id="policy-behavior">Policy behavior<a class="headerlink" href="#policy-behavior" title="Permanent link">&para;</a></h5>
+<p>When the policy computes a query plan, it first inspects the statement's routing information. If
+there isn't any, the query plan is a simple round-robin shuffle of all connected nodes that are
+located in the local datacenter.</p>
+<p>If the statement has routing information, the policy uses it to determine the <em>local</em> replicas that
+hold the corresponding data. Then it returns a query plan containing these replicas shuffled in
+random order, followed by a round-robin shuffle of the rest of the nodes.</p>
+<p>If cross-datacenter failover has been activated as explained above, some remote nodes may appear in
+query plans as well. With the driver built-in policies, remote nodes always come after local nodes
+in query plans: this way, if the local datacenter is up, local nodes will be tried first, and remote
+nodes are unlikely to ever be queried. If the local datacenter goes down however, all the local
+nodes in query plans will likely fail, causing the query plans to eventually try remote nodes
+instead. If the local datacenter unavailability persists, local nodes will be eventually marked down
+and will be removed from query plans completely from query plans, until they are back up again.</p>
+<h4 id="customizing-node-distance-assignment">Customizing node distance assignment<a class="headerlink" href="#customizing-node-distance-assignment" title="Permanent link">&para;</a></h4>
+<p>Finally, all the driver the built-in policies accept an optional node distance evaluator that gets
+invoked each time a node is added to the cluster or comes back up. If the evaluator returns a
+non-null distance for the node, that distance will be used, otherwise the driver will use its
+built-in logic to assign a default distance to it. This is a good way to exclude nodes or to adjust
+their distance according to custom, dynamic criteria.</p>
+<p>You can pass the node distance evaluator through the configuration:</p>
+<div class="highlight"><pre><span></span><code>datastax-java-driver.basic.load-balancing-policy {
+  class = DefaultLoadBalancingPolicy
+  local-datacenter = datacenter1
+  evaluator.class = com.acme.MyNodeDistanceEvaluator
+}
+</code></pre></div>
+<p>The node distance evaluator class must implement <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/loadbalancing/NodeDistanceEvaluator.html">NodeDistanceEvaluator</a>, and have a public
+constructor that takes a <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/context/DriverContext.html">DriverContext</a> argument: <code>public MyNodeDistanceEvaluator(DriverContext
+context)</code>.</p>
+<p>Sometimes it's more convenient to pass the evaluator programmatically; you can do that with
+<code>SessionBuilder.withNodeDistanceEvaluator</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">Map</span><span class="o">&lt;</span><span class="n">Node</span><span class="p">,</span><span class="w"> </span><span class="n">NodeDistance</span><span class="o">&gt;</span><span class="w"> </span><span class="n">distances</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...</span>
+<span class="n">CqlSession</span><span class="w"> </span><span class="n">session</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CqlSession</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">withNodeDistanceEvaluator</span><span class="p">((</span><span class="n">node</span><span class="p">,</span><span class="w"> </span><span class="n">dc</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">distances</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
+<span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+</code></pre></div>
+<p>If a programmatic node distance evaluator evaluator is provided, the configuration option is
+ignored.</p>
+<h3 id="custom-implementation">Custom implementation<a class="headerlink" href="#custom-implementation" title="Permanent link">&para;</a></h3>
+<p>You can use your own implementation by specifying its fully-qualified name in the configuration.</p>
+<p>Study the <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/loadbalancing/LoadBalancingPolicy.html">LoadBalancingPolicy</a> interface and the built-in [BasicLoadingBalancingPolicy] for the
+low-level details. Feel free to extend <code>BasicLoadingBalancingPolicy</code> and override only the methods
+that you wish to modify – but keep in mind that it may be simpler to just start from scratch.</p>
+<h3 id="using-multiple-policies">Using multiple policies<a class="headerlink" href="#using-multiple-policies" title="Permanent link">&para;</a></h3>
+<p>The load balancing policy can be overridden in <a href="../configuration/#profiles">execution profiles</a>:</p>
+<div class="highlight"><pre><span></span><code>datastax-java-driver {
+  basic.load-balancing-policy {
+    class = DefaultLoadBalancingPolicy
+  }
+  profiles {
+    custom-lbp {
+      basic.load-balancing-policy {
+        class = CustomLoadBalancingPolicy
+      }
+    }
+    slow {
+      request.timeout = 30 seconds
+    }
+  }
+}
+</code></pre></div>
+<p>The <code>custom-lbp</code> profile uses a dedicated policy. The <code>slow</code> profile inherits the default profile's.
+Note that this goes beyond configuration inheritance: the driver only creates a single
+<code>DefaultLoadBalancingPolicy</code> instance and reuses it (this also occurs if two sibling profiles have
+the same configuration).</p>
+<p>For query plans, each request uses its declared profile's policy. If it doesn't declare any profile,
+or if the profile doesn't have a dedicated policy, then the default profile's policy is used.</p>
+<p>For node distances, the driver remembers the last distance suggested by each policy for each node.
+Then it uses the "closest" distance for any given node. For example:</p>
+<ul>
+<li>for node1, policy1 suggests distance LOCAL and policy2 suggests REMOTE. node1 is set to LOCAL;</li>
+<li>policy1 changes its suggestion to IGNORED. node1 is set to REMOTE;</li>
+<li>policy1 changes its suggestion to REMOTE. node1 stays at REMOTE.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+    
+  </body>
+</html>
