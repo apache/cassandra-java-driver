@@ -1,0 +1,159 @@
+site_name: Java Driver for Apache Cassandra
+site_description: Java Driver for Apache Cassandra® Documentation
+site_url: https://apache.github.io/cassandra-java-driver
+repo_url: https://github.com/apache/cassandra-java-driver
+repo_name: apache/cassandra-java-driver
+
+docs_dir: manual
+site_dir: docs
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue
+      accent: blue
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.share
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - toc:
+      permalink: true
+
+nav:
+  - Home: HOME-README.md
+  - Manual:
+    - Overview: README.md
+    - API Conventions: api_conventions/README.md
+    - Case Sensitivity: case_sensitivity/README.md
+    - Cloud: cloud/README.md
+    - Core:
+      - Overview: core/README.md
+      - Integration: core/integration/README.md
+      - Configuration: core/configuration/README.md
+      - Authentication: core/authentication/README.md
+      - SSL: core/ssl/README.md
+      - Load Balancing: core/load_balancing/README.md
+      - Pooling: core/pooling/README.md
+      - Reconnection: core/reconnection/README.md
+      - Retries: core/retries/README.md
+      - Speculative Execution: core/speculative_execution/README.md
+      - Metrics: core/metrics/README.md
+      - Logging: core/logging/README.md
+      - Statements:
+        - Overview: core/statements/README.md
+        - Batch: core/statements/batch/README.md
+        - Per Query Keyspace: core/statements/per_query_keyspace/README.md
+        - Prepared: core/statements/prepared/README.md
+        - Simple: core/statements/simple/README.md
+      - Paging: core/paging/README.md
+      - Async Programming: core/async/README.md
+      - Reactive Streams: core/reactive/README.md
+      - Custom Codecs: core/custom_codecs/README.md
+      - Temporal Types: core/temporal_types/README.md
+      - Tuples: core/tuples/README.md
+      - UDTs: core/udts/README.md
+      - Compression: core/compression/README.md
+      - Address Resolution: core/address_resolution/README.md
+      - Request Tracker: core/request_tracker/README.md
+      - Throttling: core/throttling/README.md
+      - Tracing: core/tracing/README.md
+      - Performance: core/performance/README.md
+      - Metadata:
+        - Overview: core/metadata/README.md
+        - Node: core/metadata/node/README.md
+        - Schema: core/metadata/schema/README.md
+        - Token: core/metadata/token/README.md
+      - Control Connection: core/control_connection/README.md
+      - Native Protocol: core/native_protocol/README.md
+      - Non-blocking: core/non_blocking/README.md
+      - Query Timestamps: core/query_timestamps/README.md
+      - Idempotence: core/idempotence/README.md
+      - Detachable Types: core/detachable_types/README.md
+      - DSE:
+        - Overview: core/dse/README.md
+        - Geotypes: core/dse/geotypes/README.md
+        - Graph:
+          - Overview: core/dse/graph/README.md
+          - Fluent:
+            - Overview: core/dse/graph/fluent/README.md
+            - Explicit: core/dse/graph/fluent/explicit/README.md
+            - Implicit: core/dse/graph/fluent/implicit/README.md
+          - Options: core/dse/graph/options/README.md
+          - Results: core/dse/graph/results/README.md
+          - Script: core/dse/graph/script/README.md
+      - GraalVM: core/graalvm/README.md
+      - Shaded JAR: core/shaded_jar/README.md
+      - BOM: core/bom/README.md
+    - Query Builder:
+      - Overview: query_builder/README.md
+      - Select: query_builder/select/README.md
+      - Insert: query_builder/insert/README.md
+      - Update: query_builder/update/README.md
+      - Delete: query_builder/delete/README.md
+      - Schema:
+        - Overview: query_builder/schema/README.md
+        - Aggregate: query_builder/schema/aggregate/README.md
+        - Function: query_builder/schema/function/README.md
+        - Index: query_builder/schema/index/README.md
+        - Keyspace: query_builder/schema/keyspace/README.md
+        - Materialized View: query_builder/schema/materialized_view/README.md
+        - Table: query_builder/schema/table/README.md
+        - Type: query_builder/schema/type/README.md
+      - Truncate: query_builder/truncate/README.md
+      - Condition: query_builder/condition/README.md
+      - Relation: query_builder/relation/README.md
+      - Term: query_builder/term/README.md
+      - Idempotence: query_builder/idempotence/README.md
+    - Mapper:
+      - Overview: mapper/README.md
+      - Entities: mapper/entities/README.md
+      - DAOs:
+        - Overview: mapper/daos/README.md
+        - Custom Types: mapper/daos/custom_types/README.md
+        - Delete: mapper/daos/delete/README.md
+        - Get Entity: mapper/daos/getentity/README.md
+        - Increment: mapper/daos/increment/README.md
+        - Insert: mapper/daos/insert/README.md
+        - Null Saving: mapper/daos/null_saving/README.md
+        - Query: mapper/daos/query/README.md
+        - Query Provider: mapper/daos/queryprovider/README.md
+        - Select: mapper/daos/select/README.md
+        - Set Entity: mapper/daos/setentity/README.md
+        - Statement Attributes: mapper/daos/statement_attributes/README.md
+        - Update: mapper/daos/update/README.md
+      - Mapper: mapper/mapper/README.md
+      - Configuration:
+        - Overview: mapper/config/README.md
+        - Kotlin: mapper/config/kotlin/README.md
+        - Lombok: mapper/config/lombok/README.md
+        - Record: mapper/config/record/README.md
+        - Scala: mapper/config/scala/README.md
+    - Developer:
+      - Overview: developer/README.md
+      - Common:
+        - Overview: developer/common/README.md
+        - Concurrency: developer/common/concurrency/README.md
+        - Context: developer/common/context/README.md
+        - Event Bus: developer/common/event_bus/README.md
+      - Native Protocol: developer/native_protocol/README.md
+      - Netty Pipeline: developer/netty_pipeline/README.md
+      - Request Execution: developer/request_execution/README.md
+      - Admin: developer/admin/README.md
+    - OSGi: osgi/README.md
+  - API References: api/index.html
+  - FAQ: faq-README.md
+  - Changelog: changelog-README.md
+  - Upgrade Guide: upgrade-README.md
+
+plugins:
+  - search
+  - awesome-pages
