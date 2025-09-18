@@ -1,0 +1,1 @@
+{"config":{"lang":["en"],"separator":"[\\s\\-]+","pipeline":["stopWordFilter"]},"docs":[{"location":"","title":"Java Driver for Apache Cassandra","text":"<p>Please find the documentation for the following versions:</p> <ul> <li>4.19.0</li> <li>4.18.1</li> <li>4.18.0</li> </ul>"}]}

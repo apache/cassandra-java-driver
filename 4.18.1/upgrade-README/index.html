@@ -1,0 +1,5559 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Java Driver for Apache Cassandra® Documentation">
+      
+      
+      
+        <link rel="canonical" href="https://apache.github.io/cassandra-java-driver/upgrade-README/">
+      
+      
+        <link rel="prev" href="../changelog-README/">
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.17">
+    
+    
+      
+        <title>Upgrade Guide - Java Driver for Apache Cassandra</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#upgrade-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Java Driver for Apache Cassandra" class="md-header__button md-logo" aria-label="Java Driver for Apache Cassandra" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Java Driver for Apache Cassandra
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Upgrade Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/apache/cassandra-java-driver" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    apache/cassandra-java-driver
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../HOME-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href=".." class="md-tabs__link">
+          
+  
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API References
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../faq-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  FAQ
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../changelog-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Upgrade Guide
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Java Driver for Apache Cassandra" class="md-nav__button md-logo" aria-label="Java Driver for Apache Cassandra" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Java Driver for Apache Cassandra
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/apache/cassandra-java-driver" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    apache/cassandra-java-driver
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../HOME-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Conventions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../case_sensitivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Case Sensitivity
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cloud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cloud
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Core
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Core
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/authentication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/ssl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/load_balancing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Load Balancing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/pooling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pooling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/reconnection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Reconnection
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/retries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Retries
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/speculative_execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Speculative Execution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Logging
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5_13" id="__nav_2_5_13_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Statements
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_5_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5_13">
+            <span class="md-nav__icon md-icon"></span>
+            Statements
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/statements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/statements/batch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Batch
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/statements/per_query_keyspace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Per Query Keyspace
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/statements/prepared/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Prepared
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/statements/simple/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Simple
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/paging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Paging
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/async/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Async Programming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/reactive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Reactive Streams
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/custom_codecs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Custom Codecs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/temporal_types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Temporal Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/tuples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tuples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/udts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    UDTs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/compression/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Compression
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/address_resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Address Resolution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/request_tracker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Request Tracker
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/throttling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Throttling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/tracing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tracing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Performance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5_27" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5_27" id="__nav_2_5_27_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Metadata
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_5_27_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5_27">
+            <span class="md-nav__icon md-icon"></span>
+            Metadata
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/metadata/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/metadata/node/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Node
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/metadata/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Schema
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/metadata/token/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Token
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/control_connection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Control Connection
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/native_protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Native Protocol
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/non_blocking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Non-blocking
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/query_timestamps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Query Timestamps
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/idempotence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Idempotence
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/detachable_types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Detachable Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5_34" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5_34" id="__nav_2_5_34_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    DSE
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_5_34_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5_34">
+            <span class="md-nav__icon md-icon"></span>
+            DSE
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/dse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/dse/geotypes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Geotypes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5_34_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5_34_3" id="__nav_2_5_34_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Graph
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_2_5_34_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5_34_3">
+            <span class="md-nav__icon md-icon"></span>
+            Graph
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/dse/graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5_34_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5_34_3_2" id="__nav_2_5_34_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Fluent
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_2_5_34_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5_34_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            Fluent
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/dse/graph/fluent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/dse/graph/fluent/explicit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Explicit
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/dse/graph/fluent/implicit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implicit
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/dse/graph/options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Options
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/dse/graph/results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/dse/graph/script/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Script
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/graalvm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GraalVM
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/shaded_jar/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Shaded JAR
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core/bom/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    BOM
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Query Builder
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Query Builder
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/select/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Select
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/insert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Insert
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Update
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/delete/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Delete
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6_6" id="__nav_2_6_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Schema
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_6_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6_6">
+            <span class="md-nav__icon md-icon"></span>
+            Schema
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/schema/aggregate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Aggregate
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/schema/function/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Function
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/schema/index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Index
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/schema/keyspace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Keyspace
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/schema/materialized_view/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Materialized View
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/schema/table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Table
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/schema/type/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Type
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/truncate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Truncate
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/condition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Condition
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/relation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Relation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/term/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Term
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_builder/idempotence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Idempotence
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Mapper
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Mapper
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/entities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7_3" id="__nav_2_7_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    DAOs
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            DAOs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/daos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/daos/custom_types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Custom Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/daos/delete/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Delete
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/daos/getentity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Get Entity
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/daos/increment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Increment
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/daos/insert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Insert
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/daos/null_saving/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Null Saving
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/daos/query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Query
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/daos/queryprovider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Query Provider
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/daos/select/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Select
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/daos/setentity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Set Entity
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/daos/statement_attributes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Statement Attributes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/daos/update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Update
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/mapper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mapper
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7_5" id="__nav_2_7_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_7_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7_5">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/config/kotlin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kotlin
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/config/lombok/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Lombok
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/config/record/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Record
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mapper/config/scala/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Scala
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_8" id="__nav_2_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Developer
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            Developer
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_8_2" id="__nav_2_8_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Common
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_8_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8_2">
+            <span class="md-nav__icon md-icon"></span>
+            Common
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer/common/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer/common/concurrency/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concurrency
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer/common/context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Context
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer/common/event_bus/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Event Bus
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer/native_protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Native Protocol
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer/netty_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Netty Pipeline
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer/request_execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Request Execution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer/admin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../osgi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OSGi
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API References
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    FAQ
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Changelog
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Upgrade Guide
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Upgrade Guide
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#upgrade-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      Upgrade guide
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Upgrade guide">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-version-placeholder" class="md-nav__link">
+    <span class="md-ellipsis">
+      NEW VERSION PLACEHOLDER
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="NEW VERSION PLACEHOLDER">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#keystore-reloading-in-defaultsslenginefactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Keystore reloading in DefaultSslEngineFactory
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4170" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.17.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.17.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#beta-support-for-java17" class="md-nav__link">
+    <span class="md-ellipsis">
+      Beta support for Java17
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#updated-api-for-vector-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      Updated API for vector search
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4150" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.15.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.15.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#codecnotfoundexception-now-extends-driverexception" class="md-nav__link">
+    <span class="md-ellipsis">
+      CodecNotFoundException now extends DriverException
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4140" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.14.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.14.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#allnodesfailedexception-instead-of-nonodeavailableexception-in-certain-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      AllNodesFailedException instead of NoNodeAvailableException in certain cases
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#esri-geometry-dependency-now-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      Esri Geometry dependency now optional
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4130" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.13.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.13.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enhanced-support-for-graalvm-native-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enhanced support for GraalVM native images
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#registration-of-multiple-listeners-and-trackers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Registration of multiple listeners and trackers
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4120" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.12.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.12.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#microprofile-metrics-upgraded-to-30" class="md-nav__link">
+    <span class="md-ellipsis">
+      MicroProfile Metrics upgraded to 3.0
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapper-getentity-and-setentity-methods-can-now-be-lenient" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapper @GetEntity and @SetEntity methods can now be lenient
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4110" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.11.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.11.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#native-protocol-v5-is-now-production-ready" class="md-nav__link">
+    <span class="md-ellipsis">
+      Native protocol V5 is now production-ready
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#customizable-metric-names-support-for-metric-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Customizable metric names, support for metric tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-nodedistanceevaluator-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      New NodeDistanceEvaluator API
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4100" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.10.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.10.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cross-datacenter-failover" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cross-datacenter failover
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-retryverdict-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      New RetryVerdict API
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enhancements-to-the-uuids-utility-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enhancements to the Uuids utility class
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-and-dse-keyspaces-automatically-excluded-from-metadata-and-token-map-computation" class="md-nav__link">
+    <span class="md-ellipsis">
+      System and DSE keyspaces automatically excluded from metadata and token map computation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dse-graph-dependencies-are-now-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      DSE Graph dependencies are now optional
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45x-460" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.5.x - 4.6.0
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#440" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.4.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.4.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#for-apache-cassandra-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      For Apache Cassandra® users
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-datastax-enterprise-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      For DataStax Enterprise users
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#class-loader" class="md-nav__link">
+    <span class="md-ellipsis">
+      Class Loader
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#410" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.1.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.1.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#object-mapper" class="md-nav__link">
+    <span class="md-ellipsis">
+      Object mapper
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#internal-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      Internal API
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#400" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.0.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.0.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-maven-coordinates" class="md-nav__link">
+    <span class="md-ellipsis">
+      New Maven coordinates
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runtime-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Runtime requirements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Packages
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session" class="md-nav__link">
+    <span class="md-ellipsis">
+      Session
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-balancing-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Load balancing policy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Statements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dual-result-set-apis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dual result set APIs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cql-to-java-type-mappings" class="md-nav__link">
+    <span class="md-ellipsis">
+      CQL to Java type mappings
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metrics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metadata
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-builder" class="md-nav__link">
+    <span class="md-ellipsis">
+      Query builder
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dedicated-type-for-cql-identifiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dedicated type for CQL identifiers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pluggable-request-execution-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pluggable request execution logic
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#upgrade-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      Upgrade guide
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Upgrade guide">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-version-placeholder" class="md-nav__link">
+    <span class="md-ellipsis">
+      NEW VERSION PLACEHOLDER
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="NEW VERSION PLACEHOLDER">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#keystore-reloading-in-defaultsslenginefactory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Keystore reloading in DefaultSslEngineFactory
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4170" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.17.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.17.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#beta-support-for-java17" class="md-nav__link">
+    <span class="md-ellipsis">
+      Beta support for Java17
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#updated-api-for-vector-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      Updated API for vector search
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4150" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.15.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.15.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#codecnotfoundexception-now-extends-driverexception" class="md-nav__link">
+    <span class="md-ellipsis">
+      CodecNotFoundException now extends DriverException
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4140" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.14.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.14.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#allnodesfailedexception-instead-of-nonodeavailableexception-in-certain-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      AllNodesFailedException instead of NoNodeAvailableException in certain cases
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#esri-geometry-dependency-now-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      Esri Geometry dependency now optional
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4130" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.13.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.13.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enhanced-support-for-graalvm-native-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enhanced support for GraalVM native images
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#registration-of-multiple-listeners-and-trackers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Registration of multiple listeners and trackers
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4120" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.12.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.12.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#microprofile-metrics-upgraded-to-30" class="md-nav__link">
+    <span class="md-ellipsis">
+      MicroProfile Metrics upgraded to 3.0
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mapper-getentity-and-setentity-methods-can-now-be-lenient" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mapper @GetEntity and @SetEntity methods can now be lenient
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4110" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.11.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.11.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#native-protocol-v5-is-now-production-ready" class="md-nav__link">
+    <span class="md-ellipsis">
+      Native protocol V5 is now production-ready
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#customizable-metric-names-support-for-metric-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Customizable metric names, support for metric tags
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-nodedistanceevaluator-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      New NodeDistanceEvaluator API
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4100" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.10.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.10.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cross-datacenter-failover" class="md-nav__link">
+    <span class="md-ellipsis">
+      Cross-datacenter failover
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-retryverdict-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      New RetryVerdict API
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enhancements-to-the-uuids-utility-class" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enhancements to the Uuids utility class
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-and-dse-keyspaces-automatically-excluded-from-metadata-and-token-map-computation" class="md-nav__link">
+    <span class="md-ellipsis">
+      System and DSE keyspaces automatically excluded from metadata and token map computation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dse-graph-dependencies-are-now-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      DSE Graph dependencies are now optional
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45x-460" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.5.x - 4.6.0
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#440" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.4.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.4.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#for-apache-cassandra-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      For Apache Cassandra® users
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#for-datastax-enterprise-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      For DataStax Enterprise users
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#class-loader" class="md-nav__link">
+    <span class="md-ellipsis">
+      Class Loader
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#410" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.1.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.1.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#object-mapper" class="md-nav__link">
+    <span class="md-ellipsis">
+      Object mapper
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#internal-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      Internal API
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#400" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.0.0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.0.0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-maven-coordinates" class="md-nav__link">
+    <span class="md-ellipsis">
+      New Maven coordinates
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runtime-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Runtime requirements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#packages" class="md-nav__link">
+    <span class="md-ellipsis">
+      Packages
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session" class="md-nav__link">
+    <span class="md-ellipsis">
+      Session
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load-balancing-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Load balancing policy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#statements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Statements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dual-result-set-apis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dual result set APIs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cql-to-java-type-mappings" class="md-nav__link">
+    <span class="md-ellipsis">
+      CQL to Java type mappings
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metrics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metadata
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query-builder" class="md-nav__link">
+    <span class="md-ellipsis">
+      Query builder
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dedicated-type-for-cql-identifiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dedicated type for CQL identifiers
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pluggable-request-execution-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pluggable request execution logic
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+  <h1>Upgrade Guide</h1>
+
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<h2 id="upgrade-guide">Upgrade guide<a class="headerlink" href="#upgrade-guide" title="Permanent link">&para;</a></h2>
+<h3 id="new-version-placeholder">NEW VERSION PLACEHOLDER<a class="headerlink" href="#new-version-placeholder" title="Permanent link">&para;</a></h3>
+<h4 id="keystore-reloading-in-defaultsslenginefactory">Keystore reloading in DefaultSslEngineFactory<a class="headerlink" href="#keystore-reloading-in-defaultsslenginefactory" title="Permanent link">&para;</a></h4>
+<p><code>DefaultSslEngineFactory</code> now includes an optional keystore reloading interval, for detecting changes in the local
+client keystore file. This is relevant in environments with mTLS enabled and short-lived client certificates, especially
+when an application restart might not always happen between a new keystore becoming available and the previous
+keystore certificate expiring.</p>
+<p>This feature is disabled by default for compatibility. To enable, see <code>keystore-reload-interval</code> in <code>reference.conf</code>.</p>
+<h3 id="4170">4.17.0<a class="headerlink" href="#4170" title="Permanent link">&para;</a></h3>
+<h4 id="beta-support-for-java17">Beta support for Java17<a class="headerlink" href="#beta-support-for-java17" title="Permanent link">&para;</a></h4>
+<p>With the completion of <a href="https://datastax-oss.atlassian.net/browse/JAVA-3042">JAVA-3042</a> the driver now passes our automated test matrix for Java Driver releases.
+While all features function normally when run with Java 17 tests, we do not offer full support for this
+platform until we've received feedback from other users in the ecosystem.</p>
+<p>If you discover an issue with the Java Driver running on Java 17, please let us know. We will triage and address Java 17 issues.</p>
+<h4 id="updated-api-for-vector-search">Updated API for vector search<a class="headerlink" href="#updated-api-for-vector-search" title="Permanent link">&para;</a></h4>
+<p>The 4.16.0 release introduced support for the CQL <code>vector</code> datatype. This release modifies the <code>CqlVector</code>
+value type used to represent a CQL vector to make it easier to use.  <code>CqlVector</code> now implements the Iterable interface
+as well as several methods modelled on the JDK's List interface. For more, see
+<a href="https://datastax-oss.atlassian.net/browse/JAVA-3060">JAVA-3060</a>. </p>
+<p>The builder interface was replaced with factory methods that resemble similar methods on <code>CqlDuration</code>.
+For example, the following code will create a keyspace and table, populate that table with some data, and then execute
+a query that will return a <code>vector</code> type.  This data is retrieved directly via <code>Row.getVector()</code> and the resulting
+<code>CqlVector</code> value object can be interrogated directly.</p>
+<div class="highlight"><pre><span></span><code><span class="k">try</span><span class="w"> </span><span class="p">(</span><span class="n">CqlSession</span><span class="w"> </span><span class="n">session</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">CqlSessionBuilder</span><span class="p">().</span><span class="na">withLocalDatacenter</span><span class="p">(</span><span class="s">&quot;datacenter1&quot;</span><span class="p">).</span><span class="na">build</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="s">&quot;DROP KEYSPACE IF EXISTS test&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="s">&quot;CREATE KEYSPACE test WITH replication = {&#39;class&#39;: &#39;SimpleStrategy&#39;, &#39;replication_factor&#39;: 1}&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="s">&quot;CREATE TABLE test.foo(i int primary key, j vector&lt;float, 3&gt;)&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="s">&quot;CREATE CUSTOM INDEX ann_index ON test.foo(j) USING &#39;StorageAttachedIndex&#39;&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="s">&quot;INSERT INTO test.foo (i, j) VALUES (1, [8, 2.3, 58])&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="s">&quot;INSERT INTO test.foo (i, j) VALUES (2, [1.2, 3.4, 5.6])&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="s">&quot;INSERT INTO test.foo (i, j) VALUES (5, [23, 18, 3.9])&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">ResultSet</span><span class="w"> </span><span class="n">rs</span><span class="o">=</span><span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="s">&quot;SELECT j FROM test.foo WHERE j ann of [3.4, 7.8, 9.1] limit 1&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">Row</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">rs</span><span class="p">){</span>
+<span class="w">        </span><span class="n">CqlVector</span><span class="o">&lt;</span><span class="n">Float</span><span class="o">&gt;</span><span class="w"> </span><span class="n">v</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">row</span><span class="p">.</span><span class="na">getVector</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">Float</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">v</span><span class="p">);</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">Iterables</span><span class="p">.</span><span class="na">size</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">RuntimeException</span><span class="p">(</span><span class="s">&quot;Expected vector with three dimensions&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>You can also use the <code>CqlVector</code> type with prepared statements:</p>
+<div class="highlight"><pre><span></span><code><span class="n">PreparedStatement</span><span class="w"> </span><span class="n">preparedInsert</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">prepare</span><span class="p">(</span><span class="s">&quot;INSERT INTO test.foo (i, j) VALUES (?,?)&quot;</span><span class="p">);</span>
+<span class="n">CqlVector</span><span class="o">&lt;</span><span class="n">Float</span><span class="o">&gt;</span><span class="w"> </span><span class="n">vector</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CqlVector</span><span class="p">.</span><span class="na">newInstance</span><span class="p">(</span><span class="mf">1.4f</span><span class="p">,</span><span class="w"> </span><span class="mf">2.5f</span><span class="p">,</span><span class="w"> </span><span class="mf">3.6f</span><span class="p">);</span>
+<span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="n">preparedInsert</span><span class="p">.</span><span class="na">bind</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="w"> </span><span class="n">vector</span><span class="p">));</span>
+</code></pre></div>
+<p>In some cases, it makes sense to access the vector directly as an array of some numerical type. This version
+supports such use cases by providing a codec which translates a CQL vector to and from a primitive array. Only float arrays are supported. 
+You can find more information about this codec in the manual documentation on <a href="../manual/core/custom_codecs/">custom codecs</a></p>
+<h3 id="4150">4.15.0<a class="headerlink" href="#4150" title="Permanent link">&para;</a></h3>
+<h4 id="codecnotfoundexception-now-extends-driverexception">CodecNotFoundException now extends DriverException<a class="headerlink" href="#codecnotfoundexception-now-extends-driverexception" title="Permanent link">&para;</a></h4>
+<p>Before <a href="https://datastax-oss.atlassian.net/browse/JAVA-2995">JAVA-2995</a>, <code>CodecNotFoundException</code>
+was extending <code>RuntimeException</code>. This is a discrepancy as all other exceptions extend
+<code>DriverException</code>, which in turn extends <code>RuntimeException</code>.</p>
+<p>This was causing integrators to do workarounds in order to react on all exceptions correctly.</p>
+<p>The change introduced by JAVA-2995 shouldn't be a problem for most users. But if your code was using
+a logic such as below, it won't compile anymore:</p>
+<div class="highlight"><pre><span></span><code><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">doSomethingWithDriver</span><span class="p">();</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="p">(</span><span class="n">DriverException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="p">(</span><span class="n">CodecNotFoundException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span>
+<span class="p">}</span>
+</code></pre></div>
+<p>You need to either reverse the catch order and catch <code>CodecNotFoundException</code> first:</p>
+<div class="highlight"><pre><span></span><code><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">doSomethingWithDriver</span><span class="p">();</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="p">(</span><span class="n">CodecNotFoundException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="p">(</span><span class="n">DriverException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Or catch only <code>DriverException</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">doSomethingWithDriver</span><span class="p">();</span>
+<span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="p">(</span><span class="n">DriverException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="4140">4.14.0<a class="headerlink" href="#4140" title="Permanent link">&para;</a></h3>
+<h4 id="allnodesfailedexception-instead-of-nonodeavailableexception-in-certain-cases">AllNodesFailedException instead of NoNodeAvailableException in certain cases<a class="headerlink" href="#allnodesfailedexception-instead-of-nonodeavailableexception-in-certain-cases" title="Permanent link">&para;</a></h4>
+<p><a href="https://datastax-oss.atlassian.net/browse/JAVA-2959">JAVA-2959</a> changed the behavior for when a
+request cannot be executed because all nodes tried were busy. Previously you would get back a
+<code>NoNodeAvailableException</code> but you will now get back an <code>AllNodesFailedException</code> where the
+<code>getAllErrors</code> map contains a <code>NodeUnavailableException</code> for that node.</p>
+<h4 id="esri-geometry-dependency-now-optional">Esri Geometry dependency now optional<a class="headerlink" href="#esri-geometry-dependency-now-optional" title="Permanent link">&para;</a></h4>
+<p>Previous versions of the Java Driver defined a mandatory dependency on the Esri geometry library.
+This library offered support for primitive geometric types supported by DSE.  As of driver 4.14.0
+this dependency is now optional.</p>
+<p>If you do not use DSE (or if you do but do not use the support for geometric types within DSE) you
+should experience no disruption.  If you are using geometric types with DSE you'll now need to
+explicitly declare a dependency on the Esri library:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
+<span class="w">  </span><span class="nt">&lt;groupId&gt;</span>com.esri.geometry<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;artifactId&gt;</span>esri-geometry-api<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;version&gt;</span>${esri.version}<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre></div>
+<p>See the <a href="../manual/core/integration/#esri">integration</a> section in the manual for more details.</p>
+<h3 id="4130">4.13.0<a class="headerlink" href="#4130" title="Permanent link">&para;</a></h3>
+<h4 id="enhanced-support-for-graalvm-native-images">Enhanced support for GraalVM native images<a class="headerlink" href="#enhanced-support-for-graalvm-native-images" title="Permanent link">&para;</a></h4>
+<p><a href="https://datastax-oss.atlassian.net/browse/JAVA-2940">JAVA-2940</a> introduced an enhanced support for
+building GraalVM native images. </p>
+<p>If you were building a native image for your application, please verify your native image builder
+configuration. Most of the extra configuration required until now is likely to not be necessary
+anymore.</p>
+<p>Refer to this <a href="../manual/core/graalvm">manual page</a> for details.</p>
+<h4 id="registration-of-multiple-listeners-and-trackers">Registration of multiple listeners and trackers<a class="headerlink" href="#registration-of-multiple-listeners-and-trackers" title="Permanent link">&para;</a></h4>
+<p><a href="https://datastax-oss.atlassian.net/browse/JAVA-2951">JAVA-2951</a> introduced the ability to register
+more than one instance of the following interfaces:</p>
+<ul>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/tracker/RequestTracker.html">RequestTracker</a></li>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/metadata/NodeStateListener.html">NodeStateListener</a></li>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.12/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListener.html">SchemaChangeListener</a></li>
+</ul>
+<p>Multiple components can now be registered both programmatically and through the configuration. <em>If
+both approaches are used, components will add up and will all be registered</em> (whereas previously,
+the programmatic approach would take precedence over the configuration one).</p>
+<p>When using the programmatic approach to register multiple components, you should use the new
+<code>SessionBuilder</code> methods <code>addRequestTracker</code>, <code>addNodeStateListener</code> and  <code>addSchemaChangeListener</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">CqlSessionBuilder</span><span class="w"> </span><span class="n">builder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CqlSession</span><span class="p">.</span><span class="na">builder</span><span class="p">();</span>
+<span class="n">builder</span>
+<span class="w">    </span><span class="p">.</span><span class="na">addRequestTracker</span><span class="p">(</span><span class="n">tracker1</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">addRequestTracker</span><span class="p">(</span><span class="n">tracker2</span><span class="p">);</span>
+<span class="n">builder</span>
+<span class="w">    </span><span class="p">.</span><span class="na">addNodeStateListener</span><span class="p">(</span><span class="n">nodeStateListener1</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">addNodeStateListener</span><span class="p">(</span><span class="n">nodeStateListener2</span><span class="p">);</span>
+<span class="n">builder</span>
+<span class="w">    </span><span class="p">.</span><span class="na">addSchemaChangeListener</span><span class="p">(</span><span class="n">schemaChangeListener1</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">addSchemaChangeListener</span><span class="p">(</span><span class="n">schemaChangeListener2</span><span class="p">);</span>
+</code></pre></div>
+<p>To support registration of multiple components through the configuration, the following
+configuration options were deprecated because they only allow one component to be declared:</p>
+<ul>
+<li><code>advanced.request-tracker.class</code></li>
+<li><code>advanced.node-state-listener.class</code></li>
+<li><code>advanced.schema-change-listener.class</code></li>
+</ul>
+<p>They are still honored, but the driver will log a warning if they are used. They should now be
+replaced with the following ones, that accept a list of classes to instantiate, instead of just
+one:</p>
+<ul>
+<li><code>advanced.request-tracker.classes</code></li>
+<li><code>advanced.node-state-listener.classes</code></li>
+<li><code>advanced.schema-change-listener.classes</code></li>
+</ul>
+<p>Example:</p>
+<div class="highlight"><pre><span></span><code>datastax-java-driver {
+  advanced {
+    # RequestLogger is a driver built-in tracker
+    request-tracker.classes = [RequestLogger,com.example.app.MyRequestTracker]
+    node-state-listener.classes = [com.example.app.MyNodeStateListener1,com.example.app.MyNodeStateListener2]
+    schema-change-listener.classes = [com.example.app.MySchemaChangeListener]
+  }
+}
+</code></pre></div>
+<p>When more than one component of the same type is registered, the driver will distribute received
+signals to all components in sequence, by order of their registration, starting with the
+programmatically-provided ones. If a component throws an error, the error is intercepted and logged.</p>
+<h3 id="4120">4.12.0<a class="headerlink" href="#4120" title="Permanent link">&para;</a></h3>
+<h4 id="microprofile-metrics-upgraded-to-30">MicroProfile Metrics upgraded to 3.0<a class="headerlink" href="#microprofile-metrics-upgraded-to-30" title="Permanent link">&para;</a></h4>
+<p>The MicroProfile Metrics library has been upgraded from version 2.4 to 3.0. Since this upgrade
+involves backwards-incompatible binary changes, users of this library and of the
+<code>java-driver-metrics-microprofile</code> module are required to take the appropriate action:</p>
+<ul>
+<li>
+<p>If your application is still using MicroProfile Metrics &lt; 3.0, you can still upgrade the core
+  driver to 4.12, but you now must keep <code>java-driver-metrics-microprofile</code> in version 4.11 or lower,
+  as newer versions will not work.</p>
+</li>
+<li>
+<p>If your application is using MicroProfile Metrics &gt;= 3.0, then you must upgrade to driver 4.12 or
+  higher, as previous versions of <code>java-driver-metrics-microprofile</code> will not work.</p>
+</li>
+</ul>
+<h4 id="mapper-getentity-and-setentity-methods-can-now-be-lenient">Mapper <code>@GetEntity</code> and <code>@SetEntity</code> methods can now be lenient<a class="headerlink" href="#mapper-getentity-and-setentity-methods-can-now-be-lenient" title="Permanent link">&para;</a></h4>
+<p>Thanks to <a href="https://datastax-oss.atlassian.net/browse/JAVA-2935">JAVA-2935</a>, <code>@GetEntity</code> and
+<code>@SetEntity</code> methods now have a new <code>lenient</code> attribute.</p>
+<p>If the attribute is <code>false</code> (the default value), then the source row or the target statement must
+contain a matching column for every property in the entity definition. If such a column is not
+found, an error will be thrown. This corresponds to the mapper's current behavior prior to the
+introduction of the new attribute.</p>
+<p>If the new attribute is explicitly set to <code>true</code> however, the mapper will operate on a best-effort
+basis and attempt to read or write all entity properties that have a matching column in the source
+row or in the target statement, <em>leaving unmatched properties untouched</em>.</p>
+<p>This new, lenient behavior allows to achieve the equivalent of driver 3.x 
+<a href="https://docs.datastax.com/en/developer/java-driver/3.10/manual/object_mapper/using/#manual-mapping">lenient mapping</a>.</p>
+<p>Read the manual pages on <a href="../manual/mapper/daos/getentity">@GetEntity</a> methods and
+<a href="../manual/mapper/daos/setentity">@SetEntity</a> methods for more details and examples of lenient mode.</p>
+<h3 id="4110">4.11.0<a class="headerlink" href="#4110" title="Permanent link">&para;</a></h3>
+<h4 id="native-protocol-v5-is-now-production-ready">Native protocol V5 is now production-ready<a class="headerlink" href="#native-protocol-v5-is-now-production-ready" title="Permanent link">&para;</a></h4>
+<p>Thanks to <a href="https://datastax-oss.atlassian.net/browse/JAVA-2704">JAVA-2704</a>, 4.11.0 is the first
+version in the driver 4.x series to fully support Cassandra's native protocol version 5, which has
+been promoted from beta to production-ready in the upcoming Cassandra 4.0 release.</p>
+<p>Users should not experience any disruption. When connecting to Cassandra 4.0, V5 will be
+transparently selected as the protocol version to use.</p>
+<h4 id="customizable-metric-names-support-for-metric-tags">Customizable metric names, support for metric tags<a class="headerlink" href="#customizable-metric-names-support-for-metric-tags" title="Permanent link">&para;</a></h4>
+<p><a href="https://datastax-oss.atlassian.net/browse/JAVA-2872">JAVA-2872</a> introduced the ability to configure
+how metric identifiers are generated. Metric names can now be configured, but most importantly,
+metric tags are now supported. See the <a href="../manual/core/metrics/">metrics</a> section of the online
+manual, or the <code>advanced.metrics.id-generator</code> section in the
+<a href="../manual/core/configuration/reference/">reference.conf</a> file for details.</p>
+<p>Users should not experience any disruption. However, those using metrics libraries that support tags
+are encouraged to try out the new <code>TaggingMetricIdGenerator</code>, as it generates metric names and tags
+that will look more familiar to users of libraries such as Micrometer or MicroProfile Metrics (and
+look nicer when exported to Prometheus or Graphite).</p>
+<h4 id="new-nodedistanceevaluator-api">New <code>NodeDistanceEvaluator</code> API<a class="headerlink" href="#new-nodedistanceevaluator-api" title="Permanent link">&para;</a></h4>
+<p>All driver built-in load-balancing policies now accept a new optional component called
+<a href="https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/loadbalancing/NodeDistanceEvaluator.html">NodeDistanceEvaluator</a>. This component gets invoked each time a node is added to the cluster or
+comes back up. If the evaluator returns a non-null distance for the node, that distance will be
+used, otherwise the driver will use its built-in logic to assign a default distance to it.</p>
+<p>This component replaces the old "node filter" component. As a consequence, all <code>withNodeFilter</code>
+methods in <code>SessionBuilder</code> are now deprecated and should be replaced by the equivalent
+<code>withNodeDistanceEvaluator</code> methods.</p>
+<p>If you have an existing node filter implementation, it can be converted to a <code>NodeDistanceEvaluator</code>
+very easily:</p>
+<div class="highlight"><pre><span></span><code><span class="n">Predicate</span><span class="o">&lt;</span><span class="n">Node</span><span class="o">&gt;</span><span class="w"> </span><span class="n">nodeFilter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...</span>
+<span class="n">NodeDistanceEvaluator</span><span class="w"> </span><span class="n">nodeEvaluator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>
+<span class="w">    </span><span class="p">(</span><span class="n">node</span><span class="p">,</span><span class="w"> </span><span class="n">dc</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">nodeFilter</span><span class="p">.</span><span class="na">test</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">NodeDistance</span><span class="p">.</span><span class="na">IGNORED</span><span class="p">;</span>
+</code></pre></div>
+<p>The above can also be achieved by an adapter class as shown below:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">NodeFilterToDistanceEvaluatorAdapter</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">NodeDistanceEvaluator</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">Predicate</span><span class="o">&lt;</span><span class="n">Node</span><span class="o">&gt;</span><span class="w"> </span><span class="n">nodeFilter</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">NodeFilterToDistanceEvaluatorAdapter</span><span class="p">(</span><span class="nd">@NonNull</span><span class="w"> </span><span class="n">Predicate</span><span class="o">&lt;</span><span class="n">Node</span><span class="o">&gt;</span><span class="w"> </span><span class="n">nodeFilter</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">nodeFilter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nodeFilter</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Nullable</span><span class="w"> </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">NodeDistance</span><span class="w"> </span><span class="nf">evaluateDistance</span><span class="p">(</span><span class="nd">@NonNull</span><span class="w"> </span><span class="n">Node</span><span class="w"> </span><span class="n">node</span><span class="p">,</span><span class="w"> </span><span class="nd">@Nullable</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">localDc</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">nodeFilter</span><span class="p">.</span><span class="na">test</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">NodeDistance</span><span class="p">.</span><span class="na">IGNORED</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Finally, the <code>datastax-java-driver.basic.load-balancing-policy.filter.class</code> configuration option
+has been deprecated; it should be replaced with a node distance evaluator class defined by the
+<code>datastax-java-driver.basic.load-balancing-policy.evaluator.class</code> option instead.</p>
+<h3 id="4100">4.10.0<a class="headerlink" href="#4100" title="Permanent link">&para;</a></h3>
+<h4 id="cross-datacenter-failover">Cross-datacenter failover<a class="headerlink" href="#cross-datacenter-failover" title="Permanent link">&para;</a></h4>
+<p><a href="https://datastax-oss.atlassian.net/browse/JAVA-2899">JAVA-2899</a> re-introduced the ability to
+perform cross-datacenter failover using the driver's built-in load balancing policies. See <a href="../manual/core/loadbalancing/">Load
+balancing</a> in the manual for details.</p>
+<p>Cross-datacenter failover is disabled by default, therefore existing applications should not
+experience any disruption.</p>
+<h4 id="new-retryverdict-api">New <code>RetryVerdict</code> API<a class="headerlink" href="#new-retryverdict-api" title="Permanent link">&para;</a></h4>
+<p><a href="https://datastax-oss.atlassian.net/browse/JAVA-2900">JAVA-2900</a> introduced [<code>RetryVerdict</code>], a new 
+interface that allows custom retry policies to customize the request before it is retried.</p>
+<p>For this reason, the following methods in the <code>RetryPolicy</code> interface were added; they all return
+a <code>RetryVerdict</code> instance:</p>
+<ol>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onReadTimeoutVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-boolean-int-"><code>onReadTimeoutVerdict</code></a></li>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onWriteTimeoutVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-com.datastax.oss.driver.api.core.servererrors.WriteType-int-int-int-"><code>onWriteTimeoutVerdict</code></a></li>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onUnavailableVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-int-"><code>onUnavailableVerdict</code></a></li>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onRequestAbortedVerdict-com.datastax.oss.driver.api.core.session.Request-java.lang.Throwable-int-"><code>onRequestAbortedVerdict</code></a></li>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onErrorResponseVerdict-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.servererrors.CoordinatorException-int-"><code>onErrorResponseVerdict</code></a></li>
+</ol>
+<p>The following methods were deprecated and will be removed in the next major version:</p>
+<ol>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onReadTimeout-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-boolean-int-"><code>onReadTimeout</code></a></li>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onWriteTimeout-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-com.datastax.oss.driver.api.core.servererrors.WriteType-int-int-int-"><code>onWriteTimeout</code></a></li>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onUnavailable-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.ConsistencyLevel-int-int-int-"><code>onUnavailable</code></a></li>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onRequestAborted-com.datastax.oss.driver.api.core.session.Request-java.lang.Throwable-int-"><code>onRequestAborted</code></a></li>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/retry/RetryPolicy.html#onErrorResponse-com.datastax.oss.driver.api.core.session.Request-com.datastax.oss.driver.api.core.servererrors.CoordinatorException-int-"><code>onErrorResponse</code></a></li>
+</ol>
+<p>Driver 4.10.0 also re-introduced a retry policy whose behavior is equivalent to the
+<code>DowngradingConsistencyRetryPolicy</code> from driver 3.x. See this
+<a href="https://docs.datastax.com/en/developer/java-driver/4.11/faq/#where-is-downgrading-consistency-retry-policy">FAQ entry</a>
+for more information.</p>
+<h4 id="enhancements-to-the-uuids-utility-class">Enhancements to the <code>Uuids</code> utility class<a class="headerlink" href="#enhancements-to-the-uuids-utility-class" title="Permanent link">&para;</a></h4>
+<p><a href="https://datastax-oss.atlassian.net/browse/JAVA-2449">JAVA-2449</a> modified the implementation of
+<a href="https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/uuid/Uuids.html#random--">Uuids.random()</a>: this method does not delegate anymore to the JDK's <code>java.util.UUID.randomUUID()</code>
+implementation, but instead re-implements random UUID generation using the non-cryptographic
+random number generator <code>java.util.Random</code>.</p>
+<p>For most users, non-cryptographic strength is enough and this change should translate into better 
+performance when generating UUIDs for database insertion. However, in the unlikely case where your
+application requires cryptographic strength for UUID generation, you should update your code to
+use <code>java.util.UUID.randomUUID()</code> instead of <code>com.datastax.oss.driver.api.core.uuid.Uuids.random()</code> 
+from now on.</p>
+<p>This release also introduces two new methods for random UUID generation:</p>
+<ol>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/uuid/Uuids.html#random-java.util.Random-">Uuids.random(Random)</a>: similar to <code>Uuids.random()</code> but allows to pass a custom instance of 
+   <code>java.util.Random</code> and/or re-use the same instance across calls.</li>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/uuid/Uuids.html#random-java.util.SplittableRandom-">Uuids.random(SplittableRandom)</a>: similar to <code>Uuids.random()</code> but uses a 
+   <code>java.util.SplittableRandom</code> instead.</li>
+</ol>
+<h4 id="system-and-dse-keyspaces-automatically-excluded-from-metadata-and-token-map-computation">System and DSE keyspaces automatically excluded from metadata and token map computation<a class="headerlink" href="#system-and-dse-keyspaces-automatically-excluded-from-metadata-and-token-map-computation" title="Permanent link">&para;</a></h4>
+<p><a href="https://datastax-oss.atlassian.net/browse/JAVA-2871">JAVA-2871</a> now allows for a more fine-grained
+control over which keyspaces should qualify for metadata and token map computation, including the 
+ability to <em>exclude</em> keyspaces based on their names.</p>
+<p>From now on, the following keyspaces are automatically excluded:</p>
+<ol>
+<li>The <code>system</code> keyspace;</li>
+<li>All keyspaces starting with <code>system_</code>;</li>
+<li>DSE-specific keyspaces: </li>
+<li>All keyspaces starting with <code>dse_</code>;</li>
+<li>The <code>solr_admin</code> keyspace;</li>
+<li>The <code>OpsCenter</code> keyspace.</li>
+</ol>
+<p>This means that they won't show up anymore in <a href="https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--">Metadata.getKeyspaces()</a>, and <a href="https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/metadata/TokenMap.html">TokenMap</a> will return
+empty replicas and token ranges for them. If you need the driver to keep computing metadata and
+token map for these keyspaces, you now must modify the following configuration option:
+<code>datastax-java-driver.advanced.metadata.schema.refreshed-keyspaces</code>.</p>
+<h4 id="dse-graph-dependencies-are-now-optional">DSE Graph dependencies are now optional<a class="headerlink" href="#dse-graph-dependencies-are-now-optional" title="Permanent link">&para;</a></h4>
+<p>Until driver 4.9.0, the driver declared a mandatory dependency to Apache TinkerPop, a library
+required only when connecting to DSE Graph. The vast majority of Apache Cassandra users did not need
+that library, but were paying the price of having that heavy-weight library in their application's
+classpath. </p>
+<p><em>Starting with driver 4.10.0, TinkerPop is now considered an optional dependency</em>. </p>
+<p>Regular users of Apache Cassandra that do not use DSE Graph will not notice any disruption.</p>
+<p>DSE Graph users, however, will now have to explicitly declare a dependency to Apache TinkerPop. This
+can be achieved with Maven by adding the following dependencies to the <code>&lt;dependencies&gt;</code> section of
+your POM file:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
+<span class="w">  </span><span class="nt">&lt;groupId&gt;</span>org.apache.tinkerpop<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;artifactId&gt;</span>gremlin-core<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;version&gt;</span>${tinkerpop.version}<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+<span class="nt">&lt;dependency&gt;</span>
+<span class="w">  </span><span class="nt">&lt;groupId&gt;</span>org.apache.tinkerpop<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;artifactId&gt;</span>tinkergraph-gremlin<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;version&gt;</span>${tinkerpop.version}<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre></div>
+<p>See the <a href="../manual/core/integration/#tinker-pop">integration</a> section in the manual for more details
+as well as a driver vs. TinkerPop version compatibility matrix.</p>
+<h3 id="45x-460">4.5.x - 4.6.0<a class="headerlink" href="#45x-460" title="Permanent link">&para;</a></h3>
+<p>These versions are subject to <a href="https://datastax-oss.atlassian.net/browse/JAVA-2676">JAVA-2676</a>, a
+bug that causes performance degradations in certain scenarios. We strongly recommend upgrading to at
+least 4.6.1.</p>
+<h3 id="440">4.4.0<a class="headerlink" href="#440" title="Permanent link">&para;</a></h3>
+<p>DataStax Enterprise support is now available directly in the main driver. There is no longer a
+separate DSE driver.</p>
+<h4 id="for-apache-cassandra-users">For Apache Cassandra® users<a class="headerlink" href="#for-apache-cassandra-users" title="Permanent link">&para;</a></h4>
+<p>The great news is that <a href="../manual/core/reactive/">reactive execution</a> is now available for everyone.
+See the <code>CqlSession.executeReactive</code> methods.</p>
+<p>Apart from that, the only visible change is that DSE-specific features are now exposed in the API: </p>
+<ul>
+<li>new execution methods: <code>CqlSession.executeGraph</code>, <code>CqlSession.executeContinuously*</code>. They all
+  have default implementations so this doesn't break binary compatibility. You can just ignore them.</li>
+<li>new driver dependencies: TinkerPop, ESRI, Reactive Streams. If you want to keep your classpath
+  lean, you can exclude some dependencies when you don't use the corresponding DSE features; see the 
+  <a href="../manual/core/integration/#driver-dependencies">Integration&gt;Driver dependencies</a> section.</li>
+</ul>
+<h4 id="for-datastax-enterprise-users">For DataStax Enterprise users<a class="headerlink" href="#for-datastax-enterprise-users" title="Permanent link">&para;</a></h4>
+<p>Adjust your Maven coordinates to use the unified artifact:</p>
+<div class="highlight"><pre><span></span><code><span class="cm">&lt;!-- Replace: --&gt;</span>
+<span class="nt">&lt;dependency&gt;</span>
+<span class="w">  </span><span class="nt">&lt;groupId&gt;</span>com.datastax.dse<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;artifactId&gt;</span>dse-java-driver-core<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;version&gt;</span>2.3.0<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+
+<span class="cm">&lt;!-- By: --&gt;</span>
+<span class="nt">&lt;dependency&gt;</span>
+<span class="w">  </span><span class="nt">&lt;groupId&gt;</span>com.datastax.oss<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;artifactId&gt;</span>java-driver-core<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;version&gt;</span>4.4.0<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+
+<span class="cm">&lt;!-- Do the same for the other modules: query builder, mapper... --&gt;</span>
+</code></pre></div>
+<p>The new driver is a drop-in replacement for the DSE driver. Note however that we've deprecated a few
+DSE-specific types in favor of their OSS equivalents. They still work, so you don't need to make the
+changes right away; but you will get deprecation warnings:</p>
+<ul>
+<li>
+<p><code>DseSession</code>: use <code>CqlSession</code> instead, it can now do everything that a DSE session does. This
+  also applies to the builder:</p>
+<p><div class="highlight"><pre><span></span><code><span class="c1">// Replace:</span>
+<span class="n">DseSession</span><span class="w"> </span><span class="n">session</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DseSession</span><span class="p">.</span><span class="na">builder</span><span class="p">().</span><span class="na">build</span><span class="p">()</span><span class="w">  </span>
+
+<span class="c1">// By:</span>
+<span class="n">CqlSession</span><span class="w"> </span><span class="n">session</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CqlSession</span><span class="p">.</span><span class="na">builder</span><span class="p">().</span><span class="na">build</span><span class="p">()</span>
+</code></pre></div>
+* <code>DseDriverConfigLoader</code>: the driver no longer needs DSE-specific config loaders. All the factory
+  methods in this class now redirect to <code>DriverConfigLoader</code>. On that note, <code>dse-reference.conf</code>
+  does not exist anymore, all the driver defaults are now in
+  <a href="../manual/core/configuration/reference/">reference.conf</a>.
+* plain-text authentication: there is now a single implementation that works with both Cassandra and
+  DSE. If you used <code>DseProgrammaticPlainTextAuthProvider</code>, replace it by
+  <code>PlainTextProgrammaticAuthProvider</code>. Similarly, if you wrote a custom implementation by
+  subclassing <code>DsePlainTextAuthProviderBase</code>, extend <code>PlainTextAuthProviderBase</code> instead.
+* <code>DseLoadBalancingPolicy</code>: DSE-specific features (the slow replica avoidance mechanism) have been
+  merged into <code>DefaultLoadBalancingPolicy</code>. <code>DseLoadBalancingPolicy</code> still exists for backward
+  compatibility, but it is now identical to the default policy.</p>
+</li>
+</ul>
+<h4 id="class-loader">Class Loader<a class="headerlink" href="#class-loader" title="Permanent link">&para;</a></h4>
+<p>The default class loader used by the driver when instantiating classes by reflection changed. 
+Unless specified by the user, the driver will now use the same class loader that was used to load
+the driver classes themselves, in order to ensure that implemented interfaces and implementing 
+classes are fully compatible.</p>
+<p>This should ensure a more streamlined experience for OSGi users, who do not need anymore to define
+a specific class loader to use.</p>
+<p>However if you are developing a web application and your setup corresponds to the following 
+scenario, then you will now be required to explicitly define another class loader to use: if in your
+application the driver jar is loaded by the web server's system class loader (for example, 
+because the driver jar was placed in the "/lib" folder of the web server), then the default class
+loader will be the server's system class loader. Then if the application tries to load, say, a 
+custom load balancing policy declared in the web app's "WEB-INF/lib" folder, then the default class 
+loader will not be able to locate that class. Instead, you must use the web app's class loader, that 
+you can obtain in most web environments by calling <code>Thread.getContextClassLoader()</code>:</p>
+<div class="codehilite"><pre><span></span><code>CqlSession.builder()
+    .addContactEndPoint(...)
+    .withClassLoader(Thread.currentThread().getContextClassLoader())
+    .build();
+</code></pre></div>
+
+<p>See the javadocs of <a href="https://docs.datastax.com/en/drivers/java/4.11/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-">SessionBuilder.withClassLoader</a> for more information.</p>
+<h3 id="410">4.1.0<a class="headerlink" href="#410" title="Permanent link">&para;</a></h3>
+<h4 id="object-mapper">Object mapper<a class="headerlink" href="#object-mapper" title="Permanent link">&para;</a></h4>
+<p>4.1.0 marks the introduction of the new object mapper in the 4.x series.</p>
+<p>Like driver 3, it relies on annotations to configure mapped entities and queries. However, there are
+a few notable differences:</p>
+<ul>
+<li>it uses compile-time annotation processing instead of runtime reflection;</li>
+<li>the "mapper" and "accessor" concepts have been unified into a single "DAO" component, that handles
+  both pre-defined CRUD patterns, and user-provided queries.</li>
+</ul>
+<p>Refer to the <a href="../manual/mapper/">mapper manual</a> for all the details.</p>
+<h4 id="internal-api">Internal API<a class="headerlink" href="#internal-api" title="Permanent link">&para;</a></h4>
+<p><code>NettyOptions#afterBootstrapInitialized</code> is now responsible for setting socket options on driver
+connections (see <code>advanced.socket</code> in the configuration). If you had written a custom <code>NettyOptions</code>
+for 4.0, you'll have to copy over -- and possibly adapt -- the contents of
+<code>DefaultNettyOptions#afterBootstrapInitialized</code> (if you didn't override <code>NettyOptions</code>, you don't
+have to change anything).</p>
+<h3 id="400">4.0.0<a class="headerlink" href="#400" title="Permanent link">&para;</a></h3>
+<p>Version 4 is major redesign of the internal architecture. As such, it is <strong>not binary compatible</strong>
+with previous versions. However, most of the concepts remain unchanged, and the new API will look
+very familiar to 2.x and 3.x users.</p>
+<h4 id="new-maven-coordinates">New Maven coordinates<a class="headerlink" href="#new-maven-coordinates" title="Permanent link">&para;</a></h4>
+<p>The core driver is available from:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
+<span class="w">  </span><span class="nt">&lt;groupId&gt;</span>com.datastax.oss<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;artifactId&gt;</span>java-driver-core<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;version&gt;</span>4.0.0<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre></div>
+<h4 id="runtime-requirements">Runtime requirements<a class="headerlink" href="#runtime-requirements" title="Permanent link">&para;</a></h4>
+<p>The driver now requires <strong>Java 8 or above</strong>. It does not depend on Guava anymore (we still use it
+internally but it's shaded).</p>
+<p>We have dropped support for legacy protocol versions v1 and v2. As a result, the driver is
+compatible with:</p>
+<ul>
+<li><strong>Apache Cassandra®: 2.1 and above</strong>;</li>
+<li><strong>DataStax Enterprise: 4.7 and above</strong>.</li>
+</ul>
+<h4 id="packages">Packages<a class="headerlink" href="#packages" title="Permanent link">&para;</a></h4>
+<p>We've adopted new <a href="../manual/api_conventions">API conventions</a> to better organize the driver code and make it more modular. As
+a result, package names have changed. However most public API types have the same names; you can use
+the auto-import or "find class" features of your IDE to discover the new locations.</p>
+<p>Here's a side-by-side comparison with the legacy driver for a basic example:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Driver 3:</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.datastax.driver.core.ResultSet</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.datastax.driver.core.Row</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.datastax.driver.core.SimpleStatement</span><span class="p">;</span>
+
+<span class="n">SimpleStatement</span><span class="w"> </span><span class="n">statement</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="k">new</span><span class="w"> </span><span class="n">SimpleStatement</span><span class="p">(</span><span class="s">&quot;SELECT release_version FROM system.local&quot;</span><span class="p">);</span>
+<span class="n">ResultSet</span><span class="w"> </span><span class="n">resultSet</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="n">statement</span><span class="p">);</span>
+<span class="n">Row</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">resultSet</span><span class="p">.</span><span class="na">one</span><span class="p">();</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">row</span><span class="p">.</span><span class="na">getString</span><span class="p">(</span><span class="s">&quot;release_version&quot;</span><span class="p">));</span>
+
+
+<span class="c1">// Driver 4:</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.datastax.oss.driver.api.core.cql.ResultSet</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.datastax.oss.driver.api.core.cql.Row</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.datastax.oss.driver.api.core.cql.SimpleStatement</span><span class="p">;</span>
+
+<span class="n">SimpleStatement</span><span class="w"> </span><span class="n">statement</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">SimpleStatement</span><span class="p">.</span><span class="na">newInstance</span><span class="p">(</span><span class="s">&quot;SELECT release_version FROM system.local&quot;</span><span class="p">);</span>
+<span class="n">ResultSet</span><span class="w"> </span><span class="n">resultSet</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="n">statement</span><span class="p">);</span>
+<span class="n">Row</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">resultSet</span><span class="p">.</span><span class="na">one</span><span class="p">();</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">row</span><span class="p">.</span><span class="na">getString</span><span class="p">(</span><span class="s">&quot;release_version&quot;</span><span class="p">));</span>
+</code></pre></div>
+<p>Notable changes:</p>
+<ul>
+<li>the imports;</li>
+<li>simple statement instances are now created with the <code>newInstance</code> static factory method. This is
+  because <code>SimpleStatement</code> is now an interface (as most public API types).</li>
+</ul>
+<h4 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h4>
+<p>The configuration has been completely revamped. Instead of ad-hoc configuration classes, the default
+mechanism is now file-based, using the <a href="https://github.com/typesafehub/config">Typesafe Config</a> library. This is a better choice for most
+deployments, since it allows configuration changes without recompiling the client application (note
+that there are still programmatic setters for things that are likely to be injected dynamically,
+such as contact points).</p>
+<p>The driver JAR contains a <code>reference.conf</code> file that defines the options with their defaults:</p>
+<div class="highlight"><pre><span></span><code>datastax-java-driver {
+  basic.request {
+    timeout = 2 seconds
+    consistency = LOCAL_ONE
+    page-size = 5000
+  }
+  // ... and many more (~10 basic options, 70 advanced ones)
+}
+</code></pre></div>
+<p>You can place an <code>application.conf</code> in your application's classpath to override options selectively:</p>
+<div class="highlight"><pre><span></span><code>datastax-java-driver {
+  basic.request.consistency = ONE
+}
+</code></pre></div>
+<p>Options can also be overridden with system properties when launching your application:</p>
+<div class="highlight"><pre><span></span><code>java -Ddatastax-java-driver.basic.request.consistency=ONE MyApp
+</code></pre></div>
+<p>The configuration also supports <em>execution profiles</em>, that allow you to capture and reuse common
+sets of options:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// application.conf:</span>
+<span class="n">datastax</span><span class="o">-</span><span class="n">java</span><span class="o">-</span><span class="n">driver</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">profiles</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">profile1</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">basic</span><span class="p">.</span><span class="na">request</span><span class="p">.</span><span class="na">consistency</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">QUORUM</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="n">profile2</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">basic</span><span class="p">.</span><span class="na">request</span><span class="p">.</span><span class="na">consistency</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ONE</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Application code:</span>
+<span class="n">SimpleStatement</span><span class="w"> </span><span class="n">statement1</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">SimpleStatement</span><span class="p">.</span><span class="na">newInstance</span><span class="p">(</span><span class="s">&quot;...&quot;</span><span class="p">).</span><span class="na">setExecutionProfileName</span><span class="p">(</span><span class="s">&quot;profile1&quot;</span><span class="p">);</span>
+<span class="n">SimpleStatement</span><span class="w"> </span><span class="n">statement2</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">SimpleStatement</span><span class="p">.</span><span class="na">newInstance</span><span class="p">(</span><span class="s">&quot;...&quot;</span><span class="p">).</span><span class="na">setExecutionProfileName</span><span class="p">(</span><span class="s">&quot;profile2&quot;</span><span class="p">);</span>
+</code></pre></div>
+<p>The configuration can be reloaded periodically at runtime:</p>
+<div class="highlight"><pre><span></span><code>datastax-java-driver {
+  basic.config-reload-interval = 5 minutes
+}
+</code></pre></div>
+<p>This is fully customizable: the configuration is exposed to the rest of the driver as an abstract
+<code>DriverConfig</code> interface; if the default implementation doesn't work for you, you can write your
+own.</p>
+<p>For more details, refer to the <a href="../manual/core/configuration">manual</a>.</p>
+<h4 id="session">Session<a class="headerlink" href="#session" title="Permanent link">&para;</a></h4>
+<p><code>Cluster</code> does not exist anymore; the session is now the main component, initialized in a single
+step:</p>
+<div class="highlight"><pre><span></span><code><span class="n">CqlSession</span><span class="w"> </span><span class="n">session</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CqlSession</span><span class="p">.</span><span class="na">builder</span><span class="p">().</span><span class="na">build</span><span class="p">();</span>
+<span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="s">&quot;...&quot;</span><span class="p">);</span>
+</code></pre></div>
+<p>Protocol negotiation in mixed clusters has been improved: you no longer need to force the protocol
+version during a rolling upgrade. The driver will detect that there are older nodes, and downgrade
+to the best common denominator (see
+<a href="https://datastax-oss.atlassian.net/browse/JAVA-1295">JAVA-1295</a>).</p>
+<p>Reconnection is now possible at startup: if no contact point is reachable, the driver will retry at
+periodic intervals (controlled by the <a href="../manual/core/reconnection/">reconnection policy</a>) instead
+of throwing an error. To turn this on, set the following configuration option:</p>
+<div class="highlight"><pre><span></span><code>datastax-java-driver {
+  advanced.reconnect-on-init = true
+}
+</code></pre></div>
+<p>The session now has a built-in <a href="../manual/core/throttling/">throttler</a> to limit how many requests
+can execute concurrently. Here's an example based on the number of requests (a rate-based variant is
+also available):</p>
+<div class="highlight"><pre><span></span><code>datastax-java-driver {
+  advanced.throttler {
+    class = ConcurrencyLimitingRequestThrottler
+    max-concurrent-requests = 10000
+    max-queue-size = 100000
+  }
+}
+</code></pre></div>
+<h4 id="load-balancing-policy">Load balancing policy<a class="headerlink" href="#load-balancing-policy" title="Permanent link">&para;</a></h4>
+<p>Previous driver versions came with multiple load balancing policies that could be nested into each
+other. In our experience, this was one of the most complicated aspects of the configuration.</p>
+<p>In driver 4, we are taking a more opinionated approach: we provide a single <a href="../manual/core/load_balancing/#default-policy">default
+policy</a>, with what we consider as the best practices:</p>
+<ul>
+<li>local only: we believe that failover should be handled at infrastructure level, not by application
+  code.</li>
+<li>token-aware.</li>
+<li>optionally filtering nodes with a custom predicate.</li>
+</ul>
+<p>You can still provide your own policy by implementing the <code>LoadBalancingPolicy</code> interface.</p>
+<h4 id="statements">Statements<a class="headerlink" href="#statements" title="Permanent link">&para;</a></h4>
+<p>Simple, bound and batch <a href="../manual/core/statements/">statements</a> are now exposed in the public API
+as interfaces. The internal implementations are <strong>immutable</strong>. This makes them automatically
+thread-safe: you don't need to worry anymore about sharing them or reusing them between asynchronous
+executions.</p>
+<p>Note that all mutating methods return a new instance, so <strong>make sure you don't accidentally ignore
+their result</strong>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">BoundStatement</span><span class="w"> </span><span class="n">boundSelect</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">preparedSelect</span><span class="p">.</span><span class="na">bind</span><span class="p">();</span>
+
+<span class="c1">// This doesn&#39;t work: setInt doesn&#39;t modify boundSelect in place:</span>
+<span class="n">boundSelect</span><span class="p">.</span><span class="na">setInt</span><span class="p">(</span><span class="s">&quot;k&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">key</span><span class="p">);</span>
+<span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="n">boundSelect</span><span class="p">);</span>
+
+<span class="c1">// Instead, reassign the statement every time:</span>
+<span class="n">boundSelect</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">boundSelect</span><span class="p">.</span><span class="na">setInt</span><span class="p">(</span><span class="s">&quot;k&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">key</span><span class="p">);</span>
+</code></pre></div>
+<p>These methods are annotated with <code>@CheckReturnValue</code>. Some code analysis tools -- such as
+<a href="https://errorprone.info/">ErrorProne</a> -- can check correct usage at build time, and report mistakes
+as compiler errors.</p>
+<p>Unlike 3.x, the request timeout now spans the <em>entire</em> request. In other words, it's the
+maximum amount of time that <code>session.execute</code> will take, including any retry, speculative execution,
+etc. You can set it with <code>Statement.setTimeout</code>, or globally in the configuration with the
+<code>basic.request.timeout</code> option.</p>
+<p><a href="../manual/core/statements/prepared/">Prepared statements</a> are now cached client-side: if you call
+<code>session.prepare()</code> twice with the same query string, it will no longer log a warning. The second
+call will return the same statement instance, without sending anything to the server:</p>
+<div class="highlight"><pre><span></span><code><span class="n">PreparedStatement</span><span class="w"> </span><span class="n">ps1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">prepare</span><span class="p">(</span><span class="s">&quot;SELECT * FROM product WHERE sku = ?&quot;</span><span class="p">);</span>
+<span class="n">PreparedStatement</span><span class="w"> </span><span class="n">ps2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">prepare</span><span class="p">(</span><span class="s">&quot;SELECT * FROM product WHERE sku = ?&quot;</span><span class="p">);</span>
+<span class="k">assert</span><span class="w"> </span><span class="n">ps1</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">ps2</span><span class="p">;</span>
+</code></pre></div>
+<p>This cache takes into account all execution parameters. For example, if you prepare the same query
+string with different consistency levels, you will get two distinct prepared statements, each
+propagating its own consistency level to its bound statements:</p>
+<div class="highlight"><pre><span></span><code><span class="n">PreparedStatement</span><span class="w"> </span><span class="n">ps1</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">session</span><span class="p">.</span><span class="na">prepare</span><span class="p">(</span>
+<span class="w">        </span><span class="n">SimpleStatement</span><span class="p">.</span><span class="na">newInstance</span><span class="p">(</span><span class="s">&quot;SELECT * FROM product WHERE sku = ?&quot;</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="na">setConsistencyLevel</span><span class="p">(</span><span class="n">DefaultConsistencyLevel</span><span class="p">.</span><span class="na">ONE</span><span class="p">));</span>
+<span class="n">PreparedStatement</span><span class="w"> </span><span class="n">ps2</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">session</span><span class="p">.</span><span class="na">prepare</span><span class="p">(</span>
+<span class="w">        </span><span class="n">SimpleStatement</span><span class="p">.</span><span class="na">newInstance</span><span class="p">(</span><span class="s">&quot;SELECT * FROM product WHERE sku = ?&quot;</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="na">setConsistencyLevel</span><span class="p">(</span><span class="n">DefaultConsistencyLevel</span><span class="p">.</span><span class="na">TWO</span><span class="p">));</span>
+
+<span class="k">assert</span><span class="w"> </span><span class="n">ps1</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">ps2</span><span class="p">;</span>
+
+<span class="n">BoundStatement</span><span class="w"> </span><span class="n">bs1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ps1</span><span class="p">.</span><span class="na">bind</span><span class="p">();</span>
+<span class="k">assert</span><span class="w"> </span><span class="n">bs1</span><span class="p">.</span><span class="na">getConsistencyLevel</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">DefaultConsistencyLevel</span><span class="p">.</span><span class="na">ONE</span><span class="p">;</span>
+
+<span class="n">BoundStatement</span><span class="w"> </span><span class="n">bs2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ps2</span><span class="p">.</span><span class="na">bind</span><span class="p">();</span>
+<span class="k">assert</span><span class="w"> </span><span class="n">bs2</span><span class="p">.</span><span class="na">getConsistencyLevel</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">DefaultConsistencyLevel</span><span class="p">.</span><span class="na">TWO</span><span class="p">;</span>
+</code></pre></div>
+<p>DDL statements are now debounced; see <a href="../faq/#why-do-ddl-queries-have-a-higher-latency-than-driver-3">Why do DDL queries have a higher latency than driver
+3?</a> in the FAQ.</p>
+<h4 id="dual-result-set-apis">Dual result set APIs<a class="headerlink" href="#dual-result-set-apis" title="Permanent link">&para;</a></h4>
+<p>In 3.x, both synchronous and asynchronous execution models shared a common result set
+implementation. This made asynchronous usage <a href="http://docs.datastax.com/en/developer/java-driver/3.2/manual/async/#async-paging">notably error-prone</a>, because of the
+risk of accidentally triggering background synchronous fetches.</p>
+<p>There are now two separate APIs: synchronous queries return a <code>ResultSet</code>; asynchronous queries 
+return a future of <code>AsyncResultSet</code>.</p>
+<p><code>ResultSet</code> behaves much like its 3.x counterpart, except that background pre-fetching
+(<code>fetchMoreResults</code>) was deliberately removed, in order to keep this interface simple and intuitive.
+If you were using synchronous iterations with background pre-fetching, you should now switch to
+fully asynchronous iterations (see below).</p>
+<p><code>AsyncResultSet</code> is a simplified type that only contains the rows of the current page. When 
+iterating asynchronously, you no longer need to stop the iteration manually: just consume all the 
+rows in <code>currentPage()</code>, and then call <code>fetchNextPage</code> to retrieve the next page asynchronously. You
+will find more information about asynchronous iterations in the manual pages about <a href="../manual/core/async/">asynchronous 
+programming</a> and <a href="../manual/core/paging/">paging</a>.</p>
+<h4 id="cql-to-java-type-mappings">CQL to Java type mappings<a class="headerlink" href="#cql-to-java-type-mappings" title="Permanent link">&para;</a></h4>
+<p>Since the driver now has access to Java 8 types, some of the <a href="../manual/core#cql-to-java-type-mapping">CQL to Java type mappings</a> have
+changed when it comes to <a href="../manual/core/temporal_types">temporal types</a> such as <code>date</code> and <code>timestamp</code>:</p>
+<ul>
+<li><code>getDate</code> has been replaced by <code>getLocalDate</code> and returns <a href="https://docs.oracle.com/javase/8/docs/api/java/time/LocalDate.html">java.time.LocalDate</a>;</li>
+<li><code>getTime</code> has been replaced by <code>getLocalTime</code> and returns <a href="https://docs.oracle.com/javase/8/docs/api/java/time/LocalTime.html">java.time.LocalTime</a> instead of a
+  <code>long</code> representing nanoseconds since midnight;</li>
+<li><code>getTimestamp</code> has been replaced by <code>getInstant</code> and returns <a href="https://docs.oracle.com/javase/8/docs/api/java/time/Instant.html">java.time.Instant</a> instead of
+  <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Date.html">java.util.Date</a>.</li>
+</ul>
+<p>The corresponding setter methods were also changed to expect these new types as inputs.</p>
+<h4 id="metrics">Metrics<a class="headerlink" href="#metrics" title="Permanent link">&para;</a></h4>
+<p><a href="../manual/core/metrics/">Metrics</a> are now divided into two categories: session-wide and per-node. 
+Each metric can be enabled or disabled individually in the configuration:</p>
+<div class="highlight"><pre><span></span><code>datastax-java-driver {
+  advanced.metrics {
+    // more are available, see reference.conf for the full list
+    session.enabled = [ bytes-sent, bytes-received, cql-requests ]
+    node.enabled = [ bytes-sent, bytes-received, pool.in-flight ]
+  }
+}
+</code></pre></div>
+<p>Note that unlike 3.x, JMX is not supported out of the box. You'll need to add the dependency
+explicitly:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
+<span class="w">  </span><span class="nt">&lt;groupId&gt;</span>io.dropwizard.metrics<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;artifactId&gt;</span>metrics-jmx<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;version&gt;</span>4.0.2<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre></div>
+<h4 id="metadata">Metadata<a class="headerlink" href="#metadata" title="Permanent link">&para;</a></h4>
+<p><code>Session.getMetadata()</code> is now immutable and updated atomically. The node list, schema metadata and
+token map exposed by a given <code>Metadata</code> instance are guaranteed to be in sync. This is convenient
+for analytics clients that need a consistent view of the cluster at a given point in time; for
+example, a keyspace in <code>metadata.getKeyspaces()</code> will always have a corresponding entry in
+<code>metadata.getTokenMap()</code>.</p>
+<p>On the other hand, this means you have to call <code>getMetadata()</code> again each time you need a fresh
+copy; do not cache the result:</p>
+<div class="highlight"><pre><span></span><code><span class="n">Metadata</span><span class="w"> </span><span class="n">metadata</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">getMetadata</span><span class="p">();</span>
+<span class="n">Optional</span><span class="o">&lt;</span><span class="n">KeyspaceMetadata</span><span class="o">&gt;</span><span class="w"> </span><span class="n">ks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">metadata</span><span class="p">.</span><span class="na">getKeyspace</span><span class="p">(</span><span class="s">&quot;test&quot;</span><span class="p">);</span>
+<span class="k">assert</span><span class="w"> </span><span class="o">!</span><span class="n">ks</span><span class="p">.</span><span class="na">isPresent</span><span class="p">();</span>
+
+<span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span>
+<span class="w">    </span><span class="s">&quot;CREATE KEYSPACE IF NOT EXISTS test &quot;</span>
+<span class="w">        </span><span class="o">+</span><span class="w"> </span><span class="s">&quot;WITH replication = {&#39;class&#39;: &#39;SimpleStrategy&#39;, &#39;replication_factor&#39;: 1}&quot;</span><span class="p">);</span>
+
+<span class="c1">// This is still the same metadata from before the CREATE</span>
+<span class="n">ks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">metadata</span><span class="p">.</span><span class="na">getKeyspace</span><span class="p">(</span><span class="s">&quot;test&quot;</span><span class="p">);</span>
+<span class="k">assert</span><span class="w"> </span><span class="o">!</span><span class="n">ks</span><span class="p">.</span><span class="na">isPresent</span><span class="p">();</span>
+
+<span class="c1">// You need to fetch the whole metadata again</span>
+<span class="n">metadata</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">getMetadata</span><span class="p">();</span>
+<span class="n">ks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">metadata</span><span class="p">.</span><span class="na">getKeyspace</span><span class="p">(</span><span class="s">&quot;test&quot;</span><span class="p">);</span>
+<span class="k">assert</span><span class="w"> </span><span class="n">ks</span><span class="p">.</span><span class="na">isPresent</span><span class="p">();</span>
+</code></pre></div>
+<p>Refreshing the metadata can be CPU-intensive, in particular the token map. To help alleviate that,
+it can now be filtered to a subset of keyspaces. This is useful if your application connects to a
+shared cluster, but does not use the whole schema: </p>
+<div class="highlight"><pre><span></span><code>datastax-java-driver {
+  // defaults to empty (= all keyspaces)
+  advanced.metadata.schema.refreshed-keyspaces = [ &quot;users&quot;, &quot;products&quot; ]
+}
+</code></pre></div>
+<p>See the <a href="../manual/core/metadata/">manual</a> for all the details.</p>
+<h4 id="query-builder">Query builder<a class="headerlink" href="#query-builder" title="Permanent link">&para;</a></h4>
+<p>The query builder is now distributed as a separate artifact:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">&lt;dependency&gt;</span>
+<span class="w">  </span><span class="nt">&lt;groupId&gt;</span>com.datastax.oss<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;artifactId&gt;</span>java-driver-query-builder<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;version&gt;</span>4.0.0<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre></div>
+<p>It is more cleanly separated from the core driver, and only focuses on query string generation.
+Built queries are no longer directly executable, you need to convert them into a string or a
+statement:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import static</span><span class="w"> </span><span class="nn">com.datastax.oss.driver.api.querybuilder.QueryBuilder.*</span><span class="p">;</span>
+
+<span class="n">BuildableQuery</span><span class="w"> </span><span class="n">query</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">insertInto</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">value</span><span class="p">(</span><span class="s">&quot;id&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">bindMarker</span><span class="p">())</span>
+<span class="w">        </span><span class="p">.</span><span class="na">value</span><span class="p">(</span><span class="s">&quot;first_name&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">bindMarker</span><span class="p">())</span>
+<span class="w">        </span><span class="p">.</span><span class="na">value</span><span class="p">(</span><span class="s">&quot;last_name&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">bindMarker</span><span class="p">());</span>
+
+<span class="n">String</span><span class="w"> </span><span class="n">cql</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">query</span><span class="p">.</span><span class="na">asCql</span><span class="p">();</span>
+<span class="c1">// INSERT INTO user (id,first_name,last_name) VALUES (?,?,?)</span>
+
+<span class="n">SimpleStatement</span><span class="w"> </span><span class="n">statement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">query</span>
+<span class="w">    </span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">addNamedValue</span><span class="p">(</span><span class="s">&quot;id&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">addNamedValue</span><span class="p">(</span><span class="s">&quot;first_name&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Jane&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">addNamedValue</span><span class="p">(</span><span class="s">&quot;last_name&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Doe&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+</code></pre></div>
+<p>All query builder types are immutable, making them inherently thread-safe and share-safe.</p>
+<p>The query builder has its own <a href="../manual/query_builder/">manual chapter</a>, where the syntax is
+covered in detail.</p>
+<h4 id="dedicated-type-for-cql-identifiers">Dedicated type for CQL identifiers<a class="headerlink" href="#dedicated-type-for-cql-identifiers" title="Permanent link">&para;</a></h4>
+<p>Instead of raw strings, the names of schema objects (keyspaces, tables, columns, etc.) are now 
+wrapped in a dedicated <code>CqlIdentifier</code> type. This avoids ambiguities with regard to <a href="../manual/case_sensitivity">case
+sensitivity</a>.</p>
+<h4 id="pluggable-request-execution-logic">Pluggable request execution logic<a class="headerlink" href="#pluggable-request-execution-logic" title="Permanent link">&para;</a></h4>
+<p><code>Session</code> is now a high-level abstraction capable of executing arbitrary requests. Out of the box,
+the driver exposes a more familiar subtype <code>CqlSession</code>, that provides familiar signatures for CQL
+queries (<code>execute(Statement)</code>, <code>prepare(String)</code>, etc).</p>
+<p>However, the request execution logic is completely pluggable, and supports arbitrary request types
+(as long as you write the boilerplate to convert them to protocol messages).</p>
+<p>We use that in our DSE driver to implement a reactive API and support for DSE graph. You can also
+take advantage of it to plug your own request types (if you're interested, take a look at
+<code>RequestProcessor</code> in the internal API).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.highlight", "search.share"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+    
+  </body>
+</html>
