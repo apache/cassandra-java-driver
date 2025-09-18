@@ -1,0 +1,4373 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Java Driver for Apache Cassandra® Documentation">
+      
+      
+      
+        <link rel="canonical" href="https://apache.github.io/cassandra-java-driver/query_builder/select/">
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../insert/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.17">
+    
+    
+      
+        <title>Select - Java Driver for Apache Cassandra</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#select" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Java Driver for Apache Cassandra" class="md-header__button md-logo" aria-label="Java Driver for Apache Cassandra" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Java Driver for Apache Cassandra
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Select
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/apache/cassandra-java-driver" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    apache/cassandra-java-driver
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../HOME-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API References
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../faq-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  FAQ
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../upgrade-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Upgrade Guide
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Java Driver for Apache Cassandra" class="md-nav__button md-logo" aria-label="Java Driver for Apache Cassandra" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Java Driver for Apache Cassandra
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/apache/cassandra-java-driver" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    apache/cassandra-java-driver
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../HOME-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Conventions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../case_sensitivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Case Sensitivity
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cloud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cloud
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Core
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Core
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/authentication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/ssl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/load_balancing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Load Balancing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/pooling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pooling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/reconnection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Reconnection
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/retries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Retries
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/speculative_execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Speculative Execution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Logging
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5_13" id="__nav_2_5_13_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Statements
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_5_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5_13">
+            <span class="md-nav__icon md-icon"></span>
+            Statements
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/statements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/statements/batch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Batch
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/statements/per_query_keyspace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Per Query Keyspace
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/statements/prepared/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Prepared
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/statements/simple/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Simple
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/paging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Paging
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/async/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Async Programming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/reactive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Reactive Streams
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/custom_codecs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Custom Codecs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/temporal_types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Temporal Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/tuples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tuples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/udts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    UDTs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/compression/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Compression
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/address_resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Address Resolution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/request_tracker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Request Tracker
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/throttling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Throttling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/tracing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tracing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Performance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5_27" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5_27" id="__nav_2_5_27_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Metadata
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_5_27_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5_27">
+            <span class="md-nav__icon md-icon"></span>
+            Metadata
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/metadata/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/metadata/node/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Node
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/metadata/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Schema
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/metadata/token/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Token
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/control_connection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Control Connection
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/native_protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Native Protocol
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/non_blocking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Non-blocking
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/query_timestamps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Query Timestamps
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/idempotence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Idempotence
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/detachable_types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Detachable Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5_34" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5_34" id="__nav_2_5_34_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    DSE
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_5_34_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5_34">
+            <span class="md-nav__icon md-icon"></span>
+            DSE
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/dse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/dse/geotypes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Geotypes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5_34_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5_34_3" id="__nav_2_5_34_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Graph
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_2_5_34_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5_34_3">
+            <span class="md-nav__icon md-icon"></span>
+            Graph
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/dse/graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5_34_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5_34_3_2" id="__nav_2_5_34_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Fluent
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_2_5_34_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5_34_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            Fluent
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/dse/graph/fluent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/dse/graph/fluent/explicit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Explicit
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/dse/graph/fluent/implicit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implicit
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/dse/graph/options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Options
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/dse/graph/results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/dse/graph/script/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Script
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/graalvm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GraalVM
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/shaded_jar/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Shaded JAR
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core/bom/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    BOM
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Query Builder
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Query Builder
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Select
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Select
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#select" class="md-nav__link">
+    <span class="md-ellipsis">
+      SELECT
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SELECT">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#selectors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Selectors
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Selectors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#star-selector-and-count" class="md-nav__link">
+    <span class="md-ellipsis">
+      Star selector and count
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Columns
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arithmetic-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Arithmetic operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#casts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Casts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sub-elements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sub-elements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#collections-of-selectors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Collections of selectors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Functions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#literals" class="md-nav__link">
+    <span class="md-ellipsis">
+      Literals
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#raw-snippets" class="md-nav__link">
+    <span class="md-ellipsis">
+      Raw snippets
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#relations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Relations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-clauses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Other clauses
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../insert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Insert
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Update
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../delete/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Delete
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6_6" id="__nav_2_6_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Schema
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_6_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6_6">
+            <span class="md-nav__icon md-icon"></span>
+            Schema
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schema/aggregate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Aggregate
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schema/function/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Function
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schema/index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Index
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schema/keyspace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Keyspace
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schema/materialized_view/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Materialized View
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schema/table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Table
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../schema/type/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Type
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../truncate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Truncate
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../condition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Condition
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../relation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Relation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../term/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Term
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../idempotence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Idempotence
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Mapper
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Mapper
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/entities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7_3" id="__nav_2_7_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    DAOs
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            DAOs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/custom_types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Custom Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/delete/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Delete
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/getentity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Get Entity
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/increment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Increment
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/insert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Insert
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/null_saving/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Null Saving
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Query
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/queryprovider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Query Provider
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/select/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Select
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/setentity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Set Entity
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/statement_attributes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Statement Attributes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Update
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/mapper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mapper
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7_5" id="__nav_2_7_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_7_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7_5">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/config/kotlin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kotlin
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/config/lombok/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Lombok
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/config/record/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Record
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/config/scala/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Scala
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_8" id="__nav_2_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Developer
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            Developer
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_8_2" id="__nav_2_8_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Common
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_8_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8_2">
+            <span class="md-nav__icon md-icon"></span>
+            Common
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/common/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/common/concurrency/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concurrency
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/common/context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Context
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/common/event_bus/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Event Bus
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/native_protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Native Protocol
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/netty_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Netty Pipeline
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/request_execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Request Execution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/admin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../osgi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OSGi
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API References
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    FAQ
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Changelog
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../upgrade-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Upgrade Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#select" class="md-nav__link">
+    <span class="md-ellipsis">
+      SELECT
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="SELECT">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#selectors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Selectors
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Selectors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#star-selector-and-count" class="md-nav__link">
+    <span class="md-ellipsis">
+      Star selector and count
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Columns
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#arithmetic-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Arithmetic operations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#casts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Casts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sub-elements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sub-elements
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#collections-of-selectors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Collections of selectors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Functions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#literals" class="md-nav__link">
+    <span class="md-ellipsis">
+      Literals
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#raw-snippets" class="md-nav__link">
+    <span class="md-ellipsis">
+      Raw snippets
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#relations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Relations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-clauses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Other clauses
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+  <h1>Select</h1>
+
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<h2 id="select">SELECT<a class="headerlink" href="#select" title="Permanent link">&para;</a></h2>
+<p>Start your SELECT with the <code>selectFrom</code> method in <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html">QueryBuilder</a>. There are several variants
+depending on whether your table name is qualified, and whether you use
+<a href="../../case_sensitivity/">identifiers</a> or raw strings:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import static</span><span class="w"> </span><span class="nn">com.datastax.oss.driver.api.querybuilder.QueryBuilder.*</span><span class="p">;</span>
+
+<span class="n">SelectFrom</span><span class="w"> </span><span class="n">selectUser</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">);</span>
+</code></pre></div>
+<p>Note that, at this stage, the query can't be built yet. You need at least one selector.</p>
+<h3 id="selectors">Selectors<a class="headerlink" href="#selectors" title="Permanent link">&para;</a></h3>
+<p>A selector is something that appears after the <code>SELECT</code> keyword, and will become a column in the
+result set. Its simplest form is a column identifier, but it can be a more complex expression.</p>
+<p>The easiest way to add a selector is with one of the fluent shortcuts:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;first_name&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;last_name&quot;</span><span class="p">);</span>
+<span class="c1">// SELECT first_name,last_name FROM user</span>
+</code></pre></div>
+<p>You can also create it manually with one of the factory methods in <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/querybuilder/select/Selector.html">Selector</a>, and then pass it to
+<code>selector()</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">selector</span><span class="p">(</span>
+<span class="w">    </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;first_name&quot;</span><span class="p">));</span>
+<span class="c1">// SELECT first_name FROM user</span>
+</code></pre></div>
+<p>If you have multiple selectors, you can also use <code>selectors()</code> to add them all in a single call.
+This is a bit more efficient since it creates less temporary objects: </p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">selectors</span><span class="p">(</span>
+<span class="w">    </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;first_name&quot;</span><span class="p">),</span>
+<span class="w">    </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;last_name&quot;</span><span class="p">));</span>
+<span class="c1">// SELECT first_name,last_name FROM user</span>
+</code></pre></div>
+<p>Use an alias to give a selector a different name in the result set:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;first_name&quot;</span><span class="p">).</span><span class="na">as</span><span class="p">(</span><span class="s">&quot;first&quot;</span><span class="p">);</span>
+<span class="c1">// SELECT first_name AS first FROM user</span>
+
+<span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">selector</span><span class="p">(</span>
+<span class="w">    </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;first_name&quot;</span><span class="p">).</span><span class="na">as</span><span class="p">(</span><span class="s">&quot;first&quot;</span><span class="p">));</span>
+<span class="c1">// SELECT first_name AS first FROM user</span>
+</code></pre></div>
+<p>The query builder provides many kinds of selectors. Some of them only work with newer Cassandra
+versions, always check what your target platform supports.</p>
+<h4 id="star-selector-and-count">Star selector and count<a class="headerlink" href="#star-selector-and-count" title="Permanent link">&para;</a></h4>
+<p><code>all</code> is the classic "star" selector that returns all columns. It cannot be aliased, and must be the
+only selector:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">all</span><span class="p">();</span>
+<span class="c1">// SELECT * FROM user</span>
+
+<span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">all</span><span class="p">().</span><span class="na">as</span><span class="p">(</span><span class="s">&quot;everything&quot;</span><span class="p">);</span>
+<span class="c1">// throws IllegalStateException: Can&#39;t alias the * selector</span>
+</code></pre></div>
+<p>If you add it to a query that already had other selectors, they will get removed:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;first_name&quot;</span><span class="p">).</span><span class="na">all</span><span class="p">();</span>
+<span class="c1">// SELECT * FROM user</span>
+</code></pre></div>
+<p>If you add other selectors to a query that already had the star selector, the star selector gets
+removed:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">all</span><span class="p">().</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;first_name&quot;</span><span class="p">);</span>
+<span class="c1">// SELECT first_name FROM user</span>
+</code></pre></div>
+<p>If you add multiple selectors at once, and one of them is the star selector, an exception is thrown: </p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">selectors</span><span class="p">(</span>
+<span class="w">    </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;first_name&quot;</span><span class="p">),</span>
+<span class="w">    </span><span class="n">Selector</span><span class="p">.</span><span class="na">all</span><span class="p">(),</span>
+<span class="w">    </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;last_name&quot;</span><span class="p">));</span>
+<span class="c1">// throws IllegalArgumentException: Can&#39;t pass the * selector to selectors()</span>
+</code></pre></div>
+<p><code>countAll</code> counts the number of rows:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">countAll</span><span class="p">();</span>
+<span class="c1">// SELECT count(*) FROM user</span>
+</code></pre></div>
+<h4 id="columns">Columns<a class="headerlink" href="#columns" title="Permanent link">&para;</a></h4>
+<p>We've already shown how <code>column</code> works:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;first_name&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;last_name&quot;</span><span class="p">);</span>
+<span class="c1">// SELECT first_name,last_name FROM user</span>
+</code></pre></div>
+<p>When all your selectors are simple columns, there is a convenience shortcut to add them in one call:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">columns</span><span class="p">(</span><span class="s">&quot;first_name&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;last_name&quot;</span><span class="p">);</span>
+<span class="c1">// SELECT first_name,last_name FROM user</span>
+</code></pre></div>
+<h4 id="arithmetic-operations">Arithmetic operations<a class="headerlink" href="#arithmetic-operations" title="Permanent link">&para;</a></h4>
+<p>Selectors can be combined with arithmetic operations. </p>
+<table>
+<thead>
+<tr>
+<th>CQL Operator</th>
+<th>Selector name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>a+b</code></td>
+<td><code>add</code></td>
+</tr>
+<tr>
+<td><code>a-b</code></td>
+<td><code>subtract</code></td>
+</tr>
+<tr>
+<td><code>-a</code></td>
+<td><code>negate</code></td>
+</tr>
+<tr>
+<td><code>a*b</code></td>
+<td><code>multiply</code></td>
+</tr>
+<tr>
+<td><code>a/b</code></td>
+<td><code>divide</code></td>
+</tr>
+<tr>
+<td><code>a%b</code></td>
+<td><code>remainder</code></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;rooms&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">multiply</span><span class="p">(</span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;length&quot;</span><span class="p">),</span><span class="w"> </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;width&quot;</span><span class="p">))</span>
+<span class="w">    </span><span class="p">.</span><span class="na">as</span><span class="p">(</span><span class="s">&quot;surface&quot;</span><span class="p">);</span>
+<span class="c1">// SELECT length*width AS surface FROM rooms</span>
+</code></pre></div>
+<p>Operations can be nested, and will get parenthesized according to the usual precedence rules:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;foo&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">multiply</span><span class="p">(</span>
+<span class="w">        </span><span class="n">Selector</span><span class="p">.</span><span class="na">negate</span><span class="p">(</span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;a&quot;</span><span class="p">)),</span>
+<span class="w">        </span><span class="n">Selector</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;b&quot;</span><span class="p">),</span><span class="w"> </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;c&quot;</span><span class="p">)));</span>
+<span class="c1">// SELECT -a*(b+c) FROM foo</span>
+</code></pre></div>
+<p>Note: as shown in the examples above, arithmetic operations can get verbose very quickly. If you
+have common expressions that get reused throughout your application code, consider writing your own
+shortcuts:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">Selector</span><span class="w"> </span><span class="nf">multiplyColumns</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">left</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">right</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">Selector</span><span class="p">.</span><span class="na">multiply</span><span class="p">(</span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="n">left</span><span class="p">),</span><span class="w"> </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="n">right</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;rooms&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">selector</span><span class="p">(</span><span class="n">multiplyColumns</span><span class="p">(</span><span class="s">&quot;length&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;width&quot;</span><span class="p">))</span>
+<span class="w">    </span><span class="p">.</span><span class="na">as</span><span class="p">(</span><span class="s">&quot;surface&quot;</span><span class="p">);</span>
+<span class="c1">// SELECT length*width AS surface FROM rooms</span>
+</code></pre></div>
+<h4 id="casts">Casts<a class="headerlink" href="#casts" title="Permanent link">&para;</a></h4>
+<p>Casting is closely related to arithmetic operations; it allows you to coerce a selector to a
+different data type. For example, if <code>height</code> and <code>weight</code> are two <code>int</code> columns, the following
+expression uses integer division and returns an <code>int</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">divide</span><span class="p">(</span>
+<span class="w">        </span><span class="n">Selector</span><span class="p">.</span><span class="na">multiply</span><span class="p">(</span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;weight&quot;</span><span class="p">),</span><span class="w"> </span><span class="n">literal</span><span class="p">(</span><span class="mi">10_000</span><span class="p">)),</span>
+<span class="w">        </span><span class="n">Selector</span><span class="p">.</span><span class="na">multiply</span><span class="p">(</span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;height&quot;</span><span class="p">),</span><span class="w"> </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;height&quot;</span><span class="p">)))</span>
+<span class="w">    </span><span class="p">.</span><span class="na">as</span><span class="p">(</span><span class="s">&quot;bmi&quot;</span><span class="p">);</span>
+<span class="c1">// SELECT weight*10000/(height*height) AS bmi FROM user</span>
+</code></pre></div>
+<p>What if you want a floating-point result instead? You have to introduce a cast:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">divide</span><span class="p">(</span>
+<span class="w">        </span><span class="n">Selector</span><span class="p">.</span><span class="na">multiply</span><span class="p">(</span>
+<span class="w">            </span><span class="n">Selector</span><span class="p">.</span><span class="na">cast</span><span class="p">(</span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;weight&quot;</span><span class="p">),</span><span class="w"> </span><span class="n">DataTypes</span><span class="p">.</span><span class="na">DOUBLE</span><span class="p">),</span>
+<span class="w">            </span><span class="n">literal</span><span class="p">(</span><span class="mi">10_000</span><span class="p">)),</span>
+<span class="w">        </span><span class="n">Selector</span><span class="p">.</span><span class="na">multiply</span><span class="p">(</span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;height&quot;</span><span class="p">),</span><span class="w"> </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;height&quot;</span><span class="p">)))</span>
+<span class="w">    </span><span class="p">.</span><span class="na">as</span><span class="p">(</span><span class="s">&quot;bmi&quot;</span><span class="p">);</span>
+<span class="c1">// SELECT CAST(weight AS double)*10000/(height*height) AS bmi FROM user</span>
+</code></pre></div>
+<p>Type hints are similar to casts, with a subtle difference: a cast applies to an expression with an
+already well-established type, whereas a hint is used with a literal, where the type can be
+ambiguous.</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;foo&quot;</span><span class="p">).</span><span class="na">divide</span><span class="p">(</span>
+<span class="w">    </span><span class="c1">// A literal 1 can be any numeric type (int, bigint, double, etc.)</span>
+<span class="w">    </span><span class="c1">// It defaults to int, which is wrong here if we want a floating-point result.</span>
+<span class="w">    </span><span class="n">Selector</span><span class="p">.</span><span class="na">typeHint</span><span class="p">(</span><span class="n">literal</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="n">DataTypes</span><span class="p">.</span><span class="na">DOUBLE</span><span class="p">),</span>
+<span class="w">    </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;a&quot;</span><span class="p">));</span>
+<span class="c1">// SELECT (double)1/a FROM foo</span>
+</code></pre></div>
+<h4 id="sub-elements">Sub-elements<a class="headerlink" href="#sub-elements" title="Permanent link">&para;</a></h4>
+<p>These selectors extract an element from a complex column, for example:</p>
+<ul>
+<li>a field from a user-defined type:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">field</span><span class="p">(</span><span class="s">&quot;address&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;street&quot;</span><span class="p">);</span>
+<span class="c1">// SELECT address.street FROM user</span>
+</code></pre></div>
+<ul>
+<li>an element, or range of elements, in a set or a map:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;product&quot;</span><span class="p">).</span><span class="na">element</span><span class="p">(</span><span class="s">&quot;features&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">literal</span><span class="p">(</span><span class="s">&quot;color&quot;</span><span class="p">));</span>
+<span class="c1">// SELECT features[&#39;color&#39;] FROM product</span>
+
+<span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;movie&quot;</span><span class="p">).</span><span class="na">range</span><span class="p">(</span><span class="s">&quot;ratings&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">literal</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span><span class="w"> </span><span class="n">literal</span><span class="p">(</span><span class="mi">4</span><span class="p">));</span>
+<span class="c1">// SELECT ratings[3..4] FROM movie</span>
+
+<span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;movie&quot;</span><span class="p">).</span><span class="na">range</span><span class="p">(</span><span class="s">&quot;ratings&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">literal</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span><span class="w"> </span><span class="kc">null</span><span class="p">);</span>
+<span class="c1">// SELECT ratings[3..] FROM movie</span>
+
+<span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;movie&quot;</span><span class="p">).</span><span class="na">range</span><span class="p">(</span><span class="s">&quot;ratings&quot;</span><span class="p">,</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="n">literal</span><span class="p">(</span><span class="mi">3</span><span class="p">));</span>
+<span class="c1">// SELECT ratings[..3] FROM movie</span>
+</code></pre></div>
+<h4 id="collections-of-selectors">Collections of selectors<a class="headerlink" href="#collections-of-selectors" title="Permanent link">&para;</a></h4>
+<p>Groups of selectors can be extracted as a single collection, such as:</p>
+<ul>
+<li>a list or set. All inner selectors must return the same CQL type:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">listOf</span><span class="p">(</span>
+<span class="w">    </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;first_name&quot;</span><span class="p">),</span>
+<span class="w">    </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;last_name&quot;</span><span class="p">));</span>
+<span class="c1">// SELECT [first_name,last_name] FROM user</span>
+
+<span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">setOf</span><span class="p">(</span>
+<span class="w">    </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;first_name&quot;</span><span class="p">),</span>
+<span class="w">    </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;last_name&quot;</span><span class="p">));</span>
+<span class="c1">// SELECT {first_name,last_name} FROM user</span>
+</code></pre></div>
+<ul>
+<li>a map. All key and value selectors must have consistent types. In most cases, Cassandra will
+  require a type hint for the outer map, so the query builder can generate that for you if you
+  provide the key and value types:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">Map</span><span class="o">&lt;</span><span class="n">Selector</span><span class="p">,</span><span class="w"> </span><span class="n">Selector</span><span class="o">&gt;</span><span class="w"> </span><span class="n">mapSelector</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HashMap</span><span class="o">&lt;&gt;</span><span class="p">();</span>
+<span class="n">mapSelector</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="n">literal</span><span class="p">(</span><span class="s">&quot;first&quot;</span><span class="p">),</span><span class="w"> </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;first_name&quot;</span><span class="p">));</span>
+<span class="n">mapSelector</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="n">literal</span><span class="p">(</span><span class="s">&quot;last&quot;</span><span class="p">),</span><span class="w"> </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;last_name&quot;</span><span class="p">));</span>
+
+<span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">mapOf</span><span class="p">(</span><span class="n">mapSelector</span><span class="p">,</span><span class="w"> </span><span class="n">DataTypes</span><span class="p">.</span><span class="na">TEXT</span><span class="p">,</span><span class="w"> </span><span class="n">DataTypes</span><span class="p">.</span><span class="na">TEXT</span><span class="p">);</span>
+<span class="c1">// SELECT (map&lt;text,text&gt;){&#39;first&#39;:first_name,&#39;last&#39;:last_name} FROM user</span>
+</code></pre></div>
+<ul>
+<li>a tuple. This time the types can be heterogeneous:</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">tupleOf</span><span class="p">(</span>
+<span class="w">    </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;first_name&quot;</span><span class="p">),</span>
+<span class="w">    </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;birth_date&quot;</span><span class="p">));</span>
+<span class="c1">// SELECT (first_name,birth_date) FROM user</span>
+</code></pre></div>
+<h4 id="functions">Functions<a class="headerlink" href="#functions" title="Permanent link">&para;</a></h4>
+<p>Function calls take a function name (optionally qualified with a keyspace), and a list of selectors
+that will be passed as arguments:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">function</span><span class="p">(</span><span class="s">&quot;utils&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;bmi&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;weight&quot;</span><span class="p">),</span><span class="w"> </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;height&quot;</span><span class="p">));</span>
+<span class="c1">// SELECT utils.bmi(weight,height) FROM user</span>
+</code></pre></div>
+<p>The built-in functions <code>ttl</code> and <code>writetime</code> have convenience shortcuts:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">writeTime</span><span class="p">(</span><span class="s">&quot;first_name&quot;</span><span class="p">).</span><span class="na">ttl</span><span class="p">(</span><span class="s">&quot;last_name&quot;</span><span class="p">);</span>
+<span class="c1">// SELECT writetime(first_name),ttl(last_name) FROM user</span>
+</code></pre></div>
+<h4 id="literals">Literals<a class="headerlink" href="#literals" title="Permanent link">&para;</a></h4>
+<p>Occasionally, you'll need to inline a CQL literal in your query; this is not very useful as a
+top-level selector, but could happen as part of an arithmetic operation:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;foo&quot;</span><span class="p">).</span><span class="na">quotient</span><span class="p">(</span><span class="n">literal</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;a&quot;</span><span class="p">));</span>
+<span class="c1">// SELECT 1/a FROM foo</span>
+</code></pre></div>
+<p>See the <a href="../term/#literals">terms</a> section for more details on literals.</p>
+<h4 id="raw-snippets">Raw snippets<a class="headerlink" href="#raw-snippets" title="Permanent link">&para;</a></h4>
+<p>Lastly, a selector can be expressed as a raw CQL snippet, that will get appended to the query as-is,
+without any syntax checking or escaping:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">raw</span><span class="p">(</span><span class="s">&quot;first_name, last_name /*some random comment*/&quot;</span><span class="p">);</span>
+<span class="c1">// SELECT first_name, last_name /*some random comment*/ FROM user</span>
+</code></pre></div>
+<p>This should be used with caution, as it's possible to generate invalid CQL that will fail at
+execution time; on the other hand, it can be used as a workaround to handle new CQL features that
+are not yet covered by the query builder.</p>
+<h3 id="relations">Relations<a class="headerlink" href="#relations" title="Permanent link">&para;</a></h3>
+<p>Relations get added with the <code>whereXxx()</code> methods:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">all</span><span class="p">().</span><span class="na">whereColumn</span><span class="p">(</span><span class="s">&quot;id&quot;</span><span class="p">).</span><span class="na">isEqualTo</span><span class="p">(</span><span class="n">literal</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+<span class="c1">// SELECT * FROM user WHERE id=1</span>
+</code></pre></div>
+<p>You can also create and add them manually:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">all</span><span class="p">().</span><span class="na">where</span><span class="p">(</span>
+<span class="w">    </span><span class="n">Relation</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;id&quot;</span><span class="p">).</span><span class="na">isEqualTo</span><span class="p">(</span><span class="n">literal</span><span class="p">(</span><span class="mi">1</span><span class="p">)));</span>
+<span class="c1">// SELECT * FROM user WHERE id=1</span>
+</code></pre></div>
+<p>Like selectors, they also have fluent shortcuts to build and add in a single call:</p>
+<p>Relations are a common feature used by many types of statements, so they have a
+<a href="../relation">dedicated page</a> in this manual.</p>
+<h3 id="other-clauses">Other clauses<a class="headerlink" href="#other-clauses" title="Permanent link">&para;</a></h3>
+<p>The remaining SELECT clauses have a straightforward syntax. Refer to the javadocs for the fine
+print.</p>
+<p>Groupings:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;sensor_data&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">function</span><span class="p">(</span><span class="s">&quot;max&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;reading&quot;</span><span class="p">))</span>
+<span class="w">    </span><span class="p">.</span><span class="na">whereColumn</span><span class="p">(</span><span class="s">&quot;id&quot;</span><span class="p">).</span><span class="na">isEqualTo</span><span class="p">(</span><span class="n">bindMarker</span><span class="p">())</span>
+<span class="w">    </span><span class="p">.</span><span class="na">groupBy</span><span class="p">(</span><span class="s">&quot;date&quot;</span><span class="p">);</span>
+<span class="c1">// SELECT max(reading) FROM sensor_data WHERE id=? GROUP BY date</span>
+</code></pre></div>
+<p>Orderings:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder</span><span class="p">;</span>
+
+<span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;sensor_data&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;reading&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">whereColumn</span><span class="p">(</span><span class="s">&quot;id&quot;</span><span class="p">).</span><span class="na">isEqualTo</span><span class="p">(</span><span class="n">bindMarker</span><span class="p">())</span>
+<span class="w">    </span><span class="p">.</span><span class="na">orderBy</span><span class="p">(</span><span class="s">&quot;date&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">ClusteringOrder</span><span class="p">.</span><span class="na">DESC</span><span class="p">);</span>
+<span class="c1">// SELECT reading FROM sensor_data WHERE id=? ORDER BY date DESC</span>
+</code></pre></div>
+<p>Vector Search:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">com.datastax.oss.driver.api.core.data.CqlVector</span><span class="p">;</span>
+
+<span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;foo&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">all</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">where</span><span class="p">(</span><span class="n">Relation</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;k&quot;</span><span class="p">).</span><span class="na">isEqualTo</span><span class="p">(</span><span class="n">literal</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span>
+<span class="w">    </span><span class="p">.</span><span class="na">orderByAnnOf</span><span class="p">(</span><span class="s">&quot;c1&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">CqlVector</span><span class="p">.</span><span class="na">newInstance</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="mf">0.2</span><span class="p">,</span><span class="w"> </span><span class="mf">0.3</span><span class="p">));</span>
+<span class="c1">// SELECT * FROM foo WHERE k=1 ORDER BY c1 ANN OF [0.1, 0.2, 0.3]</span>
+
+<span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;cycling&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;comments_vs&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;comment&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">function</span><span class="p">(</span>
+<span class="w">        </span><span class="s">&quot;similarity_cosine&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="n">Selector</span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;comment_vector&quot;</span><span class="p">),</span>
+<span class="w">        </span><span class="n">literal</span><span class="p">(</span><span class="n">CqlVector</span><span class="p">.</span><span class="na">newInstance</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span><span class="w"> </span><span class="mf">0.15</span><span class="p">,</span><span class="w"> </span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="mf">0.2</span><span class="p">,</span><span class="w"> </span><span class="mf">0.05</span><span class="p">)))</span>
+<span class="w">    </span><span class="p">.</span><span class="na">orderByAnnOf</span><span class="p">(</span><span class="s">&quot;comment_vector&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">CqlVector</span><span class="p">.</span><span class="na">newInstance</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span><span class="w"> </span><span class="mf">0.15</span><span class="p">,</span><span class="w"> </span><span class="mf">0.3</span><span class="p">,</span><span class="w"> </span><span class="mf">0.12</span><span class="p">,</span><span class="w"> </span><span class="mf">0.05</span><span class="p">))</span>
+<span class="w">    </span><span class="p">.</span><span class="na">limit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="c1">// SELECT comment,similarity_cosine(comment_vector,[0.2, 0.15, 0.3, 0.2, 0.05]) FROM cycling.comments_vs ORDER BY comment_vector ANN OF [0.1, 0.15, 0.3, 0.12, 0.05] LIMIT 1</span>
+</code></pre></div>
+<p>Limits:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;sensor_data&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;reading&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">whereColumn</span><span class="p">(</span><span class="s">&quot;id&quot;</span><span class="p">).</span><span class="na">isEqualTo</span><span class="p">(</span><span class="n">bindMarker</span><span class="p">())</span>
+<span class="w">    </span><span class="p">.</span><span class="na">limit</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
+<span class="c1">// SELECT reading FROM sensor_data WHERE id=? LIMIT 10</span>
+
+<span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;sensor_data&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">column</span><span class="p">(</span><span class="s">&quot;reading&quot;</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">whereColumn</span><span class="p">(</span><span class="s">&quot;id&quot;</span><span class="p">).</span><span class="na">isEqualTo</span><span class="p">(</span><span class="n">bindMarker</span><span class="p">())</span>
+<span class="w">    </span><span class="p">.</span><span class="na">perPartitionLimit</span><span class="p">(</span><span class="n">bindMarker</span><span class="p">(</span><span class="s">&quot;l&quot;</span><span class="p">));</span>
+<span class="c1">// SELECT reading FROM sensor_data WHERE id IN ? PER PARTITION LIMIT :l</span>
+</code></pre></div>
+<p>Filtering:</p>
+<div class="highlight"><pre><span></span><code><span class="n">selectFrom</span><span class="p">(</span><span class="s">&quot;user&quot;</span><span class="p">).</span><span class="na">all</span><span class="p">().</span><span class="na">allowFiltering</span><span class="p">();</span>
+<span class="c1">// SELECT * FROM user ALLOW FILTERING</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+    
+  </body>
+</html>

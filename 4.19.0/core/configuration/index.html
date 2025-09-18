@@ -1,0 +1,4595 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Java Driver for Apache Cassandra® Documentation">
+      
+      
+      
+        <link rel="canonical" href="https://apache.github.io/cassandra-java-driver/core/configuration/">
+      
+      
+        <link rel="prev" href="../integration/">
+      
+      
+        <link rel="next" href="../authentication/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.17">
+    
+    
+      
+        <title>Configuration - Java Driver for Apache Cassandra</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#configuration" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Java Driver for Apache Cassandra" class="md-header__button md-logo" aria-label="Java Driver for Apache Cassandra" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Java Driver for Apache Cassandra
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Configuration
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/apache/cassandra-java-driver" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    apache/cassandra-java-driver
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../HOME-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+  Manual
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API References
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../faq-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  FAQ
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../changelog-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../upgrade-README/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Upgrade Guide
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Java Driver for Apache Cassandra" class="md-nav__button md-logo" aria-label="Java Driver for Apache Cassandra" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Java Driver for Apache Cassandra
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/apache/cassandra-java-driver" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    apache/cassandra-java-driver
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../HOME-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Manual
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api_conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Conventions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../case_sensitivity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Case Sensitivity
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cloud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Cloud
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_5" id="__nav_2_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Core
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_5">
+            <span class="md-nav__icon md-icon"></span>
+            Core
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick overview
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Concepts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Concepts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Options
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execution-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Execution profiles
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-implementation-typesafe-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default implementation: Typesafe Config
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Default implementation: Typesafe Config">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alternate-application-config-locations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternate application config locations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#programmatic-application-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Programmatic application config
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-configuration-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      The configuration API
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The configuration API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-reloading" class="md-nav__link">
+    <span class="md-ellipsis">
+      Manual reloading
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#derived-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Derived profiles
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-topics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced topics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced topics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changing-the-config-prefix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changing the config prefix
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loading-from-a-different-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      Loading from a different source
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bypassing-typesafe-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bypassing Typesafe Config
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-change-event" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration change event
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#policies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Policies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom options
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authentication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ssl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SSL
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../load_balancing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Load Balancing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pooling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Pooling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reconnection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Reconnection
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../retries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Retries
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../speculative_execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Speculative Execution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Logging
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5_13" id="__nav_2_5_13_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Statements
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_5_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5_13">
+            <span class="md-nav__icon md-icon"></span>
+            Statements
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../statements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../statements/batch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Batch
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../statements/per_query_keyspace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Per Query Keyspace
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../statements/prepared/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Prepared
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../statements/simple/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Simple
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../paging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Paging
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../async/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Async Programming
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reactive/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Reactive Streams
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../custom_codecs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Custom Codecs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../temporal_types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Temporal Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tuples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tuples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../udts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    UDTs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../compression/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Compression
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../address_resolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Address Resolution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../request_tracker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Request Tracker
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../throttling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Throttling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tracing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tracing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Performance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5_27" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5_27" id="__nav_2_5_27_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Metadata
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_5_27_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5_27">
+            <span class="md-nav__icon md-icon"></span>
+            Metadata
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metadata/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metadata/node/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Node
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metadata/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Schema
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metadata/token/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Token
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../control_connection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Control Connection
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../native_protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Native Protocol
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../non_blocking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Non-blocking
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../query_timestamps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Query Timestamps
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../idempotence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Idempotence
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../detachable_types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Detachable Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5_34" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5_34" id="__nav_2_5_34_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    DSE
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_5_34_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5_34">
+            <span class="md-nav__icon md-icon"></span>
+            DSE
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dse/geotypes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Geotypes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5_34_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5_34_3" id="__nav_2_5_34_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Graph
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_2_5_34_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5_34_3">
+            <span class="md-nav__icon md-icon"></span>
+            Graph
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dse/graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_5_34_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_5_34_3_2" id="__nav_2_5_34_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Fluent
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_2_5_34_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_5_34_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            Fluent
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dse/graph/fluent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dse/graph/fluent/explicit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Explicit
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dse/graph/fluent/implicit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implicit
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dse/graph/options/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Options
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dse/graph/results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Results
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dse/graph/script/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Script
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../graalvm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GraalVM
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../shaded_jar/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Shaded JAR
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bom/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    BOM
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Query Builder
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Query Builder
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/select/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Select
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/insert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Insert
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Update
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/delete/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Delete
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6_6" id="__nav_2_6_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Schema
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_6_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6_6">
+            <span class="md-nav__icon md-icon"></span>
+            Schema
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/schema/aggregate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Aggregate
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/schema/function/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Function
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/schema/index/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Index
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/schema/keyspace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Keyspace
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/schema/materialized_view/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Materialized View
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/schema/table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Table
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/schema/type/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Type
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/truncate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Truncate
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/condition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Condition
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/relation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Relation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/term/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Term
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../query_builder/idempotence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Idempotence
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Mapper
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Mapper
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/entities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7_3" id="__nav_2_7_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    DAOs
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            DAOs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/custom_types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Custom Types
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/delete/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Delete
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/getentity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Get Entity
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/increment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Increment
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/insert/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Insert
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/null_saving/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Null Saving
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Query
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/queryprovider/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Query Provider
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/select/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Select
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/setentity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Set Entity
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/statement_attributes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Statement Attributes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/daos/update/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Update
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/mapper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mapper
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7_5" id="__nav_2_7_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_7_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7_5">
+            <span class="md-nav__icon md-icon"></span>
+            Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/config/kotlin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kotlin
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/config/lombok/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Lombok
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/config/record/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Record
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../mapper/config/scala/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Scala
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_8" id="__nav_2_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Developer
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            Developer
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_8_2" id="__nav_2_8_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Common
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_8_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8_2">
+            <span class="md-nav__icon md-icon"></span>
+            Common
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/common/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/common/concurrency/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concurrency
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/common/context/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Context
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/common/event_bus/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Event Bus
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/native_protocol/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Native Protocol
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/netty_pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Netty Pipeline
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/request_execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Request Execution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer/admin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../osgi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OSGi
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API References
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../faq-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    FAQ
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Changelog
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../upgrade-README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Upgrade Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick overview
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Concepts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Concepts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Options
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execution-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Execution profiles
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-implementation-typesafe-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Default implementation: Typesafe Config
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Default implementation: Typesafe Config">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#alternate-application-config-locations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Alternate application config locations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#programmatic-application-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Programmatic application config
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-configuration-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      The configuration API
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The configuration API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-reloading" class="md-nav__link">
+    <span class="md-ellipsis">
+      Manual reloading
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#derived-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Derived profiles
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#advanced-topics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced topics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced topics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changing-the-config-prefix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Changing the config prefix
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loading-from-a-different-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      Loading from a different source
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bypassing-typesafe-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Bypassing Typesafe Config
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-change-event" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration change event
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#policies" class="md-nav__link">
+    <span class="md-ellipsis">
+      Policies
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom options
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+  <h1>Configuration</h1>
+
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-->
+
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<h3 id="quick-overview">Quick overview<a class="headerlink" href="#quick-overview" title="Permanent link">&para;</a></h3>
+<p>The driver's configuration is composed of options, organized in a hierarchical manner. Optionally,
+it can define <em>profiles</em> that customize a set of options for a particular kind of request.</p>
+<ul>
+<li>the default implementation is based on the Typesafe Config framework:</li>
+<li>the driver JAR comes with a <a href="reference/">reference.conf</a> file that defines the defaults.</li>
+<li>you can add an <code>application.conf</code> file in the classpath (or an absolute path, or an URL). It
+    only needs to contain the options that you override.</li>
+<li>hot reloading is supported out of the box.</li>
+<li>the config mechanism can be completely overridden by implementing a set of driver interfaces
+  (<a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverConfig.html">DriverConfig</a>, <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverExecutionProfile.html">DriverExecutionProfile</a> and <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html">DriverConfigLoader</a>)</li>
+</ul>
+<hr />
+<h3 id="concepts">Concepts<a class="headerlink" href="#concepts" title="Permanent link">&para;</a></h3>
+<h4 id="options">Options<a class="headerlink" href="#options" title="Permanent link">&para;</a></h4>
+<p>Essentially, an option is a path in the configuration with an expected type, for example
+<code>basic.request.timeout</code>, representing a duration.</p>
+<h4 id="execution-profiles">Execution profiles<a class="headerlink" href="#execution-profiles" title="Permanent link">&para;</a></h4>
+<p>Imagine an application that does both transactional and analytical requests. Transactional requests
+are simpler and must return quickly, so they will typically use a short timeout, let's say 100 
+milliseconds; analytical requests are more complex and less frequent so a higher SLA is acceptable,
+for example 5 seconds. In addition, maybe you want to use a different consistency level.</p>
+<p>Instead of manually adjusting the options on every request, you can create execution profiles:</p>
+<div class="highlight"><pre><span></span><code>datastax-java-driver {
+  profiles {
+    oltp {
+      basic.request.timeout = 100 milliseconds
+      basic.request.consistency = ONE
+    }
+    olap {
+      basic.request.timeout = 5 seconds
+      basic.request.consistency = QUORUM
+    }
+}
+</code></pre></div>
+<p>Now each request only needs a profile name:</p>
+<div class="highlight"><pre><span></span><code><span class="n">SimpleStatement</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="n">SimpleStatement</span><span class="p">.</span><span class="na">builder</span><span class="p">(</span><span class="s">&quot;SELECT name FROM user WHERE id = 1&quot;</span><span class="p">)</span>
+<span class="w">      </span><span class="p">.</span><span class="na">setExecutionProfileName</span><span class="p">(</span><span class="s">&quot;oltp&quot;</span><span class="p">)</span>
+<span class="w">      </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+</code></pre></div>
+<p>The configuration has an anonymous <em>default profile</em> that is always present. It can define an
+arbitrary number of named profiles. They inherit from the default profile, so you only need to
+override the options that have a different value.</p>
+<h3 id="default-implementation-typesafe-config">Default implementation: Typesafe Config<a class="headerlink" href="#default-implementation-typesafe-config" title="Permanent link">&para;</a></h3>
+<p>Out of the box, the driver uses <a href="https://github.com/typesafehub/config">Typesafe Config</a>. </p>
+<p>It looks at the following locations, according to the <a href="https://github.com/typesafehub/config#standard-behavior">standard behavior</a>
+of that library:</p>
+<ul>
+<li>system properties</li>
+<li><code>application.conf</code> (all resources on the classpath with this name)</li>
+<li><code>application.json</code> (all resources on the classpath with this name)</li>
+<li><code>application.properties</code> (all resources on the classpath with this name)</li>
+<li><code>reference.conf</code> (all resources on the classpath with this name)</li>
+</ul>
+<p>The driver ships with a <a href="reference/">reference.conf</a> that defines sensible defaults for all the options. That
+file is heavily documented, so refer to it for details about each option. It is included in the core
+driver JAR, so it is in your application's classpath. If you need to customize something, add an
+<code>application.conf</code> to the classpath. There are various ways to do it:</p>
+<ul>
+<li>place the file in a directory that is on your application or application server's classpath
+  (<a href="https://stackoverflow.com/questions/1300780/adding-a-directory-to-tomcat-classpath">example for Apache Tomcat</a>);</li>
+<li>if you use Maven, place it in the <code>src/main/resources</code> directory.</li>
+</ul>
+<p>Since <code>application.conf</code> inherits from <code>reference.conf</code>, you only need to redeclare what you
+override:</p>
+<div class="highlight"><pre><span></span><code># Sample application.conf: overrides one option and adds a profile
+datastax-java-driver {
+  advanced.protocol.version = V4
+  profiles {
+    slow {
+      basic.request.timeout = 10 seconds
+    }
+  }
+}
+</code></pre></div>
+<p><code>.conf</code> files are in the <em>HOCON</em> format, an improved superset of JSON; refer to the
+<a href="https://github.com/typesafehub/config/blob/master/HOCON.md">HOCON spec</a> for details. </p>
+<p>By default, configuration files are reloaded regularly, and the driver will adjust to the new values
+(on a "best effort" basis: some options, like protocol version and policy configurations, cannot be
+changed at runtime and will be ignored). The reload interval is defined in the configuration:</p>
+<div class="highlight"><pre><span></span><code># To disable periodic reloading, set this to 0.
+datastax-java-driver.basic.config-reload-interval = 5 minutes
+</code></pre></div>
+<p>As mentioned previously, system properties can also be used to override individual options. This is
+great for temporary changes, for example in your development environment:  </p>
+<div class="highlight"><pre><span></span><code># Increase heartbeat interval to limit the amount of debug logs:
+java -Ddatastax-java-driver.advanced.heartbeat.interval=&quot;5 minutes&quot; ...
+</code></pre></div>
+<p>For array options, provide each element separately by appending an index to the path:</p>
+<div class="highlight"><pre><span></span><code>-Ddatastax-java-driver.basic.contact-points.0=&quot;127.0.0.1:9042&quot;
+-Ddatastax-java-driver.basic.contact-points.1=&quot;127.0.0.2:9042&quot;
+</code></pre></div>
+<p>We recommend reserving system properties for the early phases of the project; in production, having
+all the configuration in one place will make it easier to manage and review.</p>
+<p>As shown so far, all options live under a <code>datastax-java-driver</code> prefix. This can be changed, for
+example if you need multiple driver instances in the same VM with different configurations. See the
+<a href="#changing-the-config-prefix">Advanced topics</a> section.</p>
+<h4 id="alternate-application-config-locations">Alternate application config locations<a class="headerlink" href="#alternate-application-config-locations" title="Permanent link">&para;</a></h4>
+<p>If loading <code>application.conf</code> from the classpath doesn't work for you, other loader implementations
+are available:</p>
+<ul>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromClasspath-java.lang.String-">DriverConfigLoader.fromClasspath</a>: still load from the classpath, but use a different resource
+  name. For example "config" will try to load <code>config.conf</code>, <code>config.json</code> or <code>config.properties</code>.</li>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromFile-java.io.File-">DriverConfigLoader.fromFile</a>: load from a file on the local filesystem.</li>
+<li><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#fromUrl-java.net.URL-">DriverConfigLoader.fromUrl</a>: load from a URL.</li>
+</ul>
+<p>To use any of those loaders, pass it to the session builder:</p>
+<div class="highlight"><pre><span></span><code><span class="n">File</span><span class="w"> </span><span class="n">file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">File</span><span class="p">(</span><span class="s">&quot;/path/to/application.conf&quot;</span><span class="p">);</span>
+<span class="n">CqlSession</span><span class="w"> </span><span class="n">session</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CqlSession</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">withConfigLoader</span><span class="p">(</span><span class="n">DriverConfigLoader</span><span class="p">.</span><span class="na">fromFile</span><span class="p">(</span><span class="n">file</span><span class="p">))</span>
+<span class="w">    </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+</code></pre></div>
+<p>Apart from application-specific configuration, they work exactly like the default loader: they
+fall back to the driver's built-in <code>reference.conf</code> for defaults, accept overrides via system
+properties, and reload at the interval specified by the <code>basic.config-reload-interval</code> option. </p>
+<h4 id="programmatic-application-config">Programmatic application config<a class="headerlink" href="#programmatic-application-config" title="Permanent link">&para;</a></h4>
+<p>Alternatively, you can use <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#programmaticBuilder--">DriverConfigLoader.programmaticBuilder</a> to specify configuration options
+programmatically instead of loading them from a static resource:</p>
+<div class="highlight"><pre><span></span><code><span class="n">DriverConfigLoader</span><span class="w"> </span><span class="n">loader</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">DriverConfigLoader</span><span class="p">.</span><span class="na">programmaticBuilder</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="na">withDuration</span><span class="p">(</span><span class="n">DefaultDriverOption</span><span class="p">.</span><span class="na">REQUEST_TIMEOUT</span><span class="p">,</span><span class="w"> </span><span class="n">Duration</span><span class="p">.</span><span class="na">ofSeconds</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">startProfile</span><span class="p">(</span><span class="s">&quot;slow&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">withDuration</span><span class="p">(</span><span class="n">DefaultDriverOption</span><span class="p">.</span><span class="na">REQUEST_TIMEOUT</span><span class="p">,</span><span class="w"> </span><span class="n">Duration</span><span class="p">.</span><span class="na">ofSeconds</span><span class="p">(</span><span class="mi">30</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">endProfile</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="n">CqlSession</span><span class="w"> </span><span class="n">session</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CqlSession</span><span class="p">.</span><span class="na">builder</span><span class="p">().</span><span class="na">withConfigLoader</span><span class="p">(</span><span class="n">loader</span><span class="p">).</span><span class="na">build</span><span class="p">();</span>
+</code></pre></div>
+<p>This is useful for frameworks and tools that already have their own configuration mechanism.</p>
+<h3 id="the-configuration-api">The configuration API<a class="headerlink" href="#the-configuration-api" title="Permanent link">&para;</a></h3>
+<p>You don't need the configuration API for everyday usage of the driver, but it can be useful if:</p>
+<ul>
+<li>you're writing custom policies or a custom config implementation;</li>
+<li>use dynamic profiles (see below);</li>
+<li>or simply want to read configuration options at runtime.</li>
+</ul>
+<h4 id="basics">Basics<a class="headerlink" href="#basics" title="Permanent link">&para;</a></h4>
+<p>The driver's context exposes a <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverConfig.html">DriverConfig</a> instance:</p>
+<div class="highlight"><pre><span></span><code><span class="n">DriverConfig</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">getContext</span><span class="p">().</span><span class="na">getConfig</span><span class="p">();</span>
+<span class="n">DriverExecutionProfile</span><span class="w"> </span><span class="n">defaultProfile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="na">getDefaultProfile</span><span class="p">();</span>
+<span class="n">DriverExecutionProfile</span><span class="w"> </span><span class="n">olapProfile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="na">getProfile</span><span class="p">(</span><span class="s">&quot;olap&quot;</span><span class="p">);</span>
+
+<span class="n">config</span><span class="p">.</span><span class="na">getProfiles</span><span class="p">().</span><span class="na">forEach</span><span class="p">((</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">profile</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">...);</span>
+</code></pre></div>
+<p><a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverExecutionProfile.html">DriverExecutionProfile</a> has typed option getters:</p>
+<div class="highlight"><pre><span></span><code><span class="n">Duration</span><span class="w"> </span><span class="n">requestTimeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">defaultProfile</span><span class="p">.</span><span class="na">getDuration</span><span class="p">(</span><span class="n">DefaultDriverOption</span><span class="p">.</span><span class="na">REQUEST_TIMEOUT</span><span class="p">);</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">maxRequestsPerConnection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">defaultProfile</span><span class="p">.</span><span class="na">getInt</span><span class="p">(</span><span class="n">DefaultDriverOption</span><span class="p">.</span><span class="na">CONNECTION_MAX_REQUESTS</span><span class="p">);</span>
+</code></pre></div>
+<h4 id="manual-reloading">Manual reloading<a class="headerlink" href="#manual-reloading" title="Permanent link">&para;</a></h4>
+<p>In addition to periodic reloading, you can trigger a reload programmatically. This returns a
+<code>CompletionStage</code> that you can use for example to register a callback when the reload is complete: </p>
+<div class="highlight"><pre><span></span><code><span class="n">DriverConfigLoader</span><span class="w"> </span><span class="n">loader</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">getContext</span><span class="p">().</span><span class="na">getConfigLoader</span><span class="p">();</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">loader</span><span class="p">.</span><span class="na">supportsReloading</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">CompletionStage</span><span class="o">&lt;</span><span class="n">Boolean</span><span class="o">&gt;</span><span class="w"> </span><span class="n">reloaded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">loader</span><span class="p">.</span><span class="na">reload</span><span class="p">();</span>
+<span class="w">  </span><span class="n">reloaded</span><span class="p">.</span><span class="na">whenComplete</span><span class="p">(</span>
+<span class="w">      </span><span class="p">(</span><span class="n">configChanged</span><span class="p">,</span><span class="w"> </span><span class="n">error</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">error</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="c1">// handle error</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">configChanged</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="c1">// do something after the config change</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">});</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Manual reloading is optional, this can be checked with <code>supportsReloading()</code>; the driver's built-in
+loader supports it.</p>
+<h4 id="derived-profiles">Derived profiles<a class="headerlink" href="#derived-profiles" title="Permanent link">&para;</a></h4>
+<p>Execution profiles are hard-coded in the configuration, and can't be changed at runtime (except
+by modifying and reloading the files). What if you want to adjust an option for a single request,
+without having a dedicated profile for it?</p>
+<p>To allow this, you start from an existing profile in the configuration and build a <em>derived profile</em>
+that overrides a subset of options:</p>
+<div class="highlight"><pre><span></span><code><span class="n">DriverExecutionProfile</span><span class="w"> </span><span class="n">defaultProfile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">getContext</span><span class="p">().</span><span class="na">getConfig</span><span class="p">().</span><span class="na">getDefaultProfile</span><span class="p">();</span>
+<span class="n">DriverExecutionProfile</span><span class="w"> </span><span class="n">dynamicProfile</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="n">defaultProfile</span><span class="p">.</span><span class="na">withString</span><span class="p">(</span>
+<span class="w">      </span><span class="n">DefaultDriverOption</span><span class="p">.</span><span class="na">REQUEST_CONSISTENCY</span><span class="p">,</span><span class="w"> </span><span class="n">DefaultConsistencyLevel</span><span class="p">.</span><span class="na">EACH_QUORUM</span><span class="p">.</span><span class="na">name</span><span class="p">());</span>
+<span class="n">SimpleStatement</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">SimpleStatement</span><span class="p">.</span><span class="na">builder</span><span class="p">(</span><span class="s">&quot;SELECT name FROM user WHERE id = 1&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">setExecutionProfile</span><span class="p">(</span><span class="n">dynamicProfile</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="n">session</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+</code></pre></div>
+<p>A derived profile keeps a reference to its base profile, and reflects the change if the
+configuration gets reloaded.</p>
+<p>Do not overuse derived profiles, as they can have an impact on performance: each <code>withXxx</code> method
+creates a new copy, and propagating the changes from the base profile also has an overhead. We
+strongly suggest defining all your profiles ahead of time in the configuration file; at the very
+least, try to cache derived profiles if you reuse them multiple times.</p>
+<h3 id="advanced-topics">Advanced topics<a class="headerlink" href="#advanced-topics" title="Permanent link">&para;</a></h3>
+<p><em>Note: all the features described in this section use the driver's internal API, which is subject to
+the restrictions explained in <a href="../../api_conventions">API conventions</a></em>.</p>
+<h4 id="changing-the-config-prefix">Changing the config prefix<a class="headerlink" href="#changing-the-config-prefix" title="Permanent link">&para;</a></h4>
+<p>As mentioned earlier, all configuration options are looked up under the <code>datastax-java-driver</code>
+prefix. This might be a problem if you have multiple instances of the driver executing in the same
+VM, but with different configurations. What you want instead is separate option trees, like this:</p>
+<div class="highlight"><pre><span></span><code># application.conf
+session1 {
+  basic.session-name = &quot;session1&quot;
+  advanced.protocol-version = V4
+  // etc.
+}
+session2 {
+  basic.session-name = &quot;session2&quot;
+  advanced.protocol-version = V3
+  // etc.
+}
+</code></pre></div>
+<p>To achieve that, first write a method that loads the configuration under your prefix, and uses the
+driver's <code>reference.conf</code> as a fallback:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">com.typesafe.config.Config</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.typesafe.config.ConfigFactory</span><span class="p">;</span>
+
+<span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">Config</span><span class="w"> </span><span class="nf">loadConfig</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">prefix</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// Make sure we see the changes when reloading: </span>
+<span class="w">  </span><span class="n">ConfigFactory</span><span class="p">.</span><span class="na">invalidateCaches</span><span class="p">();</span>
+
+<span class="w">  </span><span class="c1">// Every config file in the classpath, without stripping the prefixes </span>
+<span class="w">  </span><span class="n">Config</span><span class="w"> </span><span class="n">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigFactory</span><span class="p">.</span><span class="na">load</span><span class="p">();</span>
+
+<span class="w">  </span><span class="c1">// The driver&#39;s built-in defaults, under the default prefix in reference.conf:</span>
+<span class="w">  </span><span class="n">Config</span><span class="w"> </span><span class="n">reference</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">root</span><span class="p">.</span><span class="na">getConfig</span><span class="p">(</span><span class="s">&quot;datastax-java-driver&quot;</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// Everything under your custom prefix in application.conf:</span>
+<span class="w">  </span><span class="n">Config</span><span class="w"> </span><span class="n">application</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">root</span><span class="p">.</span><span class="na">getConfig</span><span class="p">(</span><span class="n">prefix</span><span class="p">);</span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">application</span><span class="p">.</span><span class="na">withFallback</span><span class="p">(</span><span class="n">reference</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Next, create a <code>DriverConfigLoader</code>. This is the component that abstracts the configuration
+implementation to the rest of the driver. Here we use the built-in class, but tell it to load the
+Typesafe Config object with the previous method:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">com.datastax.oss.driver.api.core.config.DefaultDriverOption</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.datastax.oss.driver.api.core.config.DriverConfigLoader</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.datastax.oss.driver.internal.core.config.typesafe.DefaultDriverConfigLoader</span><span class="p">;</span>
+
+<span class="n">DriverConfigLoader</span><span class="w"> </span><span class="n">session1ConfigLoader</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="k">new</span><span class="w"> </span><span class="n">DefaultDriverConfigLoader</span><span class="p">(</span>
+<span class="w">        </span><span class="p">()</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">loadConfig</span><span class="p">(</span><span class="s">&quot;session1&quot;</span><span class="p">),</span><span class="w"> </span><span class="n">DefaultDriverOption</span><span class="p">.</span><span class="na">values</span><span class="p">());</span>
+</code></pre></div>
+<p>Finally, pass the config loader when building the driver:</p>
+<div class="highlight"><pre><span></span><code><span class="n">CqlSession</span><span class="w"> </span><span class="n">session1</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">CqlSession</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="na">withConfigLoader</span><span class="p">(</span><span class="n">session1ConfigLoader</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+</code></pre></div>
+<h4 id="loading-from-a-different-source">Loading from a different source<a class="headerlink" href="#loading-from-a-different-source" title="Permanent link">&para;</a></h4>
+<p>If you don't want to use a config file, you can write custom code to create the Typesafe <code>Config</code>
+object (refer to the <a href="https://github.com/typesafehub/config">documentation</a> for more details).</p>
+<p>Then reuse the examples from the previous section to merge it with the driver's reference file, and
+pass it to the driver. Here's a contrived example that loads the configuration from a string:</p>
+<div class="highlight"><pre><span></span><code><span class="n">String</span><span class="w"> </span><span class="n">configSource</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;protocol.version = V3&quot;</span><span class="p">;</span>
+<span class="n">DriverConfigLoader</span><span class="w"> </span><span class="n">loader</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="k">new</span><span class="w"> </span><span class="n">DefaultDriverConfigLoader</span><span class="p">(</span>
+<span class="w">        </span><span class="p">()</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="n">ConfigFactory</span><span class="p">.</span><span class="na">invalidateCaches</span><span class="p">();</span>
+<span class="w">          </span><span class="n">Config</span><span class="w"> </span><span class="n">reference</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigFactory</span><span class="p">.</span><span class="na">load</span><span class="p">().</span><span class="na">getConfig</span><span class="p">(</span><span class="s">&quot;datastax-java-driver&quot;</span><span class="p">);</span>
+<span class="w">          </span><span class="n">Config</span><span class="w"> </span><span class="n">application</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ConfigFactory</span><span class="p">.</span><span class="na">parseString</span><span class="p">(</span><span class="n">configSource</span><span class="p">);</span>
+<span class="w">          </span><span class="k">return</span><span class="w"> </span><span class="n">application</span><span class="p">.</span><span class="na">withFallback</span><span class="p">(</span><span class="n">reference</span><span class="p">);</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="n">DefaultDriverOption</span><span class="p">.</span><span class="na">values</span><span class="p">());</span>
+
+<span class="n">CqlSession</span><span class="w"> </span><span class="n">session</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CqlSession</span><span class="p">.</span><span class="na">builder</span><span class="p">().</span><span class="na">withConfigLoader</span><span class="p">(</span><span class="n">loader</span><span class="p">).</span><span class="na">build</span><span class="p">();</span>
+</code></pre></div>
+<h4 id="bypassing-typesafe-config">Bypassing Typesafe Config<a class="headerlink" href="#bypassing-typesafe-config" title="Permanent link">&para;</a></h4>
+<p>If Typesafe Config doesn't work for you, it is possible to get rid of it entirely.</p>
+<p>Start by excluding Typesafe Config from the list of dependencies required by the driver; if you are 
+using Maven, this can be achieved as follows:</p>
+<p><div class="highlight"><pre><span></span><code><span class="nt">&lt;dependencies&gt;</span>
+<span class="w">    </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">        </span><span class="nt">&lt;groupId&gt;</span>org.apache.cassandra<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;artifactId&gt;</span>java-driver-core<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;version&gt;</span>...<span class="nt">&lt;/version&gt;</span>
+<span class="w">        </span><span class="nt">&lt;exclusions&gt;</span>
+<span class="w">            </span><span class="nt">&lt;exclusion&gt;</span>
+<span class="w">                </span><span class="nt">&lt;groupId&gt;</span>com.typesafe<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">                </span><span class="nt">&lt;artifactId&gt;</span>config<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">            </span><span class="nt">&lt;/exclusion&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/exclusions&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="nt">&lt;/dependencies&gt;</span>
+</code></pre></div>
+Next, you will need to provide your own implementations of <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverConfig.html">DriverConfig</a> and 
+<a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverExecutionProfile.html">DriverExecutionProfile</a>. Then write a <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html">DriverConfigLoader</a> and pass it to the session at 
+initialization, as shown in the previous sections. Study the built-in implementation (package
+<code>com.datastax.oss.driver.internal.core.config.typesafe</code>) for reference.</p>
+<p>Reloading is not mandatory: you can choose not to implement it, and the driver will simply keep
+using the initial configuration.</p>
+<p>Note that the option getters (<code>DriverExecutionProfile.getInt</code> and similar) are invoked very
+frequently on the hot code path; if your implementation is slow, consider caching the results
+between reloads.</p>
+<h4 id="configuration-change-event">Configuration change event<a class="headerlink" href="#configuration-change-event" title="Permanent link">&para;</a></h4>
+<p>If you're writing your own policies, you might want them to be reactive to configuration changes.
+You can register a callback to <code>ConfigChangeEvent</code>, which gets emitted any time a manual or periodic
+reload detects changes since the last reload:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">com.datastax.oss.driver.internal.core.context.InternalDriverContext</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.datastax.oss.driver.internal.core.config.ConfigChangeEvent</span><span class="p">;</span>
+
+<span class="n">InternalDriverContext</span><span class="w"> </span><span class="n">context</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">InternalDriverContext</span><span class="p">)</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">getContext</span><span class="p">();</span>
+
+<span class="n">Object</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">eventBus</span><span class="p">.</span><span class="na">register</span><span class="p">(</span>
+<span class="w">        </span><span class="n">ConfigChangeEvent</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">&quot;The configuration changed&quot;</span><span class="p">);</span>
+<span class="w">          </span><span class="c1">// re-read the config option(s) you&#39;re interested in, and apply changes if needed</span>
+<span class="w">        </span><span class="p">});</span>
+
+<span class="c1">// If your component has a shorter lifecycle than the driver, make sure to unregister when it closes</span>
+<span class="n">eventBus</span><span class="p">.</span><span class="na">unregister</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="w"> </span><span class="n">ConfigChangeEvent</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+</code></pre></div>
+<p>For example, the driver uses this mechanism internally to resize connection pools if you change the
+options in <code>advanced.connection.pool</code>.</p>
+<p>The event is emitted by the config loader. If you write a custom loader, study the source of
+<code>DefaultDriverConfigLoader</code> to reproduce the behavior.</p>
+<h4 id="policies">Policies<a class="headerlink" href="#policies" title="Permanent link">&para;</a></h4>
+<p>The preferred way to instantiate policies (load balancing policy, retry policy, etc.) is via the
+configuration:</p>
+<div class="highlight"><pre><span></span><code>datastax-java-driver {
+  basic.load-balancing-policy.class = DefaultLoadBalancingPolicy
+  advanced.reconnection-policy {
+    class = ExponentialReconnectionPolicy
+    base-delay = 1 second
+    max-delay = 60 seconds
+  }
+}
+</code></pre></div>
+<p>When the driver encounters such a declaration, it will load the class and use reflection to invoke a
+constructor with the following signature:</p>
+<ul>
+<li>
+<p>for policies that can be overridden in a profile (load balancing policy, retry policy, speculative
+  execution policy):</p>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="nf">DefaultLoadBalancingPolicy</span><span class="p">(</span><span class="n">DriverContext</span><span class="w"> </span><span class="n">context</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">profileName</span><span class="p">)</span>
+</code></pre></div>
+</li>
+<li>
+<p>for session-wide policies (all the others):</p>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="nf">ExponentialReconnectionPolicy</span><span class="p">(</span><span class="n">DriverContext</span><span class="w"> </span><span class="n">context</span><span class="p">)</span>
+</code></pre></div>
+</li>
+</ul>
+<p>Where <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/context/DriverContext.html">DriverContext</a> is the object returned by <code>session.getContext()</code>, which allows the policy to
+access other driver components (for example the configuration).</p>
+<p>If you write custom policy implementations, you should follow that same pattern; it provides an
+elegant way to switch policies without having to recompile the application (if your policy needs
+custom options, see the next section). Study the built-in implementations for reference.</p>
+<p>If for some reason you really can't use reflection, there is a way out; subclass
+<code>DefaultDriverContext</code> and override the corresponding method:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">com.datastax.oss.driver.internal.core.context.DefaultDriverContext</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyDriverContext</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">DefaultDriverContext</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="nf">MyDriverContext</span><span class="p">(</span><span class="n">DriverConfigLoader</span><span class="w"> </span><span class="n">configLoader</span><span class="p">,</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="n">TypeCodec</span><span class="o">&lt;?&gt;&gt;</span><span class="w"> </span><span class="n">typeCodecs</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">super</span><span class="p">(</span><span class="n">configLoader</span><span class="p">,</span><span class="w"> </span><span class="n">typeCodecs</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">protected</span><span class="w"> </span><span class="n">ReconnectionPolicy</span><span class="w"> </span><span class="nf">buildReconnectionPolicy</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">myReconnectionPolicy</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Then you'll need to pass an instance of this context to <code>DefaultSession.init</code>. You can either do so
+directly, or subclass <code>SessionBuilder</code> and override the <code>buildContext</code> method. </p>
+<h4 id="custom-options">Custom options<a class="headerlink" href="#custom-options" title="Permanent link">&para;</a></h4>
+<p>You can add your own options to the configuration. This is useful for custom components, or even as
+a way to associate arbitrary key/value pairs with the session instance.</p>
+<p>First, write an enum that implements <a href="https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverOption.html">DriverOption</a>:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">public</span><span class="w"> </span><span class="kd">enum</span><span class="w"> </span><span class="n">MyCustomOption</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">DriverOption</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">  </span><span class="n">ADMIN_NAME</span><span class="p">(</span><span class="s">&quot;admin.name&quot;</span><span class="p">),</span>
+<span class="w">  </span><span class="n">ADMIN_EMAIL</span><span class="p">(</span><span class="s">&quot;admin.email&quot;</span><span class="p">),</span>
+<span class="w">  </span><span class="n">AWESOMENESS_FACTOR</span><span class="p">(</span><span class="s">&quot;awesomeness-factor&quot;</span><span class="p">),</span>
+<span class="w">  </span><span class="p">;</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">path</span><span class="p">;</span>
+
+<span class="w">  </span><span class="n">MyCustomOption</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">path</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="na">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">path</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getPath</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">path</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>You can now add the options to your configuration:</p>
+<div class="highlight"><pre><span></span><code>datastax-java-driver {
+  admin {
+    name = &quot;Bob&quot;
+    email = &quot;bob@example.com&quot;
+  }
+  awesomeness-factor = 11
+}
+</code></pre></div>
+<p>And access them from the code:</p>
+<div class="highlight"><pre><span></span><code><span class="n">DriverConfig</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">getContext</span><span class="p">().</span><span class="na">getConfig</span><span class="p">();</span>
+<span class="n">config</span><span class="p">.</span><span class="na">getDefaultProfile</span><span class="p">().</span><span class="na">getString</span><span class="p">(</span><span class="n">MyCustomOption</span><span class="p">.</span><span class="na">ADMIN_EMAIL</span><span class="p">);</span>
+<span class="n">config</span><span class="p">.</span><span class="na">getDefaultProfile</span><span class="p">().</span><span class="na">getInt</span><span class="p">(</span><span class="n">MyCustomOption</span><span class="p">.</span><span class="na">AWESOMENESS_FACTOR</span><span class="p">);</span>
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.highlight", "search.share"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+    
+  </body>
+</html>
