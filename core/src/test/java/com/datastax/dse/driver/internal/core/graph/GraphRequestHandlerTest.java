@@ -26,9 +26,11 @@ import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.seriali
 import static com.datastax.dse.driver.internal.core.graph.GraphTestUtils.singleGraphRow;
 import static com.datastax.oss.driver.api.core.type.codec.TypeCodecs.BIGINT;
 import static com.datastax.oss.driver.api.core.type.codec.TypeCodecs.TEXT;
+import static com.datastax.oss.driver.internal.core.cql.CqlRequestHandlerTrackerTest.execInfoMatcher;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.mock;
@@ -517,17 +519,13 @@ public class GraphRequestHandlerTest {
 
     verify(requestTracker)
         .onSuccess(
-            eq(graphStatement),
             anyLong(),
-            any(DriverExecutionProfile.class),
-            eq(node),
+            argThat(execInfoMatcher(node, graphStatement, null)),
             matches(LOG_PREFIX_PER_REQUEST));
     verify(requestTracker)
         .onNodeSuccess(
-            eq(graphStatement),
             anyLong(),
-            any(DriverExecutionProfile.class),
-            eq(node),
+            argThat(execInfoMatcher(node, graphStatement, null)),
             matches(LOG_PREFIX_PER_REQUEST));
     verifyNoMoreInteractions(requestTracker);
 

@@ -18,13 +18,13 @@
 package com.datastax.oss.driver.internal.core.tracker;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.internal.core.util.Loggers;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -77,56 +77,59 @@ public class MultiplexingRequestTracker implements RequestTracker {
   }
 
   @Override
-  public void onSuccess(
+  public void onRequestCreated(
       @NonNull Request request,
-      long latencyNanos,
+      @NonNull DriverExecutionProfile executionProfile,
+      @NonNull String requestLogPrefix) {
+    invokeTrackers(
+        tracker -> tracker.onRequestCreated(request, executionProfile, requestLogPrefix),
+        requestLogPrefix,
+        "onRequestStart");
+  }
+
+  @Override
+  public void onRequestCreatedForNode(
+      @NonNull Request request,
       @NonNull DriverExecutionProfile executionProfile,
       @NonNull Node node,
-      @NonNull String logPrefix) {
+      @NonNull String requestLogPrefix) {
     invokeTrackers(
-        tracker -> tracker.onSuccess(request, latencyNanos, executionProfile, node, logPrefix),
+        tracker ->
+            tracker.onRequestCreatedForNode(request, executionProfile, node, requestLogPrefix),
+        requestLogPrefix,
+        "onRequestNodeStart");
+  }
+
+  @Override
+  public void onSuccess(
+      long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String logPrefix) {
+    invokeTrackers(
+        tracker -> tracker.onSuccess(latencyNanos, executionInfo, logPrefix),
         logPrefix,
         "onSuccess");
   }
 
   @Override
   public void onError(
-      @NonNull Request request,
-      @NonNull Throwable error,
-      long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @Nullable Node node,
-      @NonNull String logPrefix) {
+      long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String logPrefix) {
     invokeTrackers(
-        tracker -> tracker.onError(request, error, latencyNanos, executionProfile, node, logPrefix),
-        logPrefix,
-        "onError");
+        tracker -> tracker.onError(latencyNanos, executionInfo, logPrefix), logPrefix, "onError");
   }
 
   @Override
   public void onNodeSuccess(
-      @NonNull Request request,
-      long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String logPrefix) {
+      long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String logPrefix) {
     invokeTrackers(
-        tracker -> tracker.onNodeSuccess(request, latencyNanos, executionProfile, node, logPrefix),
+        tracker -> tracker.onNodeSuccess(latencyNanos, executionInfo, logPrefix),
         logPrefix,
         "onNodeSuccess");
   }
 
   @Override
   public void onNodeError(
-      @NonNull Request request,
-      @NonNull Throwable error,
-      long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String logPrefix) {
+      long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String logPrefix) {
     invokeTrackers(
-        tracker ->
-            tracker.onNodeError(request, error, latencyNanos, executionProfile, node, logPrefix),
+        tracker -> tracker.onNodeError(latencyNanos, executionInfo, logPrefix),
         logPrefix,
         "onNodeError");
   }

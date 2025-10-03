@@ -22,24 +22,35 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
 import com.datastax.oss.driver.api.core.cql.BatchStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
+import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
+import com.datastax.oss.driver.internal.core.tracker.RequestLogFormatter;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.stream.StreamSupport;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -54,7 +65,15 @@ public class PagingIterableSpliteratorIT {
 
   private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(CCM_RULE)
+          .withConfigLoader(
+              SessionUtils.configLoaderBuilder()
+                  .withClassList(
+                      DefaultDriverOption.REQUEST_TRACKER_CLASSES,
+                      Collections.singletonList(RecordingRequestTracker.class))
+                  .build())
+          .build();
 
   @ClassRule
   public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
@@ -78,6 +97,27 @@ public class PagingIterableSpliteratorIT {
       }
       SESSION_RULE.session().execute(batch.setExecutionProfile(SESSION_RULE.slowProfile()).build());
     }
+    RecordingRequestTracker.reset();
+  }
+
+  @Test
+  public void should_notify_request_tracker_during_pagination() throws Exception {
+    String query = "SELECT v FROM test where k0 = 0";
+    RecordingRequestTracker.query = query;
+    CqlSession session = SESSION_RULE.session();
+    ResultSet result = session.execute(SimpleStatement.newInstance(query));
+    Iterator<Row> iterator = result.iterator();
+    while (iterator.hasNext()) {
+      Row row = iterator.next();
+      assertThat(row.getInt("v")).isGreaterThanOrEqualTo(0);
+    }
+    int expectedFetches = 20_000 / 5_000 + 1; // +1 to retrieve empty page
+    assertThat(RecordingRequestTracker.startedRequests).hasSize(expectedFetches);
+    assertThat(RecordingRequestTracker.startedRequestsAtNode).hasSize(expectedFetches);
+    assertThat(RecordingRequestTracker.successfulRequestsAtNode).hasSize(expectedFetches);
+    assertThat(RecordingRequestTracker.successfulRequests).hasSize(expectedFetches);
+    assertThat(RecordingRequestTracker.errorRequestsAtNode).hasSize(0);
+    assertThat(RecordingRequestTracker.errorRequests).hasSize(0);
   }
 
   @Test
@@ -139,5 +179,101 @@ public class PagingIterableSpliteratorIT {
     arguments.add(Lists.newArrayList(5, true));
     arguments.add(Lists.newArrayList(19_995, true));
     return arguments;
+  }
+
+  public static class RecordingRequestTracker implements RequestTracker {
+
+    private static volatile String query = "none";
+    private static final List<Request> startedRequests = new ArrayList<>();
+    private static final List<Pair<Request, Node>> startedRequestsAtNode = new ArrayList<>();
+    private static final List<Pair<Request, Node>> successfulRequestsAtNode = new ArrayList<>();
+    private static final List<Request> successfulRequests = new ArrayList<>();
+    private static final List<Pair<Request, Node>> errorRequestsAtNode = new ArrayList<>();
+    private static final List<Request> errorRequests = new ArrayList<>();
+
+    private final RequestLogFormatter formatter;
+
+    public RecordingRequestTracker(DriverContext context) {
+      formatter = new RequestLogFormatter(context);
+    }
+
+    @Override
+    public synchronized void onRequestCreated(
+        @NonNull Request request,
+        @NonNull DriverExecutionProfile executionProfile,
+        @NonNull String requestLogPrefix) {
+      if (shouldRecord(request)) {
+        startedRequests.add(request);
+      }
+    }
+
+    @Override
+    public synchronized void onRequestCreatedForNode(
+        @NonNull Request request,
+        @NonNull DriverExecutionProfile executionProfile,
+        @NonNull Node node,
+        @NonNull String requestLogPrefix) {
+      if (shouldRecord(request)) {
+        startedRequestsAtNode.add(Pair.of(request, node));
+      }
+    }
+
+    @Override
+    public synchronized void onNodeSuccess(
+        long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String requestLogPrefix) {
+      if (shouldRecord(executionInfo.getRequest())) {
+        successfulRequestsAtNode.add(
+            Pair.of(executionInfo.getRequest(), executionInfo.getCoordinator()));
+      }
+    }
+
+    @Override
+    public synchronized void onSuccess(
+        long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String requestLogPrefix) {
+      if (shouldRecord(executionInfo.getRequest())) {
+        successfulRequests.add(executionInfo.getRequest());
+      }
+    }
+
+    @Override
+    public synchronized void onNodeError(
+        long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String requestLogPrefix) {
+      if (shouldRecord(executionInfo.getRequest())) {
+        errorRequestsAtNode.add(
+            Pair.of(executionInfo.getRequest(), executionInfo.getCoordinator()));
+      }
+    }
+
+    @Override
+    public synchronized void onError(
+        long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String requestLogPrefix) {
+      if (shouldRecord(executionInfo.getRequest())) {
+        errorRequests.add(executionInfo.getRequest());
+      }
+    }
+
+    private boolean shouldRecord(Request request) {
+      if (query == null) {
+        return true;
+      }
+      StringBuilder builder = new StringBuilder();
+      formatter.appendRequest(request, 1000, true, 1000, 1000, builder);
+      return builder.toString().contains(query);
+    }
+
+    @Override
+    public void close() throws Exception {
+      reset();
+    }
+
+    public static void reset() {
+      query = "none";
+      startedRequests.clear();
+      startedRequestsAtNode.clear();
+      successfulRequestsAtNode.clear();
+      successfulRequests.clear();
+      errorRequestsAtNode.clear();
+      errorRequests.clear();
+    }
   }
 }

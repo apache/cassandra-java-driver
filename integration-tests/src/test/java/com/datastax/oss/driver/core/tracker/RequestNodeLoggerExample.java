@@ -20,8 +20,7 @@ package com.datastax.oss.driver.core.tracker;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogFormatter;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogger;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -34,12 +33,8 @@ public class RequestNodeLoggerExample extends RequestLogger {
 
   @Override
   public void onNodeError(
-      @NonNull Request request,
-      @NonNull Throwable error,
-      long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String logPrefix) {
+      long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String logPrefix) {
+    DriverExecutionProfile executionProfile = executionInfo.getExecutionProfile();
     if (!executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_ERROR_ENABLED)) {
       return;
     }
@@ -57,10 +52,10 @@ public class RequestNodeLoggerExample extends RequestLogger {
         executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_STACK_TRACES);
 
     logError(
-        request,
-        error,
+        executionInfo.getRequest(),
+        executionInfo.getDriverError(),
         latencyNanos,
-        node,
+        executionInfo.getCoordinator(),
         maxQueryLength,
         showValues,
         maxValues,
@@ -71,11 +66,8 @@ public class RequestNodeLoggerExample extends RequestLogger {
 
   @Override
   public void onNodeSuccess(
-      @NonNull Request request,
-      long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
-      @NonNull String logPrefix) {
+      long latencyNanos, @NonNull ExecutionInfo executionInfo, @NonNull String logPrefix) {
+    DriverExecutionProfile executionProfile = executionInfo.getExecutionProfile();
     boolean successEnabled =
         executionProfile.getBoolean(DefaultDriverOption.REQUEST_LOGGER_SUCCESS_ENABLED);
     boolean slowEnabled =
@@ -106,10 +98,10 @@ public class RequestNodeLoggerExample extends RequestLogger {
             : 0;
 
     logSuccess(
-        request,
+        executionInfo.getRequest(),
         latencyNanos,
         isSlow,
-        node,
+        executionInfo.getCoordinator(),
         maxQueryLength,
         showValues,
         maxValues,
