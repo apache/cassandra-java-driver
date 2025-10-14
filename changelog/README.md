@@ -21,6 +21,24 @@ under the License.
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.19.1
+
+- [improvement] CASSJAVA-97: Let users inject an ID for each request and write to the custom payload
+- [improvement] CASSJAVA-92: Add Local DC to driver connection info and provide visibility with nodetool clientstats
+- [bug] PR 2025: Eliminate lock in ConcurrencyLimitingRequestThrottler
+- [improvement] CASSJAVA-89: Fix deprecated table configs in Cassandra 5
+- [improvement] PR 2028: Remove unnecessary locking in DefaultNettyOptions
+- [improvement] CASSJAVA-102: Fix revapi spurious complaints about optional dependencies
+- [improvement] PR 2013: Add SubnetAddressTranslator
+- [improvement] CASSJAVA-68: Improve DefaultCodecRegistry.CacheKey#hashCode() to eliminate Object[] allocation
+- [improvement] PR 1989: Bump Jackson version to la(te)st 2.13.x, 2.13.5
+- [improvement] CASSJAVA-76: Make guava an optional dependency of java-driver-guava-shaded
+- [bug] PR 2035: Prevent long overflow in SNI address resolution
+- [improvement] CASSJAVA-77: 4.x: Upgrade Netty to 4.1.119
+- [improvement] CASSJAVA-40: Driver testing against Java 21
+- [improvement] CASSJAVA-90: Update native-protocol
+- [improvement] CASSJAVA-80: Support configuration to disable DNS reverse-lookups for SAN validation
+
 ### 4.19.0
 
 - [bug] JAVA-3055: Prevent PreparedStatement cache to be polluted if a request is cancelled.
