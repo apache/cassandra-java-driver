@@ -705,6 +705,7 @@
           <source>1.8</source>
           <target>1.8</target>
           <compilerArgs combine.children="override">
+            <compilerArg>-Xep:ClassInitializationDeadlock:OFF</compilerArg>
             <compilerArg>-Xep:FutureReturnValueIgnored:OFF</compilerArg>
             <compilerArg>-Xep:PreferJavaTimeOverload:OFF</compilerArg>
             <compilerArg>-Xep:AnnotateFormatMethod:OFF</compilerArg>
