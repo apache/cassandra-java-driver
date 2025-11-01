@@ -32,21 +32,25 @@
   </parent>
   <artifactId>java-driver-mapper-processor</artifactId>
   <name>Java driver for Scylla and Apache Cassandra(R) - object mapper processor</name>
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>java-driver-bom</artifactId>
-        <version>${project.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
+  <description>Annotation processor that generates mapper implementations for the ScyllaDB Java Driver.</description>
+  <url>https://github.com/scylladb/java-driver</url>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+      <comments>Apache License Version 2.0</comments>
+    </license>
+  </licenses>
   <dependencies>
     <dependency>
       <groupId>com.scylladb</groupId>
+      <artifactId>java-driver-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.scylladb</groupId>
       <artifactId>java-driver-mapper-runtime</artifactId>
+      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.scylladb</groupId>

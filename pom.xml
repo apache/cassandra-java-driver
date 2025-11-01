@@ -98,16 +98,80 @@
     <graalapi.version>22.0.0.2</graalapi.version>
     <skipTests>false</skipTests>
     <skipUnitTests>${skipTests}</skipUnitTests>
+    <release.autopublish>false</release.autopublish>
     <pushChanges>false</pushChanges>
     <mockitoopens.argline/>
   </properties>
   <dependencyManagement>
     <dependencies>
+      <!-- define version for child packages -->
+      <dependency>
+        <groupId>com.scylladb</groupId>
+        <artifactId>java-driver-guava-shaded</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <dependency>
         <groupId>com.scylladb</groupId>
         <artifactId>java-driver-core</artifactId>
         <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.scylladb</groupId>
+        <artifactId>java-driver-query-builder</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.scylladb</groupId>
+        <artifactId>java-driver-test-infra</artifactId>
+        <scope>test</scope>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.scylladb</groupId>
+        <artifactId>java-driver-mapper-processor</artifactId>
+        <scope>test</scope>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.scylladb</groupId>
+        <artifactId>java-driver-mapper-runtime</artifactId>
+        <scope>test</scope>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.scylladb</groupId>
+        <artifactId>java-driver-core</artifactId>
+        <scope>test</scope>
         <type>test-jar</type>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.scylladb</groupId>
+        <artifactId>java-driver-metrics-micrometer</artifactId>
+        <scope>test</scope>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.scylladb</groupId>
+        <artifactId>java-driver-metrics-microprofile</artifactId>
+        <scope>test</scope>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.scylladb</groupId>
+        <artifactId>java-driver-bom</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.scylladb</groupId>
+        <artifactId>java-driver-core-shaded</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <!-- Regular dependencies     -->
+      <dependency>
+        <groupId>com.scylladb</groupId>
+        <artifactId>native-protocol</artifactId>
+        <version>1.5.2.0</version>
       </dependency>
       <dependency>
         <groupId>io.netty</groupId>
@@ -478,6 +542,11 @@
     <pluginManagement>
       <plugins>
         <plugin>
+          <groupId>net.nicoulaj.maven.plugins</groupId>
+          <artifactId>checksum-maven-plugin</artifactId>
+          <version>1.11</version>
+        </plugin>
+        <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.1</version>
         </plugin>
@@ -538,17 +607,12 @@
           <version>3.4.2</version>
         </plugin>
         <plugin>
-          <groupId>org.sonatype.plugins</groupId>
-          <artifactId>nexus-staging-maven-plugin</artifactId>
-          <version>1.7.0</version>
-        </plugin>
-        <plugin>
           <artifactId>maven-gpg-plugin</artifactId>
           <version>3.2.8</version>
         </plugin>
         <plugin>
           <artifactId>maven-release-plugin</artifactId>
-          <version>3.1.1</version>
+          <version>2.5.3</version>
         </plugin>
         <plugin>
           <artifactId>maven-install-plugin</artifactId>
@@ -621,6 +685,18 @@
       </plugins>
     </pluginManagement>
     <plugins>
+      <plugin>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <version>0.8.0</version>
+        <extensions>true</extensions>
+        <configuration>
+          <publishingServerId>central</publishingServerId>
+          <excludeArtifacts>java-driver-distribution-source,java-driver-distribution-tests,java-driver-distribution,java-driver-examples,java-driver-integration-tests,java-driver-osgi-tests</excludeArtifacts>
+          <autoPublish>${release.autopublish}</autoPublish>
+          <waitUntil>validated</waitUntil>
+        </configuration>
+      </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
@@ -724,17 +800,6 @@
           <systemPropertyVariables>
             <logback.configurationFile>${project.basedir}/src/test/resources/logback-test.xml</logback.configurationFile>
           </systemPropertyVariables>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.sonatype.plugins</groupId>
-        <artifactId>nexus-staging-maven-plugin</artifactId>
-        <extensions>true</extensions>
-        <configuration>
-          <serverId>ossrh</serverId>
-          <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-          <autoReleaseAfterClose>true</autoReleaseAfterClose>
-          <!-- skipLocalStaging>true</skipLocalStaging -->
         </configuration>
       </plugin>
       <plugin>
@@ -874,15 +939,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           <localCheckout>true</localCheckout>
           <pushChanges>${pushChanges}</pushChanges>
           <mavenExecutorId>forked-path</mavenExecutorId>
-          <arguments>-Dgpg.passphrase=${gpg.passphrase}</arguments>
-          <!-- Our integration tests are too long to run during a release, we run them in CI -->
-          <arguments>-DskipITs</arguments>
+          <arguments>-DskipITs -Drelease.autopublish=${release.autopublish} -Dxml-format.skip=true</arguments>
         </configuration>
         <dependencies>
           <dependency>
             <groupId>org.apache.maven.scm</groupId>
             <artifactId>maven-scm-provider-gitexe</artifactId>
-            <version>2.2.1</version>
+            <version>1.9.5</version>
           </dependency>
         </dependencies>
       </plugin>
@@ -1053,12 +1116,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </profiles>
   <distributionManagement>
     <snapshotRepository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <id>central</id>
+      <url>https://central.sonatype.com/repository/maven-snapshots</url>
     </snapshotRepository>
     <repository>
-      <id>ossrh</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+      <id>central</id>
+      <url>https://central.sonatype.com/repository/maven-releases</url>
     </repository>
   </distributionManagement>
   <licenses>
