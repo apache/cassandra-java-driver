@@ -7,7 +7,6 @@ on:
       - "docs/**"
       - .github/workflows/docs-pages.yml
       - .github/workflows/docs-pr.yml
-      - .github/workflows/re-release.yml
       - .github/workflows/release.yml
       - "*.md"
       - "*.sh"
@@ -20,7 +19,6 @@ on:
       - "docs/**"
       - .github/workflows/docs-pages.yml
       - .github/workflows/docs-pr.yml
-      - .github/workflows/re-release.yml
       - .github/workflows/release.yml
       - "*.md"
       - "*.sh"

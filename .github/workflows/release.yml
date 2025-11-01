@@ -3,10 +3,20 @@ name: Release ScyllaDB Java Driver
 on:
   workflow_dispatch:
     inputs:
-      dryrun:
+      dry-run:
         type: boolean
-        description: 'dryrun: run without publishing the package'
-        default: true
+        description: 'dry-run: run without pushing SCM changes to upstream'
+        default: false
+
+      skip-tests:
+        type: boolean
+        description: 'skip-tests: do not run tests while releasing'
+        default: false
+
+      target-tag:
+        type: string
+        description: 'target-tag: tag or branch name to release. Use to re-release tagged releases'
+        default: scylla-4.x
 
 jobs:
   release:
@@ -20,53 +30,64 @@ jobs:
       MVNCMD: mvn -B -X -ntp
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v5
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Set up Java
-      uses: actions/setup-java@v5
-      with:
-        java-version: '8'
-        distribution: 'temurin'
-        server-id: ossrh
-        gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-        server-username: OSSRH_USERNAME
-        server-password: OSSRH_PASSWORD
+      - name: Checkout Code One Commit Before ${{ inputs.version_tag }}
+        if: inputs.target-tag != 'scylla-4.x'
+        env:
+          RELEASE_TARGET_TAG: ${{ inputs.version_tag }}
+        run: make checkout-one-commit-before
 
-    - name: Configure Git user
-      run: |
-        git config user.name "ScyllaDB Promoter"
-        git config user.email "github-promoter@scylladb.com"
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+          server-id: central
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          server-username: SONATYPE_TOKEN_USERNAME
+          server-password: SONATYPE_TOKEN_PASSWORD
+          cache: maven
 
-    - name: Clean project
-      run: $MVNCMD clean
+      - name: Configure Git user
+        run: |
+          git config user.name "ScyllaDB Promoter"
+          git config user.email "github-promoter@scylladb.com"
 
-    - name: Clean release
-      run: $MVNCMD release:clean
+      - name: Prepare release
+        env:
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          RELEASE_SKIP_TESTS: ${{ inputs.skip-tests }}
+        run: make release-prepare
 
-    - name: Prepare release
-      env:
-        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-      run: make release-prepare
+      - name: Perform release
+        if: inputs.dry-run == false
+        env:
+          RELEASE_SKIP_TESTS: ${{ inputs.skip-tests }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          SONATYPE_TOKEN_USERNAME: ${{ secrets.SONATYPE_TOKEN_USERNAME }}
+          SONATYPE_TOKEN_PASSWORD: ${{ secrets.SONATYPE_TOKEN_PASSWORD }}
+        run: make release
 
-    - name: Perform release
-      env:
-        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-        OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-      if: ${{ github.event.inputs.dryrun == false }}
-      run: make release
+      - name: Perform release dry-run
+        if: inputs.dry-run == true
+        env:
+          RELEASE_SKIP_TESTS: ${{ inputs.skip-tests }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          SONATYPE_TOKEN_USERNAME: ${{ secrets.SONATYPE_TOKEN_USERNAME }}
+          SONATYPE_TOKEN_PASSWORD: ${{ secrets.SONATYPE_TOKEN_PASSWORD }}
+        run: make release-dry-run
 
-    - name: Perform dry-run release
-      env:
-        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-        OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-      if: ${{ github.event.inputs.dryrun == true }}
-      run: make release-dry-run
+      - name: Upload release logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maven-stdout
+          path: /tmp/java-driver-release-logs/*.log
 
-    - name: Push changes to SCM
-      if: ${{ github.event.inputs.dryrun == false }}
-      run: |
-        git status && git log -3
-        git push origin --follow-tags -v
+      - name: Push changes to SCM
+        if: ${{ inputs.dry-run == false && inputs.target-tag == 'scylla-4.x' }}
+        run: |
+          git status && git log -3
+          git push origin --follow-tags -v

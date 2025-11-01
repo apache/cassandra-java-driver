@@ -13,9 +13,14 @@ CCM_SCYLLA_VERSION ?= master
 
 SCYLLA_EXT_OPTS ?= --smp=2 --memory=4G
 MVNCMD ?= mvn -B -X -ntp
-GPG_PASSPHRASE ?=
-OSSRH_USERNAME ?=
+
+MAVEN_GPG_PASSPHRASE ?=
+SONATYPE_TOKEN_USERNAME ?=
+SONATYPE_TOKEN_PASSWORD ?=
+
 MAVEN_OPTS ?=
+
+RELEASE_SKIP_TESTS ?=
 
 ifeq (${CCM_CONFIG_DIR},)
 	CCM_CONFIG_DIR = ~/.ccm
@@ -153,6 +158,14 @@ resolve-scylla-version: .prepare-get-version
 	fi
 	echo "$${SCYLLA_VERSION_RESOLVED}" >${SCYLLA_VERSION_FILE}
 
+checkout-one-commit-before:
+	@if [[ "${RELEASE_TARGET_TAG}" == 3.* ]]; then
+		echo "Checking out one commit before ${RELEASE_TARGET_TAG}"
+		git fetch --prune --unshallow || git fetch --prune || true
+		git checkout ${RELEASE_TARGET_TAG}~1
+		git tag -d ${RELEASE_TARGET_TAG}
+	fi
+
 download-cassandra: .prepare-scylla-ccm resolve-cassandra-version
 	@if [[ -z "$${CASSANDRA_VERSION_RESOLVED}" ]]; then
 		CASSANDRA_VERSION_RESOLVED=$$(cat '${CASSANDRA_VERSION_FILE}')
@@ -180,42 +193,44 @@ download-scylla: .prepare-scylla-ccm resolve-scylla-version
 	rm -rf /tmp/download.ccm
 
 .require-release-prepare-env:
-	@if [[ -z "${GPG_PASSPHRASE}" ]]; then
-		echo "GPG_PASSPHRASE is empty"
+	@if [[ -z "${MAVEN_GPG_PASSPHRASE}" ]]; then
+		echo "MAVEN_GPG_PASSPHRASE is empty"
 		exit 1
 	fi
 
 .require-release-env:
-	@if [[ -z "${GPG_PASSPHRASE}" ]]; then
-		echo "GPG_PASSPHRASE is empty"
+	@if [[ -z "${MAVEN_GPG_PASSPHRASE}" ]]; then
+		echo "MAVEN_GPG_PASSPHRASE is empty"
 		exit 1
 	fi
-	if [[ -z "${OSSRH_USERNAME}" ]]; then
-		echo "OSSRH_USERNAME is empty"
+	if [[ -z "${SONATYPE_TOKEN_USERNAME}" ]]; then
+		echo "SONATYPE_TOKEN_USERNAME is empty"
 		exit 1
 	fi
-	if [[ -z "${OSSRH_PASSWORD}" ]]; then
-		echo "OSSRH_PASSWORD is empty"
+	if [[ -z "${SONATYPE_TOKEN_PASSWORD}" ]]; then
+		echo "SONATYPE_TOKEN_PASSWORD is empty"
 		exit 1
 	fi
 
 release-prepare: .require-release-prepare-env
-	@if [[ -n "${RELEASE_SKIP_TESTS}" ]]; then
+	@if [[ "${RELEASE_SKIP_TESTS}" == "true" ]] || [[ "${RELEASE_SKIP_TESTS}" == "1" ]]; then
 		export MAVEN_OPTS="${MAVEN_OPTS} -DskipTests=true -DskipITs=true"
 	fi
-	$(MVNCMD) release:prepare -DpushChanges=false -Dgpg.passphrase=${GPG_PASSPHRASE}
+	$(MVNCMD) release:prepare -DpushChanges=false -Dxml-format.skip=true
 
 release: .require-release-env
-	@if [[ -n "${RELEASE_SKIP_TESTS}" ]]; then
+	@if [[ "${RELEASE_SKIP_TESTS}" == "true" ]] || [[ "${RELEASE_SKIP_TESTS}" == "1" ]]; then
 		export MAVEN_OPTS="${MAVEN_OPTS} -DskipTests=true -DskipITs=true"
 	fi
-	$(MVNCMD) release:perform -Drelease.autopublish=true -Dgpg.passphrase=${GPG_PASSPHRASE} > >(tee /tmp/logs-stdout.log) 2> >(tee /tmp/logs-stderr.log)
+	mkdir /tmp/java-driver-release-logs/ 2>/dev/null || true
+	$(MVNCMD) release:perform -Drelease.autopublish=true > >(tee /tmp/java-driver-release-logs/stdout.log) 2> >(tee /tmp/java-driver-release-logs/stderr.log)
 
 release-dry-run: .require-release-env
-	@if [[ -n "${RELEASE_SKIP_TESTS}" ]]; then
+	@if [[ "${RELEASE_SKIP_TESTS}" == "true" ]] || [[ "${RELEASE_SKIP_TESTS}" == "1" ]]; then
 		export MAVEN_OPTS="${MAVEN_OPTS} -DskipTests=true -DskipITs=true"
 	fi
-	$(MVNCMD) release:perform -Dgpg.passphrase=${GPG_PASSPHRASE} > >(tee /tmp/logs-stdout.log) 2> >(tee /tmp/logs-stderr.log)
+	mkdir /tmp/java-driver-release-logs/ 2>/dev/null || true
+	$(MVNCMD) release:perform > >(tee /tmp/java-driver-release-logs/stdout.log) 2> >(tee /tmp/java-driver-release-logs/stderr.log)
 
 compile-all: .install-guava-shaded
 	mvn -B compile test-compile -Dfmt.skip=true -Dclirr.skip=true -Danimal.sniffer.skip=true
@@ -264,6 +279,7 @@ clean:
 	find -name 'pom.xml.next' -delete
 	find -name 'target' -exec rm -rf {} +
 	find -name 'dependency-reduced-pom.xml' -exec rm -f {} +
+	rm -f release.properties 2>/dev/null
 	for dir in driver-core driver-examples driver-extras driver-mapping driver-tests driver-dist testing; do
 		rm -rf $$dir 2>/dev/null
 	done
