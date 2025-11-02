@@ -352,7 +352,7 @@
           <forceJavacCompilerUse>true</forceJavacCompilerUse>
           <source>1.8</source>
           <target>1.8</target>
-          <compilerArgs combine.children="override">
+          <compilerArgs combine.children="append">
             <compilerArg>-Xep:ClassInitializationDeadlock:OFF</compilerArg>
             <compilerArg>-Xep:FutureReturnValueIgnored:OFF</compilerArg>
             <compilerArg>-Xep:PreferJavaTimeOverload:OFF</compilerArg>
