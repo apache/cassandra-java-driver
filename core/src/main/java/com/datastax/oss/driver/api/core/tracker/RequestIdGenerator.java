@@ -19,20 +19,21 @@ package com.datastax.oss.driver.api.core.tracker;
 
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.session.Request;
-import com.datastax.oss.protocol.internal.util.collection.NullAllowingImmutableMap;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Interface responsible for generating request IDs.
  *
- * <p>Note that all request IDs have a parent/child relationship. A "parent ID" can loosely be
- * thought of as encompassing a sequence of a request + any attendant retries, speculative
+ * <p>Note that all request IDs have a parent/child relationship. A "session request ID" can loosely
+ * be thought of as encompassing a sequence of a request + any attendant retries, speculative
  * executions etc. It's scope is identical to that of a {@link
- * com.datastax.oss.driver.internal.core.cql.CqlRequestHandler}. A "request ID" represents a single
- * request within this larger scope. Note that a request corresponding to a request ID may be
+ * com.datastax.oss.driver.internal.core.cql.CqlRequestHandler}. A "node request ID" represents a
+ * single request within this larger scope. Note that a request corresponding to a request ID may be
  * retried; in that case the retry count will be appended to the corresponding identifier in the
  * logs.
  */
@@ -67,11 +68,17 @@ public interface RequestIdGenerator {
 
   default Statement<?> getDecoratedStatement(
       @NonNull Statement<?> statement, @NonNull String requestId) {
-    Map<String, ByteBuffer> customPayload =
-        NullAllowingImmutableMap.<String, ByteBuffer>builder()
-            .putAll(statement.getCustomPayload())
-            .put(getCustomPayloadKey(), ByteBuffer.wrap(requestId.getBytes(StandardCharsets.UTF_8)))
-            .build();
-    return statement.setCustomPayload(customPayload);
+
+    Map<String, ByteBuffer> existing = new HashMap<>(statement.getCustomPayload());
+    String key = getCustomPayloadKey();
+
+    // Add or overwrite
+    existing.put(key, ByteBuffer.wrap(requestId.getBytes(StandardCharsets.UTF_8)));
+
+    // Allowing null key/values
+    // Wrap a map inside to be immutable without instanciating a new map
+    Map<String, ByteBuffer> unmodifiableMap = Collections.unmodifiableMap(existing);
+
+    return statement.setCustomPayload(unmodifiableMap);
   }
 }

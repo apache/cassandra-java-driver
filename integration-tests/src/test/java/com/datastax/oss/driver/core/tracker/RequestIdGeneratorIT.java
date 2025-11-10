@@ -17,12 +17,14 @@
  */
 package com.datastax.oss.driver.core.tracker;
 
+import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.tracker.RequestIdGenerator;
@@ -119,7 +121,24 @@ public class RequestIdGeneratorIT {
     try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
       String query = "SELECT * FROM system.local";
       ResultSet rs = session.execute(query);
-      assertThat(rs.getExecutionInfo().getRequest().getCustomPayload().get("trace_key")).isNull();
+      assertThat(rs.getExecutionInfo().getRequest().getCustomPayload().get("request-id")).isNull();
+    }
+  }
+
+  @Test
+  public void should_succeed_with_null_value_in_custom_payload() {
+    DriverConfigLoader loader =
+        SessionUtils.configLoaderBuilder()
+            .withString(
+                DefaultDriverOption.REQUEST_ID_GENERATOR_CLASS, "W3CContextRequestIdGenerator")
+            .build();
+    try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
+      String query = "SELECT * FROM system.local";
+      Map<String, ByteBuffer> customPayload =
+          new NullAllowingImmutableMap.Builder<String, ByteBuffer>(1).put("my_key", null).build();
+      SimpleStatement statement =
+          SimpleStatement.newInstance(query).setCustomPayload(customPayload);
+      assertThatStage(session.executeAsync(statement)).isSuccess();
     }
   }
 }

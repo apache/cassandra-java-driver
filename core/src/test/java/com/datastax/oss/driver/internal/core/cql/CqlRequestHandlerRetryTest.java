@@ -48,6 +48,8 @@ import com.datastax.oss.driver.api.core.servererrors.ReadTimeoutException;
 import com.datastax.oss.driver.api.core.servererrors.ServerError;
 import com.datastax.oss.driver.api.core.servererrors.UnavailableException;
 import com.datastax.oss.driver.api.core.servererrors.WriteTimeoutException;
+import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.tracker.RequestIdGenerator;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.error.ReadTimeout;
@@ -55,9 +57,13 @@ import com.datastax.oss.protocol.internal.response.error.Unavailable;
 import com.datastax.oss.protocol.internal.response.error.WriteTimeout;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.UseDataProvider;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 
 public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
@@ -380,6 +386,63 @@ public class CqlRequestHandlerRetryTest extends CqlRequestHandlerTestBase {
                         anyLong(),
                         eq(TimeUnit.NANOSECONDS));
                 verifyNoMoreInteractions(nodeMetricUpdater1);
+              });
+    }
+  }
+
+  @Test
+  @UseDataProvider("failureAndIdempotent")
+  public void should_not_fail_with_duplicate_key_when_retrying_with_request_id_generator(
+      FailureScenario failureScenario, boolean defaultIdempotence, Statement<?> statement) {
+
+    // Create a RequestIdGenerator that uses the same key as the statement's custom payload
+    RequestIdGenerator requestIdGenerator =
+        new RequestIdGenerator() {
+          private AtomicInteger counter = new AtomicInteger(0);
+
+          @Override
+          public String getSessionRequestId() {
+            return "session-123";
+          }
+
+          @Override
+          public String getNodeRequestId(@NonNull Request request, @NonNull String parentId) {
+            return parentId + "-" + counter.getAndIncrement();
+          }
+        };
+
+    RequestHandlerTestHarness.Builder harnessBuilder =
+        RequestHandlerTestHarness.builder()
+            .withDefaultIdempotence(defaultIdempotence)
+            .withRequestIdGenerator(requestIdGenerator);
+    failureScenario.mockRequestError(harnessBuilder, node1);
+    harnessBuilder.withResponse(node2, defaultFrameOf(singleRow()));
+
+    try (RequestHandlerTestHarness harness = harnessBuilder.build()) {
+      failureScenario.mockRetryPolicyVerdict(
+          harness.getContext().getRetryPolicy(anyString()), RetryVerdict.RETRY_NEXT);
+
+      CompletionStage<AsyncResultSet> resultSetFuture =
+          new CqlRequestHandler(statement, harness.getSession(), harness.getContext(), "test")
+              .handle();
+
+      // The test should succeed without throwing a duplicate key exception
+      assertThatStage(resultSetFuture)
+          .isSuccess(
+              resultSet -> {
+                Iterator<Row> rows = resultSet.currentPage().iterator();
+                assertThat(rows.hasNext()).isTrue();
+                assertThat(rows.next().getString("message")).isEqualTo("hello, world");
+
+                ExecutionInfo executionInfo = resultSet.getExecutionInfo();
+                assertThat(executionInfo.getCoordinator()).isEqualTo(node2);
+                assertThat(executionInfo.getErrors()).hasSize(1);
+                assertThat(executionInfo.getErrors().get(0).getKey()).isEqualTo(node1);
+
+                // Verify that the custom payload still contains the request ID key
+                // (either the original value or the generated one, depending on implementation)
+                assertThat(executionInfo.getRequest().getCustomPayload().get("request-id"))
+                    .isEqualTo(ByteBuffer.wrap("session-123-1".getBytes(StandardCharsets.UTF_8)));
               });
     }
   }
