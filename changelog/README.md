@@ -21,6 +21,10 @@ under the License.
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.19.2
+
+- [bug] CASSJAVA-116: Retry or Speculative Execution with RequestIdGenerator throws "Duplicate Key"
+
 ### 4.19.1
 
 - [improvement] CASSJAVA-97: Let users inject an ID for each request and write to the custom payload
