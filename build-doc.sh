@@ -12,17 +12,5 @@ mvn clean install -DskipTests # or guava-shaded can not be found
 # mvn javadoc:javadoc -pl core,query-builder,mapper-runtime
 mvn javadoc:aggregate
 
-# Substitute the reference.yaml. I didn't find a better alternative.
-sed -i '' "/<SUBSTITUE_ME>/{
-    r core/src/main/resources/reference.conf
-    d
-}" manual/core/configuration/reference/README.md
-
 # Build manual with API references
 mkdocs build # or `mkdocs serve` to preview
-
-# revert the substitution
-sed -i '' "/{
-    r core/src/main/resources/reference.conf
-    d
-}/<SUBSTITUE_ME>" manual/core/configuration/reference/README.md

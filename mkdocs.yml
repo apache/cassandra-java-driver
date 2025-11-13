@@ -157,3 +157,4 @@ nav:
 plugins:
   - search
   - awesome-pages
+  - macros
