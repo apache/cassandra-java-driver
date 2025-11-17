@@ -52,7 +52,7 @@ You don't need to manage connections yourself. You simply interact with a [CqlSe
 takes care of it.
 
 **For a given session, there is one connection pool per connected node** (a node is connected when
-it is up and not ignored by the [load balancing policy](../load_balancing/)).
+it is up and not ignored by the [load balancing policy](../load_balancing/README.md)).
 
 The number of connections per pool is configurable (this will be described in the next section).
 There are up to 32768 stream ids per connection.
@@ -65,7 +65,7 @@ There are up to 32768 stream ids per connection.
 
 ### Configuration
 
-Pool sizes are defined in the `connection` section of the [configuration](../configuration/). Here
+Pool sizes are defined in the `connection` section of the [configuration](../configuration/README.md). Here
 are the relevant options with their default values:
 
 ```
@@ -112,7 +112,7 @@ the change.
 
 ### Monitoring
 
-The driver exposes node-level [metrics](../metrics/) to monitor your pools (note that all metrics
+The driver exposes node-level [metrics](../metrics/README.md) to monitor your pools (note that all metrics
 are disabled by default, you'll need to change your configuration to enable them):
 
 ```
@@ -166,7 +166,7 @@ improvement: the server is only going to service so many requests at a time anyw
 requests are just going to pile up.
 
 Lowering the value is not a good idea either. If your goal is to limit the global throughput of the
-driver, a [throttler](../throttling) is a better solution.
+driver, a [throttler](../throttling/README.md) is a better solution.
 
 #### Number of connections per node 
 

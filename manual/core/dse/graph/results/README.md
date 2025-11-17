@@ -19,7 +19,7 @@ under the License.
 
 ## Handling graph results
 
-[Script queries](../script/) and [explicit fluent traversals](../fluent/explicit/) return graph
+[Script queries](../script/README.md) and [explicit fluent traversals](../fluent/explicit/README.md) return graph
 result sets, which are essentially iterables of [GraphNode].
 
 ### Synchronous / asynchronous result
@@ -39,7 +39,7 @@ was executed.
 * `session.executeAsync` returns an [AsyncGraphResultSet]. It only holds the current page of
    results, accessible via the `currentPage()` method. If the query is paged, the next pages must be
    fetched explicitly using the `hasMorePages()` and `fetchNextPage()` methods. See [Asynchronous
-   paging](../../../paging/#asynchronous-paging) for more details about how to work with async
+   paging](../../../paging/README.md#asynchronous-paging) for more details about how to work with async
    types.
 
 *Note: at the time of writing (DSE 6.0), graph queries are never paged. Results are always returned

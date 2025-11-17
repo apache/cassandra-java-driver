@@ -21,7 +21,7 @@ under the License.
 
 Start your SELECT with the `selectFrom` method in [QueryBuilder]. There are several variants
 depending on whether your table name is qualified, and whether you use
-[identifiers](../../case_sensitivity/) or raw strings:
+[identifiers](../../case_sensitivity/README.md) or raw strings:
 
 ```java
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
@@ -321,7 +321,7 @@ selectFrom("foo").quotient(literal(1), Selector.column("a"));
 // SELECT 1/a FROM foo
 ```
 
-See the [terms](../term/#literals) section for more details on literals.
+See the [terms](../term/README.md#literals) section for more details on literals.
 
 #### Raw snippets
 
@@ -358,7 +358,7 @@ Like selectors, they also have fluent shortcuts to build and add in a single cal
 
 
 Relations are a common feature used by many types of statements, so they have a
-[dedicated page](../relation) in this manual.
+[dedicated page](../relation/README.md) in this manual.
 
 ### Other clauses
 

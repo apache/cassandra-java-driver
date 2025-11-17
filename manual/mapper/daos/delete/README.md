@@ -19,7 +19,7 @@ under the License.
 
 ## Delete methods
 
-Annotate a DAO method with [@Delete] to generate a query that deletes an [Entity](../../entities):
+Annotate a DAO method with [@Delete] to generate a query that deletes an [Entity](../../entities/README.md):
 
 ```java
 @Dao
@@ -48,7 +48,7 @@ The method can operate on:
     ```
     
     In this case, the parameters must match the types of the [primary key
-    columns](../../entities/#primary-key-columns), in the exact order (as defined by the
+    columns](../../entities/README.md#primary-key-columns), in the exact order (as defined by the
     [@PartitionKey] and [@ClusteringColumn] annotations). The parameter names don't necessarily need
     to match the names of the columns.
     
@@ -99,7 +99,7 @@ void deleteIfDescriptionMatches(UUID productId, String expectedDescription);
 A `Function<BoundStatementBuilder, BoundStatementBuilder>` or `UnaryOperator<BoundStatementBuilder>`
 can be added as the **last** parameter. It will be applied to the statement before execution. This
 allows you to customize certain aspects of the request (page size, timeout, etc) at runtime. See
-[statement attributes](../statement_attributes/).
+[statement attributes](../statement_attributes/README.md).
 
 ### Return type
 
@@ -154,7 +154,7 @@ The method can return:
     ReactiveResultSet deleteReactive(Product product);
     ```
 
-* a [custom type](../custom_types).
+* a [custom type](../custom_types/README.md).
 
 Note that you can also return a boolean or result set for non-conditional queries, but there's no
 practical purpose for that since those queries always return `wasApplied = true` and an empty result
@@ -162,13 +162,13 @@ set.
 
 ### Target keyspace and table
 
-If a keyspace was specified [when creating the DAO](../../mapper/#dao-factory-methods), then the
+If a keyspace was specified [when creating the DAO](../../mapper/README.md#dao-factory-methods), then the
 generated query targets that keyspace. Otherwise, it doesn't specify a keyspace, and will only work
 if the mapper was built from a session that has a [default keyspace] set.
 
 If a table was specified when creating the DAO, then the generated query targets that table.
 Otherwise, it uses the default table name for the entity (which is determined by the name of the
-entity class and the [naming strategy](../../entities/#naming-strategy)).
+entity class and the [naming strategy](../../entities/README.md#naming-strategy)).
 
 [default keyspace]:       https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
 [AsyncResultSet]:         https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/cql/AsyncResultSet.html

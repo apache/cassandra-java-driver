@@ -60,8 +60,8 @@ in its POM. The driver artifacts are always in sync, however they were pulled in
 
 ### BOM and mapper processor
 
-If you are using the driver's [object mapper](../../mapper), our recommendation is to declare the
-mapper processor in the [annotationProcessorPaths](../../mapper/config/#maven) section of the
+If you are using the driver's [object mapper](../../mapper/README.md), our recommendation is to declare the
+mapper processor in the [annotationProcessorPaths](../../mapper/config/README.md#maven) section of the
 compiler plugin configuration. Unfortunately, `<dependencyManagement>` versions don't work there,
 this is a known Maven issue ([MCOMPILER-391]).
 

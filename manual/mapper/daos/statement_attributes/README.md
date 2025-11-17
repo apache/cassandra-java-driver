@@ -19,8 +19,8 @@ under the License.
 
 ## Statement attributes
 
-The [@Delete](../delete/), [@Insert](../insert/), [@Query](../query/), [@Select](../select/) and
-[@Update](../update/) annotations allow you to control some aspects of the execution of the
+The [@Delete](../delete/README.md), [@Insert](../insert/README.md), [@Query](../query/README.md), [@Select](../select/README.md) and
+[@Update](../update/README.md) annotations allow you to control some aspects of the execution of the
 underlying statement, such as the consistency level, timeout, etc.
 
 ### As a parameter

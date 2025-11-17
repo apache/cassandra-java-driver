@@ -35,7 +35,7 @@ abbreviated LBP) is a central component that determines:
 * which nodes the driver will communicate with;
 * for each new query, which coordinator to pick, and which nodes to use as failover.
 
-It is defined in the [configuration](../configuration/):
+It is defined in the [configuration](../configuration/README.md):
 
 ```
 datastax-java-driver.basic.load-balancing-policy {
@@ -50,7 +50,7 @@ datastax-java-driver.basic.load-balancing-policy {
 For each node, the policy computes a *distance* that determines how connections will be established:
 
 * `LOCAL` and `REMOTE` are "active" distances, meaning that the driver will keep open connections to
-  this node. [Connection pools](../pooling/) can be sized independently for each distance.
+  this node. [Connection pools](../pooling/README.md) can be sized independently for each distance.
 * `IGNORED` means that the driver will never attempt to connect.
 
 Typically, the distance will reflect network topology (e.g. local vs. remote datacenter), although
@@ -63,7 +63,7 @@ datacenter traffic (see below to understand how to change this behavior).
 
 Each time the driver executes a query, it asks the policy to compute a *query plan*, in other words
 a list of nodes. The driver then tries each node in sequence, moving down the plan according to the
-[retry policy](../retries/) and [speculative execution policy](../speculative_execution/).
+[retry policy](../retries/README.md) and [speculative execution policy](../speculative_execution/README.md).
 
 The contents and order of query plans are entirely implementation-specific, but policies typically
 return plans that:
@@ -225,7 +225,7 @@ this option to any value greater than zero will have the following effects:
 - The load balancing policies will assign the `REMOTE` distance to that many nodes *in each remote
   datacenter*.
 - The driver will then attempt to open connections to those nodes. The actual number of connections
-  to open to each one of those nodes is configurable, see [Connection pools](../pooling/) for
+  to open to each one of those nodes is configurable, see [Connection pools](../pooling/README.md) for
   more details. By default, the driver opens only one connection to each node.
 - Those remote nodes (and only those) will then become eligible for inclusion in query plans,
   effectively enabling cross-datacenter failover.
@@ -280,11 +280,11 @@ replicas that own the data being queried.
 
 ##### Providing routing information
 
-First make sure that [token metadata](../metadata/token/#configuration) is enabled.
+First make sure that [token metadata](../metadata/token/README.md#configuration) is enabled.
 
 Then your statements need to provide:
 
-* a keyspace: if you use a [per-query keyspace](../statements/per_query_keyspace/), then it will be
+* a keyspace: if you use a [per-query keyspace](../statements/per_query_keyspace/README.md), then it will be
   used for routing as well. Otherwise, the driver relies on [getRoutingKeyspace()];
 * a routing key: it can be provided either by [getRoutingKey()] \(raw binary data) or
   [getRoutingToken()] \(already hashed as a token).
@@ -297,7 +297,7 @@ CREATE TABLE testKs.sensor_data(id int, year int, ts timestamp, data double,
                                 PRIMARY KEY ((id, year), ts));
 ```
 
-For [simple statements](../statements/simple/), routing information is never computed
+For [simple statements](../statements/simple/README.md), routing information is never computed
 automatically:
 
 ```java
@@ -320,7 +320,7 @@ statement = statement.setRoutingKey(
 session.execute(statement);
 ```
 
-For [bound statements](../statements/prepared/), the keyspace is always available; the routing key
+For [bound statements](../statements/prepared/README.md), the keyspace is always available; the routing key
 is only available if all components of the partition key are bound as variables:
 
 ```java
@@ -341,7 +341,7 @@ assert statement2.getRoutingKeyspace() != null;
 assert statement2.getRoutingKey() == null;
 ```
 
-For [batch statements](../statements/batch/), the routing information of each child statement is
+For [batch statements](../statements/batch/README.md), the routing information of each child statement is
 inspected; the first non-null keyspace is used as the keyspace of the batch, and the first non-null
 routing key as its routing key (the idea is that all children should have the same routing
 information, since batches are supposed to operate on a single partition). If no child has any
@@ -410,7 +410,7 @@ that you wish to modify – but keep in mind that it may be simpler to just star
 
 ### Using multiple policies
 
-The load balancing policy can be overridden in [execution profiles](../configuration/#profiles):
+The load balancing policy can be overridden in [execution profiles](../configuration/README.md#execution-profiles):
 
 ```
 datastax-java-driver {

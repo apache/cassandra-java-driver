@@ -19,7 +19,7 @@ under the License.
 
 ## Administrative tasks
 
-Aside from the main task of [executing user requests](../request_execution), the driver also needs
+Aside from the main task of [executing user requests](../request_execution/README.md), the driver also needs
 to track cluster state and metadata. This is done with a number of administrative components:
 
 ```ditaa
@@ -48,7 +48,7 @@ node info|     |                  schema |         +------------+ EventBus |
                                metadata changed events
 ```
 
-Note: the event bus is covered in the [common infrastructure](../common/event_bus) section.
+Note: the event bus is covered in the [common infrastructure](../common/event_bus/README.md) section.
 
 ### Control connection
 
@@ -74,7 +74,7 @@ writing, the session also references the control connection directly, but that's
 ### Metadata manager
 
 This component is responsible for maintaining the contents of
-[session.getMetadata()](../../core/metadata/).
+[session.getMetadata()](../../core/metadata/README.md).
 
 One big improvement in driver 4 is that the `Metadata` object is immutable and updated atomically;
 this guarantees a consistent view of the cluster at a given point in time. For example, if a
@@ -85,7 +85,7 @@ keyspace name is referenced in the token map, there will always be a correspondi
 managed by a `MetadataRefresh` object that computes the new metadata, along with an optional list of
 events to publish on the bus (e.g. table created, keyspace removed, etc.) The new metadata is then
 written back to the volatile field. `MetadataManager` follows the [confined inner
-class](../common/concurrency/#cold-path) pattern to ensure that all refreshes are applied serially,
+class](../common/concurrency/README.md#cold-path) pattern to ensure that all refreshes are applied serially,
 from a single admin thread. This guarantees that two refreshes can't start from the same initial
 state and overwrite each other.
 
@@ -323,7 +323,7 @@ service instead of relying on system tables and gossip (see
 [JAVA-1082](https://datastax-oss.atlassian.net/browse/JAVA-1082)).
 
 A custom implementation can be plugged by [extending the
-context](../common/context/#overriding-a-context-component) and overriding `buildTopologyMonitor`.
+context](../common/context/README.md#overriding-a-context-component) and overriding `buildTopologyMonitor`.
 It should:
 
 * implement the methods of `TopologyMonitor` by querying the discovery service;
@@ -338,5 +338,5 @@ information returned by the topology monitor.
 It's less likely that this will be overridden directly. But the schema querying and parsing logic is
 abstracted behind two factories that handle the differences between Cassandra versions:
 `SchemaQueriesFactory` and `SchemaParserFactory`. These are pluggable by [extending the
-context](../common/context/#overriding-a-context-component) and overriding the corresponding
+context](../common/context/README.md#overriding-a-context-component) and overriding the corresponding
 `buildXxx` methods.

@@ -36,17 +36,17 @@ When a connection is lost, try to reestablish it at configured intervals.
 If a running session loses a connection to a node, it tries to re-establish it according to a
 configurable policy. This is used in two places:
 
-* [connection pools](../pooling/): for each node, a session has a fixed-size pool of connections to
+* [connection pools](../pooling/README.md): for each node, a session has a fixed-size pool of connections to
   execute user requests. If one or more connections drop, a reconnection gets started for the pool;
   each attempt tries to reopen the missing number of connections. This goes on until the pool is
   back to its expected size;
-* [control connection](../control_connection/): a session uses a single connection to an arbitrary
+* [control connection](../control_connection/README.md): a session uses a single connection to an arbitrary
   node for administrative requests. If that connection goes down, a reconnection gets started; each
   attempt iterates through all active nodes until one of them accepts a connection. This goes on
   until we have a control node again.
 
 The reconnection policy controls the interval between each attempt. It is defined in the
-[configuration](../configuration/):
+[configuration](../configuration/README.md):
 
 ```
 datastax-java-driver {
@@ -84,7 +84,7 @@ is the exponential one with the default values, and the control connection is in
 * [t = 2.2], node3's pool tries to open its missing connection, which succeeds. The pool is back to
   its expected size, node3's reconnection stops;
 * [t = 2.5] the control connection tries to find a new node. It invokes the
-  [load balancing policy](../load_balancing/) to get a query plan, which happens to start with
+  [load balancing policy](../load_balancing/README.md) to get a query plan, which happens to start with
   node4. The connection succeeds, node4 is now the control node and the reconnection stops;
 * [t = 3] node2's pool tries to open the last missing connection, which succeeds. The pool is back
   to its expected size, node2's reconnection stops.

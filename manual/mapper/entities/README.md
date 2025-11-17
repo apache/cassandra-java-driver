@@ -38,8 +38,8 @@ POJO annotated with [@Entity], must expose a no-arg constructor.
 
 -----
 
-An entity is a Java class that will be mapped to a Cassandra table or [UDT](../../core/udts).
-Entities are used as arguments or return types of [DAO](../daos/) methods; they can also be nested
+An entity is a Java class that will be mapped to a Cassandra table or [UDT](../../core/udts/README.md).
+Entities are used as arguments or return types of [DAO](../daos/README.md) methods; they can also be nested
 inside other entities (to map UDT columns).
 
 In order to be detected by the mapper, the class must be annotated with [@Entity]:
@@ -280,7 +280,7 @@ private int day;
 ```
 
 This information is used by some of the DAO method annotations; for example,
-[@Select](../daos/select/)'s default behavior is to generate a selection by primary key.
+[@Select](../daos/select/README.md)'s default behavior is to generate a selection by primary key.
 
 #### Computed properties
 

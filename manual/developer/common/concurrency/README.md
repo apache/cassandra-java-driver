@@ -97,7 +97,7 @@ fields, and methods are guaranteed to always run in isolation, eliminating subtl
 ### Non-blocking
 
 Whether on the hot or cold path, internal code is almost 100% lock-free. The driver guarantees on
-lock-freedom are [detailed](../../../core/non_blocking) in the core manual.
+lock-freedom are [detailed](../../../core/non_blocking/README.md) in the core manual.
 
 If an internal component needs to execute a query, it does so asynchronously, and registers 
 callbacks to process the results. Examples of this can be found in `ReprepareOnUp` and 

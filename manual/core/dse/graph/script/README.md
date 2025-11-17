@@ -38,7 +38,7 @@ As demonstrated above, the simplest way to create a script statement is to pass 
 string to [ScriptGraphStatement.newInstance].
 
 The default implementation returned by the driver is **immutable**; if you call additional methods
-on the statement -- for example to set [options](../options/) -- each method call will create a new
+on the statement -- for example to set [options](../options/README.md) -- each method call will create a new
 copy:
 
 ```java
@@ -112,7 +112,7 @@ Alternatively, `withQueryParams` takes multiple parameters as a map.
 
 Building requests as Java strings can be unwieldy, especially for long scripts. Besides, the script
 API is a bit less performant on the server side. Therefore we recommend the
-[Fluent API](../fluent/) instead for graph traversals.
+[Fluent API](../fluent/README.md) instead for graph traversals.
 
 Note however that some types of queries can only be performed through the script API:
 

@@ -184,7 +184,7 @@ keep the value of the last refresh, and token-aware routing might operate on sta
 #### Relation to schema metadata
 
 The keyspace-specific information in `TokenMap` (all methods with a `CqlIdentifier` argument) relies
-on [schema metadata](../schema/). If schema metadata is disabled or filtered, token metadata will
+on [schema metadata](../schema/README.md). If schema metadata is disabled or filtered, token metadata will
 also be unavailable for the excluded keyspaces.
 
 

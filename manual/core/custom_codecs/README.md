@@ -39,7 +39,7 @@ Define custom Java to CQL mappings.
 
 -----
 
-Out of the box, the driver comes with [default CQL to Java mappings](../#cql-to-java-type-mapping).
+Out of the box, the driver comes with [default CQL to Java mappings](../README.md#cql-to-java-type-mapping).
 For example, if you read a CQL `text` column, it is mapped to its natural counterpart
 `java.lang.String`:
 
@@ -246,7 +246,7 @@ be of type `int`.
 
     If you really want to use integer codes for storage efficiency, implement an explicit mapping
     (for example with a `toCode()` method on your enum type). It is then fairly straightforward to
-    implement a codec with [MappingCodec](#creating-custom-java-to-cql-mappings-with-mapping-codec),
+    implement a codec with [MappingCodec](#creating-custom-java-to-cql-mappings-with-mappingcodec),
     using `TypeCodecs#INT` as the "inner" codec.
 
 For example, assuming the following enum:
@@ -624,7 +624,7 @@ Coordinates coordinates = row.get("coordinates", Coordinates.class);
 ``` 
 
 Note: if you need even more advanced mapping capabilities, consider adopting
-the driver's [object mapping framework](../../mapper/).
+the driver's [object mapping framework](../../mapper/README.md).
 
 ### Subtype polymorphism
 

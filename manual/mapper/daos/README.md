@@ -32,7 +32,7 @@ Interface annotated with [@Dao].
 -----
 
 A DAO is an interface that defines a set of query methods. In general, those queries will relate to
-the same [entity](../entities/) (although that is not a requirement).
+the same [entity](../entities/README.md) (although that is not a requirement).
 
 It must be annotated with [@Dao]:
 
@@ -55,22 +55,22 @@ public interface ProductDao {
 To add queries, define methods on your interface and mark them with one of the following
 annotations:
 
-* [@Delete](delete/)
-* [@GetEntity](getentity/)
-* [@Insert](insert/)
-* [@Query](query/)
-* [@QueryProvider](queryprovider/)
-* [@Select](select/)
-* [@SetEntity](setentity/)
-* [@Update](update/)
-* [@Increment](increment/)
+* [@Delete](delete/README.md)
+* [@GetEntity](getentity/README.md)
+* [@Insert](insert/README.md)
+* [@Query](query/README.md)
+* [@QueryProvider](queryprovider/README.md)
+* [@Select](select/README.md)
+* [@SetEntity](setentity/README.md)
+* [@Update](update/README.md)
+* [@Increment](increment/README.md)
 
 The methods can have any name. The allowed parameters and return type are specific to each
 annotation.
 
 ### Runtime usage
 
-To obtain a DAO instance, use a [factory method](../mapper/#dao-factory-methods) on the mapper
+To obtain a DAO instance, use a [factory method](../mapper/README.md#dao-factory-methods) on the mapper
 interface.
 
 ```java
@@ -171,4 +171,4 @@ To control how the hierarchy is scanned, annotate interfaces with [@HierarchySca
 [@DaoFactory]:   https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/mapper/annotations/DaoFactory.html
 [@DefaultNullSavingStrategy]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/mapper/annotations/DefaultNullSavingStrategy.html
 [@HierarchyScanStrategy]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/mapper/annotations/HierarchyScanStrategy.html
-[Entity Inheritance]: ../entities/#inheritance
+[Entity Inheritance]: ../entities/README.md#inheritance

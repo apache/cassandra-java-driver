@@ -20,7 +20,7 @@ under the License.
 ## Custom result types
 
 The mapper supports a pre-defined set of built-in types for DAO method results. For example, a
-[Select](../select/#return-type) method can return a single entity, an asynchronous
+[Select](../select/README.md#return-type) method can return a single entity, an asynchronous
 `CompletionStage`, a `ReactiveResultSet`, etc.
 
 Sometimes it's convenient to use your own types. For example if you use a specific Reactive Streams

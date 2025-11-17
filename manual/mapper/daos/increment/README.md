@@ -50,10 +50,10 @@ public interface VotesDao {
 
 The entity class must be specified with `entityClass` in the annotation.
 
-The method's parameters must start with the [full primary key](../../entities/#primary-key-columns),
+The method's parameters must start with the [full primary key](../../entities/README.md#primary-key-columns),
 in the exact order (as defined by the [@PartitionKey] and [@ClusteringColumn] annotations in the
 entity class). The parameter names don't necessarily need to match the names of the columns, but the
-types must match. Unlike other methods like [@Select](../select/) or [@Delete](../delete/), counter
+types must match. Unlike other methods like [@Select](../select/README.md) or [@Delete](../delete/README.md), counter
 updates cannot operate on a whole partition, they need to target exactly one row; so all the
 partition key and clustering columns must be specified.
 
@@ -71,13 +71,13 @@ void incrementUpVotes(int articleId, @CqlName("up_votes") long foobar);
 When you invoke the method, each parameter value is interpreted as a **delta** that will be applied
 to the counter. In other words, if you pass 1, the counter will be incremented by 1. Negative values
 are allowed. If you are using Cassandra 2.2 or above, you can use `Long` and pass `null` for some of
-the parameters, they will be ignored (following [NullSavingStrategy#DO_NOT_SET](../null_saving/)
+the parameters, they will be ignored (following [NullSavingStrategy#DO_NOT_SET](../null_saving/README.md)
 semantics). If you are using Cassandra 2.1, `null` values will trigger a runtime error.
 
 A `Function<BoundStatementBuilder, BoundStatementBuilder>` or `UnaryOperator<BoundStatementBuilder>`
 can be added as the **last** parameter. It will be applied to the statement before execution. This
 allows you to customize certain aspects of the request (page size, timeout, etc) at runtime. See
-[statement attributes](../statement_attributes/).
+[statement attributes](../statement_attributes/README.md).
 
 ### Return type
 
@@ -86,7 +86,7 @@ The method can return `void`, a void [CompletionStage] or [CompletableFuture], o
 
 ### Target keyspace and table
 
-If a keyspace was specified [when creating the DAO](../../mapper/#dao-factory-methods), then the
+If a keyspace was specified [when creating the DAO](../../mapper/README.md#dao-factory-methods), then the
 generated query targets that keyspace. Otherwise, it doesn't specify a keyspace, and will only work
 if the mapper was built from a session that has a [default keyspace] set.
 

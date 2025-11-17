@@ -63,7 +63,7 @@ client                             driver                Cassandra
 ```
 
 If you execute the same query often (or a similar query with different column values), consider a
-[prepared statement](../prepared/) instead.
+[prepared statement](../prepared/README.md) instead.
 
 ### Creating an instance
 
@@ -147,7 +147,7 @@ session.execute(
 ### Type inference
 
 Another consequence of not parsing query strings is that the driver has to guess how to serialize 
-values, based on their Java type (see the [default type mappings](../../#cql-to-java-type-mapping)).
+values, based on their Java type (see the [default type mappings](../../README.md#cql-to-java-type-mapping)).
 This can be tricky, in particular for numeric types:
 
 ```java
@@ -198,7 +198,7 @@ session.execute(
         .build());
 ```
 
-Or you could also use [prepared statements](../prepared/), which don't have this limitation since
+Or you could also use [prepared statements](../prepared/README.md), which don't have this limitation since
 parameter types are known in advance. 
 
 [SimpleStatement]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/cql/SimpleStatement.html

@@ -33,9 +33,9 @@ under the License.
 The driver exposes metadata about the Cassandra cluster via the [Session#getMetadata] method. It
 returns a [Metadata] object, which contains three types of information:
 
-* [node metadata](node/)
-* [schema metadata](schema/)
-* [token metadata](token/)
+* [node metadata](node/README.md)
+* [schema metadata](schema/README.md)
+* [token metadata](token/README.md)
 
 Metadata is mostly **immutable** (except for the fields of the [Node] class, see the "node metadata"
 link above for details). Each call to `getMetadata()` will return a **new copy** if something has
@@ -73,7 +73,7 @@ This is a big improvement over previous versions of the driver, where it was pos
 new keyspace in the schema metadata before the token metadata was updated.
 
 Schema and node state events are debounced. This allows you to control how often the metadata gets
-refreshed. See the [Performance](../performance/#debouncing) page for more details.
+refreshed. See the [Performance](../performance/README.md#debouncing) page for more details.
 
 [Session#getMetadata]:                          https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/Session.html#getMetadata--
 [Metadata]:                                     https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/metadata/Metadata.html

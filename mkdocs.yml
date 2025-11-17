@@ -38,7 +38,9 @@ nav:
     - Core:
       - Overview: core/README.md
       - Integration: core/integration/README.md
-      - Configuration: core/configuration/README.md
+      - Configuration:
+          - Overview: core/configuration/README.md
+          - Reference: core/configuration/reference/README.md
       - Authentication: core/authentication/README.md
       - SSL: core/ssl/README.md
       - Load Balancing: core/load_balancing/README.md

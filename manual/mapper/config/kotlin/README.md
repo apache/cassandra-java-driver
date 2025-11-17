@@ -27,7 +27,7 @@ We have a full example at [DataStax-Examples/object-mapper-jvm/kotlin].
 ### Writing the model
 
 You can use Kotlin [data classes] for your entities. Data classes are usually
-[immutable](../../entities/#mutability), but you don't need to declare that explicitly with
+[immutable](../../entities/README.md#mutability), but you don't need to declare that explicitly with
 [@PropertyStrategy]: the mapper detects that it's processing Kotlin code, and will assume `mutable =
 false` by default:
 
@@ -46,10 +46,10 @@ declare a default value for every component in order to generate a no-arg constr
 data class Product(@PartitionKey var id: Int? = null, var description: String? = null)
 ```
 
-All of the [property annotations](../../entities/#property-annotations) can be declared directly on
+All of the [property annotations](../../entities/README.md#property-annotations) can be declared directly on
 the components.
 
-If you want to take advantage of [null saving strategies](../../daos/null_saving/), your components
+If you want to take advantage of [null saving strategies](../../daos/null_saving/README.md), your components
 should be nullable.
 
 The other mapper interfaces are direct translations of the Java versions:

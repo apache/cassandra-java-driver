@@ -34,9 +34,9 @@ GraphTraversal<Vertex, Vertex> traversal = g.V().has("name", "marko");
 
 There are two ways to execute fluent traversals:
 
-* [explicitly](explicit/) by wrapping a traversal into a statement and passing it to
+* [explicitly](explicit/README.md) by wrapping a traversal into a statement and passing it to
   `session.execute`;
-* [implicitly](implicit/) by building the traversal from a connected source, and calling a
+* [implicitly](implicit/README.md) by building the traversal from a connected source, and calling a
   terminal step.
 
 ### Common topics
@@ -52,7 +52,7 @@ fluent API:
 * configuration;
 * DSE graph schema queries.
 
-You'll have to use the [script API](../script) for those use cases.
+You'll have to use the [script API](../script/README.md) for those use cases.
 
 #### Performance considerations
 

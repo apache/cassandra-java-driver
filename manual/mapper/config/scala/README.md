@@ -38,7 +38,7 @@ case class UserVideo(@(PartitionKey@field) userid: UUID,
                      previewImageLocation: String)
 ```
 
-Case classes are immutable and use the [fluent getter style](../../entities#getter-style), but you
+Case classes are immutable and use the [fluent getter style](../../entities/README.md#accessor-styles), but you
 don't need to declare that explicitly with [@PropertyStrategy]: the mapper detects when it's
 processing a case class, and will assume `mutable = false, getterStyle = FLUENT` by default.
 

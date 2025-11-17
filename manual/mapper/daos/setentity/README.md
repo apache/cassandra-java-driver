@@ -20,7 +20,7 @@ under the License.
 ## SetEntity methods
 
 Annotate a DAO method with [@SetEntity] to fill a core driver data structure from an
-[Entity](../../entities):
+[Entity](../../entities/README.md):
 
 ```java
 public interface ProductDao {
@@ -97,7 +97,7 @@ The method must have two parameters: one is the entity instance, the other must 
 
 The order of the parameters does not matter.
 
-The annotation can define a [null saving strategy](../null_saving/) that applies to the properties
+The annotation can define a [null saving strategy](../null_saving/README.md) that applies to the properties
 of the object to set. This is only really useful with bound statements (or bound statement
 builders): if the target is a [UdtValue], the driver sends null fields in the serialized form
 anyway, so both strategies are equivalent.

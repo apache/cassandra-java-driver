@@ -21,7 +21,7 @@ under the License.
 
 To start an UPDATE query, use one of the `update` methods in [QueryBuilder]. There are several
 variants depending on whether your table name is qualified, and whether you use
-[identifiers](../../case_sensitivity/) or raw strings:
+[identifiers](../../case_sensitivity/README.md) or raw strings:
 
 ```java
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
@@ -242,7 +242,7 @@ SimpleStatement statement = update("foo")
 ```
 
 Relations are a common feature used by many types of statements, so they have a
-[dedicated page](../relation) in this manual.
+[dedicated page](../relation/README.md) in this manual.
 
 ### Conditions
 
@@ -268,7 +268,7 @@ update("foo")
 ```
 
 Conditions are a common feature used by UPDATE and DELETE, so they have a
-[dedicated page](../condition) in this manual.
+[dedicated page](../condition/README.md) in this manual.
 
 [QueryBuilder]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html
 [Assignment]:   https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/querybuilder/update/Assignment.html

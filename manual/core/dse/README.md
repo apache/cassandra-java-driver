@@ -21,10 +21,10 @@ under the License.
 
 Some driver features only work with DataStax Enterprise:
 
-* [Graph](graph/);
-* [Geospatial types](geotypes/);
-* Proxy and GSSAPI authentication (covered in the [Authentication](../authentication/) page).
+* [Graph](graph/README.md);
+* [Geospatial types](geotypes/README.md);
+* Proxy and GSSAPI authentication (covered in the [Authentication](../authentication/README.md) page).
 
 Note that, if you don't use these features, you might be able to exclude certain dependencies in
 order to limit the number of JARs in your classpath. See the
-[Integration](../integration/#driver-dependencies) page.
+[Integration](../integration/README.md#driver-dependencies) page.

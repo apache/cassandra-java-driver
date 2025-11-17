@@ -50,7 +50,7 @@ datastax-java-driver.basic.request.page-size = 5000
 
 It can be changed at runtime (the new value will be used for requests issued after the change). If
 you have categories of queries that require different page sizes, use
-[configuration profiles](../configuration#profiles).
+[configuration profiles](../configuration/README.md#execution-profiles).
 
 Note that the page size is merely a hint; the server will not always return the exact number of
 rows, it might decide to return slightly more or less.
@@ -153,7 +153,7 @@ private CompletionStage<Integer> countRows(AsyncResultSet resultSet, int previou
 }
 ```
 
-See [Asynchronous programming](../async/) for more tips about the async API.
+See [Asynchronous programming](../async/README.md) for more tips about the async API.
 
 ### Saving and reusing the paging state
 
@@ -199,7 +199,7 @@ to reinject it in the wrong statement. This allows you to detect the error early
 roundtrip to the server.
 
 Note that, if you use a simple statement and one of the bound values requires a [custom
-codec](../custom_codecs), you have to provide a reference to the session when reinjecting the paging
+codec](../custom_codecs/README.md), you have to provide a reference to the session when reinjecting the paging
 state:
 
 ```java
@@ -249,7 +249,7 @@ rs = session.execute(query);
 OffsetPager.Page<Row> page5 = pager.getPage(rs, 5);
 ```
 
-Note that `getPage` can also process the entity iterables returned by the [mapper](../../mapper/).
+Note that `getPage` can also process the entity iterables returned by the [mapper](../../mapper/README.md).
 
 #### Establishing application-level guardrails
 

@@ -35,7 +35,7 @@ every application request. The driver comes with an optional implementation that
 
 ### Configuration
 
-Request trackers can be declared in the [configuration](../configuration/) as follows:
+Request trackers can be declared in the [configuration](../configuration/README.md) as follows:
 
 ```
 datastax-java-driver.advanced.request-tracker {

@@ -30,7 +30,7 @@ following coordinates:
 </dependency>
 ```
 
-(For more details on setting up your build tool, see the [integration](integration/) page.)
+(For more details on setting up your build tool, see the [integration](integration/README.md) page.)
 
 ### Quick start
 
@@ -69,14 +69,14 @@ variants that return a `CompletionStage`).
 
 [CqlSession#builder()] provides a fluent API to create an instance programmatically. Most of the
 customization is done through the driver configuration (refer to the
-[corresponding section](configuration/) of this manual for full details).
+[corresponding section](configuration/README.md) of this manual for full details).
 
-We recommend that you take a look at the [reference configuration](configuration/reference/) for the
+We recommend that you take a look at the [reference configuration](configuration/reference/README.md) for the
 list of available options, and cross-reference with the sub-sections in this manual for more
 explanations.
 
 By default, `CqlSession.builder().build()` fails immediately if the cluster is not available. If you
-want to retry instead, you can set the [reconnect-on-init](reconnection/#at-init-time) option in the
+want to retry instead, you can set the [reconnect-on-init](reconnection/README.md#at-init-time) option in the
 configuration.
 
 ##### Contact points
@@ -91,7 +91,7 @@ This is fine for a quick start on a developer workstation, but you'll quickly wa
 specific addresses. There are two ways to do this:
 
 * via [SessionBuilder.addContactPoint()] or [SessionBuilder.addContactPoints()];
-* in the [configuration](configuration/) via the `basic.contact-points` option.
+* in the [configuration](configuration/README.md) via the `basic.contact-points` option.
 
 As soon as there are explicit contact points, you also need to provide the name of the local
 datacenter. All contact points must belong to it (as reported in their system tables:
@@ -123,7 +123,7 @@ datastax-java-driver {
 ```
 
 For more details about the local datacenter, refer to the [load balancing
-policy](load_balancing/#local-only) section.
+policy](load_balancing/README.md#datacenter-locality) section.
 
 ##### Keyspace
 
@@ -135,7 +135,7 @@ session.execute("SELECT * FROM my_keyspace.my_table WHERE id = 1");
 ```
 
 You can also specify a keyspace at construction time, either through the
-[configuration](configuration/):
+[configuration](configuration/README.md):
 
 ```
 datastax-java-driver {
@@ -203,7 +203,7 @@ ResultSet rs = session.execute("SELECT release_version FROM system.local");
 ```
 
 As shown here, the simplest form is to pass a query string directly. You can also pass a
-[Statement](statements/) instance.
+[Statement](statements/README.md) instance.
 
 #### Processing rows
 
@@ -218,7 +218,7 @@ for (Row row : rs) {
 
 This will return **all results** without limit (even though the driver might use multiple queries in
 the background). To handle large result sets, you might want to use a `LIMIT` clause in your CQL
-query, or use one of the techniques described in the [paging](paging/) documentation.
+query, or use one of the techniques described in the [paging](paging/README.md) documentation.
 
 When you know that there is only one row (or are only interested in the first one), the driver
 provides a convenience method:
@@ -257,10 +257,10 @@ See [AccessibleByName] for an explanation of the conversion rules.
 | blob               | getByteBuffer  | java.nio.ByteBuffer  |                                   |
 | boolean            | getBoolean     | boolean              |                                   |
 | counter            | getLong        | long                 |                                   |
-| date               | getLocalDate   | java.time.LocalDate  | [Temporal types](temporal_types/) |
+| date               | getLocalDate   | java.time.LocalDate  | [Temporal types](temporal_types/README.md) |
 | decimal            | getBigDecimal  | java.math.BigDecimal |                                   |
 | double             | getDouble      | double               |                                   |
-| duration           | getCqlDuration | [CqlDuration]        | [Temporal types](temporal_types/) |
+| duration           | getCqlDuration | [CqlDuration]        | [Temporal types](temporal_types/README.md) |
 | float              | getFloat       | float                |                                   |
 | inet               | getInetAddress | java.net.InetAddress |                                   |
 | int                | getInt         | int                  |                                   |
@@ -269,19 +269,19 @@ See [AccessibleByName] for an explanation of the conversion rules.
 | set                | getSet         | java.util.Set<T>     |                                   |
 | smallint           | getShort       | short                |                                   |
 | text               | getString      | java.lang.String     |                                   |
-| time               | getLocalTime   | java.time.LocalTime  | [Temporal types](temporal_types/) |
-| timestamp          | getInstant     | java.time.Instant    | [Temporal types](temporal_types/) |
+| time               | getLocalTime   | java.time.LocalTime  | [Temporal types](temporal_types/README.md) |
+| timestamp          | getInstant     | java.time.Instant    | [Temporal types](temporal_types/README.md) |
 | timeuuid           | getUuid        | java.util.UUID       |                                   |
 | tinyint            | getByte        | byte                 |                                   |
-| tuple              | getTupleValue  | [TupleValue]         | [Tuples](tuples/)                 |
-| user-defined types | getUDTValue    | [UDTValue]           | [User-defined types](udts/)       |
+| tuple              | getTupleValue  | [TupleValue]         | [Tuples](tuples/README.md)                 |
+| user-defined types | getUDTValue    | [UDTValue]           | [User-defined types](udts/README.md)       |
 | uuid               | getUuid        | java.util.UUID       |                                   |
 | varchar            | getString      | java.lang.String     |                                   |
 | varint             | getBigInteger  | java.math.BigInteger |                                   |
-| vector             | getVector      | [CqlVector]          | [Custom Codecs](custom_codecs/)   |
+| vector             | getVector      | [CqlVector]          | [Custom Codecs](custom_codecs/README.md)   |
 
 Sometimes the driver has to infer a CQL type from a Java type (for example when handling the values 
-of [simple statements](statements/simple/)); for those that have multiple CQL equivalents, it makes
+of [simple statements](statements/simple/README.md)); for those that have multiple CQL equivalents, it makes
 the following choices:
 
 * `java.lang.String`: `text`
@@ -289,7 +289,7 @@ the following choices:
 * `java.util.UUID`: `uuid`
 
 In addition to these default mappings, you can register your own types with
-[custom codecs](custom_codecs/).
+[custom codecs](custom_codecs/README.md).
 
 ##### Primitive types
 

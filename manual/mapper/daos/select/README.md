@@ -20,7 +20,7 @@ under the License.
 ## Select methods
 
 Annotate a DAO method with [@Select] to generate a query that selects one or more rows, and maps
-them to [Entities](../../entities):
+them to [Entities](../../entities/README.md):
 
 ```java
 @Dao
@@ -34,7 +34,7 @@ public interface ProductDao {
 
 If the annotation doesn't have a [customWhereClause()], the mapper defaults to a selection by
 primary key (partition key + clustering columns). The method's parameters must match the types of
-the [primary key columns](../../entities/#primary-key-columns), in the exact order (as defined by
+the [primary key columns](../../entities/README.md#primary-key-columns), in the exact order (as defined by
 the [@PartitionKey] and [@ClusteringColumn] annotations). The parameter names don't necessarily need
 to match the names of the columns.
 
@@ -85,7 +85,7 @@ whose values will be provided through additional method parameters. Note that it
 possible to determine if a parameter is a primary key component or a placeholder value; therefore
 the rule is that **if your method takes a partial primary key, the first parameter that is not a
 primary key component must be explicitly annotated with
-[@CqlName](../../entities/#user-provided-names)**. For example if the primary key is `((day int,
+[@CqlName](../../entities/README.md#user-provided-names)**. For example if the primary key is `((day int,
 hour int, minute int), ts timestamp)`:
 
 ```java
@@ -97,7 +97,7 @@ PagingIterable<Sale> findDailySales(int day, @CqlName("l") int l);
 A `Function<BoundStatementBuilder, BoundStatementBuilder>` or `UnaryOperator<BoundStatementBuilder>`
 can be added as the **last** parameter. It will be applied to the statement before execution. This
 allows you to customize certain aspects of the request (page size, timeout, etc) at runtime. See
-[statement attributes](../statement_attributes/).
+[statement attributes](../statement_attributes/README.md).
 
 ### Return type
 
@@ -167,17 +167,17 @@ In all cases, the method can return:
     MappedReactiveResultSet<Product> findByDescriptionReactive(String searchString);
     ```
 
-* a [custom type](../custom_types).
+* a [custom type](../custom_types/README.md).
 
 ### Target keyspace and table
 
-If a keyspace was specified [when creating the DAO](../../mapper/#dao-factory-methods), then the
+If a keyspace was specified [when creating the DAO](../../mapper/README.md#dao-factory-methods), then the
 generated query targets that keyspace. Otherwise, it doesn't specify a keyspace, and will only work
 if the mapper was built from a session that has a [default keyspace] set.
 
 If a table was specified when creating the DAO, then the generated query targets that table.
 Otherwise, it uses the default table name for the entity (which is determined by the name of the
-entity class and the [naming strategy](../../entities/#naming-strategy)).
+entity class and the [naming strategy](../../entities/README.md#naming-strategy)).
 
 [default keyspace]:          https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
 [@ClusteringColumn]:         https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/mapper/annotations/ClusteringColumn.html

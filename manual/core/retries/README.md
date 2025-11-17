@@ -26,7 +26,7 @@ What to do when a request failed on a node: retry (same or other node), rethrow,
 * `advanced.retry-policy` in the configuration. Default policy retries at most once, in cases that
   have a high chance of success; you can also write your own.
 * can have per-profile policies. 
-* only kicks in if the query is [idempotent](../idempotence).
+* only kicks in if the query is [idempotent](../idempotence/README.md).
 
 -----
 
@@ -60,7 +60,7 @@ use this retry policy if you understand the consequences.**
 
 Since `DefaultRetryPolicy` is already the driver's default retry policy, no special configuration
 is required to activate it. To use `ConsistencyDowngradingRetryPolicy` instead, the following 
-option must be declared in the driver [configuration](../configuration/):
+option must be declared in the driver [configuration](../configuration/README.md):
                  
 ```
 datastax-java-driver.advanced.retry-policy.class = ConsistencyDowngradingRetryPolicy
@@ -78,7 +78,7 @@ The policy has several methods that cover different error cases. Each method ret
 what to do next. There are four possible retry decisions:
 
 * retry on the same node;
-* retry on the next node in the [query plan](../load_balancing/) for this statement;
+* retry on the next node in the [query plan](../load_balancing/README.md) for this statement;
 * rethrow the exception to the user code (from the `session.execute` call, or as a failed future if
   using the asynchronous API);
 * ignore the exception. That is, mark the request as successful, and return an empty result set.
@@ -144,7 +144,7 @@ mutation was applied or not on the non-answering replica.
 
 If the policy rethrows the error, the user code will get a [WriteTimeoutException].
 
-This method is only invoked for [idempotent](../idempotence/) statements. Otherwise, the driver
+This method is only invoked for [idempotent](../idempotence/README.md) statements. Otherwise, the driver
 bypasses the retry policy and always rethrows the error.
 
 The default policy triggers a maximum of one retry (to the same node), and only for a `BATCH_LOG`
@@ -173,10 +173,10 @@ cases:
 
 * if the connection was closed due to an external event. This will manifest as a
   [ClosedConnectionException] \(network failure) or [HeartbeatException] \(missed
-  [heartbeat](../pooling/#heartbeat));
+  [heartbeat](../pooling/README.md#heartbeat));
 * if there was an unexpected error while decoding the response (this can only be a driver bug).
 
-This method is only invoked for [idempotent](../idempotence/) statements. Otherwise, the driver
+This method is only invoked for [idempotent](../idempotence/README.md) statements. Otherwise, the driver
 bypasses the retry policy and always rethrows the error.
 
 Both the default policy and `ConsistencyDowngradingRetryPolicy` retry on the next node if the 
@@ -188,7 +188,7 @@ The coordinator replied with an error other than `READ_TIMEOUT`, `WRITE_TIMEOUT`
 Namely, this covers [OverloadedException], [ServerError], [TruncateException],
 [ReadFailureException] and [WriteFailureException].
 
-This method is only invoked for [idempotent](../idempotence/) statements. Otherwise, the driver
+This method is only invoked for [idempotent](../idempotence/README.md) statements. Otherwise, the driver
 bypasses the retry policy and always rethrows the error.
 
 Both the default policy and `ConsistencyDowngradingRetryPolicy` rethrow read and write failures, 
@@ -200,14 +200,14 @@ There are a few cases where retrying is always the right thing to do. These are 
 `RetryPolicy`, but instead hard-coded in the driver:
 
 * **any error before a network write was attempted**: to send a query, the driver selects a node,
-  borrows a connection from the host's [connection pool](../pooling/), and then writes the message
+  borrows a connection from the host's [connection pool](../pooling/README.md), and then writes the message
   to the connection. Errors can occur before the write was even attempted, for example if the
   connection pool is saturated, or if the node went down right after we borrowed. In those cases, it
   is always safe to retry since the request wasn't sent, so the driver will transparently move to
   the next node in the query plan.
 * **re-preparing a statement**: when the driver executes a prepared statement, it may find out that
   the coordinator doesn't know about it, and need to re-prepare it on the fly (this is described in
-  detail [here](../statements/prepared/)). The query is then retried on the same node.
+  detail [here](../statements/prepared/README.md)). The query is then retried on the same node.
 * **trying to communicate with a node that is bootstrapping**: this is a rare edge case, as in
   practice the driver should never try to communicate with a bootstrapping node (the only way is if
   it was specified as a contact point). It is again safe to assume that the query was not executed
@@ -222,7 +222,7 @@ directly to the user. These include:
 
 ### Using multiple policies
 
-The retry policy can be overridden in [execution profiles](../configuration/#profiles):
+The retry policy can be overridden in [execution profiles](../configuration/README.md#execution-profiles):
 
 ```
 datastax-java-driver {

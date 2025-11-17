@@ -19,7 +19,7 @@ under the License.
 
 ## Request execution
 
-The [Netty pipeline](../netty_pipeline/) gives us the ability to send low-level protocol messages on
+The [Netty pipeline](../netty_pipeline/README.md) gives us the ability to send low-level protocol messages on
 a single connection.
 
 The request execution layer builds upon that to:
@@ -73,7 +73,7 @@ will be explained in [Request processors](#request-processors).
 ```
 
 `DefaultSession` contains the session implementation. It follows the [confined inner
-class](../common/concurrency/#cold-path) pattern to simplify concurrency.
+class](../common/concurrency/README.md#cold-path) pattern to simplify concurrency.
 
 ### Connection pooling
 
@@ -91,7 +91,7 @@ class](../common/concurrency/#cold-path) pattern to simplify concurrency.
 ```
 
 `ChannelPool` handles the connections to a given node, for a given session. It follows the [confined
-inner class](../common/concurrency/#cold-path) pattern to simplify concurrency. There are a few
+inner class](../common/concurrency/README.md#cold-path) pattern to simplify concurrency. There are a few
 differences compared to the 3.x implementation:
 
 #### Fixed size
@@ -112,12 +112,12 @@ sales), then a manual configuration change is good enough.
 
 To get a connection to a node, client code calls `ChannelPool.next()`. This returns the less busy
 connection, based on the the `getAvailableIds()` counter exposed by
-[InFlightHandler](netty_pipeline/#in-flight-handler).
+[InFlightHandler](../netty_pipeline/README.md#inflighthandler).
 
 If all connections are busy, there is no queuing; the driver moves to the next node immediately. The
 rationale is that it's better to try another node that might be ready to reply, instead of
 introducing an additional wait for each node. If the user wants queuing when all nodes are busy,
-it's better to do it at the session level with a [throttler](../../core/throttling/), which provides
+it's better to do it at the session level with a [throttler](../../core/throttling/README.md), which provides
 more intuitive configuration.
 
 Before 4.5.0, there was also no preemptive acquisition of the stream id outside of the event loop:
@@ -231,7 +231,7 @@ registry to find the processor that matches the request and result types.
 
 A processor is responsible for:
 
-* converting the user request into [protocol-level messages](../native_protocol/);
+* converting the user request into [protocol-level messages](../native_protocol/README.md);
 * selecting a coordinator node, and obtaining a channel from its connection pool;
 * writing the request to the channel;
 * handling timeouts, retries and speculative executions;
@@ -261,7 +261,7 @@ public interface CqlSession extends Session {
 #### RequestProcessorRegistry
 
 You can customize the set of request processors by [extending the
-context](../common/context/#overriding-a-context-component) and overriding
+context](../common/context/README.md#overriding-a-context-component) and overriding
 `buildRequestProcessorRegistry`.
 
 This can be used to either:

@@ -36,7 +36,7 @@ This can be done in two ways:
 
 ### In the configuration
 
-Define an `auth-provider` section in the [configuration](../configuration/):
+Define an `auth-provider` section in the [configuration](../configuration/README.md):
 
 ```
 datastax-java-driver {
@@ -255,4 +255,4 @@ session.execute(statement);
 [ProxyAuthentication.executeAs]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/dse/driver/api/core/auth/ProxyAuthentication.html#executeAs-java.lang.String-StatementT-
 [SessionBuilder.withAuthCredentials]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withAuthCredentials-java.lang.String-java.lang.String-
 [SessionBuilder.withAuthProvider]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withAuthProvider-com.datastax.oss.driver.api.core.auth.AuthProvider-
-[reference.conf]: ../configuration/reference/
+[reference.conf]: ../configuration/reference/README.md

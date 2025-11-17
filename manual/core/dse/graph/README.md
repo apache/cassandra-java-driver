@@ -29,7 +29,7 @@ modeling, refer to the [DSE developer guide].*
 Note: graph capabilities require the [Apache TinkerPop™] library to be present on the classpath. The
 driver has a non-optional dependency on that library, but if your application does not use graph at
 all, it is possible to exclude it to minimize the number of runtime dependencies (see the
-[Integration>Driver dependencies](../../integration/#driver-dependencies) section for more
+[Integration>Driver dependencies](../../integration/README.md#driver-dependencies) section for more
 details). If the library cannot be found at runtime, graph queries won't be available and a warning
 will be logged, but the driver will otherwise operate normally (this is also valid for OSGi
 deployments).
@@ -44,7 +44,7 @@ your application, let the driver pull it transitively.
 There are 3 ways to execute graph requests:
 
 1. Passing a Gremlin script directly in a plain Java string. We'll refer to this as the
-   [script API](script/):
+   [script API](script/README.md):
 
     ```java
     CqlSession session = CqlSession.builder().build();
@@ -61,8 +61,8 @@ There are 3 ways to execute graph requests:
     }
     ```
     
-2. Building a traversal with the [TinkerPop fluent API](fluent/), and [executing it
-   explicitly](fluent/explicit/) with the session:
+2. Building a traversal with the [TinkerPop fluent API](fluent/README.md), and [executing it
+   explicitly](fluent/explicit/README.md) with the session:
    
     ```java
     import static com.datastax.dse.driver.api.core.graph.DseGraph.g;
@@ -77,7 +77,7 @@ There are 3 ways to execute graph requests:
     ```
 
 3. Building a connected traversal with the fluent API, and [executing it
-   implicitly](fluent/implicit/) by invoking a terminal step:
+   implicitly](fluent/implicit/README.md) by invoking a terminal step:
    
     ```java
     GraphTraversalSource g = DseGraph.g
@@ -86,9 +86,9 @@ There are 3 ways to execute graph requests:
     List<Vertex> vertices = g.V().has("name", "marko").toList();
     ```
 
-All executions modes rely on the same set of [configuration options](options/).
+All executions modes rely on the same set of [configuration options](options/README.md).
 
-The script and explicit fluent API return driver-specific [result sets](results/). The implicit
+The script and explicit fluent API return driver-specific [result sets](results/README.md). The implicit
 fluent API returns Apache TinkerPop™ types directly.
 
 [Apache TinkerPop™]: http://tinkerpop.apache.org/

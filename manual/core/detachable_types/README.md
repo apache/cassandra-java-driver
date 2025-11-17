@@ -31,7 +31,7 @@ specific circumstances, they can lose that reference, and you might need to reat
 
 Namely, these components are:
 
-* all [DataType] instances, in particular [tuples](../tuples/) and [UDTs](../udts/);
+* all [DataType] instances, in particular [tuples](../tuples/README.md) and [UDTs](../udts/README.md);
 * [result rows][Row], and their [column definitions][ColumnDefinition].
 
 Detachable types are an advanced topic, that should only be a concern for 3rd-party tool developers.
@@ -41,7 +41,7 @@ them. See the [bottom line](#bottom-line) at the end of this page for details.
 ### Rationale
 
 Detachable components are those that encode or decode their fields themselves. For example, when you
-set a field on a [tuple value](../tuples):
+set a field on a [tuple value](../tuples/README.md):
 
 ```java
 tupleValue = tupleValue.setString(0, "foo");
@@ -53,8 +53,8 @@ reuse the tuple instance in multiple requests.
 
 Encoding requires session-specific information:
 
-* the [CodecRegistry] instance (in case it contains [custom codecs](../custom_codecs/));
-* the [protocol version](../native_protocol/) (because the binary format can change across
+* the [CodecRegistry] instance (in case it contains [custom codecs](../custom_codecs/README.md));
+* the [protocol version](../native_protocol/README.md) (because the binary format can change across
   versions).
 
 Therefore the tuple value needs a reference to the session to access those two objects. 
@@ -83,7 +83,7 @@ There is no way to detach an object explicitly. This can only happen when:
 
 * deserializing a previously serialized instance (we're referring here to [Java serialization]);
 * attaching an object to another session;
-* creating a [tuple](../tuples/) or [UDT](../udts/) definition manually:
+* creating a [tuple](../tuples/README.md) or [UDT](../udts/README.md) definition manually:
 
     ```java
     TupleType tupleType = DataTypes.tupleOf(DataTypes.INT, DataTypes.TEXT, DataTypes.FLOAT);
@@ -148,7 +148,7 @@ create tuple or UDT types manually.
 
 Even then, the defaults used by detached objects might be good enough for you:
 
-* the default codec registry works if you don't have any [custom codec](../custom_codecs/);
+* the default codec registry works if you don't have any [custom codec](../custom_codecs/README.md);
 * the binary encoding format is stable across modern protocol versions. The last changes were for
   collection encoding from v2 to v3; Java Driver 4 only supports v3 and above. When in doubt, check
   the "Changes" section of the [protocol specifications].

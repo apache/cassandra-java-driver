@@ -146,5 +146,5 @@ public class Main {
 [Create an Astra database - AWS/Azure/GCP]: https://docs.datastax.com/en/astra/docs/creating-your-astra-database.html
 [Access an Astra database - AWS/Azure/GCP]: https://docs.datastax.com/en/astra/docs/obtaining-database-credentials.html#_sharing_your_secure_connect_bundle
 [Download the secure connect bundle - AWS/Azure/GCP]: https://docs.datastax.com/en/astra/docs/obtaining-database-credentials.html
-[minimal project structure]: ../core/integration/#minimal-project-structure
-[driver documentation]: ../core/configuration/
+[minimal project structure]: ../core/integration/README.md#minimal-project-structure
+[driver documentation]: ../core/configuration/README.md

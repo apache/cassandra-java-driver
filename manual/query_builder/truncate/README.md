@@ -21,7 +21,7 @@ under the License.
 
 To create a TRUNCATE query, use one of the `truncate` methods in [QueryBuilder]. There are several
 variants depending on whether your table name is qualified, and whether you use
-[identifiers](../../case_sensitivity/) or raw strings:
+[identifiers](../../case_sensitivity/README.md) or raw strings:
 
 ```java
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;

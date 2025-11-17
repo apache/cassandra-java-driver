@@ -42,7 +42,7 @@ completely *detached*: even though they contain the complete data, modifications
 not be reflected on the server side.
 
 Traversal sources with different configurations can easily be created through execution profiles in
-the [configuration](../../../../configuration/):
+the [configuration](../../../../configuration/README.md):
 
 ```
 datastax-java-driver {
@@ -66,6 +66,6 @@ GraphTraversalSource a = AnonymousTraversalSource.traversal().withRemote(
 
 -----
 
-See also the [parent page](../) for topics common to all fluent traversals. 
+See also the [parent page](../README.md) for topics common to all fluent traversals. 
 
 [terminal step]: http://tinkerpop.apache.org/docs/current/reference/#terminal-steps

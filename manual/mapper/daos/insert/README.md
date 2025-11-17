@@ -19,7 +19,7 @@ under the License.
 
 ## Insert methods
 
-Annotate a DAO method with [@Insert] to generate a query that inserts an [Entity](../../entities):
+Annotate a DAO method with [@Insert] to generate a query that inserts an [Entity](../../entities/README.md):
 
 ```java
 @Dao
@@ -41,13 +41,13 @@ corresponding additional parameters (same name, and a compatible Java type):
 void insertWithTtl(Product product, int ttl);
 ```
 
-The annotation can define a [null saving strategy](../null_saving/) that applies to the properties
+The annotation can define a [null saving strategy](../null_saving/README.md) that applies to the properties
 of the entity to insert.
 
 A `Function<BoundStatementBuilder, BoundStatementBuilder>` or `UnaryOperator<BoundStatementBuilder>`
 can be added as the **last** parameter. It will be applied to the statement before execution. This
 allows you to customize certain aspects of the request (page size, timeout, etc) at runtime. See
-[statement attributes](../statement_attributes/).
+[statement attributes](../statement_attributes/README.md).
 
 ### Return type
 
@@ -115,17 +115,17 @@ The method can return:
     ReactiveResultSet insertReactive(Product product);
     ```
 
-* a [custom type](../custom_types).
+* a [custom type](../custom_types/README.md).
 
 ### Target keyspace and table
 
-If a keyspace was specified [when creating the DAO](../../mapper/#dao-factory-methods), then the
+If a keyspace was specified [when creating the DAO](../../mapper/README.md#dao-factory-methods), then the
 generated query targets that keyspace. Otherwise, it doesn't specify a keyspace, and will only work
 if the mapper was built from a session that has a [default keyspace] set.
 
 If a table was specified when creating the DAO, then the generated query targets that table.
 Otherwise, it uses the default table name for the entity (which is determined by the name of the
-entity class and the [naming strategy](../../entities/#naming-strategy)).
+entity class and the [naming strategy](../../entities/README.md#naming-strategy)).
 
 [default keyspace]:             https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withKeyspace-com.datastax.oss.driver.api.core.CqlIdentifier-
 [@Insert]:                      https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/mapper/annotations/Insert.html
