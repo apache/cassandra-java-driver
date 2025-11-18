@@ -45,8 +45,8 @@ are multiple modules, all prefixed with `java-driver-`.
 Note that the query builder is now published as a separate artifact, you'll need to add the
 dependency if you plan to use it.
 
-Refer to each module's manual for more details ([core](/manual/core/README.md), [query
-builder](/manual/query_builder/README.md), [mapper](/manual/mapper/README.md)).
+Refer to each module's manual for more details ([core](manual/core/README.md), [query
+builder](manual/query_builder/README.md), [mapper](manual/mapper/README.md)).
 
 [com.datastax.oss]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22com.datastax.oss%22
 
@@ -73,7 +73,7 @@ See the [Cassandra error handling done right blog](https://www.datastax.com/blog
 
 ## Useful links
 
-* [Manual](/manual/README.md)
+* [Manual](manual/README.md)
 * [API docs]
 * Bug tracking: [JIRA]
 * [Mailing list]

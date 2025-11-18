@@ -400,7 +400,7 @@ more fine-grained control of what should be retried, and how, is required.
 [ReactiveRow.wasApplied]:           https://docs.datastax.com/en/drivers/java/4.17/com/datastax/dse/driver/api/core/cql/reactive/ReactiveRow.html#wasApplied--
 
 [built-in retry mechanism]: ../retries/README.md
-[request throttling]: ../throttling/
+[request throttling]: ../throttling/README.md
 
 [Managing concurrency in asynchronous query execution]: https://docs.datastax.com/en/devapp/doc/devapp/driverManagingConcurrency.html]
 [Publisher]: https://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/org/reactivestreams/Publisher.html

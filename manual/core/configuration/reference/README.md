@@ -27,6 +27,6 @@ values for all configuration options (in the sources, it can be found under
 See the [configuration](../README.md) page for more explanations.
 
 ```conf
-{% include 'core/configuration/reference.conf' %}
+{% include 'manual/core/configuration/reference/reference.conf' %}
 ```
 
