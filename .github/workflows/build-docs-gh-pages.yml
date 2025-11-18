@@ -1,0 +1,110 @@
+name: Build docs, publish gh-pages, upload ZIP
+
+on:
+  push:
+    branches:
+      - 4.x
+  pull_request:
+    branches:
+      - 4.x
+  workflow_dispatch:
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+#      pull-requests: write
+
+    steps:
+      # 1. Checkout doc branch
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+
+#      # 2. Checkout gh-pages branch
+#      - name: Checkout gh-pages
+#        uses: actions/checkout@v4
+#        with:
+#          ref: gh-pages
+#          fetch-depth: 0
+#          path: gh-pages
+
+      # 3. Java 8
+      - name: Set up Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "8"
+
+      # 4. Python 3.10.1 + MkDocs + plugins
+      - name: Set up Python 3.10.1
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10.1"
+
+      - name: Install MkDocs dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install \
+            mkdocs \
+            mkdocs-material \
+            mkdocs-awesome-pages-plugin \
+            mkdocs-macros-plugin
+
+      # 5. Build docs via build-doc.sh
+      - name: Build documentation
+        run: |
+          chmod +x ./build-doc.sh
+          ./build-doc.sh
+
+      # 6. Upload built docs as a ZIP artifact
+      #    mkdocs.yml -> site_dir: docs, so output is doc/docs/
+      - name: Archive built documentation
+        run: |
+          zip -r docs-built.zip docs
+
+      - name: Upload built doc artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-docs-zip
+          path: docs-built.zip
+          retention-days: 10
+
+      # 7. Replace content in gh-pages branch
+#      - name: Sync docs into gh-pages
+#        run: |
+#          cd gh-pages
+#          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+#          cd ..
+#          cp -R doc/docs/* gh-pages/
+#
+#      # 8. Commit changes to gh-pages
+#      - name: Commit and push to gh-pages
+#        working-directory: gh-pages
+#        run: |
+#          git config user.name "github-actions[bot]"
+#          git config user.email "github-actions[bot]@users.noreply.github.com"
+#
+#          git add .
+#
+#          if git diff --cached --quiet; then
+#            echo "No changes to push to gh-pages."
+#            exit 0
+#          fi
+#
+#          git commit -m "Update generated docs"
+#          git push origin gh-pages
+#
+#      # 9. Create or update PR: gh-pages-pr -> gh-pages
+#      - name: Create or update gh-pages PR
+#        uses: peter-evans/create-pull-request@v7
+#        with:
+#          token: ${{ secrets.GITHUB_TOKEN }}
+#          path: gh-pages
+#          branch: gh-pages-pr
+#          base: gh-pages
+#          commit-message: "Update generated docs"
+#          title: "Update generated docs on gh-pages"
+#          body: |
+#            This PR updates the `gh-pages` branch with the latest generated documentation.
+#            A downloadable ZIP of the built docs is also available in the workflow artifacts.
