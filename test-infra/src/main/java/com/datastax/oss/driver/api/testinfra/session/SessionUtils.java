@@ -31,7 +31,9 @@ import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.api.testinfra.astra.BaseAstraRule;
 import com.datastax.oss.driver.internal.core.loadbalancing.helper.NodeFilterToDistanceEvaluatorAdapter;
+import java.io.File;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
@@ -147,8 +149,31 @@ public class SessionUtils {
       SchemaChangeListener schemaChangeListener,
       Predicate<Node> nodeFilter) {
     SessionBuilder<?, SessionT> builder = baseBuilder();
+
+    // Check if this is an Astra resource - use Secure Connect Bundle instead of contact points
+    if (cassandraResource instanceof BaseAstraRule) {
+      BaseAstraRule astraRule = (BaseAstraRule) cassandraResource;
+      File secureConnectBundle = astraRule.getSecureConnectBundle();
+      if (secureConnectBundle != null) {
+        builder.withCloudSecureConnectBundle(secureConnectBundle.toPath());
+
+        // Add authentication credentials for Astra
+        String clientId = astraRule.getAstraBridge().getClientId();
+        String clientSecret = astraRule.getAstraBridge().getClientSecret();
+        if (clientId != null && clientSecret != null) {
+          builder.withAuthCredentials(clientId, clientSecret);
+        }
+      } else {
+        throw new IllegalStateException(
+            "Astra Secure Connect Bundle is not available. "
+                + "Make sure the AstraRule has been initialized.");
+      }
+    } else {
+      // For non-Astra resources, use contact points
+      builder.addContactEndPoints(cassandraResource.getContactPoints());
+    }
+
     builder
-        .addContactEndPoints(cassandraResource.getContactPoints())
         .withKeyspace(keyspace)
         .withNodeStateListener(nodeStateListener)
         .withSchemaChangeListener(schemaChangeListener);

@@ -20,7 +20,8 @@ package com.datastax.oss.driver.api.testinfra.requirement;
 public enum BackendType {
   CASSANDRA("Apache Cassandra"),
   DSE("DSE"),
-  HCD("HCD");
+  HCD("HCD"),
+  ASTRA("Astra DB");
 
   final String friendlyName;
 
@@ -33,7 +34,7 @@ public enum BackendType {
   }
 
   public String[] getCcmOptions() {
-    if (this == CASSANDRA) {
+    if (this == CASSANDRA || this == ASTRA) {
       return new String[0];
     }
     return new String[] {"--" + name().toLowerCase()};
