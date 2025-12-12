@@ -286,10 +286,22 @@ public class AstraBridge implements AutoCloseable {
   }
 
   public synchronized void stop() {
-    // Astra databases are not automatically terminated
-    // They can be manually terminated via: astra db delete <DB_NAME>
-    LOG.info("Astra database {} (ID: {}) is still running", databaseName, databaseId);
-    LOG.info("To terminate manually, run: astra db delete {}", databaseName);
+    if (databaseName == null) {
+      LOG.info("No Astra database to terminate");
+      return;
+    }
+
+    try {
+      LOG.info("Terminating Astra database: {}", databaseName);
+
+      // Delete the database asynchronously (don't wait for completion)
+      String deleteOutput = runAstraCommand("db", "delete", databaseName, "--async");
+      LOG.info("Database deletion initiated: {}", deleteOutput);
+      LOG.info("Astra database {} (ID: {}) is being terminated", databaseName, databaseId);
+    } catch (Exception e) {
+      LOG.warn("Failed to terminate Astra database {}: {}", databaseName, e.getMessage());
+      LOG.info("To terminate manually, run: astra db delete {}", databaseName);
+    }
   }
 
   @Override
