@@ -157,11 +157,11 @@ public class SessionUtils {
       if (secureConnectBundle != null) {
         builder.withCloudSecureConnectBundle(secureConnectBundle.toPath());
 
-        // Add authentication credentials for Astra
-        String clientId = astraRule.getAstraBridge().getClientId();
-        String clientSecret = astraRule.getAstraBridge().getClientSecret();
-        if (clientId != null && clientSecret != null) {
-          builder.withAuthCredentials(clientId, clientSecret);
+        // Add authentication credentials for Astra using token
+        // For Astra, username is "token" and password is the actual token value
+        String token = astraRule.getAstraBridge().getToken();
+        if (token != null) {
+          builder.withAuthCredentials("token", token);
         }
       } else {
         throw new IllegalStateException(

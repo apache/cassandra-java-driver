@@ -29,6 +29,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -153,7 +155,7 @@ public class AstraBridge implements AutoCloseable {
   public synchronized void create() {
     if (created.compareAndSet(false, true)) {
       try {
-        LOG.error("Creating Astra database: {}", databaseName);
+        LOG.info("Creating Astra database: {}", databaseName);
 
         // Setup Astra CLI with token
         runAstraCommand("setup", "--token", ASTRA_TOKEN);
@@ -174,11 +176,15 @@ public class AstraBridge implements AutoCloseable {
         createArgs.add(databaseName);
 
         String output = runAstraCommand(createArgs.toArray(new String[0]));
-        LOG.error("Database creation output: {}", output);
+        LOG.info("Database creation output: {}", output);
 
         // Get database ID using: astra db get <DB_NAME> --key id
-        databaseId = runAstraCommand("db", "get", databaseName, "--key", "id").trim();
-        LOG.error("Astra database created with ID: {}", databaseId);
+        String dbIdOutput = runAstraCommand("db", "get", databaseName, "--key", "id");
+        LOG.info("Database ID output: {}", dbIdOutput);
+
+        // Extract the UUID from the output (filter out [INFO] and other lines)
+        databaseId = extractDatabaseId(dbIdOutput);
+        LOG.info("Astra database created with ID: {}", databaseId);
 
         // Download secure connect bundle
         downloadSecureConnectBundle();
@@ -207,6 +213,34 @@ public class AstraBridge implements AutoCloseable {
     LOG.info("Secure connect bundle downloaded to: {}", scbFile.getAbsolutePath());
   }
 
+  private static final Pattern UUID_PATTERN =
+      Pattern.compile(
+          "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
+
+  /**
+   * Extract database ID (UUID) from Astra CLI output. The output may contain [INFO] lines and other
+   * messages, so we need to find the line that looks like a UUID. E.g. ✗ astra db get
+   * java_driver_test_db_1765404086049 --key id [INFO] You are using a non-production environment
+   * 'DEV' be2d3ad0-3bb0-4257-97d6-b83f2265b5f1
+   */
+  private String extractDatabaseId(String output) {
+    // Use Pattern.compile to split by newline to avoid String.split() warning
+    String[] lines = Pattern.compile("\n").split(output);
+    for (String line : lines) {
+      String trimmed = line.trim();
+      // Skip lines that start with [INFO], [OK], [ERROR], etc.
+      if (trimmed.startsWith("[")) {
+        continue;
+      }
+      // Check if this line contains a UUID
+      Matcher matcher = UUID_PATTERN.matcher(trimmed);
+      if (matcher.find()) {
+        return matcher.group();
+      }
+    }
+    throw new IllegalStateException("Could not extract database ID from output: " + output);
+  }
+
   private String runAstraCommand(String... args) throws IOException, InterruptedException {
     List<String> command = new ArrayList<>();
     command.add("astra");
@@ -214,7 +248,7 @@ public class AstraBridge implements AutoCloseable {
       command.add(arg);
     }
 
-    LOG.error("Running Astra CLI command: {}", String.join(" ", command));
+    LOG.info("Running Astra CLI command: {}", String.join(" ", command));
 
     ProcessBuilder pb = new ProcessBuilder(command);
     pb.redirectErrorStream(true);
@@ -254,8 +288,8 @@ public class AstraBridge implements AutoCloseable {
   public synchronized void stop() {
     // Astra databases are not automatically terminated
     // They can be manually terminated via: astra db delete <DB_NAME>
-    LOG.error("Astra database {} (ID: {}) is still running", databaseName, databaseId);
-    LOG.error("To terminate manually, run: astra db delete {}", databaseName);
+    LOG.info("Astra database {} (ID: {}) is still running", databaseName, databaseId);
+    LOG.info("To terminate manually, run: astra db delete {}", databaseName);
   }
 
   @Override
@@ -285,6 +319,10 @@ public class AstraBridge implements AutoCloseable {
 
   public String getClientSecret() {
     return clientSecret;
+  }
+
+  public String getToken() {
+    return ASTRA_TOKEN;
   }
 
   public BackendType getDistribution() {
