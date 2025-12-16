@@ -18,6 +18,7 @@
 package com.datastax.oss.driver.api.testinfra.astra;
 
 import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.api.testinfra.CassandraBridge;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import java.io.BufferedReader;
 import java.io.File;
@@ -34,7 +35,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AstraBridge implements AutoCloseable {
+public class AstraBridge implements CassandraBridge {
 
   private static final Logger LOG = LoggerFactory.getLogger(AstraBridge.class);
 
@@ -131,6 +132,7 @@ public class AstraBridge implements AutoCloseable {
     }
   }
 
+  @Override
   public synchronized void create() {
     if (created.compareAndSet(false, true)) {
       try {
@@ -258,12 +260,14 @@ public class AstraBridge implements AutoCloseable {
     return output.toString();
   }
 
+  @Override
   public synchronized void start() {
     if (started.compareAndSet(false, true)) {
       create();
     }
   }
 
+  @Override
   public synchronized void stop() {
     if (databaseName == null) {
       LOG.info("No Astra database to terminate");
@@ -308,6 +312,7 @@ public class AstraBridge implements AutoCloseable {
     return ASTRA_TOKEN;
   }
 
+  @Override
   public BackendType getDistribution() {
     return DISTRIBUTION;
   }
