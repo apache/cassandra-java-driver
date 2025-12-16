@@ -105,16 +105,6 @@ public class CustomAstraRule extends BaseAstraRule {
       return this;
     }
 
-    public Builder withClientId(String clientId) {
-      bridgeBuilder.withClientId(clientId);
-      return this;
-    }
-
-    public Builder withClientSecret(String clientSecret) {
-      bridgeBuilder.withClientSecret(clientSecret);
-      return this;
-    }
-
     public CustomAstraRule build() {
       return new CustomAstraRule(bridgeBuilder.build());
     }

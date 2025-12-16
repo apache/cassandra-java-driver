@@ -42,8 +42,6 @@ public class AstraBridge implements AutoCloseable {
 
   // Astra CLI configuration
   private static final String ASTRA_TOKEN = System.getProperty("astra.token");
-  private static final String ASTRA_CLIENT_ID = System.getProperty("astra.client.id", "token");
-  private static final String ASTRA_CLIENT_SECRET = System.getProperty("astra.client.secret");
   private static final String ASTRA_CLOUD_PROVIDER =
       System.getProperty("astra.cloud.provider", "gcp");
   private static final String ASTRA_REGION = System.getProperty("astra.region", "us-east1");
@@ -59,8 +57,6 @@ public class AstraBridge implements AutoCloseable {
   private final String cloudProvider;
 
   private final String region;
-  private final String clientId;
-  private final String clientSecret;
   private final AtomicBoolean created = new AtomicBoolean();
   private final AtomicBoolean started = new AtomicBoolean();
   private final Path configDirectory;
@@ -73,16 +69,12 @@ public class AstraBridge implements AutoCloseable {
       String databaseName,
       String keyspace,
       String cloudProvider,
-      String region,
-      String clientId,
-      String clientSecret) {
+      String region) {
     this.configDirectory = configDirectory;
     this.databaseName = databaseName;
     this.keyspace = keyspace;
     this.cloudProvider = cloudProvider;
     this.region = region;
-    this.clientId = clientId;
-    this.clientSecret = clientSecret;
   }
 
   public static Builder builder() {
@@ -108,8 +100,6 @@ public class AstraBridge implements AutoCloseable {
     private String keyspace = DEFAULT_KEYSPACE;
     private String cloudProvider = ASTRA_CLOUD_PROVIDER;
     private String region = ASTRA_REGION;
-    private String clientId = ASTRA_CLIENT_ID;
-    private String clientSecret = ASTRA_CLIENT_SECRET;
 
     public Builder withDatabaseName(String databaseName) {
       this.databaseName = databaseName;
@@ -131,21 +121,10 @@ public class AstraBridge implements AutoCloseable {
       return this;
     }
 
-    public Builder withClientId(String clientId) {
-      this.clientId = clientId;
-      return this;
-    }
-
-    public Builder withClientSecret(String clientSecret) {
-      this.clientSecret = clientSecret;
-      return this;
-    }
-
     public AstraBridge build() {
       try {
         Path configDir = Files.createTempDirectory("astra-test-");
-        return new AstraBridge(
-            configDir, databaseName, keyspace, cloudProvider, region, clientId, clientSecret);
+        return new AstraBridge(configDir, databaseName, keyspace, cloudProvider, region);
       } catch (IOException e) {
         throw new RuntimeException("Failed to create config directory", e);
       }
@@ -323,14 +302,6 @@ public class AstraBridge implements AutoCloseable {
 
   public File getSecureConnectBundle() {
     return secureConnectBundle;
-  }
-
-  public String getClientId() {
-    return clientId;
-  }
-
-  public String getClientSecret() {
-    return clientSecret;
   }
 
   public String getToken() {
