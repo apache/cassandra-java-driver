@@ -24,6 +24,15 @@ import java.lang.annotation.RetentionPolicy;
 /**
  * Annotation for a Class or Method that defines a database backend Version requirement. If the
  * type/version in use does not meet the requirement, the test is skipped.
+ *
+ * <p>When {@code include = true} (default), the test runs only if the backend type and version
+ * match the specified criteria.
+ *
+ * <p>When {@code include = false}, the test is skipped if the backend type matches (version
+ * constraints are ignored for exclusions).
+ *
+ * <p>Example: {@code @BackendRequirement(type = BackendType.ASTRA, include = false)} will skip the
+ * test when running with Astra.
  */
 @Repeatable(BackendRequirements.class)
 @Retention(RetentionPolicy.RUNTIME)
@@ -35,4 +44,10 @@ public @interface BackendRequirement {
   String maxExclusive() default "";
 
   String description() default "";
+
+  /**
+   * Whether to include or exclude this backend type. When {@code true} (default), the test runs
+   * only if the backend matches. When {@code false}, the test is skipped if the backend matches.
+   */
+  boolean include() default true;
 }
