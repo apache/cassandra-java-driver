@@ -38,8 +38,10 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
+import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
-import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.api.testinfra.CassandraResourceRuleFactory;
 import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
@@ -72,19 +74,19 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class BoundStatementCcmIT {
 
-  private CcmRule ccmRule = CcmRule.getInstance();
+  private CassandraResourceRule cassandraResource = CassandraResourceRuleFactory.getInstance();
 
-  private final boolean atLeastV4 = ccmRule.getHighestProtocolVersion().getCode() >= 4;
+  private final boolean atLeastV4 = cassandraResource.getHighestProtocolVersion().getCode() >= 4;
 
   private SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule)
+      SessionRule.builder(cassandraResource)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 20)
                   .build())
           .build();
 
-  @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @Rule public TestRule chain = RuleChain.outerRule(cassandraResource).around(sessionRule);
 
   @Rule public TestName name = new TestName();
 
@@ -100,8 +102,13 @@ public class BoundStatementCcmIT {
           sessionRule
               .session()
               .execute(
-                  SimpleStatement.builder(
-                          "CREATE TABLE IF NOT EXISTS test (k text, v int, PRIMARY KEY(k, v))")
+                  SimpleStatement.builder("DROP TABLE IF EXISTS test")
+                      .setExecutionProfile(sessionRule.slowProfile())
+                      .build());
+          sessionRule
+              .session()
+              .execute(
+                  SimpleStatement.builder("CREATE TABLE test (k text, v int, PRIMARY KEY(k, v))")
                       .setExecutionProfile(sessionRule.slowProfile())
                       .build());
           for (int i = 0; i < 100; i++) {
@@ -117,8 +124,13 @@ public class BoundStatementCcmIT {
           sessionRule
               .session()
               .execute(
-                  SimpleStatement.builder(
-                          "CREATE TABLE IF NOT EXISTS test2 (k text primary key, v0 int)")
+                  SimpleStatement.builder("DROP TABLE IF EXISTS test2")
+                      .setExecutionProfile(sessionRule.slowProfile())
+                      .build());
+          sessionRule
+              .session()
+              .execute(
+                  SimpleStatement.builder("CREATE TABLE test2 (k text primary key, v0 int)")
                       .setExecutionProfile(sessionRule.slowProfile())
                       .build());
 
@@ -126,8 +138,14 @@ public class BoundStatementCcmIT {
           sessionRule
               .session()
               .execute(
+                  SimpleStatement.builder("DROP TABLE IF EXISTS test3")
+                      .setExecutionProfile(sessionRule.slowProfile())
+                      .build());
+          sessionRule
+              .session()
+              .execute(
                   SimpleStatement.builder(
-                          "CREATE TABLE IF NOT EXISTS test3 "
+                          "CREATE TABLE test3 "
                               + "(pk1 int, pk2 int, v int, "
                               + "PRIMARY KEY ((pk1, pk2)))")
                       .setExecutionProfile(sessionRule.slowProfile())
@@ -141,7 +159,7 @@ public class BoundStatementCcmIT {
         SessionUtils.configLoaderBuilder()
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V3")
             .build();
-    try (CqlSession v3Session = SessionUtils.newSession(ccmRule, loader)) {
+    try (CqlSession v3Session = SessionUtils.newSession(cassandraResource, loader)) {
       // Intentionally use fully qualified table here to avoid warnings as these are not supported
       // by v3 protocol version, see JAVA-3068
       PreparedStatement prepared =
@@ -160,7 +178,7 @@ public class BoundStatementCcmIT {
   @Test
   public void should_not_write_tombstone_if_value_is_implicitly_unset() {
     assumeThat(atLeastV4).as("unset values require protocol V4+").isTrue();
-    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(cassandraResource, sessionRule.keyspace())) {
       PreparedStatement prepared = session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
 
       session.execute(prepared.bind(name.getMethodName(), VALUE));
@@ -175,7 +193,7 @@ public class BoundStatementCcmIT {
   @Test
   public void should_write_tombstone_if_value_is_explicitly_unset() {
     assumeThat(atLeastV4).as("unset values require protocol V4+").isTrue();
-    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(cassandraResource, sessionRule.keyspace())) {
       PreparedStatement prepared = session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
 
       session.execute(prepared.bind(name.getMethodName(), VALUE));
@@ -194,7 +212,7 @@ public class BoundStatementCcmIT {
   @Test
   public void should_write_tombstone_if_value_is_explicitly_unset_on_builder() {
     assumeThat(atLeastV4).as("unset values require protocol V4+").isTrue();
-    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(cassandraResource, sessionRule.keyspace())) {
       PreparedStatement prepared = session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
 
       session.execute(prepared.bind(name.getMethodName(), VALUE));
@@ -213,7 +231,7 @@ public class BoundStatementCcmIT {
 
   @Test
   public void should_have_empty_result_definitions_for_update_query() {
-    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(cassandraResource, sessionRule.keyspace())) {
       PreparedStatement prepared = session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
 
       assertThat(prepared.getResultSetDefinitions()).hasSize(0);
@@ -225,7 +243,7 @@ public class BoundStatementCcmIT {
 
   @Test
   public void should_bind_null_value_when_setting_values_in_bulk() {
-    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(cassandraResource, sessionRule.keyspace())) {
       PreparedStatement prepared = session.prepare("INSERT INTO test2 (k, v0) values (?, ?)");
       BoundStatement boundStatement = prepared.bind(name.getMethodName(), null);
       assertThat(boundStatement.get(1, TypeCodecs.INT)).isNull();
@@ -255,7 +273,7 @@ public class BoundStatementCcmIT {
 
   @Test
   public void should_use_page_size_from_simple_statement() {
-    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(cassandraResource, sessionRule.keyspace())) {
       SimpleStatement st = SimpleStatement.builder("SELECT v FROM test").setPageSize(10).build();
       PreparedStatement prepared = session.prepare(st);
       CompletionStage<AsyncResultSet> future = session.executeAsync(prepared.bind());
@@ -268,7 +286,7 @@ public class BoundStatementCcmIT {
 
   @Test
   public void should_use_page_size() {
-    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(cassandraResource, sessionRule.keyspace())) {
       // set page size on simple statement, but will be unused since
       // overridden by bound statement.
       SimpleStatement st = SimpleStatement.builder("SELECT v FROM test").setPageSize(10).build();
@@ -363,7 +381,7 @@ public class BoundStatementCcmIT {
   @Test
   @BackendRequirement(type = BackendType.CASSANDRA, minInclusive = "2.2")
   public void should_compute_routing_key_when_indices_randomly_distributed() {
-    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(cassandraResource, sessionRule.keyspace())) {
 
       PreparedStatement ps = session.prepare("INSERT INTO test3 (v, pk2, pk1) VALUES (?,?,?)");
 
@@ -434,12 +452,9 @@ public class BoundStatementCcmIT {
 
   @SuppressWarnings("unchecked")
   private CqlSession sessionWithCustomCodec(CqlIntToStringCodec codec) {
-    return (CqlSession)
-        SessionUtils.baseBuilder()
-            .addContactEndPoints(ccmRule.getContactPoints())
-            .withKeyspace(sessionRule.keyspace())
-            .addTypeCodecs(codec)
-            .build();
+    SessionBuilder<?, CqlSession> builder =
+        SessionUtils.baseBuilder(cassandraResource, sessionRule.keyspace());
+    return (CqlSession) builder.addTypeCodecs(codec).build();
   }
 
   private boolean supportsPerRequestKeyspace(CqlSession session) {

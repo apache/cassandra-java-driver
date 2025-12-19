@@ -76,18 +76,22 @@ public abstract class BaseAstraRule extends CassandraResourceRule {
     }
   }
 
+  @Override
   public BackendType getDistribution() {
     return AstraBridge.DISTRIBUTION;
   }
 
+  @Override
   public boolean isDistributionOf(BackendType type) {
     return AstraBridge.isDistributionOf(type);
   }
 
+  @Override
   public Version getDistributionVersion() {
     return AstraBridge.getDistributionVersion();
   }
 
+  @Override
   public Version getCassandraVersion() {
     return AstraBridge.getCassandraVersion();
   }

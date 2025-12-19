@@ -30,7 +30,8 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.api.testinfra.CassandraResourceRuleFactory;
 import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
@@ -58,11 +59,11 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class PerRequestKeyspaceIT {
 
-  private CcmRule ccmRule = CcmRule.getInstance();
+  private CassandraResourceRule cassandraResource = CassandraResourceRuleFactory.getInstance();
 
-  private SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
+  private SessionRule<CqlSession> sessionRule = SessionRule.builder(cassandraResource).build();
 
-  @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @Rule public TestRule chain = RuleChain.outerRule(cassandraResource).around(sessionRule);
 
   @Rule public TestName nameRule = new TestName();
 
@@ -118,7 +119,7 @@ public class PerRequestKeyspaceIT {
         SessionUtils.configLoaderBuilder()
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V4")
             .build();
-    try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
+    try (CqlSession session = SessionUtils.newSession(cassandraResource, loader)) {
       Throwable t = catchThrowable(() -> session.execute(statement));
       assertThat(t)
           .isInstanceOf(IllegalArgumentException.class)
@@ -226,7 +227,7 @@ public class PerRequestKeyspaceIT {
     // Create a separate session because we don't want it to have a default keyspace
     SchemaChangeSynchronizer.withLock(
         () -> {
-          try (CqlSession session = SessionUtils.newSession(ccmRule)) {
+          try (CqlSession session = SessionUtils.newSession(cassandraResource)) {
             executeDdl(
                 session,
                 String.format(

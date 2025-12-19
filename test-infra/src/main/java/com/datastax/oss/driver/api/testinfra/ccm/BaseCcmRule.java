@@ -58,6 +58,19 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
 
   @Override
   public Statement apply(Statement base, Description description) {
+    // Skip CCM-specific tests when running with Astra
+    if (CcmBridge.DISTRIBUTION == BackendType.ASTRA) {
+      return new Statement() {
+        @Override
+        public void evaluate() {
+          throw new AssumptionViolatedException(
+              "Test uses CCM-specific rule and cannot run against Astra. "
+                  + "Use CassandraResourceRuleFactory.getInstance() instead of CcmRule or CustomCcmRule "
+                  + "to support both CCM and Astra backends.");
+        }
+      };
+    }
+
     if (BackendRequirementRule.meetsDescriptionRequirements(description)) {
       return super.apply(base, description);
     } else {
@@ -72,10 +85,12 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
     }
   }
 
+  @Override
   public BackendType getDistribution() {
     return CcmBridge.DISTRIBUTION;
   }
 
+  @Override
   public boolean isDistributionOf(BackendType type) {
     return CcmBridge.isDistributionOf(type);
   }
@@ -84,10 +99,12 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
     return CcmBridge.isDistributionOf(type, comparator);
   }
 
+  @Override
   public Version getDistributionVersion() {
     return CcmBridge.getDistributionVersion();
   }
 
+  @Override
   public Version getCassandraVersion() {
     return CcmBridge.getCassandraVersion();
   }

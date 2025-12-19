@@ -142,6 +142,21 @@ public class SessionUtils {
     return newSession(cassandraResourceRule, keyspace, null, null, null, loader);
   }
 
+  /**
+   * Returns a SessionBuilder configured for the given CassandraResourceRule.
+   *
+   * <p>This method handles the differences between Astra (which uses Secure Connect Bundle) and
+   * other backends (which use contact points).
+   *
+   * @param cassandraResource the Cassandra resource to connect to
+   * @param keyspace the keyspace to connect to (can be null)
+   * @return a SessionBuilder configured for the given resource
+   */
+  public static <SessionT extends Session> SessionBuilder<?, SessionT> baseBuilder(
+      CassandraResourceRule cassandraResource, CqlIdentifier keyspace) {
+    return builder(cassandraResource, keyspace, null, null, null);
+  }
+
   private static <SessionT extends Session> SessionBuilder<?, SessionT> builder(
       CassandraResourceRule cassandraResource,
       CqlIdentifier keyspace,

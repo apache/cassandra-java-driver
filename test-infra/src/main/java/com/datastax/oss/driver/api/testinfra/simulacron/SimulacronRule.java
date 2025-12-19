@@ -19,8 +19,10 @@ package com.datastax.oss.driver.api.testinfra.simulacron;
 
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
 import com.datastax.oss.simulacron.server.BoundCluster;
@@ -94,5 +96,28 @@ public class SimulacronRule extends CassandraResourceRule {
   @Override
   public ProtocolVersion getHighestProtocolVersion() {
     return DefaultProtocolVersion.V4;
+  }
+
+  @Override
+  public BackendType getDistribution() {
+    // Simulacron simulates Cassandra
+    return BackendType.CASSANDRA;
+  }
+
+  @Override
+  public boolean isDistributionOf(BackendType type) {
+    return type == BackendType.CASSANDRA;
+  }
+
+  @Override
+  public Version getDistributionVersion() {
+    // Simulacron simulates Cassandra 4.0
+    return Version.parse("4.0.0");
+  }
+
+  @Override
+  public Version getCassandraVersion() {
+    // Simulacron simulates Cassandra 4.0
+    return Version.parse("4.0.0");
   }
 }

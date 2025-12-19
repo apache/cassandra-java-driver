@@ -27,7 +27,8 @@ import com.datastax.oss.driver.api.core.cql.QueryTrace;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
-import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.api.testinfra.CassandraResourceRuleFactory;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
@@ -42,12 +43,14 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class QueryTraceIT {
 
-  private static final CcmRule CCM_RULE = CcmRule.getInstance();
+  private static final CassandraResourceRule CASSANDRA_RESOURCE =
+      CassandraResourceRuleFactory.getInstance();
 
-  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(CASSANDRA_RESOURCE).build();
 
   @ClassRule
-  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
+  public static final TestRule CHAIN = RuleChain.outerRule(CASSANDRA_RESOURCE).around(SESSION_RULE);
 
   @Test
   public void should_not_have_tracing_id_when_tracing_disabled() {
@@ -79,11 +82,11 @@ public class QueryTraceIT {
 
     assertThat(executionInfo.getTracingId()).isNotNull();
 
-    EndPoint contactPoint = CCM_RULE.getContactPoints().iterator().next();
+    EndPoint contactPoint = CASSANDRA_RESOURCE.getContactPoints().iterator().next();
     InetAddress nodeAddress = ((InetSocketAddress) contactPoint.resolve()).getAddress();
     boolean expectPorts =
-        CCM_RULE.getCassandraVersion().nextStable().compareTo(Version.V4_0_0) >= 0
-            && !CCM_RULE.isDistributionOf(BackendType.DSE);
+        CASSANDRA_RESOURCE.getCassandraVersion().nextStable().compareTo(Version.V4_0_0) >= 0
+            && !CASSANDRA_RESOURCE.isDistributionOf(BackendType.DSE);
 
     QueryTrace queryTrace = executionInfo.getQueryTrace();
     assertThat(queryTrace.getTracingId()).isEqualTo(executionInfo.getTracingId());

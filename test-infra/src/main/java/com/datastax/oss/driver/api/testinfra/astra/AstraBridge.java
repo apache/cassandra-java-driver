@@ -316,4 +316,33 @@ public class AstraBridge implements CassandraBridge {
   public BackendType getDistribution() {
     return DISTRIBUTION;
   }
+
+  /**
+   * Creates a new keyspace in the Astra database using the Astra CLI.
+   *
+   * @param keyspaceName the name of the keyspace to create
+   * @throws RuntimeException if the keyspace creation fails
+   */
+  public void createKeyspace(String keyspaceName) {
+    if (databaseName == null) {
+      throw new IllegalStateException(
+          "Cannot create keyspace: Astra database has not been created yet");
+    }
+
+    try {
+      LOG.info("Creating keyspace '{}' in Astra database '{}'", keyspaceName, databaseName);
+
+      // Create keyspace using: astra db create-keyspace <DB_NAME> -k <KEYSPACE> --if-not-exist
+      String output =
+          runAstraCommand(
+              "db", "create-keyspace", databaseName, "-k", keyspaceName, "--if-not-exist");
+      LOG.info("Keyspace creation output: {}", output);
+      LOG.info("Keyspace '{}' created successfully", keyspaceName);
+
+    } catch (IOException | InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException(
+          "Failed to create keyspace '" + keyspaceName + "' in database '" + databaseName + "'", e);
+    }
+  }
 }

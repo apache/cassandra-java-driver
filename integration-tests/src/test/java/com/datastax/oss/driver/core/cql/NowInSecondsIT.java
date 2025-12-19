@@ -26,7 +26,8 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.api.testinfra.CassandraResourceRuleFactory;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -49,12 +50,14 @@ import org.junit.rules.TestRule;
     description = "Feature not available in DSE yet")
 public class NowInSecondsIT {
 
-  private static final CcmRule CCM_RULE = CcmRule.getInstance();
+  private static final CassandraResourceRule CASSANDRA_RESOURCE =
+      CassandraResourceRuleFactory.getInstance();
 
-  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
+  private static final SessionRule<CqlSession> SESSION_RULE =
+      SessionRule.builder(CASSANDRA_RESOURCE).build();
 
   @ClassRule
-  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
+  public static final TestRule CHAIN = RuleChain.outerRule(CASSANDRA_RESOURCE).around(SESSION_RULE);
 
   @Before
   public void setup() {

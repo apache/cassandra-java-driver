@@ -36,7 +36,8 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.type.DataTypes;
-import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.api.testinfra.CassandraResourceRuleFactory;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -70,10 +71,10 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class PreparedStatementIT {
 
-  private CcmRule ccmRule = CcmRule.getInstance();
+  private CassandraResourceRule cassandraResource = CassandraResourceRuleFactory.getInstance();
 
   private SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(ccmRule)
+      SessionRule.builder(cassandraResource)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 2)
@@ -81,7 +82,7 @@ public class PreparedStatementIT {
                   .build())
           .build();
 
-  @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @Rule public TestRule chain = RuleChain.outerRule(cassandraResource).around(sessionRule);
 
   @Before
   public void setupSchema() {
@@ -106,7 +107,7 @@ public class PreparedStatementIT {
 
   @Test
   public void should_have_empty_result_definitions_for_insert_query_without_bound_variable() {
-    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(cassandraResource, sessionRule.keyspace())) {
       PreparedStatement prepared =
           session.prepare("INSERT INTO prepared_statement_test (a, b, c) VALUES (1, 1, 1)");
       assertThat(prepared.getVariableDefinitions()).isEmpty();
@@ -117,7 +118,7 @@ public class PreparedStatementIT {
 
   @Test
   public void should_have_non_empty_result_definitions_for_insert_query_with_bound_variable() {
-    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(cassandraResource, sessionRule.keyspace())) {
       PreparedStatement prepared =
           session.prepare("INSERT INTO prepared_statement_test (a, b, c) VALUES (?, ?, ?)");
       assertThat(prepared.getVariableDefinitions()).hasSize(3);
@@ -128,7 +129,7 @@ public class PreparedStatementIT {
 
   @Test
   public void should_have_empty_variable_definitions_for_select_query_without_bound_variable() {
-    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(cassandraResource, sessionRule.keyspace())) {
       PreparedStatement prepared =
           session.prepare("SELECT a,b,c FROM prepared_statement_test WHERE a = 1");
       assertThat(prepared.getVariableDefinitions()).isEmpty();
@@ -139,7 +140,7 @@ public class PreparedStatementIT {
 
   @Test
   public void should_have_non_empty_variable_definitions_for_select_query_with_bound_variable() {
-    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace())) {
+    try (CqlSession session = SessionUtils.newSession(cassandraResource, sessionRule.keyspace())) {
       PreparedStatement prepared =
           session.prepare("SELECT a,b,c FROM prepared_statement_test WHERE a = ?");
       assertThat(prepared.getVariableDefinitions()).hasSize(1);
@@ -227,7 +228,7 @@ public class PreparedStatementIT {
   public void should_update_metadata_when_schema_changed_across_sessions() {
     // Given
     CqlSession session1 = sessionRule.session();
-    CqlSession session2 = SessionUtils.newSession(ccmRule, sessionRule.keyspace());
+    CqlSession session2 = SessionUtils.newSession(cassandraResource, sessionRule.keyspace());
 
     PreparedStatement ps1 = session1.prepare("SELECT * FROM prepared_statement_test WHERE a = ?");
     PreparedStatement ps2 = session2.prepare("SELECT * FROM prepared_statement_test WHERE a = ?");
@@ -302,7 +303,8 @@ public class PreparedStatementIT {
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V4")
             .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
             .build();
-    try (CqlSession session = SessionUtils.newSession(ccmRule, sessionRule.keyspace(), loader)) {
+    try (CqlSession session =
+        SessionUtils.newSession(cassandraResource, sessionRule.keyspace(), loader)) {
       should_not_store_metadata_for_conditional_updates(session);
     }
   }
@@ -448,7 +450,7 @@ public class PreparedStatementIT {
    * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-15252">CASSANDRA-15252</a>
    */
   private AbstractThrowableAssert<?, ? extends Throwable> assertableReprepareAfterIdChange() {
-    try (CqlSession session = SessionUtils.newSession(ccmRule)) {
+    try (CqlSession session = SessionUtils.newSession(cassandraResource)) {
       PreparedStatement preparedStatement =
           session.prepare(
               String.format(
@@ -552,7 +554,7 @@ public class PreparedStatementIT {
 
   private CqlSession sessionWithCacheSizeMetric() {
     return SessionUtils.newSession(
-        ccmRule,
+        cassandraResource,
         sessionRule.keyspace(),
         SessionUtils.configLoaderBuilder()
             .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 2)

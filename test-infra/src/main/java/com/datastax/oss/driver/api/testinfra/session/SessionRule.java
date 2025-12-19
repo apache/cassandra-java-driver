@@ -101,6 +101,8 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
     this.cassandraResource = cassandraResource;
     this.nodeStateListener = nodeStateListener;
     this.schemaChangeListener = schemaChangeListener;
+    // Generate a unique keyspace for all backends except Simulacron (when createKeyspace is true)
+    // For Simulacron or when createKeyspace is false, don't generate a keyspace
     this.keyspace =
         (cassandraResource instanceof SimulacronRule || !createKeyspace)
             ? null
@@ -145,30 +147,24 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
 
   @Override
   protected void before() {
-    // For Astra, use the keyspace that was created with the database through Astra CLI
-    if (cassandraResource instanceof BaseAstraRule) {
-      BaseAstraRule astraRule = (BaseAstraRule) cassandraResource;
-      String astraKeyspace = astraRule.getAstraBridge().getKeyspace();
-      CqlIdentifier sessionKeyspace = CqlIdentifier.fromCql(astraKeyspace);
-      session =
-          SessionUtils.newSession(
-              cassandraResource,
-              sessionKeyspace,
-              nodeStateListener,
-              schemaChangeListener,
-              null,
-              configLoader);
-    } else {
-      session =
-          SessionUtils.newSession(
-              cassandraResource, null, nodeStateListener, schemaChangeListener, null, configLoader);
-    }
+    // Create session without keyspace first
+    session =
+        SessionUtils.newSession(
+            cassandraResource, null, nodeStateListener, schemaChangeListener, null, configLoader);
 
     slowProfile = SessionUtils.slowProfile(session);
 
-    // Only create keyspace for non-Astra resources
-    if (keyspace != null && !(cassandraResource instanceof BaseAstraRule)) {
-      SessionUtils.createKeyspace(session, keyspace, slowProfile);
+    // Create keyspace if needed
+    if (keyspace != null) {
+      if (cassandraResource instanceof BaseAstraRule) {
+        // For Astra, create keyspace using Astra CLI
+        BaseAstraRule astraRule = (BaseAstraRule) cassandraResource;
+        astraRule.getAstraBridge().createKeyspace(keyspace.asInternal());
+      } else {
+        // For CCM and other backends, create keyspace using CQL
+        SessionUtils.createKeyspace(session, keyspace, slowProfile);
+      }
+      // Switch to the keyspace
       session.execute(
           SimpleStatement.newInstance(String.format("USE %s", keyspace.asCql(false))),
           Statement.SYNC);

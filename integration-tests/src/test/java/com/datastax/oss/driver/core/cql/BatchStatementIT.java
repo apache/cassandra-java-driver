@@ -33,7 +33,8 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
-import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.api.testinfra.CassandraResourceRuleFactory;
 import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
@@ -53,11 +54,11 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class BatchStatementIT {
 
-  private CcmRule ccmRule = CcmRule.getInstance();
+  private CassandraResourceRule cassandraResource = CassandraResourceRuleFactory.getInstance();
 
-  private SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
+  private SessionRule<CqlSession> sessionRule = SessionRule.builder(cassandraResource).build();
 
-  @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+  @Rule public TestRule chain = RuleChain.outerRule(cassandraResource).around(sessionRule);
 
   @Rule public TestName name = new TestName();
 
@@ -67,10 +68,10 @@ public class BatchStatementIT {
   public void createTable() {
     String[] schemaStatements =
         new String[] {
-          "CREATE TABLE test (k0 text, k1 int, v int, PRIMARY KEY (k0, k1))",
-          "CREATE TABLE counter1 (k0 text PRIMARY KEY, c counter)",
-          "CREATE TABLE counter2 (k0 text PRIMARY KEY, c counter)",
-          "CREATE TABLE counter3 (k0 text PRIMARY KEY, c counter)",
+          "CREATE TABLE IF NOT EXISTS test (k0 text, k1 int, v int, PRIMARY KEY (k0, k1))",
+          "CREATE TABLE IF NOT EXISTS counter1 (k0 text PRIMARY KEY, c counter)",
+          "CREATE TABLE IF NOT EXISTS counter2 (k0 text PRIMARY KEY, c counter)",
+          "CREATE TABLE IF NOT EXISTS counter3 (k0 text PRIMARY KEY, c counter)",
         };
 
     SchemaChangeSynchronizer.withLock(
@@ -353,7 +354,7 @@ public class BatchStatementIT {
         SessionUtils.configLoaderBuilder()
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V3")
             .build();
-    try (CqlSession v3Session = SessionUtils.newSession(ccmRule, loader)) {
+    try (CqlSession v3Session = SessionUtils.newSession(cassandraResource, loader)) {
       // Intentionally use fully qualified table here to avoid warnings as these are not supported
       // by v3 protocol version, see JAVA-3068
       PreparedStatement prepared =
