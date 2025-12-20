@@ -29,7 +29,6 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.MappingCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
-import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -48,13 +47,11 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class PagingStateIT {
 
-  private static final CassandraResourceRule CASSANDRA_RESOURCE = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
-  private static final SessionRule<CqlSession> SESSION_RULE =
-      SessionRule.builder(CASSANDRA_RESOURCE).build();
+  private static final SessionRule<CqlSession> SESSION_RULE = SessionRule.builder(CCM_RULE).build();
 
-  @ClassRule
-  public static TestRule CHAIN = RuleChain.outerRule(CASSANDRA_RESOURCE).around(SESSION_RULE);
+  @ClassRule public static TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Before
   public void setupSchema() {
@@ -62,11 +59,8 @@ public class PagingStateIT {
     SchemaChangeSynchronizer.withLock(
         () -> {
           session.execute(
-              SimpleStatement.builder("DROP TABLE IF EXISTS foo")
-                  .setExecutionProfile(SESSION_RULE.slowProfile())
-                  .build());
-          session.execute(
-              SimpleStatement.builder("CREATE TABLE foo (k int, cc int, v int, PRIMARY KEY(k, cc))")
+              SimpleStatement.builder(
+                      "CREATE TABLE IF NOT EXISTS foo (k int, cc int, v int, PRIMARY KEY(k, cc))")
                   .setExecutionProfile(SESSION_RULE.slowProfile())
                   .build());
         });
@@ -116,8 +110,10 @@ public class PagingStateIT {
   public void should_inject_in_simple_statement_with_custom_codecs() {
     try (CqlSession session =
         (CqlSession)
-            SessionUtils.baseBuilder(CASSANDRA_RESOURCE, SESSION_RULE.keyspace())
+            SessionUtils.baseBuilder()
                 .addTypeCodecs(new IntWrapperCodec())
+                .addContactEndPoints(CCM_RULE.getContactPoints())
+                .withKeyspace(SESSION_RULE.keyspace())
                 .build()) {
 
       SimpleStatement statement =

@@ -28,7 +28,6 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
-import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -50,10 +49,10 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class SimpleStatementCcmIT {
 
-  private static final CassandraResourceRule CASSANDRA_RESOURCE = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
   private static final SessionRule<CqlSession> SESSION_RULE =
-      SessionRule.builder(CASSANDRA_RESOURCE)
+      SessionRule.builder(CCM_RULE)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, 20)
@@ -61,7 +60,7 @@ public class SimpleStatementCcmIT {
           .build();
 
   @ClassRule
-  public static final TestRule CHAIN = RuleChain.outerRule(CASSANDRA_RESOURCE).around(SESSION_RULE);
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @Rule public TestName name = new TestName();
 
@@ -73,13 +72,8 @@ public class SimpleStatementCcmIT {
     SESSION_RULE
         .session()
         .execute(
-            SimpleStatement.builder("DROP TABLE IF EXISTS test")
-                .setExecutionProfile(SESSION_RULE.slowProfile())
-                .build());
-    SESSION_RULE
-        .session()
-        .execute(
-            SimpleStatement.builder("CREATE TABLE test (k text, v int, PRIMARY KEY(k, v))")
+            SimpleStatement.builder(
+                    "CREATE TABLE IF NOT EXISTS test (k text, v int, PRIMARY KEY(k, v))")
                 .setExecutionProfile(SESSION_RULE.slowProfile())
                 .build());
     for (int i = 0; i < 100; i++) {
@@ -95,13 +89,7 @@ public class SimpleStatementCcmIT {
     SESSION_RULE
         .session()
         .execute(
-            SimpleStatement.builder("DROP TABLE IF EXISTS test2")
-                .setExecutionProfile(SESSION_RULE.slowProfile())
-                .build());
-    SESSION_RULE
-        .session()
-        .execute(
-            SimpleStatement.builder("CREATE TABLE test2 (k text primary key, v int)")
+            SimpleStatement.builder("CREATE TABLE IF NOT EXISTS test2 (k text primary key, v int)")
                 .setExecutionProfile(SESSION_RULE.slowProfile())
                 .build());
   }

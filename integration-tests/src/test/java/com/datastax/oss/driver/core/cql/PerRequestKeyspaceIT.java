@@ -30,7 +30,6 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
@@ -59,11 +58,11 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class PerRequestKeyspaceIT {
 
-  private CassandraResourceRule cassandraResource = CcmRule.getInstance();
+  private CcmRule ccmRule = CcmRule.getInstance();
 
-  private SessionRule<CqlSession> sessionRule = SessionRule.builder(cassandraResource).build();
+  private SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
 
-  @Rule public TestRule chain = RuleChain.outerRule(cassandraResource).around(sessionRule);
+  @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   @Rule public TestName nameRule = new TestName();
 
@@ -119,7 +118,7 @@ public class PerRequestKeyspaceIT {
         SessionUtils.configLoaderBuilder()
             .withString(DefaultDriverOption.PROTOCOL_VERSION, "V4")
             .build();
-    try (CqlSession session = SessionUtils.newSession(cassandraResource, loader)) {
+    try (CqlSession session = SessionUtils.newSession(ccmRule, loader)) {
       Throwable t = catchThrowable(() -> session.execute(statement));
       assertThat(t)
           .isInstanceOf(IllegalArgumentException.class)
@@ -227,7 +226,7 @@ public class PerRequestKeyspaceIT {
     // Create a separate session because we don't want it to have a default keyspace
     SchemaChangeSynchronizer.withLock(
         () -> {
-          try (CqlSession session = SessionUtils.newSession(cassandraResource)) {
+          try (CqlSession session = SessionUtils.newSession(ccmRule)) {
             executeDdl(
                 session,
                 String.format(

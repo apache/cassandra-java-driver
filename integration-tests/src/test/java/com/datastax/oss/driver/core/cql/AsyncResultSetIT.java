@@ -52,17 +52,18 @@ public class AsyncResultSetIT {
   private static final String PARTITION_KEY1 = "part";
   private static final String PARTITION_KEY2 = "part2";
 
-  private static final CcmRule ccmRule = CcmRule.getInstance();
+  private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
   private static final SessionRule<CqlSession> SESSION_RULE =
-      SessionRule.builder(ccmRule)
+      SessionRule.builder(CCM_RULE)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, PAGE_SIZE)
                   .build())
           .build();
 
-  @ClassRule public static final TestRule CHAIN = RuleChain.outerRule(ccmRule).around(SESSION_RULE);
+  @ClassRule
+  public static final TestRule CHAIN = RuleChain.outerRule(CCM_RULE).around(SESSION_RULE);
 
   @BeforeClass
   public static void setupSchema() {
@@ -72,14 +73,8 @@ public class AsyncResultSetIT {
           SESSION_RULE
               .session()
               .execute(
-                  SimpleStatement.builder("DROP TABLE IF EXISTS test")
-                      .setExecutionProfile(SESSION_RULE.slowProfile())
-                      .build());
-          SESSION_RULE
-              .session()
-              .execute(
                   SimpleStatement.builder(
-                          "CREATE TABLE test (k0 text, k1 int, v int, PRIMARY KEY(k0, k1))")
+                          "CREATE TABLE IF NOT EXISTS test (k0 text, k1 int, v int, PRIMARY KEY(k0, k1))")
                       .setExecutionProfile(SESSION_RULE.slowProfile())
                       .build());
         });

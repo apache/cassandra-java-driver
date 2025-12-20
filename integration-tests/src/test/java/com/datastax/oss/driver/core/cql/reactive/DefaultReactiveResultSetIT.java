@@ -31,7 +31,6 @@ import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -57,13 +56,11 @@ import org.junit.runner.RunWith;
 @Category(ParallelizableTests.class)
 public class DefaultReactiveResultSetIT {
 
-  private static CassandraResourceRule cassandraResource = CcmRule.getInstance();
+  private static CcmRule ccmRule = CcmRule.getInstance();
 
-  private static SessionRule<CqlSession> sessionRule =
-      SessionRule.builder(cassandraResource).build();
+  private static SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
 
-  @ClassRule
-  public static TestRule chain = RuleChain.outerRule(cassandraResource).around(sessionRule);
+  @ClassRule public static TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
 
   @BeforeClass
   public static void initialize() {
