@@ -37,7 +37,7 @@ import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
-import com.datastax.oss.driver.api.testinfra.CassandraResourceRuleFactory;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -71,7 +71,7 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class PreparedStatementIT {
 
-  private CassandraResourceRule cassandraResource = CassandraResourceRuleFactory.getInstance();
+  private CassandraResourceRule cassandraResource = CcmRule.getInstance();
 
   private SessionRule<CqlSession> sessionRule =
       SessionRule.builder(cassandraResource)

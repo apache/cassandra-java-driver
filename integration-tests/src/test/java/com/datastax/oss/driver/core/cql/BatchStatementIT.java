@@ -34,7 +34,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
-import com.datastax.oss.driver.api.testinfra.CassandraResourceRuleFactory;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
@@ -54,7 +54,7 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class BatchStatementIT {
 
-  private CassandraResourceRule cassandraResource = CassandraResourceRuleFactory.getInstance();
+  private CassandraResourceRule cassandraResource = CcmRule.getInstance();
 
   private SessionRule<CqlSession> sessionRule = SessionRule.builder(cassandraResource).build();
 

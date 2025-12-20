@@ -41,7 +41,7 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
-import com.datastax.oss.driver.api.testinfra.CassandraResourceRuleFactory;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
@@ -74,7 +74,7 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class BoundStatementCcmIT {
 
-  private CassandraResourceRule cassandraResource = CassandraResourceRuleFactory.getInstance();
+  private CassandraResourceRule cassandraResource = CcmRule.getInstance();
 
   private final boolean atLeastV4 = cassandraResource.getHighestProtocolVersion().getCode() >= 4;
 

@@ -30,7 +30,7 @@ import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
-import com.datastax.oss.driver.api.testinfra.CassandraResourceRuleFactory;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.shaded.guava.common.collect.Lists;
@@ -53,8 +53,7 @@ import org.junit.runner.RunWith;
 @Category(ParallelizableTests.class)
 public class PagingIterableSpliteratorIT {
 
-  private static final CassandraResourceRule CASSANDRA_RESOURCE =
-      CassandraResourceRuleFactory.getInstance();
+  private static final CassandraResourceRule CASSANDRA_RESOURCE = CcmRule.getInstance();
 
   private static final SessionRule<CqlSession> SESSION_RULE =
       SessionRule.builder(CASSANDRA_RESOURCE).build();

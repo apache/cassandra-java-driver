@@ -30,7 +30,7 @@ import com.datastax.oss.driver.api.core.type.codec.CodecNotFoundException;
 import com.datastax.oss.driver.api.core.type.codec.MappingCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
-import com.datastax.oss.driver.api.testinfra.CassandraResourceRuleFactory;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -48,8 +48,7 @@ import org.junit.rules.TestRule;
 @Category(ParallelizableTests.class)
 public class PagingStateIT {
 
-  private static final CassandraResourceRule CASSANDRA_RESOURCE =
-      CassandraResourceRuleFactory.getInstance();
+  private static final CassandraResourceRule CASSANDRA_RESOURCE = CcmRule.getInstance();
 
   private static final SessionRule<CqlSession> SESSION_RULE =
       SessionRule.builder(CASSANDRA_RESOURCE).build();

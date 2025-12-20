@@ -28,7 +28,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
-import com.datastax.oss.driver.api.testinfra.CassandraResourceRuleFactory;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
@@ -45,8 +45,7 @@ import org.junit.rules.TestRule;
 @BackendRequirement(type = BackendType.ASTRA, include = false)
 public class QueryTraceIT {
 
-  private static final CassandraResourceRule CASSANDRA_RESOURCE =
-      CassandraResourceRuleFactory.getInstance();
+  private static final CassandraResourceRule CASSANDRA_RESOURCE = CcmRule.getInstance();
 
   private static final SessionRule<CqlSession> SESSION_RULE =
       SessionRule.builder(CASSANDRA_RESOURCE).build();
@@ -82,7 +81,7 @@ public class QueryTraceIT {
                     .build())
             .getExecutionInfo();
 
-    //TODO: to be confirmed. It's failing against Astra
+    // TODO: to be confirmed. It's failing against Astra
     assertThat(executionInfo.getTracingId()).isNotNull();
 
     EndPoint contactPoint = CASSANDRA_RESOURCE.getContactPoints().iterator().next();

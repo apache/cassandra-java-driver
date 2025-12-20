@@ -210,6 +210,12 @@
         "code": "java.method.abstractMethodAdded",
         "new": "method boolean com.datastax.oss.driver.api.testinfra.CassandraResourceRule::isDistributionOf(com.datastax.oss.driver.api.testinfra.requirement.BackendType)",
         "justification": "Adding methods to support polymorphic backend selection for Astra and CCM tests"
+      },
+      {
+        "code": "java.method.returnTypeChanged",
+        "old": "method com.datastax.oss.driver.api.testinfra.ccm.CcmRule com.datastax.oss.driver.api.testinfra.ccm.CcmRule::getInstance()",
+        "new": "method com.datastax.oss.driver.api.testinfra.CassandraResourceRule com.datastax.oss.driver.api.testinfra.ccm.CcmRule::getInstance()",
+        "justification": "CcmRule.getInstance() now returns CassandraResourceRule to support polymorphic backend selection (CCM or Astra) based on ccm.distribution system property"
       }
     ]
   }

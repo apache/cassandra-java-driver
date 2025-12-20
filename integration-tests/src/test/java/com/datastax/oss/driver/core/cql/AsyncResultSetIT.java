@@ -28,8 +28,7 @@ import com.datastax.oss.driver.api.core.cql.DefaultBatchType;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
-import com.datastax.oss.driver.api.testinfra.CassandraResourceRuleFactory;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
@@ -53,19 +52,17 @@ public class AsyncResultSetIT {
   private static final String PARTITION_KEY1 = "part";
   private static final String PARTITION_KEY2 = "part2";
 
-  private static final CassandraResourceRule CASSANDRA_RESOURCE =
-      CassandraResourceRuleFactory.getInstance();
+  private static final CcmRule ccmRule = CcmRule.getInstance();
 
   private static final SessionRule<CqlSession> SESSION_RULE =
-      SessionRule.builder(CASSANDRA_RESOURCE)
+      SessionRule.builder(ccmRule)
           .withConfigLoader(
               SessionUtils.configLoaderBuilder()
                   .withInt(DefaultDriverOption.REQUEST_PAGE_SIZE, PAGE_SIZE)
                   .build())
           .build();
 
-  @ClassRule
-  public static final TestRule CHAIN = RuleChain.outerRule(CASSANDRA_RESOURCE).around(SESSION_RULE);
+  @ClassRule public static final TestRule CHAIN = RuleChain.outerRule(ccmRule).around(SESSION_RULE);
 
   @BeforeClass
   public static void setupSchema() {

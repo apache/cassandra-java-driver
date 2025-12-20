@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
 import com.datastax.oss.driver.api.core.ProtocolVersion;
 import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
-import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirementRule;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import java.io.File;
@@ -31,11 +31,12 @@ import org.junit.AssumptionViolatedException;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-public abstract class BaseAstraRule extends CassandraResourceRule {
+public abstract class BaseAstraRule extends CcmRule {
 
   protected final AstraBridge astraBridge;
 
   BaseAstraRule(AstraBridge astraBridge) {
+    super();
     this.astraBridge = astraBridge;
     Runtime.getRuntime()
         .addShutdownHook(

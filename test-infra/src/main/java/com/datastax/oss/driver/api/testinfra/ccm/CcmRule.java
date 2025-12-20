@@ -17,6 +17,8 @@
  */
 package com.datastax.oss.driver.api.testinfra.ccm;
 
+import com.datastax.oss.driver.api.testinfra.astra.AstraRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.lang.reflect.Method;
 import org.junit.AssumptionViolatedException;
@@ -32,14 +34,20 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Note that this rule should be considered mutually exclusive with {@link CustomCcmRule}.
  * Creating instances of these rules can create resource issues.
+ *
+ * <p>When {@code ccm.distribution} system property is set to {@code ASTRA}, this rule will delegate
+ * to {@link AstraRule} instead of creating a CCM cluster.
  */
 public class CcmRule extends BaseCcmRule {
 
-  private static final CcmRule INSTANCE = new CcmRule();
+  private static final CcmRule CCM_INSTANCE = new CcmRule();
+  private static final BackendType DISTRIBUTION =
+      BackendType.valueOf(
+          System.getProperty("ccm.distribution", BackendType.CASSANDRA.name()).toUpperCase());
 
   private volatile boolean started = false;
 
-  private CcmRule() {
+  protected CcmRule() {
     super(configureCcmBridge(CcmBridge.builder()).build());
   }
 
@@ -99,7 +107,22 @@ public class CcmRule extends BaseCcmRule {
     return super.apply(base, description);
   }
 
+  /**
+   * Returns a singleton instance of a Cassandra resource rule.
+   *
+   * <p>The actual implementation returned depends on the {@code ccm.distribution} system property:
+   *
+   * <ul>
+   *   <li>If set to {@code ASTRA}, returns {@link AstraRule#getInstance()}
+   *   <li>Otherwise, returns a {@link CcmRule} instance
+   * </ul>
+   *
+   * @return a singleton Cassandra resource rule
+   */
   public static CcmRule getInstance() {
-    return INSTANCE;
+    if (DISTRIBUTION == BackendType.ASTRA) {
+      return AstraRule.getInstance();
+    }
+    return CCM_INSTANCE;
   }
 }
