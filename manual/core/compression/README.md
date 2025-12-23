@@ -46,7 +46,7 @@ datastax-java-driver {
 
 Compression must be set before opening a session, it cannot be changed at runtime.
 
-Two algorithms are supported out of the box: [LZ4](https://github.com/jpountz/lz4-java) and
+Two algorithms are supported out of the box: [LZ4](https://github.com/yawkat/lz4-java) and
 [Snappy](http://google.github.io/snappy/). The LZ4 implementation is a good first choice; it offers
 fallback implementations in case native libraries fail to load and
 [benchmarks](http://java-performance.info/performance-general-compression/) suggest that it offers
@@ -63,9 +63,9 @@ Dependency:
 
 ```xml
 <dependency>
-  <groupId>org.lz4</groupId>
+  <groupId>at.yawk.lz4</groupId>
   <artifactId>lz4-java</artifactId>
-  <version>1.4.1</version>
+  <version>1.10.1</version>
 </dependency>
 ```
 

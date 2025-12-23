@@ -17,7 +17,7 @@ The following files have been resolved:
    com.fasterxml.jackson.core:jackson-core:jar:2.8.11:compile
    org.hdrhistogram:HdrHistogram:jar:2.1.10:compile (optional)
    org.ow2.asm:asm-tree:jar:5.0.3:compile
-   org.lz4:lz4-java:jar:1.4.1:compile (optional)
+   at.yawk.lz4:lz4-java:jar:1.10.1:compile (optional)
    io.netty:netty-transport:jar:4.0.56.Final:compile
    io.dropwizard.metrics:metrics-core:jar:3.2.2:compile
    io.netty:netty-common:jar:4.0.56.Final:compile

@@ -416,7 +416,7 @@ are not available on your platform, you can exclude the following dependency:
 
 #### Compression libraries
 
-The driver supports compression with either [LZ4](https://github.com/jpountz/lz4-java) or
+The driver supports compression with either [LZ4](https://github.com/yawkat/lz4-java) or
 [Snappy](http://google.github.io/snappy/).
 
 These dependencies are optional; you have to add them explicitly in your application in order to

@@ -57,7 +57,7 @@
     <!-- when changing version also update version in LICENSE_binary  -->
     <hdrhistogram.version>2.1.12</hdrhistogram.version>
     <metrics.version>4.1.18</metrics.version>
-    <netty.version>4.1.119.Final</netty.version>
+    <netty.version>4.1.130.Final</netty.version>
     <esri.version>1.2.1</esri.version>
     <!--
     When upgrading TinkerPop please upgrade the version matrix in
@@ -73,7 +73,7 @@
     <jackson-databind.version>${jackson.version}</jackson-databind.version>
     <!-- optional dependencies -->
     <snappy.version>1.1.10.1</snappy.version>
-    <lz4.version>1.7.1</lz4.version>
+    <lz4.version>1.10.1</lz4.version>
     <!-- test dependencies -->
     <assertj.version>3.19.0</assertj.version>
     <commons-exec.version>1.3</commons-exec.version>
@@ -137,7 +137,7 @@
         <version>${snappy.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.lz4</groupId>
+        <groupId>at.yawk.lz4</groupId>
         <artifactId>lz4-java</artifactId>
         <version>${lz4.version}</version>
       </dependency>

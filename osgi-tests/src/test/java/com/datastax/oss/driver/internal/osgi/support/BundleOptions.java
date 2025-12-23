@@ -117,7 +117,7 @@ public class BundleOptions {
   public static CompositeOption lz4Bundle() {
     return () ->
         options(
-            mavenBundle("org.lz4", "lz4-java").versionAsInProject(),
+            mavenBundle("at.yawk.lz4", "lz4-java").versionAsInProject(),
             systemProperty("cassandra.compression").value("LZ4"));
   }
 
