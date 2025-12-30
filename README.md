@@ -5,7 +5,7 @@
 
 *If you're reading this on github.com, please note that this is the readme for the development 
 version and that some features described here might not yet have been released. You can find the documentation for latest version at [apache.github.io] or via the release tags, e.g. 
-[4.17.0](https://github.com/apache/cassandra-java-driver/tree/4.17.0). For earlier versions, see the [DataStax Docs].*
+[4.17.0](https://github.com/apache/cassandra-java-driver/tree/4.17.0). For versions earlier than 4.18.0, see the [DataStax Docs].*
 
 A modern, feature-rich and highly tunable Java client library for [Apache Cassandra®] \(2.1+) and 
 [DataStax Enterprise] \(4.7+), and [DataStax Astra], using exclusively Cassandra's binary protocol
