@@ -33,6 +33,7 @@ Define custom Java to CQL mappings.
         (MutableCodecRegistry) session.getContext().getCodecRegistry();    
     registry.register(myCodec);
     ```
+
 * using a codec:
   * if already registered: `row.get("columnName", MyCustomType.class)`
   * otherwise: `row.get("columnName", myCodec)`
