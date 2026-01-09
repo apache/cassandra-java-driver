@@ -51,7 +51,7 @@ public abstract class BaseAstraRule extends CcmRule {
   }
 
   @Override
-  protected void before() {
+  protected synchronized void before() {
     astraBridge.create();
     astraBridge.start();
   }

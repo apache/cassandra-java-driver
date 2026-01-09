@@ -31,7 +31,7 @@ import org.junit.runners.model.Statement;
  */
 public class AstraRule extends BaseAstraRule {
 
-  private static final AstraRule INSTANCE = new AstraRule();
+  private static volatile AstraRule INSTANCE;
 
   private volatile boolean started = false;
 
@@ -77,6 +77,14 @@ public class AstraRule extends BaseAstraRule {
   }
 
   public static AstraRule getInstance() {
+    // Lazy initialization to avoid creating AstraBridge when not using Astra
+    if (INSTANCE == null) {
+      synchronized (AstraRule.class) {
+        if (INSTANCE == null) {
+          INSTANCE = new AstraRule();
+        }
+      }
+    }
     return INSTANCE;
   }
 }

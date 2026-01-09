@@ -18,7 +18,7 @@
 package com.datastax.oss.driver.api.testinfra.astra;
 
 import com.datastax.oss.driver.api.core.Version;
-import com.datastax.oss.driver.api.testinfra.CassandraBridge;
+import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import java.io.BufferedReader;
 import java.io.File;
@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AstraBridge implements CassandraBridge {
+public class AstraBridge extends CcmBridge {
 
   private static final Logger LOG = LoggerFactory.getLogger(AstraBridge.class);
 
@@ -71,6 +71,16 @@ public class AstraBridge implements CassandraBridge {
       String keyspace,
       String cloudProvider,
       String region) {
+    super(
+        configDirectory,
+        new int[] {1},
+        "127.0.0",
+        java.util.Collections.emptyMap(),
+        java.util.Collections.emptyMap(),
+        java.util.Collections.emptyList(),
+        java.util.Collections.emptyList(),
+        java.util.Collections.emptyList(),
+        java.util.Collections.emptyList());
     this.configDirectory = configDirectory;
     this.databaseName = databaseName;
     this.keyspace = keyspace;
@@ -96,7 +106,7 @@ public class AstraBridge implements CassandraBridge {
     return Version.parse("4.0.0");
   }
 
-  public static class Builder {
+  public static class Builder extends CcmBridge.Builder {
     private String databaseName = DATABASE_NAME_PREFIX + System.currentTimeMillis();
     private String keyspace = DEFAULT_KEYSPACE;
     private String cloudProvider = ASTRA_CLOUD_PROVIDER;
@@ -122,6 +132,7 @@ public class AstraBridge implements CassandraBridge {
       return this;
     }
 
+    @Override
     public AstraBridge build() {
       try {
         Path configDir = Files.createTempDirectory("astra-test-");

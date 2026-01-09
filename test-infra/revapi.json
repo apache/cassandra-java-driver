@@ -212,10 +212,58 @@
         "justification": "Adding methods to support polymorphic backend selection for Astra and CCM tests"
       },
       {
-        "code": "java.method.returnTypeChanged",
-        "old": "method com.datastax.oss.driver.api.testinfra.ccm.CcmRule com.datastax.oss.driver.api.testinfra.ccm.CcmRule::getInstance()",
-        "new": "method com.datastax.oss.driver.api.testinfra.CassandraResourceRule com.datastax.oss.driver.api.testinfra.ccm.CcmRule::getInstance()",
-        "justification": "CcmRule.getInstance() now returns CassandraResourceRule to support polymorphic backend selection (CCM or Astra) based on ccm.distribution system property"
+        "ignore": true,
+        "code": "java.method.visibilityIncreased",
+        "old": "method void com.datastax.oss.driver.api.testinfra.ccm.CcmRule::<init>()",
+        "new": "method void com.datastax.oss.driver.api.testinfra.ccm.CcmRule::<init>()",
+        "oldVisibility": "private",
+        "newVisibility": "protected",
+        "justification": "So that AstraRule can extend CcmRule"
+      },
+      {
+        "ignore": true,
+        "code": "java.method.visibilityIncreased",
+        "old": "method void com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule::<init>(com.datastax.oss.driver.api.testinfra.ccm.CcmBridge)",
+        "new": "method void com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule::<init>(com.datastax.oss.driver.api.testinfra.CassandraBridge)",
+        "oldVisibility": "package",
+        "newVisibility": "protected",
+        "justification": "So that AstraRule can extend CcmRule and pass AstraBridge"
+      },
+      {
+        "ignore": true,
+        "code": "java.field.typeChanged",
+        "old": "field com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule.ccmBridge",
+        "new": "field com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule.ccmBridge",
+        "oldType": "com.datastax.oss.driver.api.testinfra.ccm.CcmBridge",
+        "newType": "com.datastax.oss.driver.api.testinfra.CassandraBridge",
+        "justification": "So that AstraRule can extend CcmRule and use AstraBridge"
+      },
+      {
+        "ignore": true,
+        "code": "java.method.visibilityIncreased",
+        "old": "method void com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule::<init>(com.datastax.oss.driver.api.testinfra.ccm.CcmBridge)",
+        "new": "method void com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule::<init>(com.datastax.oss.driver.api.testinfra.ccm.CcmBridge)",
+        "oldVisibility": "package",
+        "newVisibility": "protected",
+        "justification": "ADD YOUR EXPLANATION FOR THE NECESSITY OF THIS CHANGE"
+      },
+      {
+        "ignore": true,
+        "code": "java.method.visibilityIncreased",
+        "old": "method void com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.Builder::<init>()",
+        "new": "method void com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.Builder::<init>()",
+        "oldVisibility": "private",
+        "newVisibility": "protected",
+        "justification": "ADD YOUR EXPLANATION FOR THE NECESSITY OF THIS CHANGE"
+      },
+      {
+        "ignore": true,
+        "code": "java.method.visibilityIncreased",
+        "old": "method void com.datastax.oss.driver.api.testinfra.ccm.CcmBridge::<init>(java.nio.file.Path, int[], java.lang.String, java.util.Map<java.lang.String, java.lang.Object>, java.util.Map<java.lang.String, java.lang.Object>, java.util.List<java.lang.String>, java.util.List<java.lang.String>, java.util.Collection<java.lang.String>, java.util.List<java.lang.String>)",
+        "new": "method void com.datastax.oss.driver.api.testinfra.ccm.CcmBridge::<init>(java.nio.file.Path, int[], java.lang.String, java.util.Map<java.lang.String, java.lang.Object>, java.util.Map<java.lang.String, java.lang.Object>, java.util.List<java.lang.String>, java.util.List<java.lang.String>, java.util.Collection<java.lang.String>, java.util.List<java.lang.String>)",
+        "oldVisibility": "private",
+        "newVisibility": "protected",
+        "justification": "ADD YOUR EXPLANATION FOR THE NECESSITY OF THIS CHANGE"
       }
     ]
   }

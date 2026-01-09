@@ -31,7 +31,7 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
 
   protected final CcmBridge ccmBridge;
 
-  BaseCcmRule(CcmBridge ccmBridge) {
+  protected BaseCcmRule(CcmBridge ccmBridge) {
     this.ccmBridge = ccmBridge;
     Runtime.getRuntime()
         .addShutdownHook(
@@ -58,19 +58,6 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
 
   @Override
   public Statement apply(Statement base, Description description) {
-    // Skip CCM-specific tests when running with Astra
-    if (CcmBridge.DISTRIBUTION == BackendType.ASTRA) {
-      return new Statement() {
-        @Override
-        public void evaluate() {
-          throw new AssumptionViolatedException(
-              "Test uses CCM-specific rule and cannot run against Astra. "
-                  + "Use CassandraResourceRuleFactory.getInstance() instead of CcmRule or CustomCcmRule "
-                  + "to support both CCM and Astra backends.");
-        }
-      };
-    }
-
     if (BackendRequirementRule.meetsDescriptionRequirements(description)) {
       return super.apply(base, description);
     } else {
@@ -87,12 +74,12 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
 
   @Override
   public BackendType getDistribution() {
-    return CcmBridge.DISTRIBUTION;
+    return ccmBridge.getDistribution();
   }
 
   @Override
   public boolean isDistributionOf(BackendType type) {
-    return CcmBridge.isDistributionOf(type);
+    return ccmBridge.getDistribution() == type;
   }
 
   public boolean isDistributionOf(BackendType type, CcmBridge.VersionComparator comparator) {

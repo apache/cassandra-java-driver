@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
  */
 public class CcmRule extends BaseCcmRule {
 
-  private static final CcmRule CCM_INSTANCE = new CcmRule();
+  private static volatile CcmRule CCM_INSTANCE;
   private static final BackendType DISTRIBUTION =
       BackendType.valueOf(
           System.getProperty("ccm.distribution", BackendType.CASSANDRA.name()).toUpperCase());
@@ -49,6 +49,14 @@ public class CcmRule extends BaseCcmRule {
 
   protected CcmRule() {
     super(configureCcmBridge(CcmBridge.builder()).build());
+  }
+
+  /**
+   * Protected constructor for subclasses (like AstraRule) that want to provide their own bridge
+   * implementation.
+   */
+  protected CcmRule(CcmBridge bridge) {
+    super(bridge);
   }
 
   public static CcmBridge.Builder configureCcmBridge(CcmBridge.Builder builder) {
@@ -108,20 +116,28 @@ public class CcmRule extends BaseCcmRule {
   }
 
   /**
-   * Returns a singleton instance of a Cassandra resource rule.
+   * Returns a singleton instance of a CCM rule.
    *
    * <p>The actual implementation returned depends on the {@code ccm.distribution} system property:
    *
    * <ul>
-   *   <li>If set to {@code ASTRA}, returns {@link AstraRule#getInstance()}
+   *   <li>If set to {@code ASTRA}, returns {@link AstraRule#getInstance()} (which extends CcmRule)
    *   <li>Otherwise, returns a {@link CcmRule} instance
    * </ul>
    *
-   * @return a singleton Cassandra resource rule
+   * @return a singleton CCM rule
    */
   public static CcmRule getInstance() {
     if (DISTRIBUTION == BackendType.ASTRA) {
       return AstraRule.getInstance();
+    }
+    // Lazy initialization to avoid creating CcmBridge when using Astra
+    if (CCM_INSTANCE == null) {
+      synchronized (CcmRule.class) {
+        if (CCM_INSTANCE == null) {
+          CCM_INSTANCE = new CcmRule();
+        }
+      }
     }
     return CCM_INSTANCE;
   }

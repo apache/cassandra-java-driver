@@ -18,7 +18,6 @@
 package com.datastax.oss.driver.api.testinfra.ccm;
 
 import com.datastax.oss.driver.api.core.Version;
-import com.datastax.oss.driver.api.testinfra.CassandraBridge;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.shaded.guava.common.base.Joiner;
 import com.datastax.oss.driver.shaded.guava.common.io.Resources;
@@ -52,7 +51,7 @@ import org.assertj.core.util.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CcmBridge implements CassandraBridge {
+public class CcmBridge implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(CcmBridge.class);
 
@@ -133,7 +132,7 @@ public class CcmBridge implements CassandraBridge {
   private final List<String> dseWorkloads;
   private final String jvmArgs;
 
-  private CcmBridge(
+  protected CcmBridge(
       Path configDirectory,
       int[] nodes,
       String ipPrefix,
@@ -216,7 +215,6 @@ public class CcmBridge implements CassandraBridge {
     return version.toString();
   }
 
-  @Override
   public void create() {
     if (created.compareAndSet(false, true)) {
       if (INSTALL_DIRECTORY != null) {
@@ -290,7 +288,6 @@ public class CcmBridge implements CassandraBridge {
     dsetool(node, "reload_core", keyspace + "." + table, "reindex=" + reindex);
   }
 
-  @Override
   public void start() {
     if (started.compareAndSet(false, true)) {
       List<String> cmdAndArgs = Lists.newArrayList("start", jvmArgs, "--wait-for-binary-proto");
@@ -305,7 +302,6 @@ public class CcmBridge implements CassandraBridge {
     }
   }
 
-  @Override
   public void stop() {
     if (started.compareAndSet(true, false)) {
       execute("stop");
@@ -433,7 +429,6 @@ public class CcmBridge implements CassandraBridge {
     }
   }
 
-  @Override
   public BackendType getDistribution() {
     return DISTRIBUTION;
   }
@@ -547,7 +542,7 @@ public class CcmBridge implements CassandraBridge {
 
     private final Path configDirectory;
 
-    private Builder() {
+    protected Builder() {
       try {
         this.configDirectory = Files.createTempDirectory("ccm");
         // mark the ccm temp directories for deletion when the JVM exits

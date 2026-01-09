@@ -36,6 +36,8 @@ import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import java.util.Objects;
 import org.junit.rules.ExternalResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Creates and manages a {@link Session} instance for a test.
@@ -64,6 +66,7 @@ import org.junit.rules.ExternalResource;
  */
 public class SessionRule<SessionT extends Session> extends ExternalResource {
 
+  private static final Logger LOG = LoggerFactory.getLogger(SessionRule.class);
   private static final Version V6_8_0 = Objects.requireNonNull(Version.parse("6.8.0"));
 
   // the CCM or Simulacron rule to depend on
@@ -156,6 +159,10 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
 
     // Create keyspace if needed
     if (keyspace != null) {
+      LOG.warn(
+          "Creating keyspace: {} with CassandraResource: {}",
+          keyspace,
+          cassandraResource.getClass().getSimpleName());
       if (cassandraResource instanceof BaseAstraRule) {
         // For Astra, create keyspace using Astra CLI
         BaseAstraRule astraRule = (BaseAstraRule) cassandraResource;

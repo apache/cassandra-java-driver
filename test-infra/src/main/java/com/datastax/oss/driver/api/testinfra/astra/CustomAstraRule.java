@@ -40,7 +40,7 @@ public class CustomAstraRule extends BaseAstraRule {
   }
 
   @Override
-  protected void before() {
+  protected synchronized void before() {
     if (CURRENT.get() == null && CURRENT.compareAndSet(null, this)) {
       try {
         super.before();
