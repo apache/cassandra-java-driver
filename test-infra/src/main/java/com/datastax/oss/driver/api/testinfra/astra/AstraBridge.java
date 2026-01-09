@@ -47,6 +47,9 @@ public class AstraBridge extends CcmBridge {
       System.getProperty("astra.cloud.provider", "gcp");
   private static final String ASTRA_REGION = System.getProperty("astra.region", "us-east1");
 
+  // Existing database ID (if provided, use existing database instead of creating new one)
+  private static final String ASTRA_DATABASE_ID = System.getProperty("astra.database.id");
+
   // Database configuration
   private static final String DATABASE_NAME_PREFIX = "java_driver_test_db_";
   private static final String DEFAULT_KEYSPACE = "java_driver_test";
@@ -62,6 +65,9 @@ public class AstraBridge extends CcmBridge {
   private final AtomicBoolean started = new AtomicBoolean();
   private final Path configDirectory;
 
+  // Flag to track if we're using an existing database (should not be destroyed)
+  private final boolean usingExistingDatabase;
+
   private String databaseId;
   private File secureConnectBundle;
 
@@ -70,7 +76,8 @@ public class AstraBridge extends CcmBridge {
       String databaseName,
       String keyspace,
       String cloudProvider,
-      String region) {
+      String region,
+      String existingDatabaseId) {
     super(
         configDirectory,
         new int[] {1},
@@ -82,10 +89,33 @@ public class AstraBridge extends CcmBridge {
         java.util.Collections.emptyList(),
         java.util.Collections.emptyList());
     this.configDirectory = configDirectory;
-    this.databaseName = databaseName;
     this.keyspace = keyspace;
     this.cloudProvider = cloudProvider;
     this.region = region;
+    this.usingExistingDatabase = existingDatabaseId != null;
+    this.databaseId = existingDatabaseId; // Will be set if using existing database
+
+    // If using existing database, extract the database name from Astra
+    if (usingExistingDatabase) {
+      try {
+        // Setup Astra CLI with token first
+        runAstraCommand("setup", "--token", ASTRA_TOKEN);
+
+        // Get database info using CSV output format
+        String dbInfoOutput = runAstraCommand("db", "get", existingDatabaseId, "-o", "csv");
+        this.databaseName = extractDatabaseNameFromCsv(dbInfoOutput);
+        LOG.info(
+            "Extracted database name '{}' for existing database ID: {}",
+            this.databaseName,
+            existingDatabaseId);
+      } catch (IOException | InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException(
+            "Failed to extract database name for existing database ID: " + existingDatabaseId, e);
+      }
+    } else {
+      this.databaseName = databaseName;
+    }
   }
 
   public static Builder builder() {
@@ -111,6 +141,7 @@ public class AstraBridge extends CcmBridge {
     private String keyspace = DEFAULT_KEYSPACE;
     private String cloudProvider = ASTRA_CLOUD_PROVIDER;
     private String region = ASTRA_REGION;
+    private String existingDatabaseId = ASTRA_DATABASE_ID;
 
     public Builder withDatabaseName(String databaseName) {
       this.databaseName = databaseName;
@@ -132,11 +163,17 @@ public class AstraBridge extends CcmBridge {
       return this;
     }
 
+    public Builder withExistingDatabaseId(String databaseId) {
+      this.existingDatabaseId = databaseId;
+      return this;
+    }
+
     @Override
     public AstraBridge build() {
       try {
         Path configDir = Files.createTempDirectory("astra-test-");
-        return new AstraBridge(configDir, databaseName, keyspace, cloudProvider, region);
+        return new AstraBridge(
+            configDir, databaseName, keyspace, cloudProvider, region, existingDatabaseId);
       } catch (IOException e) {
         throw new RuntimeException("Failed to create config directory", e);
       }
@@ -147,39 +184,49 @@ public class AstraBridge extends CcmBridge {
   public synchronized void create() {
     if (created.compareAndSet(false, true)) {
       try {
-        LOG.info("Creating Astra database: {}", databaseName);
+        // Setup Astra CLI with token (skip if already done in constructor for existing DB)
+        if (!usingExistingDatabase) {
+          runAstraCommand("setup", "--token", ASTRA_TOKEN);
+        }
 
-        // Setup Astra CLI with token
-        runAstraCommand("setup", "--token", ASTRA_TOKEN);
+        if (usingExistingDatabase) {
+          LOG.info("Using existing Astra database '{}' with ID: {}", databaseName, databaseId);
 
-        // Create database using Astra CLI
-        // astra db create --no-async --non-vector --if-not-exists -k <KEYSPACE> -r <REGION>
-        // <DB_NAME>
-        List<String> createArgs = new ArrayList<>();
-        createArgs.add("db");
-        createArgs.add("create");
-        createArgs.add("--no-async");
-        createArgs.add("--non-vector");
-        createArgs.add("--if-not-exists");
-        createArgs.add("-k");
-        createArgs.add(keyspace);
-        createArgs.add("-r");
-        createArgs.add(region);
-        createArgs.add(databaseName);
+          // Download secure connect bundle for existing database
+          downloadSecureConnectBundleById();
 
-        String output = runAstraCommand(createArgs.toArray(new String[0]));
-        LOG.info("Database creation output: {}", output);
+        } else {
+          LOG.info("Creating Astra database: {}", databaseName);
 
-        // Get database ID using: astra db get <DB_NAME> --key id
-        String dbIdOutput = runAstraCommand("db", "get", databaseName, "--key", "id");
-        LOG.info("Database ID output: {}", dbIdOutput);
+          // Create database using Astra CLI
+          // astra db create --no-async --non-vector --if-not-exists -k <KEYSPACE> -r <REGION>
+          // <DB_NAME>
+          List<String> createArgs = new ArrayList<>();
+          createArgs.add("db");
+          createArgs.add("create");
+          createArgs.add("--no-async");
+          createArgs.add("--non-vector");
+          createArgs.add("--if-not-exists");
+          createArgs.add("-k");
+          createArgs.add(keyspace);
+          createArgs.add("-r");
+          createArgs.add(region);
+          createArgs.add(databaseName);
 
-        // Extract the UUID from the output (filter out [INFO] and other lines)
-        databaseId = extractDatabaseId(dbIdOutput);
-        LOG.info("Astra database created with ID: {}", databaseId);
+          String output = runAstraCommand(createArgs.toArray(new String[0]));
+          LOG.info("Database creation output: {}", output);
 
-        // Download secure connect bundle
-        downloadSecureConnectBundle();
+          // Get database ID using: astra db get <DB_NAME> --key id
+          String dbIdOutput = runAstraCommand("db", "get", databaseName, "--key", "id");
+          LOG.info("Database ID output: {}", dbIdOutput);
+
+          // Extract the UUID from the output (filter out [INFO] and other lines)
+          databaseId = extractDatabaseId(dbIdOutput);
+          LOG.info("Astra database created with ID: {}", databaseId);
+
+          // Download secure connect bundle
+          downloadSecureConnectBundle();
+        }
 
       } catch (IOException | InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -203,6 +250,23 @@ public class AstraBridge extends CcmBridge {
 
     this.secureConnectBundle = scbFile;
     LOG.info("Secure connect bundle downloaded to: {}", scbFile.getAbsolutePath());
+  }
+
+  private void downloadSecureConnectBundleById() throws IOException, InterruptedException {
+    // Create SCB directory
+    Path scbDir = configDirectory.resolve("scb");
+    Files.createDirectories(scbDir);
+
+    // Download SCB using database ID: astra db download-scb <DB_ID> -f <FILE>
+    File scbFile = scbDir.resolve("scb_" + databaseId + ".zip").toFile();
+    runAstraCommand("db", "download-scb", databaseId, "-f", scbFile.getAbsolutePath());
+
+    if (!scbFile.exists()) {
+      throw new IOException("Secure connect bundle was not downloaded: " + scbFile);
+    }
+
+    this.secureConnectBundle = scbFile;
+    LOG.info("Secure connect bundle downloaded by ID to: {}", scbFile.getAbsolutePath());
   }
 
   private static final Pattern UUID_PATTERN =
@@ -231,6 +295,40 @@ public class AstraBridge extends CcmBridge {
       }
     }
     throw new IllegalStateException("Could not extract database ID from output: " + output);
+  }
+
+  /**
+   * Extract database name from Astra CLI CSV output. The CSV output format is:
+   *
+   * <pre>
+   * Attribute,Value
+   * Name,java_driver_test_db_1767831564069
+   * id,67750433-fe2e-48d4-bd60-7aef5e76be27
+   * ...
+   * </pre>
+   *
+   * @param output the CSV output from 'astra db get <DB_ID> -o csv'
+   * @return the database name
+   */
+  private String extractDatabaseNameFromCsv(String output) {
+    // Use Pattern.compile to split by newline to avoid String.split() warning
+    String[] lines = Pattern.compile("\n").split(output);
+    for (String line : lines) {
+      String trimmed = line.trim();
+      // Skip lines that start with [INFO], [OK], [ERROR], etc.
+      if (trimmed.startsWith("[")) {
+        continue;
+      }
+      // Look for the line that starts with "Name,"
+      if (trimmed.startsWith("Name,")) {
+        // Extract the value after the comma
+        String[] parts = trimmed.split(",", 2);
+        if (parts.length == 2) {
+          return parts[1].trim();
+        }
+      }
+    }
+    throw new IllegalStateException("Could not extract database name from CSV output: " + output);
   }
 
   private String runAstraCommand(String... args) throws IOException, InterruptedException {
@@ -280,13 +378,18 @@ public class AstraBridge extends CcmBridge {
 
   @Override
   public synchronized void stop() {
-    if (databaseName == null) {
+    if (databaseId == null) {
       LOG.info("No Astra database to terminate");
       return;
     }
 
+    if (usingExistingDatabase) {
+      LOG.info("Using existing Astra database (ID: {}), skipping deletion", databaseId);
+      return;
+    }
+
     try {
-      LOG.info("Terminating Astra database: {}", databaseName);
+      LOG.info("Terminating Astra database: {} (ID: {})", databaseName, databaseId);
 
       // Delete the database asynchronously (don't wait for completion)
       String deleteOutput = runAstraCommand("db", "delete", databaseName, "--async");
