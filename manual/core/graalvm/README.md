@@ -24,13 +24,13 @@ under the License.
 * [GraalVM native images](https://www.graalvm.org/reference-manual/native-image/) can be built with 
   no additional configuration starting with driver 4.13.0.
 * But extra configurations are required in a few cases:
-  * When using [reactive programming](../reactive);
-  * When using [Jackson](../integration#Jackson);
-  * When using LZ4 [compression](../compression/);
-  * Depending on the [logging backend](../logging) in use.
+    * When using [reactive programming](../reactive);
+    * When using [Jackson](../integration#Jackson);
+    * When using LZ4 [compression](../compression/);
+    * Depending on the [logging backend](../logging) in use.
 * DSE-specific features:
-  * [Geospatial types](../dse/geotypes) are supported.
-  * [DSE Graph](../dse/graph) is not officially supported, although it may work.
+    * [Geospatial types](../dse/geotypes) are supported.
+    * [DSE Graph](../dse/graph) is not officially supported, although it may work.
 * The [shaded jar](../shaded_jar) is not officially supported, although it may work.
 
 -----
