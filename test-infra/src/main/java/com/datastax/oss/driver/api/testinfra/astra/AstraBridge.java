@@ -99,7 +99,14 @@ public class AstraBridge extends CcmBridge {
     if (usingExistingDatabase) {
       try {
         // Setup Astra CLI with token first
-        runAstraCommand("setup", "--token", ASTRA_TOKEN);
+        runAstraCommand(
+            "config",
+            "create",
+            "java_driver_test",
+            "--token",
+            ASTRA_TOKEN,
+            "--default",
+            "--overwrite");
 
         // Get database info using CSV output format
         String dbInfoOutput = runAstraCommand("db", "get", existingDatabaseId, "-o", "csv");
@@ -186,7 +193,14 @@ public class AstraBridge extends CcmBridge {
       try {
         // Setup Astra CLI with token (skip if already done in constructor for existing DB)
         if (!usingExistingDatabase) {
-          runAstraCommand("setup", "--token", ASTRA_TOKEN);
+          runAstraCommand(
+              "config",
+              "create",
+              "java_driver_test",
+              "--token",
+              ASTRA_TOKEN,
+              "--default",
+              "--overwrite");
         }
 
         if (usingExistingDatabase) {
@@ -331,7 +345,71 @@ public class AstraBridge extends CcmBridge {
     throw new IllegalStateException("Could not extract database name from CSV output: " + output);
   }
 
+  /**
+   * Checks if the error message indicates a transient error that should be retried.
+   *
+   * @param errorMessage the error message from the failed command
+   * @return true if the error is retryable
+   */
+  private boolean isRetryableAstraError(String errorMessage) {
+    if (errorMessage == null) {
+      return false;
+    }
+    // Check for invalid state errors (e.g., MAINTENANCE mode)
+    if (errorMessage.contains("invalid state")) {
+      return true;
+    }
+    // Check for internal HTTP errors
+    if (errorMessage.contains("INTERNAL_ERROR") && errorMessage.contains("HTTP Request")) {
+      return true;
+    }
+    // Check for HttpEntity errors
+    if (errorMessage.contains("HttpEntity")) {
+      return true;
+    }
+    return false;
+  }
+
   private String runAstraCommand(String... args) throws IOException, InterruptedException {
+    int maxRetries = 3;
+    int retryDelaySeconds = 10;
+    IOException lastException = null;
+
+    for (int attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        return executeAstraCommand(args);
+      } catch (IOException e) {
+        lastException = e;
+        String errorMessage = e.getMessage();
+
+        // Check if this is a retryable error
+        if (isRetryableAstraError(errorMessage) && attempt < maxRetries) {
+          LOG.error(
+              "Astra CLI command failed with transient error (attempt {}/{}): {}",
+              attempt + 1,
+              maxRetries + 1,
+              errorMessage);
+          LOG.info("Waiting {} seconds before retry...", retryDelaySeconds);
+
+          try {
+            Thread.sleep(retryDelaySeconds * 1000L);
+          } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Interrupted while waiting to retry Astra CLI command", ie);
+          }
+          // Continue to next retry iteration
+        } else {
+          // Non-retryable error or max retries reached, throw immediately
+          throw e;
+        }
+      }
+    }
+
+    // Should not reach here, but just in case
+    throw lastException;
+  }
+
+  private String executeAstraCommand(String... args) throws IOException, InterruptedException {
     List<String> command = new ArrayList<>();
     command.add("astra");
     for (String arg : args) {
@@ -432,7 +510,8 @@ public class AstraBridge extends CcmBridge {
   }
 
   /**
-   * Creates a new keyspace in the Astra database using the Astra CLI.
+   * Creates a new keyspace in the Astra database using the Astra CLI. Retries are handled
+   * automatically by runAstraCommand() for transient errors.
    *
    * @param keyspaceName the name of the keyspace to create
    * @throws RuntimeException if the keyspace creation fails
@@ -446,10 +525,18 @@ public class AstraBridge extends CcmBridge {
     try {
       LOG.info("Creating keyspace '{}' in Astra database '{}'", keyspaceName, databaseName);
 
-      // Create keyspace using: astra db create-keyspace <DB_NAME> -k <KEYSPACE> --if-not-exist
+      // Create keyspace using: astra db create-keyspace <DB_NAME> -k <KEYSPACE> --if-not-exists
+      // runAstraCommand() will automatically retry on transient errors
       String output =
           runAstraCommand(
-              "db", "create-keyspace", databaseName, "-k", keyspaceName, "--if-not-exist");
+              "db",
+              "create-keyspace",
+              databaseName,
+              "-k",
+              keyspaceName,
+              "--if-not-exists",
+              "--timeout",
+              "120");
       LOG.info("Keyspace creation output: {}", output);
       LOG.info("Keyspace '{}' created successfully", keyspaceName);
 

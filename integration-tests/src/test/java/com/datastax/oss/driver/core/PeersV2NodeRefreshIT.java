@@ -17,11 +17,13 @@
  */
 package com.datastax.oss.driver.core;
 
+import static com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.isDistributionOf;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.simulacron.common.cluster.ClusterSpec;
@@ -30,6 +32,7 @@ import com.datastax.oss.simulacron.server.BoundCluster;
 import com.datastax.oss.simulacron.server.Server;
 import java.util.concurrent.ExecutionException;
 import org.junit.AfterClass;
+import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -41,6 +44,7 @@ public class PeersV2NodeRefreshIT {
 
   @BeforeClass
   public static void setup() {
+    Assume.assumeTrue("Skipping for Astra", !isDistributionOf(BackendType.ASTRA));
     peersV2Server = Server.builder().withMultipleNodesPerIp(true).build();
     cluster = peersV2Server.register(ClusterSpec.builder().withNodes(2));
   }

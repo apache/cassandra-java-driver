@@ -307,10 +307,27 @@ public class DefaultReactiveResultSetIT {
 
   private static void partiallyDeleteInsertedRows() {
     CqlSession session = sessionRule.session();
-    session.execute(" DELETE FROM test_reactive_write WHERE pk = 0 and cc = 5");
-    session.execute(" DELETE FROM test_reactive_write WHERE pk = 0 and cc = 6");
-    session.execute(" DELETE FROM test_reactive_write WHERE pk = 0 and cc = 7");
-    session.execute(" DELETE FROM test_reactive_write WHERE pk = 0 and cc = 8");
-    session.execute(" DELETE FROM test_reactive_write WHERE pk = 0 and cc = 9");
+    // Use ALL consistency level to ensure deletes are immediately visible across all replicas
+    // This is important for Astra (distributed system) to avoid eventual consistency issues
+    session.execute(
+        SimpleStatement.builder("DELETE FROM test_reactive_write WHERE pk = 0 and cc = 5")
+            .setConsistencyLevel(com.datastax.oss.driver.api.core.DefaultConsistencyLevel.ALL)
+            .build());
+    session.execute(
+        SimpleStatement.builder("DELETE FROM test_reactive_write WHERE pk = 0 and cc = 6")
+            .setConsistencyLevel(com.datastax.oss.driver.api.core.DefaultConsistencyLevel.ALL)
+            .build());
+    session.execute(
+        SimpleStatement.builder("DELETE FROM test_reactive_write WHERE pk = 0 and cc = 7")
+            .setConsistencyLevel(com.datastax.oss.driver.api.core.DefaultConsistencyLevel.ALL)
+            .build());
+    session.execute(
+        SimpleStatement.builder("DELETE FROM test_reactive_write WHERE pk = 0 and cc = 8")
+            .setConsistencyLevel(com.datastax.oss.driver.api.core.DefaultConsistencyLevel.ALL)
+            .build());
+    session.execute(
+        SimpleStatement.builder("DELETE FROM test_reactive_write WHERE pk = 0 and cc = 9")
+            .setConsistencyLevel(com.datastax.oss.driver.api.core.DefaultConsistencyLevel.ALL)
+            .build());
   }
 }
