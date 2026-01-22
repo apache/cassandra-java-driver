@@ -77,6 +77,7 @@ public class SchemaIT {
   }
 
   @Test
+  @BackendRequirement(type = BackendType.ASTRA, include = false)
   public void should_expose_test_keyspace() {
     Map<CqlIdentifier, KeyspaceMetadata> keyspaces =
         sessionRule.session().getMetadata().getKeyspaces();

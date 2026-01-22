@@ -120,7 +120,8 @@ public class VersionRequirement {
   }
 
   public static Collection<VersionRequirement> fromAnnotations(Description description) {
-    // collect all requirement annotation types
+    // collect all requirement annotation types from both the method and the class
+    // (description.getAnnotation() only checks the method when using @Rule)
     CassandraRequirement cassandraRequirement =
         description.getAnnotation(CassandraRequirement.class);
     DseRequirement dseRequirement = description.getAnnotation(DseRequirement.class);
@@ -128,6 +129,23 @@ public class VersionRequirement {
     BackendRequirement backendRequirement = description.getAnnotation(BackendRequirement.class);
     // matches methods/classes with two or more @BackendRequirement annotations
     BackendRequirements backendRequirements = description.getAnnotation(BackendRequirements.class);
+
+    // Also check the test class for annotations (needed when using @Rule instead of @ClassRule)
+    Class<?> testClass = description.getTestClass();
+    if (testClass != null) {
+      if (cassandraRequirement == null) {
+        cassandraRequirement = testClass.getAnnotation(CassandraRequirement.class);
+      }
+      if (dseRequirement == null) {
+        dseRequirement = testClass.getAnnotation(DseRequirement.class);
+      }
+      if (backendRequirement == null) {
+        backendRequirement = testClass.getAnnotation(BackendRequirement.class);
+      }
+      if (backendRequirements == null) {
+        backendRequirements = testClass.getAnnotation(BackendRequirements.class);
+      }
+    }
 
     // build list of required versions
     Collection<VersionRequirement> requirements = new ArrayList<>();

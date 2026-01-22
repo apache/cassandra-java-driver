@@ -104,12 +104,22 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
     this.cassandraResource = cassandraResource;
     this.nodeStateListener = nodeStateListener;
     this.schemaChangeListener = schemaChangeListener;
-    // Generate a unique keyspace for all backends except Simulacron (when createKeyspace is true)
-    // For Simulacron or when createKeyspace is false, don't generate a keyspace
-    this.keyspace =
-        (cassandraResource instanceof SimulacronRule || !createKeyspace)
-            ? null
-            : SessionUtils.uniqueKeyspaceId();
+    // Determine keyspace based on backend type:
+    // - Simulacron: no keyspace (null)
+    // - Astra: use shared keyspace from AstraBridge (when createKeyspace is true)
+    // - CCM/other: generate unique keyspace (when createKeyspace is true)
+    // - When createKeyspace is false: no keyspace (null)
+    if (!createKeyspace || cassandraResource instanceof SimulacronRule) {
+      this.keyspace = null;
+    } else if (cassandraResource instanceof BaseAstraRule) {
+      // For Astra, use the shared keyspace from AstraBridge
+      BaseAstraRule astraRule = (BaseAstraRule) cassandraResource;
+      String sharedKeyspace = astraRule.getAstraBridge().getKeyspace();
+      this.keyspace = sharedKeyspace != null ? CqlIdentifier.fromCql(sharedKeyspace) : null;
+    } else {
+      // For CCM and other backends, generate a unique keyspace
+      this.keyspace = SessionUtils.uniqueKeyspaceId();
+    }
     this.configLoader = configLoader;
     this.graphName = graphName;
     this.isCoreGraph = isCoreGraph;
@@ -159,16 +169,20 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
 
     // Create keyspace if needed
     if (keyspace != null) {
-      LOG.warn(
-          "Creating keyspace: {} with CassandraResource: {}",
-          keyspace,
-          cassandraResource.getClass().getSimpleName());
       if (cassandraResource instanceof BaseAstraRule) {
-        // For Astra, create keyspace using Astra CLI
+        // For Astra, the shared keyspace already exists - just switch to it
         BaseAstraRule astraRule = (BaseAstraRule) cassandraResource;
-        astraRule.getAstraBridge().createKeyspace(keyspace.asInternal());
+        String sharedKeyspace = astraRule.getAstraBridge().getKeyspace();
+        LOG.warn(
+            "Using shared Astra keyspace: {} with CassandraResource: {}",
+            sharedKeyspace,
+            cassandraResource.getClass().getSimpleName());
       } else {
-        // For CCM and other backends, create keyspace using CQL
+        // For CCM and other backends, create a unique keyspace using CQL
+        LOG.warn(
+            "Creating keyspace: {} with CassandraResource: {}",
+            keyspace,
+            cassandraResource.getClass().getSimpleName());
         SessionUtils.createKeyspace(session, keyspace, slowProfile);
       }
       // Switch to the keyspace

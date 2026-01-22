@@ -17,9 +17,15 @@
  */
 package com.datastax.oss.driver.api.testinfra.astra;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
+import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
+import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
+import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -28,8 +34,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
@@ -82,12 +92,12 @@ public class AstraBridge extends CcmBridge {
         configDirectory,
         new int[] {1},
         "127.0.0",
-        java.util.Collections.emptyMap(),
-        java.util.Collections.emptyMap(),
-        java.util.Collections.emptyList(),
-        java.util.Collections.emptyList(),
-        java.util.Collections.emptyList(),
-        java.util.Collections.emptyList());
+        Collections.emptyMap(),
+        Collections.emptyMap(),
+        Collections.emptyList(),
+        Collections.emptyList(),
+        Collections.emptyList(),
+        Collections.emptyList());
     this.configDirectory = configDirectory;
     this.keyspace = keyspace;
     this.cloudProvider = cloudProvider;
@@ -333,9 +343,21 @@ public class AstraBridge extends CcmBridge {
       if (trimmed.startsWith("[")) {
         continue;
       }
-      // Look for the line that starts with "Name,"
-      if (trimmed.startsWith("Name,")) {
-        // Extract the value after the comma
+      // Skip the CSV header line
+      if (trimmed.startsWith("code,message,attribute,value")) {
+        continue;
+      }
+      // Look for the line with "Name" in the attribute column
+      // Format: OK,,Name,<database_name> or Name,<database_name> (for older CLI versions)
+      if (trimmed.contains(",Name,")) {
+        // Split by comma and get the last part (the value)
+        List<String> parts = Splitter.on(',').splitToList(trimmed);
+        if (parts.size() >= 2) {
+          // Return the last part which is the database name
+          return parts.get(parts.size() - 1).trim();
+        }
+      } else if (trimmed.startsWith("Name,")) {
+        // Handle older CSV format: Name,<database_name>
         String[] parts = trimmed.split(",", 2);
         if (parts.length == 2) {
           return parts[1].trim();
@@ -544,6 +566,81 @@ public class AstraBridge extends CcmBridge {
       Thread.currentThread().interrupt();
       throw new RuntimeException(
           "Failed to create keyspace '" + keyspaceName + "' in database '" + databaseName + "'", e);
+    }
+  }
+
+  /**
+   * Drops all user-created tables in the specified keyspace. This is used to clean up after test
+   * suites when running against Astra, where creating/dropping keyspaces is expensive.
+   *
+   * <p>System tables (those starting with "system") are not dropped.
+   *
+   * @param keyspaceName the name of the keyspace to clean
+   * @param session the CQL session to use for dropping tables
+   */
+  public void dropAllTablesInKeyspace(String keyspaceName, CqlSession session) {
+    if (databaseName == null) {
+      throw new IllegalStateException(
+          "Cannot drop tables: Astra database has not been created yet");
+    }
+
+    try {
+      LOG.info(
+          "Dropping all tables in keyspace '{}' of Astra database '{}'",
+          keyspaceName,
+          databaseName);
+
+      // Get keyspace metadata from the driver
+      Optional<KeyspaceMetadata> keyspaceMetadata = session.getMetadata().getKeyspace(keyspaceName);
+
+      if (!keyspaceMetadata.isPresent()) {
+        LOG.error("Keyspace '{}' not found in metadata", keyspaceName);
+        return;
+      }
+
+      // Get all tables from the keyspace metadata
+      Map<CqlIdentifier, TableMetadata> tables = keyspaceMetadata.get().getTables();
+      Map<CqlIdentifier, UserDefinedType> udts = keyspaceMetadata.get().getUserDefinedTypes();
+
+      AtomicInteger droppedCount = new AtomicInteger();
+      for (TableMetadata tableMetadata : tables.values()) {
+        String tableName = tableMetadata.getName().asInternal();
+        if (!tableName.startsWith("system")) {
+          session
+              .executeAsync(String.format("DROP TABLE IF EXISTS %s.%s", keyspaceName, tableName))
+              .whenComplete(
+                  (rs, err) -> {
+                    if (err != null) {
+                      LOG.info(
+                          "Failed to drop table '{}.{}': {}",
+                          keyspaceName,
+                          tableName,
+                          err.getMessage());
+                    } else {
+                      droppedCount.getAndIncrement();
+                      LOG.info("Dropped table '{}.{}'", keyspaceName, tableName);
+                    }
+                  });
+        }
+      }
+
+      for (UserDefinedType udt : udts.values()) {
+        String udtName = udt.getName().asInternal();
+        session
+            .executeAsync(String.format("DROP TYPE IF EXISTS %s.%s", keyspaceName, udtName))
+            .whenComplete(
+                (rs, err) -> {
+                  if (err != null) {
+                    LOG.info(
+                        "Failed to drop type '{}.{}': {}", keyspaceName, udtName, err.getMessage());
+                  } else {
+                    LOG.info("Dropped type '{}.{}'", keyspaceName, udtName);
+                  }
+                });
+      }
+    } catch (Exception e) {
+      LOG.error("Failed to drop tables in keyspace '{}': {}", keyspaceName, e.getMessage(), e);
+      // Don't throw - this is cleanup, we don't want to fail tests because of cleanup issues
     }
   }
 }

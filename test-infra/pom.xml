@@ -70,12 +70,6 @@
       <artifactId>commons-exec</artifactId>
       <optional>true</optional>
     </dependency>
-    <!-- only required for Astra tests -->
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <optional>true</optional>
-    </dependency>
     <dependency>
       <groupId>org.awaitility</groupId>
       <artifactId>awaitility</artifactId>
