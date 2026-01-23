@@ -85,6 +85,7 @@ public class SchemaIT {
   }
 
   @Test
+  @BackendRequirement(type = BackendType.ASTRA, include = false)
   public void should_filter_by_keyspaces() {
     DriverConfigLoader loader =
         SessionUtils.configLoaderBuilder()

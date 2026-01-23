@@ -19,7 +19,9 @@ package com.datastax.oss.driver.api.testinfra.astra;
 
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.DriverException;
 import com.datastax.oss.driver.api.core.Version;
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
 import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
@@ -33,6 +35,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -598,45 +602,43 @@ public class AstraBridge extends CcmBridge {
         return;
       }
 
+      // Tried the fan out pattern to drop tables and types concurrently,
+      // It didn't work well because the drop table queries easily time out
+
       // Get all tables from the keyspace metadata
       Map<CqlIdentifier, TableMetadata> tables = keyspaceMetadata.get().getTables();
-      Map<CqlIdentifier, UserDefinedType> udts = keyspaceMetadata.get().getUserDefinedTypes();
 
       AtomicInteger droppedCount = new AtomicInteger();
       for (TableMetadata tableMetadata : tables.values()) {
         String tableName = tableMetadata.getName().asInternal();
         if (!tableName.startsWith("system")) {
-          session
-              .executeAsync(String.format("DROP TABLE IF EXISTS %s.%s", keyspaceName, tableName))
-              .whenComplete(
-                  (rs, err) -> {
-                    if (err != null) {
-                      LOG.info(
-                          "Failed to drop table '{}.{}': {}",
-                          keyspaceName,
-                          tableName,
-                          err.getMessage());
-                    } else {
-                      droppedCount.getAndIncrement();
-                      LOG.info("Dropped table '{}.{}'", keyspaceName, tableName);
-                    }
-                  });
+          try {
+            session.execute(
+                SimpleStatement.newInstance(
+                        String.format("DROP TABLE IF EXISTS %s.%s", keyspaceName, tableName))
+                    .setTimeout(Duration.of(20, ChronoUnit.SECONDS)));
+            droppedCount.getAndIncrement();
+            LOG.info("Dropped table '{}.{}'", keyspaceName, tableName);
+          } catch (DriverException e) {
+            LOG.error("Failed to drop table '{}.{}': {}", keyspaceName, tableName, e.getMessage());
+          }
+          session.execute(
+              SimpleStatement.newInstance(
+                      String.format("DROP TABLE IF EXISTS %s.%s", keyspaceName, tableName))
+                  .setTimeout(Duration.of(20, ChronoUnit.SECONDS)));
         }
       }
 
+      LOG.info("Dropped {} tables in keyspace '{}'", droppedCount.get(), keyspaceName);
+
+      Map<CqlIdentifier, UserDefinedType> udts = keyspaceMetadata.get().getUserDefinedTypes();
       for (UserDefinedType udt : udts.values()) {
         String udtName = udt.getName().asInternal();
-        session
-            .executeAsync(String.format("DROP TYPE IF EXISTS %s.%s", keyspaceName, udtName))
-            .whenComplete(
-                (rs, err) -> {
-                  if (err != null) {
-                    LOG.info(
-                        "Failed to drop type '{}.{}': {}", keyspaceName, udtName, err.getMessage());
-                  } else {
-                    LOG.info("Dropped type '{}.{}'", keyspaceName, udtName);
-                  }
-                });
+        try {
+          session.execute(String.format("DROP TYPE IF EXISTS %s.%s", keyspaceName, udtName));
+        } catch (DriverException e) {
+          LOG.error("Failed to drop type '{}.{}': {}", keyspaceName, udtName, e.getMessage());
+        }
       }
     } catch (Exception e) {
       LOG.error("Failed to drop tables in keyspace '{}': {}", keyspaceName, e.getMessage(), e);

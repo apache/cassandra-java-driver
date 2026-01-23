@@ -40,12 +40,6 @@ public abstract class BaseAstraRule extends CcmRule {
   // Reusable session for table cleanup operations
   private volatile CqlSession cleanupSession;
 
-  // Track the current test class and method count for @Rule cleanup
-  private volatile Class<?> currentTestClass;
-  private volatile int totalTestMethods;
-  private volatile int completedTestMethods;
-  private final Object testTrackingLock = new Object();
-
   BaseAstraRule(AstraBridge astraBridge) {
     super();
     this.astraBridge = astraBridge;
@@ -69,87 +63,22 @@ public abstract class BaseAstraRule extends CcmRule {
   }
 
   @Override
-  protected void after() {
-    // Check if we need to drop tables after the last test method in a @Rule scenario
-    synchronized (testTrackingLock) {
-      completedTestMethods++;
-      LoggerFactory.getLogger(BaseAstraRule.class)
-          .error(
-              "Test method completed: {}/{} in class {}",
-              completedTestMethods,
-              totalTestMethods,
-              currentTestClass != null ? currentTestClass.getSimpleName() : "null");
-
-      if (currentTestClass != null && completedTestMethods >= totalTestMethods) {
-        // Last test method in the class has completed, drop all tables
-        LoggerFactory.getLogger(BaseAstraRule.class)
-            .error(
-                "Last test method completed in class {}, dropping all tables in keyspace '{}'",
-                currentTestClass.getSimpleName(),
-                astraBridge.getKeyspace());
-        try {
-          dropAllTablesInKeyspace();
-        } finally {
-          // Reset tracking for the next test class
-          currentTestClass = null;
-          totalTestMethods = 0;
-          completedTestMethods = 0;
-        }
-      }
-    }
-
-    // Note: We don't call closeCleanupSession() or astraBridge.close() here
-    // because the rule is reused across test classes (singleton pattern)
-  }
-
-  @Override
   public Statement apply(Statement base, Description description) {
     if (BackendRequirementRule.meetsDescriptionRequirements(description)) {
-      // Determine if this is a class-level rule (@ClassRule) or method-level rule (@Rule)
-      boolean isClassRule = description.isTest() == false;
-
-      if (isClassRule) {
-        // @ClassRule: Wrap the base statement to drop all tables after test suite execution
-        Statement wrappedStatement =
-            new Statement() {
-              @Override
-              public void evaluate() throws Throwable {
-                try {
-                  base.evaluate();
-                } finally {
-                  // Drop all tables in the keyspace after the test suite completes
-                  dropAllTablesInKeyspace();
-                }
-              }
-            };
-        return super.apply(wrappedStatement, description);
-      } else {
-        // @Rule: Track test class and method count for cleanup after last test method
-        Class<?> testClass = description.getTestClass();
-        synchronized (testTrackingLock) {
-          if (currentTestClass != testClass) {
-            // New test class, reset tracking
-            currentTestClass = testClass;
-            completedTestMethods = 0;
-            // Count total test methods in this class
-            totalTestMethods = (int) description.getTestClass().getMethods().length;
-            // More accurate: count only @Test methods
-            totalTestMethods = 0;
-            for (java.lang.reflect.Method method : testClass.getMethods()) {
-              if (method.isAnnotationPresent(org.junit.Test.class)) {
-                totalTestMethods++;
+      // @ClassRule: Wrap the base statement to drop all tables after test suite execution
+      Statement wrappedStatement =
+          new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+              try {
+                base.evaluate();
+              } finally {
+                // Drop all tables in the keyspace after the test suite completes
+                dropAllTablesInKeyspace();
               }
             }
-            LoggerFactory.getLogger(BaseAstraRule.class)
-                .error(
-                    "Starting new test class {} with {} test methods (using @Rule)",
-                    testClass.getSimpleName(),
-                    totalTestMethods);
-          }
-        }
-        // Don't drop tables after each test method - cleanup happens in after()
-        return super.apply(base, description);
-      }
+          };
+      return super.apply(wrappedStatement, description);
     } else {
       // requirements not met, throw reasoning assumption to skip test
       return new Statement() {

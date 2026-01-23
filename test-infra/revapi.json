@@ -190,6 +190,66 @@
         "code": "java.method.removed",
         "old": "method java.util.Optional<com.datastax.oss.driver.api.core.Version> com.datastax.oss.driver.api.testinfra.ccm.CcmBridge::getDseVersion()",
         "justification": "Method has been replaced with more generic isDistributionOf(BackendType) and getDistributionVersion()"
+      },
+      {
+        "ignore": true,
+        "code": "java.method.abstractMethodAdded",
+        "new": "method com.datastax.oss.driver.api.core.Version com.datastax.oss.driver.api.testinfra.CassandraResourceRule::getCassandraVersion()",
+        "justification": " CASSJAVA-120: ADD ASTRA INTEGRATION TESTS INFRASTRUCTURE"
+      },
+      {
+        "ignore": true,
+        "code": "java.method.abstractMethodAdded",
+        "new": "method com.datastax.oss.driver.api.testinfra.requirement.BackendType com.datastax.oss.driver.api.testinfra.CassandraResourceRule::getDistribution()",
+        "justification": " CASSJAVA-120: ADD ASTRA INTEGRATION TESTS INFRASTRUCTURE"
+      },
+      {
+        "ignore": true,
+        "code": "java.method.abstractMethodAdded",
+        "new": "method com.datastax.oss.driver.api.core.Version com.datastax.oss.driver.api.testinfra.CassandraResourceRule::getDistributionVersion()",
+        "justification": " CASSJAVA-120: ADD ASTRA INTEGRATION TESTS INFRASTRUCTURE"
+      },
+      {
+        "ignore": true,
+        "code": "java.method.abstractMethodAdded",
+        "new": "method boolean com.datastax.oss.driver.api.testinfra.CassandraResourceRule::isDistributionOf(com.datastax.oss.driver.api.testinfra.requirement.BackendType)",
+        "justification": " CASSJAVA-120: ADD ASTRA INTEGRATION TESTS INFRASTRUCTURE"
+      },
+      {
+        "ignore": true,
+        "code": "java.method.visibilityIncreased",
+        "old": "method void com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule::<init>(com.datastax.oss.driver.api.testinfra.ccm.CcmBridge)",
+        "new": "method void com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule::<init>(com.datastax.oss.driver.api.testinfra.ccm.CcmBridge)",
+        "oldVisibility": "package",
+        "newVisibility": "protected",
+        "justification": " CASSJAVA-120: ADD ASTRA INTEGRATION TESTS INFRASTRUCTURE"
+      },
+      {
+        "ignore": true,
+        "code": "java.method.visibilityIncreased",
+        "old": "method void com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.Builder::<init>()",
+        "new": "method void com.datastax.oss.driver.api.testinfra.ccm.CcmBridge.Builder::<init>()",
+        "oldVisibility": "private",
+        "newVisibility": "protected",
+        "justification": " CASSJAVA-120: ADD ASTRA INTEGRATION TESTS INFRASTRUCTURE"
+      },
+      {
+        "ignore": true,
+        "code": "java.method.visibilityIncreased",
+        "old": "method void com.datastax.oss.driver.api.testinfra.ccm.CcmBridge::<init>(java.nio.file.Path, int[], java.lang.String, java.util.Map<java.lang.String, java.lang.Object>, java.util.Map<java.lang.String, java.lang.Object>, java.util.List<java.lang.String>, java.util.List<java.lang.String>, java.util.Collection<java.lang.String>, java.util.List<java.lang.String>)",
+        "new": "method void com.datastax.oss.driver.api.testinfra.ccm.CcmBridge::<init>(java.nio.file.Path, int[], java.lang.String, java.util.Map<java.lang.String, java.lang.Object>, java.util.Map<java.lang.String, java.lang.Object>, java.util.List<java.lang.String>, java.util.List<java.lang.String>, java.util.Collection<java.lang.String>, java.util.List<java.lang.String>)",
+        "oldVisibility": "private",
+        "newVisibility": "protected",
+        "justification": " CASSJAVA-120: ADD ASTRA INTEGRATION TESTS INFRASTRUCTURE"
+      },
+      {
+        "ignore": true,
+        "code": "java.method.visibilityIncreased",
+        "old": "method void com.datastax.oss.driver.api.testinfra.ccm.CcmRule::<init>()",
+        "new": "method void com.datastax.oss.driver.api.testinfra.ccm.CcmRule::<init>()",
+        "oldVisibility": "private",
+        "newVisibility": "protected",
+        "justification": " CASSJAVA-120: ADD ASTRA INTEGRATION TESTS INFRASTRUCTURE"
       }
     ]
   }
