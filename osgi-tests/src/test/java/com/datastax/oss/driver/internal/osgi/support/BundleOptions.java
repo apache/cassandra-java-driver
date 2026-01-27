@@ -128,6 +128,9 @@ public class BundleOptions {
     return () ->
         options(
             mavenBundle("at.yawk.lz4", "lz4-java").versionAsInProject(),
+            // at.yawk.lz4 requires sun.misc package
+            mavenBundle("com.diffplug.osgi", "com.diffplug.osgi.extension.sun.misc")
+                .version("0.0.0"),
             systemProperty("cassandra.compression").value("LZ4"));
   }
 
