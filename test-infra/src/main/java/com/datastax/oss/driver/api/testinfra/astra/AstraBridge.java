@@ -602,40 +602,51 @@ public class AstraBridge extends CcmBridge {
         return;
       }
 
-      // Tried the fan out pattern to drop tables and types concurrently,
-      // It didn't work well because the drop table queries easily time out
-
-      // Get all tables from the keyspace metadata
+      // Get all tables and UDTs from the keyspace metadata
       Map<CqlIdentifier, TableMetadata> tables = keyspaceMetadata.get().getTables();
+      Map<CqlIdentifier, UserDefinedType> udts = keyspaceMetadata.get().getUserDefinedTypes();
 
-      AtomicInteger droppedCount = new AtomicInteger();
+      // IMPORTANT: Drop tables FIRST, then UDTs
+      // UDTs cannot be dropped while tables are still using them
+
+      // Step 1: Drop all tables
+      AtomicInteger droppedTableCount = new AtomicInteger();
       for (TableMetadata tableMetadata : tables.values()) {
-        String tableName = tableMetadata.getName().asInternal();
+        CqlIdentifier tableId = tableMetadata.getName();
+        String tableName = tableId.asInternal();
         if (!tableName.startsWith("system")) {
           try {
+            // IMPORTANT: Use the CqlIdentifier to properly quote the table name
+            // Tables created with quotes (e.g., "UPPER_CASE") need quotes to drop
+            String dropStatement =
+                String.format("DROP TABLE IF EXISTS %s.%s", keyspaceName, tableId.asCql(true));
             session.execute(
-                SimpleStatement.newInstance(
-                        String.format("DROP TABLE IF EXISTS %s.%s", keyspaceName, tableName))
+                SimpleStatement.newInstance(dropStatement)
                     .setTimeout(Duration.of(20, ChronoUnit.SECONDS)));
-            droppedCount.getAndIncrement();
-            LOG.info("Dropped table '{}.{}'", keyspaceName, tableName);
+            droppedTableCount.getAndIncrement();
+            LOG.info("Dropped table '{}.{}' using: {}", keyspaceName, tableName, dropStatement);
           } catch (DriverException e) {
             LOG.error("Failed to drop table '{}.{}': {}", keyspaceName, tableName, e.getMessage());
           }
-          session.execute(
-              SimpleStatement.newInstance(
-                      String.format("DROP TABLE IF EXISTS %s.%s", keyspaceName, tableName))
-                  .setTimeout(Duration.of(20, ChronoUnit.SECONDS)));
         }
       }
 
-      LOG.info("Dropped {} tables in keyspace '{}'", droppedCount.get(), keyspaceName);
+      LOG.info("Dropped {} tables in keyspace '{}'", droppedTableCount.get(), keyspaceName);
 
-      Map<CqlIdentifier, UserDefinedType> udts = keyspaceMetadata.get().getUserDefinedTypes();
+      // Step 2: Drop all UDTs (after tables are dropped)
+      AtomicInteger droppedUdtCount = new AtomicInteger();
       for (UserDefinedType udt : udts.values()) {
-        String udtName = udt.getName().asInternal();
+        CqlIdentifier udtId = udt.getName();
+        String udtName = udtId.asInternal();
         try {
-          session.execute(String.format("DROP TYPE IF EXISTS %s.%s", keyspaceName, udtName));
+          // IMPORTANT: Use the CqlIdentifier to properly quote the UDT name
+          String dropStatement =
+              String.format("DROP TYPE IF EXISTS %s.%s", keyspaceName, udtId.asCql(true));
+          session.execute(
+              SimpleStatement.newInstance(dropStatement)
+                  .setTimeout(Duration.of(20, ChronoUnit.SECONDS)));
+          droppedUdtCount.getAndIncrement();
+          LOG.info("Dropped type '{}.{}' using: {}", keyspaceName, udtName, dropStatement);
         } catch (DriverException e) {
           LOG.error("Failed to drop type '{}.{}': {}", keyspaceName, udtName, e.getMessage());
         }
