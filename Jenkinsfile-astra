@@ -98,12 +98,6 @@ ${status} after ${currentBuild.durationString - ' and counting'}"""
             message: "${message}"
 }
 
-// branch pattern for cron
-// should match 3.x, 4.x, 4.5.x, etc
-def branchPatternCron() {
-  ~"((\\d+(\\.[\\dx]+)+))"
-}
-
 pipeline {
   agent {
     label 'ubuntu/focal64/java-driver'
@@ -114,11 +108,6 @@ pipeline {
     timeout(time: 2, unit: 'HOURS')
     buildDiscarder(logRotator(artifactNumToKeepStr: '10', // Keep only the last 10 artifacts
                               numToKeepStr: '50'))        // Keep only the last 50 build records
-  }
-
-  triggers {
-    // Run Astra tests weekly on release branches
-    cron(branchPatternCron().matcher(env.BRANCH_NAME).matches() ? '@weekly' : '')
   }
 
   environment {
