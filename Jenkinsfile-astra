@@ -40,6 +40,7 @@ def initializeEnvironment() {
 
     java -version
     mvn -v
+    astra help
     printenv | sort
   '''
 }
@@ -57,8 +58,7 @@ def buildDriver() {
 
 def executeAstraTests() {
   withCredentials([
-    string(credentialsId: 'astra-database-id', variable: 'ASTRA_DB_ID'),
-    string(credentialsId: 'astra-token', variable: 'ASTRA_TOKEN')
+    string(credentialsId: 'astra-integration-test-token', variable: 'ASTRA_TOKEN')
   ]) {
     sh label: 'Execute Astra integration tests', script: '''#!/bin/bash -le
       . ${JABBA_SHELL}
@@ -71,7 +71,6 @@ def executeAstraTests() {
         -Dmaven.test.failure.ignore=true \
         -Dmaven.javadoc.skip=true \
         -Dccm.distribution=Astra \
-        -Dastra.database.id=${ASTRA_DB_ID} \
         -Dastra.token=${ASTRA_TOKEN}
     '''
   }
