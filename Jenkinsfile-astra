@@ -60,7 +60,7 @@ def executeAstraTests() {
   withCredentials([
     string(credentialsId: 'astra-integration-test-token', variable: 'ASTRA_TOKEN')
   ]) {
-    sh label: 'Execute Astra integration tests', script: '''#!/bin/bash -le
+    sh label: 'Execute Astra integration tests', script: '''#!/bin/bash -lex
       . ${JABBA_SHELL}
       jabba use 1.8
 
