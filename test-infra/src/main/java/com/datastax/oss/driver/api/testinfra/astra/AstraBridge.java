@@ -444,7 +444,10 @@ public class AstraBridge extends CcmBridge {
 
     ProcessBuilder pb = new ProcessBuilder(command);
     pb.redirectErrorStream(true);
-    LOG.info("Running Astra CLI command: {} with environment: {}", String.join(" ", command), pb.environment().toString());
+    LOG.info(
+        "Running Astra CLI command: {} with environment: {}",
+        String.join(" ", command),
+        pb.environment().toString());
     Process process = pb.start();
 
     StringBuilder output = new StringBuilder();
