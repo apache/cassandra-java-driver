@@ -442,7 +442,7 @@ public class AstraBridge extends CcmBridge {
 
   private String executeAstraCommand(String... args) throws IOException, InterruptedException {
     // Build command line
-    CommandLine cli = new CommandLine("astra");
+    CommandLine cli = new CommandLine("/home/jenkins/.astra/cli/astra");
     for (String arg : args) {
       cli.addArgument(arg);
     }
