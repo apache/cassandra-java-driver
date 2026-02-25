@@ -28,11 +28,8 @@ import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.shaded.guava.common.base.Splitter;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -42,10 +39,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteStreamHandler;
+import org.apache.commons.exec.ExecuteWatchdog;
+import org.apache.commons.exec.Executor;
+import org.apache.commons.exec.LogOutputStream;
+import org.apache.commons.exec.PumpStreamHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -436,40 +441,59 @@ public class AstraBridge extends CcmBridge {
   }
 
   private String executeAstraCommand(String... args) throws IOException, InterruptedException {
-    List<String> command = new ArrayList<>();
-    command.add("astra");
+    // Build command line
+    CommandLine cli = new CommandLine("astra");
     for (String arg : args) {
-      command.add(arg);
+      cli.addArgument(arg);
     }
 
-    ProcessBuilder pb = new ProcessBuilder(command);
-    pb.redirectErrorStream(true);
-    LOG.info(
-        "Running Astra CLI command: {} with environment: {}",
-        String.join(" ", command),
-        pb.environment().toString());
-    Process process = pb.start();
+    LOG.info("Running Astra CLI command: {}", cli.toString());
 
+    // StringBuilder to collect output
     StringBuilder output = new StringBuilder();
-    try (BufferedReader reader =
-        new BufferedReader(
-            new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
-      String line;
-      while ((line = reader.readLine()) != null) {
-        output.append(line).append("\n");
-        LOG.info("Astra CLI: {}", line);
-      }
-    }
 
-    int exitCode = process.waitFor();
-    if (exitCode != 0) {
-      throw new IOException(
-          "Astra CLI command failed with exit code "
-              + exitCode
-              + ": "
-              + String.join(" ", command)
-              + "\nOutput: "
-              + output);
+    // Create watchdog with 10-minute timeout (same as CcmBridge)
+    ExecuteWatchdog watchDog = new ExecuteWatchdog(TimeUnit.MINUTES.toMillis(10));
+
+    try (LogOutputStream outStream =
+            new LogOutputStream() {
+              @Override
+              protected void processLine(String line, int logLevel) {
+                output.append(line).append("\n");
+                LOG.debug("astraout> {}", line);
+              }
+            };
+        LogOutputStream errStream =
+            new LogOutputStream() {
+              @Override
+              protected void processLine(String line, int logLevel) {
+                output.append(line).append("\n");
+                LOG.error("astraerr> {}", line);
+              }
+            }) {
+
+      Executor executor = new DefaultExecutor();
+      ExecuteStreamHandler streamHandler = new PumpStreamHandler(outStream, errStream);
+      executor.setStreamHandler(streamHandler);
+      executor.setWatchdog(watchDog);
+
+      int retValue = executor.execute(cli);
+
+      if (retValue != 0) {
+        throw new IOException(
+            "Astra CLI command failed with exit code "
+                + retValue
+                + ": "
+                + cli.toString()
+                + "\nOutput: "
+                + output);
+      }
+
+    } catch (IOException e) {
+      if (watchDog.killedProcess()) {
+        throw new IOException("Astra CLI command timed out after 10 minutes: " + cli.toString(), e);
+      }
+      throw e;
     }
 
     return output.toString();
