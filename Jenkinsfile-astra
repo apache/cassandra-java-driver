@@ -100,7 +100,7 @@ ${status} after ${currentBuild.durationString - ' and counting'}"""
 
 pipeline {
   agent {
-    label 'ubuntu/focal64/java-driver'
+    label 'ubuntu/jammy64/java-driver'
   }
 
   // Global pipeline timeout

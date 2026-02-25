@@ -402,7 +402,7 @@ pipeline {
   }
 
   environment {
-    OS_VERSION = 'ubuntu/focal64/java-driver'
+    OS_VERSION = 'ubuntu/jammy64/java-driver'
     JABBA_SHELL = '/usr/lib/jabba/jabba.sh'
     CCM_ENVIRONMENT_SHELL = '/usr/local/bin/ccm_environment.sh'
     SERIAL_ITS_ARGUMENT = "-DskipSerialITs=${params.SKIP_SERIAL_ITS}"
