@@ -347,7 +347,8 @@ public class ChannelFactory {
                 endPoint,
                 options,
                 heartbeatHandler,
-                productType == null);
+                // TODO: check whether it's reasonable
+                true);
 
         ChannelPipeline pipeline = channel.pipeline();
         context

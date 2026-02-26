@@ -33,6 +33,8 @@ import com.datastax.oss.driver.internal.core.channel.ChannelFactory;
 import com.datastax.oss.driver.internal.core.channel.ClusterNameMismatchException;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
+import com.datastax.oss.driver.internal.core.channel.EventCallback;
+import com.datastax.oss.driver.internal.core.channel.GracefulDisconnectEvent;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
@@ -44,7 +46,10 @@ import com.datastax.oss.driver.internal.core.util.concurrent.Reconnection;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
+import com.datastax.oss.protocol.internal.Message;
+import com.datastax.oss.protocol.internal.response.Event;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
@@ -233,6 +238,7 @@ public class ChannelPool implements AsyncAutoCloseable {
     private final Set<DriverChannel> closingChannels = new HashSet<>();
     private final Reconnection reconnection;
     private final Object configListenerKey;
+    private final Object gracefulDisconnectListenerKey;
 
     private NodeDistance distance;
     private int wantedCount;
@@ -264,6 +270,10 @@ public class ChannelPool implements AsyncAutoCloseable {
       this.configListenerKey =
           eventBus.register(
               ConfigChangeEvent.class, RunOrSchedule.on(adminExecutor, this::onConfigChanged));
+      this.gracefulDisconnectListenerKey =
+          eventBus.register(
+              GracefulDisconnectEvent.class,
+              RunOrSchedule.on(adminExecutor, this::onGracefulDisconnect));
     }
 
     private void connect() {
@@ -291,13 +301,21 @@ public class ChannelPool implements AsyncAutoCloseable {
 
       int missing = wantedCount - channels.size();
       LOG.debug("[{}] Trying to create {} missing channels", logPrefix, missing);
-      DriverChannelOptions options =
-          DriverChannelOptions.builder()
-              .withKeyspace(keyspaceName)
-              .withOwnerLogPrefix(sessionLogPrefix)
-              .build();
+
       for (int i = 0; i < missing; i++) {
+        // Create a separate event callback for each channel to handle GRACEFUL_DISCONNECT events
+        QueryConnectionEventCallback eventCallback = new QueryConnectionEventCallback();
+
+        DriverChannelOptions options =
+            DriverChannelOptions.builder()
+                .withKeyspace(keyspaceName)
+                .withOwnerLogPrefix(sessionLogPrefix)
+                .withEvents(ImmutableList.of(GracefulDisconnectEvent.EVENT_TYPE), eventCallback)
+                .build();
+
         CompletionStage<DriverChannel> channelFuture = channelFactory.connect(node, options);
+        // When the channel is ready, set it in the callback so it can be used when events arrive
+        channelFuture.thenAccept(eventCallback::setChannel);
         pendingChannels.add(channelFuture);
       }
       return CompletableFutures.allDone(pendingChannels)
@@ -474,6 +492,75 @@ public class ChannelPool implements AsyncAutoCloseable {
       resize(distance);
     }
 
+    private void onGracefulDisconnect(GracefulDisconnectEvent event) {
+      assert adminExecutor.inEventLoop();
+      // Only handle events for channels belonging to this pool's node
+      if (!event.node.equals(node)) {
+        return;
+      }
+      DriverChannel affectedChannel = event.channel;
+      // Check if this channel belongs to this pool
+      boolean channelFound = false;
+      for (DriverChannel channel : channels) {
+        if (channel == affectedChannel) {
+          channelFound = true;
+          break;
+        }
+      }
+      if (channelFound) {
+        LOG.info(
+            "[{}] Received GRACEFUL_DISCONNECT on channel {}, closing gracefully",
+            logPrefix,
+            affectedChannel);
+        // Close the channel gracefully - this will trigger onChannelCloseStarted which will
+        // remove it from the pool and start reconnection
+        affectedChannel.close();
+      }
+    }
+
+    /**
+     * Event callback for query connections that handles GRACEFUL_DISCONNECT events.
+     *
+     * <p>This is called from the Netty I/O thread when an event is received on a query connection.
+     */
+    private class QueryConnectionEventCallback implements EventCallback {
+      private volatile DriverChannel channel;
+
+      void setChannel(DriverChannel channel) {
+        this.channel = channel;
+      }
+
+      @Override
+      public void onEvent(Message eventMessage) {
+        if (!(eventMessage instanceof Event)) {
+          LOG.warn(
+              "[{}] Unsupported event class on query connection: {}",
+              logPrefix,
+              eventMessage.getClass().getName());
+          return;
+        }
+        Event event = (Event) eventMessage;
+        LOG.error(
+            "[{}] Received event on query connection - type: {}, message: {}",
+            logPrefix,
+            event.type,
+            event);
+        if (GracefulDisconnectEvent.EVENT_TYPE.equals(event.type)) {
+          LOG.error("[{}] Received GRACEFUL_DISCONNECT event on query connection!", logPrefix);
+          DriverChannel currentChannel = this.channel;
+          if (currentChannel != null) {
+            // Fire an internal event on the event bus to notify the pool
+            eventBus.fire(new GracefulDisconnectEvent(node, currentChannel));
+          } else {
+            LOG.error("[{}] Channel is null, cannot fire GracefulDisconnectEvent", logPrefix);
+          }
+        } else {
+          LOG.error(
+              "[{}] Received unexpected event type on query connection: {}", logPrefix, event.type);
+        }
+      }
+    }
+
     private CompletionStage<Void> setKeyspace(CqlIdentifier newKeyspaceName) {
       assert adminExecutor.inEventLoop();
       if (setKeyspaceFuture != null && !setKeyspaceFuture.isDone()) {
@@ -533,6 +620,7 @@ public class ChannelPool implements AsyncAutoCloseable {
       reconnection.stop();
 
       eventBus.unregister(configListenerKey, ConfigChangeEvent.class);
+      eventBus.unregister(gracefulDisconnectListenerKey, GracefulDisconnectEvent.class);
 
       // Close all channels, the pool future completes when all the channels futures have completed
       int toClose = closingChannels.size() + channels.size();

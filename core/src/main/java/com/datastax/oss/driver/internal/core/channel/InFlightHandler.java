@@ -218,10 +218,16 @@ public class InFlightHandler extends ChannelDuplexHandler {
 
     if (streamId < 0) {
       Message event = responseFrame.message;
+      LOG.error(
+          "[{}] Received frame with streamId < 0 (event). StreamId: {}, Message: {}, EventCallback: {}",
+          logPrefix,
+          streamId,
+          event,
+          eventCallback != null ? "present" : "null");
       if (eventCallback == null) {
-        LOG.debug("[{}] Received event {} but no callback was registered", logPrefix, event);
+        LOG.error("[{}] Received event {} but no callback was registered", logPrefix, event);
       } else {
-        LOG.debug("[{}] Received event {}, notifying callback", logPrefix, event);
+        LOG.error("[{}] Received event {}, notifying callback", logPrefix, event);
         try {
           eventCallback.onEvent(event);
         } catch (Throwable t) {

@@ -30,6 +30,7 @@ import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
 import com.datastax.oss.driver.internal.core.channel.EventCallback;
+import com.datastax.oss.driver.internal.core.channel.GracefulDisconnectEvent;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultTopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.DistanceEvent;
@@ -178,8 +179,9 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     if (!(eventMessage instanceof Event)) {
       LOG.warn("[{}] Unsupported event class: {}", logPrefix, eventMessage.getClass().getName());
     } else {
-      LOG.debug("[{}] Processing incoming event {}", logPrefix, eventMessage);
       Event event = (Event) eventMessage;
+      LOG.error(
+          "[{}] Processing incoming event type: {}, message: {}", logPrefix, event.type, event);
       switch (event.type) {
         case ProtocolConstants.EventType.TOPOLOGY_CHANGE:
           processTopologyChange(event);
@@ -189,6 +191,10 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
           break;
         case ProtocolConstants.EventType.SCHEMA_CHANGE:
           processSchemaChange(event);
+          break;
+        case ProtocolConstants.EventType.GRACEFUL_DISCONNECT:
+          LOG.error("[{}] Received GRACEFUL_DISCONNECT event!", logPrefix);
+          processGracefulDisconnect();
           break;
         default:
           LOG.warn("[{}] Unsupported event type: {}", logPrefix, event.type);
@@ -240,6 +246,25 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                     error);
               }
             });
+  }
+
+  private void processGracefulDisconnect() {
+    LOG.info(
+        "[{}] Received GRACEFUL_DISCONNECT event on control connection, "
+            + "the server is shutting down gracefully",
+        logPrefix);
+    // Fire an internal event to notify other components
+    DriverChannel currentChannel = channel;
+    if (currentChannel != null) {
+      context
+          .getMetadataManager()
+          .getMetadata()
+          .findNode(currentChannel.getEndPoint())
+          .ifPresent(
+              node ->
+                  context.getEventBus().fire(new GracefulDisconnectEvent(node, currentChannel)));
+    }
+    // The control connection will handle reconnection automatically when the channel closes
   }
 
   private class SingleThreaded {
@@ -612,7 +637,8 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     if (listenClusterEvents) {
       builder
           .add(ProtocolConstants.EventType.STATUS_CHANGE)
-          .add(ProtocolConstants.EventType.TOPOLOGY_CHANGE);
+          .add(ProtocolConstants.EventType.TOPOLOGY_CHANGE)
+          .add(GracefulDisconnectEvent.EVENT_TYPE);
     }
     return builder.build();
   }

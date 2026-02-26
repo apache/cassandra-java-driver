@@ -55,7 +55,9 @@ import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
@@ -183,10 +185,34 @@ class ProtocolInitHandler extends ConnectInitHandler {
         case AUTH_RESPONSE:
           return request = new AuthResponse(authResponseToken);
         case REGISTER:
-          return request = new Register(options.eventTypes);
+          return request = new Register(filterSupportedEventTypes());
         default:
           throw new AssertionError("unhandled step: " + step);
       }
+    }
+
+    /**
+     * Filters the requested event types to only include those supported by the server.
+     *
+     * <p>Specifically, GRACEFUL_DISCONNECT is only included if the server advertises support for it
+     * in the SUPPORTED message response.
+     */
+    private List<String> filterSupportedEventTypes() {
+      List<String> filteredEventTypes = new ArrayList<>(options.eventTypes);
+
+      // Check if GRACEFUL_DISCONNECT is in the requested event types
+      if (filteredEventTypes.contains(GracefulDisconnectEvent.EVENT_TYPE)) {
+        // Get the supported options from the channel attribute (set during OPTIONS step)
+        Map<String, List<String>> supportedOptions = channel.attr(DriverChannel.OPTIONS_KEY).get();
+
+        // Only include GRACEFUL_DISCONNECT if the server supports it
+        if (supportedOptions == null
+            || !supportedOptions.containsKey(GracefulDisconnectEvent.EVENT_TYPE)) {
+          filteredEventTypes.remove(GracefulDisconnectEvent.EVENT_TYPE);
+        }
+      }
+
+      return filteredEventTypes;
     }
 
     @Override
