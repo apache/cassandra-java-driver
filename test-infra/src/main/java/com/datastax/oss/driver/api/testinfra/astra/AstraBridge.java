@@ -522,7 +522,7 @@ public class AstraBridge extends CcmBridge {
       LOG.info("Terminating Astra database: {} (ID: {})", databaseName, databaseId);
 
       // Delete the database asynchronously (don't wait for completion)
-      String deleteOutput = runAstraCommand("db", "delete", databaseName, "--async");
+      String deleteOutput = runAstraCommand("db", "delete", databaseName, "--yes");
       LOG.info("Database deletion initiated: {}", deleteOutput);
       LOG.info("Astra database {} (ID: {}) is being terminated", databaseName, databaseId);
     } catch (Exception e) {
@@ -534,14 +534,6 @@ public class AstraBridge extends CcmBridge {
   @Override
   public void close() {
     stop();
-  }
-
-  public String getDatabaseName() {
-    return databaseName;
-  }
-
-  public String getDatabaseId() {
-    return databaseId;
   }
 
   public String getKeyspace() {
@@ -559,44 +551,6 @@ public class AstraBridge extends CcmBridge {
   @Override
   public BackendType getDistribution() {
     return DISTRIBUTION;
-  }
-
-  /**
-   * Creates a new keyspace in the Astra database using the Astra CLI. Retries are handled
-   * automatically by runAstraCommand() for transient errors.
-   *
-   * @param keyspaceName the name of the keyspace to create
-   * @throws RuntimeException if the keyspace creation fails
-   */
-  public void createKeyspace(String keyspaceName) {
-    if (databaseName == null) {
-      throw new IllegalStateException(
-          "Cannot create keyspace: Astra database has not been created yet");
-    }
-
-    try {
-      LOG.info("Creating keyspace '{}' in Astra database '{}'", keyspaceName, databaseName);
-
-      // Create keyspace using: astra db create-keyspace <DB_NAME> -k <KEYSPACE> --if-not-exists
-      // runAstraCommand() will automatically retry on transient errors
-      String output =
-          runAstraCommand(
-              "db",
-              "create-keyspace",
-              databaseName,
-              "-k",
-              keyspaceName,
-              "--if-not-exists",
-              "--timeout",
-              "120");
-      LOG.info("Keyspace creation output: {}", output);
-      LOG.info("Keyspace '{}' created successfully", keyspaceName);
-
-    } catch (IOException | InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new RuntimeException(
-          "Failed to create keyspace '" + keyspaceName + "' in database '" + databaseName + "'", e);
-    }
   }
 
   /**

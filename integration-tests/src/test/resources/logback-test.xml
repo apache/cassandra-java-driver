@@ -24,14 +24,15 @@
       <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
     </encoder>
   </appender>
-  <root level="INFO">
-    <appender-ref ref="STDOUT"/>
-  </root>
-  <!--  <logger name="org.apache.directory" level="${adsServerLevel:-ERROR}"/>-->
-  <!--  <logger name="com.datastax.oss.driver" level="${ossDriverLevel:-ERROR}"/>-->
-  <!--  <logger name="com.datastax.dse.driver" level="${dseDriverLevel:-ERROR}"/>-->
-  <!--  <logger name="com.datastax.oss.simulacron" level="${simulacronLevel:-ERROR}"/>-->
-  <!--  <logger name="com.datastax.oss.driver.api.testinfra.ccm" level="${ccmLevel:-INFO}"/>-->
-  <!-- Set this logger to DEBUG to help debugging OSGi tests -->
-  <logger name="org.ops4j" level="${osgiLevel:-ERROR}"/>
+    <root level="ERROR">
+        <appender-ref ref="STDOUT"/>
+    </root>
+    <logger name="org.apache.directory" level="${adsServerLevel:-ERROR}"/>
+    <logger name="com.datastax.oss.driver" level="${ossDriverLevel:-ERROR}"/>
+    <logger name="com.datastax.dse.driver" level="${dseDriverLevel:-ERROR}"/>
+    <logger name="com.datastax.oss.simulacron" level="${simulacronLevel:-ERROR}"/>
+    <logger name="com.datastax.oss.driver.api.testinfra.ccm" level="${ccmLevel:-INFO}"/>
+    <logger name="com.datastax.oss.driver.api.testinfra.astra.AstraBridge" level="INFO"/>
+    <!-- Set this logger to DEBUG to help debugging OSGi tests -->
+    <logger name="org.ops4j" level="${osgiLevel:-ERROR}"/>
 </configuration>
