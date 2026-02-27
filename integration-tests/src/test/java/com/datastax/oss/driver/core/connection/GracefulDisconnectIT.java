@@ -32,7 +32,7 @@ public class GracefulDisconnectIT {
             .build()) {
       while (true) {
         session.execute("SELECT * FROM system.local");
-        Thread.sleep(1000);
+        Thread.sleep(10);
       }
 
     } catch (InterruptedException e) {

@@ -540,17 +540,13 @@ public class ChannelPool implements AsyncAutoCloseable {
           return;
         }
         Event event = (Event) eventMessage;
-        LOG.error(
-            "[{}] Received event on query connection - type: {}, message: {}",
-            logPrefix,
-            event.type,
-            event);
         if (GracefulDisconnectEvent.EVENT_TYPE.equals(event.type)) {
-          LOG.error("[{}] Received GRACEFUL_DISCONNECT event on query connection!", logPrefix);
+          LOG.debug("[{}] Received GRACEFUL_DISCONNECT event on query connection!", logPrefix);
           DriverChannel currentChannel = this.channel;
           if (currentChannel != null) {
             // Fire an internal event on the event bus to notify the pool
             eventBus.fire(new GracefulDisconnectEvent(node, currentChannel));
+            currentChannel.close(); // allow outstanding requests to complete, but do not accept new requests
           } else {
             LOG.error("[{}] Channel is null, cannot fire GracefulDisconnectEvent", logPrefix);
           }
