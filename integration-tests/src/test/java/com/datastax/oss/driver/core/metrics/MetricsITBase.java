@@ -174,11 +174,12 @@ public abstract class MetricsITBase {
       // trigger node1 UP -> DOWN
       eventBus.fire(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, node1));
 
-      Thread.sleep(expireAfter.toMillis());
-
       // then node-level metrics should be evicted from node1, but
       // node2 and node3 metrics should not have been evicted
-      await().untilAsserted(() -> assertNodeMetricsEvicted(session, node1));
+      await()
+          .atMost(expireAfter.plusSeconds(5))
+          .pollInterval(Duration.ofMillis(100))
+          .untilAsserted(() -> assertNodeMetricsEvicted(session, node1));
       assertNodeMetricsNotEvicted(session, node2);
       assertNodeMetricsNotEvicted(session, node3);
 
@@ -219,19 +220,25 @@ public abstract class MetricsITBase {
       eventBus.fire(NodeStateEvent.changed(NodeState.UP, NodeState.FORCED_DOWN, node2));
       eventBus.fire(NodeStateEvent.removed(node3));
 
-      Thread.sleep(500);
+      // Wait for half the expiry window before bringing nodes back up
+      await().pollDelay(Duration.ofMillis(500)).atMost(Duration.ofSeconds(5)).until(() -> true);
 
       // trigger nodes DOWN -> UP, should cancel the timeouts
       eventBus.fire(NodeStateEvent.changed(NodeState.DOWN, NodeState.UP, node1));
       eventBus.fire(NodeStateEvent.changed(NodeState.FORCED_DOWN, NodeState.UP, node2));
       eventBus.fire(NodeStateEvent.added(node3));
 
-      Thread.sleep(expireAfter.toMillis());
-
-      // then no node-level metrics should be evicted
-      assertNodeMetricsNotEvicted(session, node1);
-      assertNodeMetricsNotEvicted(session, node2);
-      assertNodeMetricsNotEvicted(session, node3);
+      // Wait for the full expiry duration and verify metrics are never evicted
+      await()
+          .during(expireAfter)
+          .atMost(expireAfter.plusSeconds(5))
+          .pollInterval(Duration.ofMillis(200))
+          .untilAsserted(
+              () -> {
+                assertNodeMetricsNotEvicted(session, node1);
+                assertNodeMetricsNotEvicted(session, node2);
+                assertNodeMetricsNotEvicted(session, node3);
+              });
 
     } finally {
       AbstractMetricUpdater.MIN_EXPIRE_AFTER = Duration.ofMinutes(5);

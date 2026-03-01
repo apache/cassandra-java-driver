@@ -24,6 +24,7 @@
 package com.datastax.oss.driver.core.resolver;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -34,8 +35,6 @@ import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
 import com.datastax.oss.driver.api.core.config.TypedDriverOption;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
-import com.datastax.oss.driver.api.core.cql.SimpleStatement;
-import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.categories.IsolatedTests;
@@ -130,30 +129,16 @@ public class MockResolverIT {
       ccmBridge.create();
       ccmBridge.start();
       session = builder.build();
-      boolean allNodesUp = false;
-      int nodesUp = 0;
-      for (int i = 0; i < CLUSTER_WAIT_SECONDS; i++) {
-        try {
-          Collection<Node> nodes = session.getMetadata().getNodes().values();
-          nodesUp = 0;
-          for (Node node : nodes) {
-            if (node.getUpSinceMillis() > 0) {
-              nodesUp++;
-            }
-          }
-          if (nodesUp == numberOfNodes) {
-            allNodesUp = true;
-            break;
-          }
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-          break;
-        }
-      }
-      if (!allNodesUp) {
+      final CqlSession firstSession = session;
+      try {
+        await()
+            .atMost(Duration.ofSeconds(CLUSTER_WAIT_SECONDS))
+            .pollInterval(Duration.ofSeconds(1))
+            .until(() -> countUpNodes(firstSession) == numberOfNodes);
+      } catch (org.awaitility.core.ConditionTimeoutException e) {
         LOG.error(
             "Driver sees only {} nodes UP instead of {} after waiting {}s",
-            nodesUp,
+            countUpNodes(firstSession),
             numberOfNodes,
             CLUSTER_WAIT_SECONDS);
       }
@@ -178,30 +163,15 @@ public class MockResolverIT {
         CcmBridge.builder().withNodes(numberOfNodes).withIpPrefix("127.0.1.").build()) {
       ccmBridge.create();
       ccmBridge.start();
-      boolean allNodesUp = false;
-      int nodesUp = 0;
-      for (int i = 0; i < CLUSTER_WAIT_SECONDS; i++) {
-        try {
-          Collection<Node> nodes = session.getMetadata().getNodes().values();
-          nodesUp = 0;
-          for (Node node : nodes) {
-            if (node.getUpSinceMillis() > 0) {
-              nodesUp++;
-            }
-          }
-          if (nodesUp == numberOfNodes) {
-            allNodesUp = true;
-            break;
-          }
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-          break;
-        }
-      }
-      if (!allNodesUp) {
+      try {
+        await()
+            .atMost(Duration.ofSeconds(CLUSTER_WAIT_SECONDS))
+            .pollInterval(Duration.ofSeconds(1))
+            .until(() -> countUpNodes(session) == numberOfNodes);
+      } catch (org.awaitility.core.ConditionTimeoutException e) {
         LOG.error(
             "Driver sees only {} nodes UP instead of {} after waiting {}s",
-            nodesUp,
+            countUpNodes(session),
             numberOfNodes,
             CLUSTER_WAIT_SECONDS);
       }
@@ -269,30 +239,8 @@ public class MockResolverIT {
       ccmBridge.create();
       ccmBridge.start();
       session = builder.build();
-      long endTime = System.currentTimeMillis() + CLUSTER_WAIT_SECONDS * 1000;
-      while (System.currentTimeMillis() < endTime) {
-        try {
-          nodes = session.getMetadata().getNodes().values();
-          int upNodes = 0;
-          for (Node node : nodes) {
-            if (node.getUpSinceMillis() > 0) {
-              upNodes++;
-            }
-          }
-          if (upNodes == 3) {
-            break;
-          }
-          // session.refreshSchema();
-          SimpleStatement statement =
-              new SimpleStatementBuilder("select * from system.local where key='local'")
-                  .setTimeout(Duration.ofSeconds(3))
-                  .build();
-          session.executeAsync(statement);
-          Thread.sleep(3000);
-        } catch (InterruptedException e) {
-          break;
-        }
-      }
+      final CqlSession firstUnusedSession = session;
+      awaitAllNodesUp(firstUnusedSession, 3);
       ResultSet rs = session.execute("select * from system.local where key='local'");
       assertThat(rs).isNotNull();
       Row row = rs.one();
@@ -329,29 +277,7 @@ public class MockResolverIT {
             "test.cluster.fake", ccmBridge.getNodeIpAddress(3));
         ccmBridge.create();
         ccmBridge.start();
-        long endTime = System.currentTimeMillis() + CLUSTER_WAIT_SECONDS * 1000;
-        while (System.currentTimeMillis() < endTime) {
-          try {
-            nodes = session.getMetadata().getNodes().values();
-            int upNodes = 0;
-            for (Node node : nodes) {
-              if (node.getUpSinceMillis() > 0) {
-                upNodes++;
-              }
-            }
-            if (upNodes == 3) {
-              break;
-            }
-            SimpleStatement statement =
-                new SimpleStatementBuilder("select * from system.local where key='local'")
-                    .setTimeout(Duration.ofSeconds(3))
-                    .build();
-            session.executeAsync(statement);
-            Thread.sleep(3000);
-          } catch (InterruptedException e) {
-            break;
-          }
-        }
+        awaitAllNodesUp(session, 3);
         nodes = session.getMetadata().getNodes().values();
         assertThat(nodes).hasSize(3);
         Iterator<Node> iterator = nodes.iterator();
@@ -384,32 +310,34 @@ public class MockResolverIT {
       // Now the driver should fail to reconnect since unresolved hostname is gone.
       ccmBridge.create();
       ccmBridge.start();
-      long endTime = System.currentTimeMillis() + CLUSTER_WAIT_SECONDS * 1000;
-      while (System.currentTimeMillis() < endTime) {
-        try {
-          nodes = session.getMetadata().getNodes().values();
-          int upNodes = 0;
-          for (Node node : nodes) {
-            if (node.getUpSinceMillis() > 0) {
-              upNodes++;
-            }
-          }
-          if (upNodes == 3) {
-            break;
-          }
-          // session.refreshSchema();
-          SimpleStatement statement =
-              new SimpleStatementBuilder("select * from system.local where key='local'")
-                  .setTimeout(Duration.ofSeconds(3))
-                  .build();
-          session.executeAsync(statement);
-          Thread.sleep(3000);
-        } catch (InterruptedException e) {
-          break;
-        }
-      }
+      awaitAllNodesUp(session, 3);
       session.execute("select * from system.local where key='local'");
     }
     session.close();
+  }
+
+  private static int countUpNodes(CqlSession session) {
+    int count = 0;
+    for (Node node : session.getMetadata().getNodes().values()) {
+      if (node.getUpSinceMillis() > 0) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  private static void awaitAllNodesUp(CqlSession session, int expectedNodes) {
+    try {
+      await()
+          .atMost(Duration.ofSeconds(CLUSTER_WAIT_SECONDS))
+          .pollInterval(Duration.ofSeconds(1))
+          .until(() -> countUpNodes(session) == expectedNodes);
+    } catch (org.awaitility.core.ConditionTimeoutException e) {
+      LOG.error(
+          "Driver sees only {} nodes UP instead of {} after waiting {}s",
+          countUpNodes(session),
+          expectedNodes,
+          CLUSTER_WAIT_SECONDS);
+    }
   }
 }
