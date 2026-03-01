@@ -68,7 +68,7 @@
     <slf4j.version>2.0.16</slf4j.version>
     <!-- when changing version also update version in LICENSE_binary  -->
     <reactive-streams.version>1.0.3</reactive-streams.version>
-    <jackson.version>2.20.1</jackson.version>
+    <jackson.version>2.21.1</jackson.version>
     <jackson-databind.version>${jackson.version}</jackson-databind.version>
     <!-- optional dependencies -->
     <snappy.version>1.1.10.1</snappy.version>
