@@ -27,12 +27,12 @@ public class GracefulDisconnectIT {
   public void should_opt_in_gracefully_disconnect() {
     try (CqlSession session =
         CqlSession.builder()
-            .addContactPoint(new InetSocketAddress("127.0.0.1", 9042))
-            .withLocalDatacenter("datacenter1")
+            .addContactPoint(new InetSocketAddress("cassandra-node1", 9042))
+            .withLocalDatacenter("dc1")
             .build()) {
       while (true) {
         session.execute("SELECT * FROM system.local");
-        Thread.sleep(10);
+        Thread.sleep(100);
       }
 
     } catch (InterruptedException e) {

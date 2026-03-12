@@ -1,0 +1,122 @@
+services:
+  java-client:
+    image: maven:3.9-eclipse-temurin-8
+    container_name: java-client
+    working_dir: /app
+    depends_on:
+      cassandra-node1:
+        condition: service_healthy
+      cassandra-node2:
+        condition: service_healthy
+      cassandra-node3:
+        condition: service_healthy
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - .:/app
+      - /Users/siyaohe/.m2/repository:/root/.m2/repository
+    networks:
+      cassandra-net:
+        ipv4_address: 172.20.0.10
+    command: >
+      sh -c "mvn compile verify -pl integration-tests -Dtest=GracefulDisconnectIT"
+
+  cassandra-node1:
+    image: cassandra:5.0
+    container_name: cassandra-node1
+    hostname: cassandra-node1
+    ports:
+      - "9042:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=TestCluster
+      - CASSANDRA_DC=dc1
+      - CASSANDRA_RACK=rack1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_SEEDS=cassandra-node1
+      - CASSANDRA_NUM_TOKENS=16
+      - HEAP_NEWSIZE=128M
+      - MAX_HEAP_SIZE=512M
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      cassandra-net:
+        ipv4_address: 172.20.0.2
+    healthcheck:
+      test: [ "CMD-SHELL", "nodetool status | grep -E '^UN\\s+' | wc -l | grep -q 1" ]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 90s
+
+  cassandra-node2:
+    image: cassandra:5.0
+    container_name: cassandra-node2
+    hostname: cassandra-node2
+    ports:
+      - "9043:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=TestCluster
+      - CASSANDRA_DC=dc1
+      - CASSANDRA_RACK=rack1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_SEEDS=cassandra-node1
+      - CASSANDRA_NUM_TOKENS=16
+      - HEAP_NEWSIZE=128M
+      - MAX_HEAP_SIZE=512M
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      cassandra-net:
+        ipv4_address: 172.20.0.3
+    depends_on:
+      cassandra-node1:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "nodetool status | grep -E '^UN\\s+' | wc -l | grep -qE '[2-9]'" ]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 90s
+
+  cassandra-node3:
+    image: cassandra:5.0
+    container_name: cassandra-node3
+    hostname: cassandra-node3
+    ports:
+      - "9044:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=TestCluster
+      - CASSANDRA_DC=dc1
+      - CASSANDRA_RACK=rack1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_SEEDS=cassandra-node1
+      - CASSANDRA_NUM_TOKENS=16
+      - HEAP_NEWSIZE=128M
+      - MAX_HEAP_SIZE=512M
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      cassandra-net:
+        ipv4_address: 172.20.0.4
+    depends_on:
+      cassandra-node1:
+        condition: service_healthy
+      cassandra-node2:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "nodetool status | grep -E '^UN\\s+' | wc -l | grep -qE '[3-9]'" ]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 90s
+
+networks:
+  cassandra-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
