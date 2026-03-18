@@ -4,11 +4,7 @@ services:
     container_name: java-client
     working_dir: /app
     depends_on:
-      cassandra-node1:
-        condition: service_healthy
-      cassandra-node2:
-        condition: service_healthy
-      cassandra-node3:
+      ccm-cluster:
         condition: service_healthy
     cap_add:
       - NET_ADMIN
@@ -22,98 +18,58 @@ services:
     command: >
       sh -c "mvn compile verify -pl integration-tests -Dtest=GracefulDisconnectIT"
 
-  cassandra-node1:
-    image: cassandra:5.0
-    container_name: cassandra-node1
-    hostname: cassandra-node1
+  ccm-cluster:
+    image: apache.jfrog.io/cassan-docker/apache/cassandra-java-driver-testing-ubuntu2204:latest
+    container_name: ccm-cluster
+    hostname: ccm-cluster
+    user: root
     ports:
       - "9042:9042"
-    environment:
-      - CASSANDRA_CLUSTER_NAME=TestCluster
-      - CASSANDRA_DC=dc1
-      - CASSANDRA_RACK=rack1
-      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
-      - CASSANDRA_SEEDS=cassandra-node1
-      - CASSANDRA_NUM_TOKENS=16
-      - HEAP_NEWSIZE=128M
-      - MAX_HEAP_SIZE=512M
+      - "9043:9043"
+      - "9044:9044"
     cap_add:
       - NET_ADMIN
       - NET_RAW
     networks:
       cassandra-net:
         ipv4_address: 172.20.0.2
-    healthcheck:
-      test: [ "CMD-SHELL", "nodetool status | grep -E '^UN\\s+' | wc -l | grep -q 1" ]
-      interval: 15s
-      timeout: 10s
-      retries: 15
-      start_period: 90s
-
-  cassandra-node2:
-    image: cassandra:5.0
-    container_name: cassandra-node2
-    hostname: cassandra-node2
-    ports:
-      - "9043:9042"
     environment:
-      - CASSANDRA_CLUSTER_NAME=TestCluster
-      - CASSANDRA_DC=dc1
-      - CASSANDRA_RACK=rack1
-      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
-      - CASSANDRA_SEEDS=cassandra-node1
-      - CASSANDRA_NUM_TOKENS=16
       - HEAP_NEWSIZE=128M
       - MAX_HEAP_SIZE=512M
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-    networks:
-      cassandra-net:
-        ipv4_address: 172.20.0.3
-    depends_on:
-      cassandra-node1:
-        condition: service_healthy
+      - HOST_UID=${HOST_UID:-1000}
+      - HOST_GID=${HOST_GID:-1000}
+    volumes:
+      - .:/home/docker/cassandra-java-driver
+      - /Users/siyaohe/Documents/DataStax/Repos/cassandra:/home/docker/cassandra
+    entrypoint: ["/bin/bash", "-l", "-c"]
+    command:
+      - |
+        bash /home/docker/cassandra-java-driver/ci/create-user.sh docker $${HOST_UID} $${HOST_GID} /home/docker/cassandra-java-driver &&
+        . /home/docker/env.txt &&
+        pip install -U cqlsh &&
+        sudo apt install iproute2 &&
+        ccm create test -n 3 --install-dir=/home/docker/cassandra &&
+        ccm node1 updateconf \
+        "rpc_address: 0.0.0.0" \
+        "broadcast_rpc_address: 172.20.0.2" \
+        "native_transport_port: 9042" &&
+        ccm node2 updateconf \
+        "rpc_address: 0.0.0.0" \
+        "broadcast_rpc_address: 172.20.0.2" \
+        "native_transport_port: 9043" &&
+        ccm node3 updateconf \
+        "rpc_address: 0.0.0.0" \
+        "broadcast_rpc_address: 172.20.0.2" \
+        "native_transport_port: 9044" &&
+        ccm start &&
+        touch /home/docker/.setup_complete &&
+        tail -f /dev/null
     healthcheck:
-      test: [ "CMD-SHELL", "nodetool status | grep -E '^UN\\s+' | wc -l | grep -qE '[2-9]'" ]
-      interval: 15s
-      timeout: 10s
-      retries: 15
-      start_period: 90s
-
-  cassandra-node3:
-    image: cassandra:5.0
-    container_name: cassandra-node3
-    hostname: cassandra-node3
-    ports:
-      - "9044:9042"
-    environment:
-      - CASSANDRA_CLUSTER_NAME=TestCluster
-      - CASSANDRA_DC=dc1
-      - CASSANDRA_RACK=rack1
-      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
-      - CASSANDRA_SEEDS=cassandra-node1
-      - CASSANDRA_NUM_TOKENS=16
-      - HEAP_NEWSIZE=128M
-      - MAX_HEAP_SIZE=512M
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-    networks:
-      cassandra-net:
-        ipv4_address: 172.20.0.4
-    depends_on:
-      cassandra-node1:
-        condition: service_healthy
-      cassandra-node2:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD-SHELL", "nodetool status | grep -E '^UN\\s+' | wc -l | grep -qE '[3-9]'" ]
-      interval: 15s
-      timeout: 10s
-      retries: 15
-      start_period: 90s
-
+      test: ["CMD", "test", "-f", "/home/docker/.setup_complete"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
 networks:
   cassandra-net:
     driver: bridge
