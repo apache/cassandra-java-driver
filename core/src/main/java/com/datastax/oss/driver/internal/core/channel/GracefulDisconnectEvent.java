@@ -21,7 +21,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import net.jcip.annotations.Immutable;
 
 /**
- * <p>This event indicates that the server is shutting down gracefully and the driver should:
+ * This event indicates that the server is shutting down gracefully and the driver should:
  *
  * <ul>
  *   <li>Stop sending new requests on the affected connection

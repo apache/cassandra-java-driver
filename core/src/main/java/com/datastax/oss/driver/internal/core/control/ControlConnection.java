@@ -253,7 +253,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
         "[{}] Received GRACEFUL_DISCONNECT event on control connection, "
             + "the server is shutting down gracefully",
         logPrefix);
-    // Fire an internal event to notify other components
+    // Fire an internal event to notify other components (particularly the ChannelPool)
     DriverChannel currentChannel = channel;
     if (currentChannel != null) {
       context
@@ -264,7 +264,10 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
               node ->
                   context.getEventBus().fire(new GracefulDisconnectEvent(node, currentChannel)));
     }
-    // The control connection will handle reconnection automatically when the channel closes
+    // The control connection will handle reconnection automatically when the channel closes.
+    // The ChannelPool will close all its channels when it receives the GracefulDisconnectEvent,
+    // which will cause the NodeStateManager to set the node to DOWN state and trigger the
+    // LoadBalancingPolicy to remove it from the live set.
   }
 
   private class SingleThreaded {

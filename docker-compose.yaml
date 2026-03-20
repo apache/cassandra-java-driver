@@ -16,7 +16,7 @@ services:
       cassandra-net:
         ipv4_address: 172.20.0.10
     command: >
-      sh -c "mvn compile verify -pl integration-tests -Dtest=GracefulDisconnectIT"
+      sh -c "mvn compile -DskipTests && mvn verify -pl integration-tests -Dtest=GracefulDisconnectIT"
 
   ccm-cluster:
     image: apache.jfrog.io/cassan-docker/apache/cassandra-java-driver-testing-ubuntu2204:latest

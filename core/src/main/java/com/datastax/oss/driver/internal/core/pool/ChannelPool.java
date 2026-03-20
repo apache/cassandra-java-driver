@@ -509,12 +509,18 @@ public class ChannelPool implements AsyncAutoCloseable {
       }
       if (channelFound) {
         LOG.info(
-            "[{}] Received GRACEFUL_DISCONNECT on channel {}, closing gracefully",
+            "[{}] Received GRACEFUL_DISCONNECT on channel {}, closing all channels gracefully",
             logPrefix,
             affectedChannel);
-        // Close the channel gracefully - this will trigger onChannelCloseStarted which will
-        // remove it from the pool and start reconnection
-        affectedChannel.close();
+        // Close ALL channels in the pool gracefully to immediately stop accepting new requests.
+        // When all channels are closed, the NodeStateManager will automatically set the node to
+        // DOWN state, which will trigger the LoadBalancingPolicy to remove it from the live set.
+        // The graceful close allows in-flight requests to complete before channels are fully
+        // closed.
+        // Reconnection will start automatically once all channels are closed.
+        for (DriverChannel channel : channels) {
+          channel.close();
+        }
       }
     }
 
@@ -544,9 +550,10 @@ public class ChannelPool implements AsyncAutoCloseable {
           LOG.debug("[{}] Received GRACEFUL_DISCONNECT event on query connection!", logPrefix);
           DriverChannel currentChannel = this.channel;
           if (currentChannel != null) {
-            // Fire an internal event on the event bus to notify the pool
+            // Fire an internal event on the event bus to notify the pool.
+            // The pool's onGracefulDisconnect handler will mark the node as going away
+            // and close the channel gracefully, allowing in-flight requests to complete.
             eventBus.fire(new GracefulDisconnectEvent(node, currentChannel));
-            currentChannel.close(); // allow outstanding requests to complete, but do not accept new requests
           } else {
             LOG.error("[{}] Channel is null, cannot fire GracefulDisconnectEvent", logPrefix);
           }
