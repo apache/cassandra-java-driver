@@ -21,20 +21,34 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.config.DriverConfigLoader;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.cql.PrepareRequest;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.session.ProgrammaticArguments;
+import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.testinfra.ccm.CustomCcmRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.IsolatedTests;
 import com.datastax.oss.driver.internal.core.context.DefaultDriverContext;
 import com.datastax.oss.driver.internal.core.cql.CqlPrepareAsyncProcessor;
+import com.datastax.oss.driver.internal.core.cql.CqlPrepareSyncProcessor;
+import com.datastax.oss.driver.internal.core.session.BuiltInRequestProcessors;
+import com.datastax.oss.driver.internal.core.session.RequestProcessor;
+import com.datastax.oss.driver.internal.core.session.RequestProcessorRegistry;
 import com.datastax.oss.driver.shaded.guava.common.base.Predicates;
 import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -49,6 +63,69 @@ public class PreparedStatementCancellationIT {
   private SessionRule<CqlSession> sessionRule = SessionRule.builder(ccmRule).build();
 
   @Rule public TestRule chain = RuleChain.outerRule(ccmRule).around(sessionRule);
+
+  private static class TestCqlPrepareAsyncProcessor extends CqlPrepareAsyncProcessor {
+
+    public TestCqlPrepareAsyncProcessor(@NonNull Optional<DefaultDriverContext> context) {
+      // Default CqlPrepareAsyncProcessor uses weak values here as well.  We avoid doing so
+      // to prevent cache entries from unexpectedly disappearing mid-test.
+      super(context, Function.identity());
+    }
+  }
+
+  private static class TestDefaultDriverContext extends DefaultDriverContext {
+    public TestDefaultDriverContext(
+        DriverConfigLoader configLoader, ProgrammaticArguments programmaticArguments) {
+      super(configLoader, programmaticArguments);
+    }
+
+    @Override
+    protected RequestProcessorRegistry buildRequestProcessorRegistry() {
+      // Re-create the processor cache to insert the TestCqlPrepareAsyncProcessor with it's strong
+      // prepared statement cache, see JAVA-3062
+      List<RequestProcessor<?, ?>> processors =
+          BuiltInRequestProcessors.createDefaultProcessors(this);
+      processors.removeIf((processor) -> processor instanceof CqlPrepareAsyncProcessor);
+      processors.removeIf((processor) -> processor instanceof CqlPrepareSyncProcessor);
+      CqlPrepareAsyncProcessor asyncProcessor =
+          new PreparedStatementCancellationIT.TestCqlPrepareAsyncProcessor(Optional.of(this));
+      processors.add(2, asyncProcessor);
+      processors.add(3, new CqlPrepareSyncProcessor(asyncProcessor));
+      return new RequestProcessorRegistry(
+          getSessionName(), processors.toArray(new RequestProcessor[0]));
+    }
+  }
+
+  private static class TestSessionBuilder extends SessionBuilder {
+
+    @Override
+    protected Object wrap(@NonNull CqlSession defaultSession) {
+      return defaultSession;
+    }
+
+    @Override
+    protected DriverContext buildContext(
+        DriverConfigLoader configLoader, ProgrammaticArguments programmaticArguments) {
+      return new PreparedStatementCancellationIT.TestDefaultDriverContext(
+          configLoader, programmaticArguments);
+    }
+  }
+
+  @BeforeClass
+  public static void setupBeforeClass() {
+    System.setProperty(
+        SessionUtils.SESSION_BUILDER_CLASS_PROPERTY,
+        PreparedStatementCancellationIT.class.getName());
+  }
+
+  @AfterClass
+  public static void teardownAfterClass() {
+    System.clearProperty(SessionUtils.SESSION_BUILDER_CLASS_PROPERTY);
+  }
+
+  public static SessionBuilder builder() {
+    return new PreparedStatementCancellationIT.TestSessionBuilder();
+  }
 
   @Before
   public void setup() {

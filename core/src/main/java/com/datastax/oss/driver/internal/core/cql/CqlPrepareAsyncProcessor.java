@@ -34,7 +34,6 @@ import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RequestProcessor;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
-import com.datastax.oss.driver.shaded.guava.common.base.Functions;
 import com.datastax.oss.driver.shaded.guava.common.cache.Cache;
 import com.datastax.oss.driver.shaded.guava.common.cache.CacheBuilder;
 import com.datastax.oss.driver.shaded.guava.common.collect.Iterables;
@@ -64,14 +63,15 @@ public class CqlPrepareAsyncProcessor
   }
 
   public CqlPrepareAsyncProcessor(@NonNull Optional<? extends DefaultDriverContext> context) {
-    this(context, Functions.identity());
+    // Use weakValues to evict prepared statements from the cache as soon are they are
+    // no longer referenced elsewhere.
+    this(context, CacheBuilder::weakValues);
   }
 
   protected CqlPrepareAsyncProcessor(
       Optional<? extends DefaultDriverContext> context,
       Function<CacheBuilder<Object, Object>, CacheBuilder<Object, Object>> decorator) {
-
-    CacheBuilder<Object, Object> baseCache = CacheBuilder.newBuilder().weakValues();
+    CacheBuilder<Object, Object> baseCache = CacheBuilder.newBuilder();
     this.cache = decorator.apply(baseCache).build();
     context.ifPresent(
         (ctx) -> {

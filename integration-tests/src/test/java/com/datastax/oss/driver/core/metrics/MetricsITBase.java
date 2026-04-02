@@ -174,11 +174,13 @@ public abstract class MetricsITBase {
       // trigger node1 UP -> DOWN
       eventBus.fire(NodeStateEvent.changed(NodeState.UP, NodeState.DOWN, node1));
 
-      Thread.sleep(expireAfter.toMillis());
+      Thread.sleep(expireAfter.toMillis() + 100);
 
       // then node-level metrics should be evicted from node1, but
       // node2 and node3 metrics should not have been evicted
-      await().untilAsserted(() -> assertNodeMetricsEvicted(session, node1));
+      await()
+          .atMost(Duration.ofMinutes(2))
+          .untilAsserted(() -> assertNodeMetricsEvicted(session, node1));
       assertNodeMetricsNotEvicted(session, node2);
       assertNodeMetricsNotEvicted(session, node3);
 
@@ -226,7 +228,8 @@ public abstract class MetricsITBase {
       eventBus.fire(NodeStateEvent.changed(NodeState.FORCED_DOWN, NodeState.UP, node2));
       eventBus.fire(NodeStateEvent.added(node3));
 
-      Thread.sleep(expireAfter.toMillis());
+      // Add a small buffer to ensure the timeout would have fired if it wasn't cancelled
+      Thread.sleep(expireAfter.toMillis() + 100);
 
       // then no node-level metrics should be evicted
       assertNodeMetricsNotEvicted(session, node1);
