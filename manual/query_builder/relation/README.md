@@ -24,10 +24,10 @@ statement operates on.
 
 Relations are used by the following statements:
 
-* [SELECT](../select/) 
-* [UPDATE](../update/)
-* [DELETE](../delete/)
-* [CREATE MATERIALIZED VIEW](../schema/materialized_view/)
+* [SELECT](../select/README.md) 
+* [UPDATE](../update/README.md)
+* [DELETE](../delete/README.md)
+* [CREATE MATERIALIZED VIEW](../schema/materialized_view/README.md)
 
 The easiest way to add a relation is with a `whereXxx` method in the fluent API:
 
@@ -60,7 +60,7 @@ selectFrom("sensor_data").all()
 ```
 
 Relations are generally composed of a left operand, an operator, and an optional right-hand-side
-[term](../term/). The type of relation determines which operators are available.
+[term](../term/README.md). The type of relation determines which operators are available.
  
 ### Simple columns
 

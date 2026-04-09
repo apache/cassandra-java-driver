@@ -186,12 +186,12 @@ The driver initializes its `FrameCodec` in `DefaultDriverContext.buildFrameCodec
 ### Extension points
 
 The default frame codec can be replaced by [extending the
-context](../common/context/#overriding-a-context-component) to override `buildFrameCodec`. This
+context](../common/context/README.md#overriding-a-context-component) to override `buildFrameCodec`. This
 can be used to add or remove a protocol version, or replace a particular codec.
 
 If protocol versions change, `ProtocolVersionRegistry` will likely be affected as well.
 
 Also, depending on the nature of the protocol changes, the driver's [request
-processors](../request_execution/#request-processors) might require some adjustments: either replace
+processors](../request_execution/README.md#request-processors) might require some adjustments: either replace
 them, or introduce separate ones (possibly with new `executeXxx()` methods on a custom session
 interface).

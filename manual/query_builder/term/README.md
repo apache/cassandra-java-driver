@@ -21,9 +21,9 @@ under the License.
 
 A term is an expression that does not involve the value of a column. It is used:
 
-* as an argument to some selectors, for example the indices of [sub-element](../select/#sub-element)
+* as an argument to some selectors, for example the indices of [sub-element](../select/README.md#sub-elements)
   selectors;
-* as the right operand of [relations](../relation).
+* as the right operand of [relations](../relation/README.md).
 
 To create a term, call one of the factory methods in [QueryBuilder]:
 
@@ -37,10 +37,10 @@ selectFrom("user").all().whereColumn("id").isEqualTo(literal(1));
 ```
 
 The argument is converted according to the driver's
-[default type mappings](../../core/#cql-to-java-type-mapping). If there is no default mapping, you
+[default type mappings](../../core/README.md#cql-to-java-type-mapping). If there is no default mapping, you
 will get a `CodecNotFoundException`.
 
-If you use [custom codecs](../../core/custom_codecs), you might need to inline a custom Java type.
+If you use [custom codecs](../../core/custom_codecs/README.md), you might need to inline a custom Java type.
 You can pass a [CodecRegistry] as the second argument (most likely, this will be the registry of
 your session):
 

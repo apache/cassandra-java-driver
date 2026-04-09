@@ -134,7 +134,7 @@ context.getEventBus().fire(TopologyEvent.forceUp(node1.getConnectAddress()));
 
 As shown by the imports above, forcing a node down requires the *internal* driver API, which is 
 reserved for expert usage and subject to the disclaimers in
-[API conventions](../../../api_conventions/).
+[API conventions](../../../api_conventions/README.md).
 
 #### Using a custom topology monitor
 

@@ -81,7 +81,7 @@ Select select =
 ```
 
 When your query is complete, you can either extract a raw query string, or turn it into a
-[simple statement](../core/statements/simple) (or its builder):
+[simple statement](../core/statements/simple/README.md) (or its builder):
 
 ```java
 String cql = select.asCql();
@@ -137,7 +137,7 @@ On the downside, immutability means that the query builder creates lots of short
 Modern garbage collectors are good at handling that, but still we recommend that you **avoid using
 the query builder in your hot path**:
 
-* favor [bound statements](../core/statements/prepared) for queries that are used often. You can
+* favor [bound statements](../core/statements/prepared/README.md) for queries that are used often. You can
   still use the query builder and prepare the result:
   
   ```java
@@ -157,7 +157,7 @@ the query builder in your hot path**:
 
 All fluent API methods use [CqlIdentifier] for schema element names (keyspaces, tables, columns...).
 But, for convenience, there are also `String` overloads that take the CQL form (as see [Case
-sensitivity](../case_sensitivity) for more explanations).
+sensitivity](../case_sensitivity/README.md) for more explanations).
 
 For conciseness, we'll use the string-based versions for the examples in this manual.
 
@@ -219,17 +219,17 @@ a better alternative.
 For a complete tour of the API, browse the child pages in this manual:
 
 * statement types:
-  * [SELECT](select/)
-  * [INSERT](insert/)
-  * [UPDATE](update/)
-  * [DELETE](delete/)
-  * [TRUNCATE](truncate/)
-  * [Schema builder](schema/) (for DDL statements such as CREATE TABLE, etc.)
+  * [SELECT](select/README.md)
+  * [INSERT](insert/README.md)
+  * [UPDATE](update/README.md)
+  * [DELETE](delete/README.md)
+  * [TRUNCATE](truncate/README.md)
+  * [Schema builder](schema/README.md) (for DDL statements such as CREATE TABLE, etc.)
 * common topics:
-  * [Relations](relation/)
-  * [Conditions](condition/)
-  * [Terms](term/)
-  * [Idempotence](idempotence/)
+  * [Relations](relation/README.md)
+  * [Conditions](condition/README.md)
+  * [Terms](term/README.md)
+  * [Idempotence](idempotence/README.md)
   
 [QueryBuilder]:  https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/querybuilder/QueryBuilder.html
 [SchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html

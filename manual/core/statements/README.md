@@ -33,22 +33,22 @@ To execute a CQL query, you  create a [Statement] instance and pass it to
 [Session#execute][execute] or [Session#executeAsync][executeAsync]. The driver provides various
 implementations:
 
-* [SimpleStatement](simple/): a simple implementation built directly from a character string. 
+* [SimpleStatement](simple/README.md): a simple implementation built directly from a character string. 
   Typically used for queries that are executed only once or a few times.
-* [BoundStatement (from PreparedStatement)](prepared/): obtained by binding values to a prepared
+* [BoundStatement (from PreparedStatement)](prepared/README.md): obtained by binding values to a prepared
   query. Typically used for queries that are executed often, with different values.
-* [BatchStatement](batch/): a statement that groups multiple statements to be executed as a batch.
+* [BatchStatement](batch/README.md): a statement that groups multiple statements to be executed as a batch.
 
 All statement types share a [common set of execution attributes][StatementBuilder], that can be set
 through either setters or a builder:
 
-* [execution profile](../configuration/) name, or the profile itself if it's been built dynamically.
-* [idempotent flag](../idempotence/).
-* [tracing flag](../tracing/).
-* [query timestamp](../query_timestamps/).
-* [page size and paging state](../paging/).
-* [per-query keyspace](per_query_keyspace/) (Cassandra 4 or above).
-* [token-aware routing](../load_balancing/#token-aware) information (keyspace and key/token).
+* [execution profile](../configuration/README.md) name, or the profile itself if it's been built dynamically.
+* [idempotent flag](../idempotence/README.md).
+* [tracing flag](../tracing/README.md).
+* [query timestamp](../query_timestamps/README.md).
+* [page size and paging state](../paging/README.md).
+* [per-query keyspace](per_query_keyspace/README.md) (Cassandra 4 or above).
+* [token-aware routing](../load_balancing/README.md#token-aware) information (keyspace and key/token).
 * normal and serial consistency level.
 * query timeout.
 * custom payload to send arbitrary key/value pairs with the request (you should only need this if
@@ -74,7 +74,7 @@ such as [ErrorProne](https://errorprone.info/) -- can check correct usage at bui
 mistakes as compiler errors.
 
 Note that some attributes can either be set programmatically, or inherit a default value defined in
-the [configuration](../configuration/). Namely, these are: idempotent flag, query timeout,
+the [configuration](../configuration/README.md). Namely, these are: idempotent flag, query timeout,
 consistency levels and page size. We recommended the configuration approach whenever possible (you
 can create execution profiles to capture common combinations of those options).
 

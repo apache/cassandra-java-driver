@@ -37,7 +37,7 @@ Two strategies are available:
     update and the column previously had another value, it won't be overwritten.
 
     Note that unset values ([CASSANDRA-7304]) are only supported with [native
-    protocol](../../../core/native_protocol/) v4 (Cassandra 2.2) or above . If you try to use this
+    protocol](../../../core/native_protocol/README.md) v4 (Cassandra 2.2) or above . If you try to use this
     strategy with a lower Cassandra version, the mapper will throw an [MapperException] when you try
     to access the corresponding DAO.
 
@@ -60,12 +60,12 @@ import static com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrateg
 void update(Product product);
 ```
 
-This applies to [@Insert](../insert/), [@Query](../query/), [@SetEntity](../setentity/) and
-[@Update](../update/) (other method types don't need it since they don't write data).
+This applies to [@Insert](../insert/README.md), [@Query](../query/README.md), [@SetEntity](../setentity/README.md) and
+[@Update](../update/README.md) (other method types don't need it since they don't write data).
 
 ### DAO level
 
-Annotate your [DAO](../../daos/) interface with [@DefaultNullSavingStrategy]. Any method that does
+Annotate your [DAO](../README.md) interface with [@DefaultNullSavingStrategy]. Any method that does
 not explicitly define its strategy inherits the DAO-level one:
 
 ```java

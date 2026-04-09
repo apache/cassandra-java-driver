@@ -19,7 +19,7 @@ under the License.
 
 ## Graph options
 
-There are various [configuration](../../../configuration/) options that control the execution of
+There are various [configuration](../../../configuration/README.md) options that control the execution of
 graph statements. They can also be overridden programmatically on individual statements.
 
 ### Setting options
@@ -157,7 +157,7 @@ its own versioning scheme.
 unset by default, and you should almost never have to change it: the driver sets it automatically
 based on the information it knows about the server.
 
-There is one exception: if you use the [script API](../script/) against a legacy DSE version (5.0.3
+There is one exception: if you use the [script API](../script/README.md) against a legacy DSE version (5.0.3
 or older), the driver infers the wrong protocol version. This manifests as a `ClassCastException`
 when you try to deserialize complex result objects, such as vertices:
 

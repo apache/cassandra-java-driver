@@ -48,7 +48,7 @@ for (TableMetadata table : system.getTables().values()) {
 
 Schema metadata is fully immutable (both the map and all the objects it contains). It represents a
 snapshot of the database at the time of the last metadata refresh, and is consistent with the
-[token map](../token/) of its parent `Metadata` object. Keep in mind that `Metadata` is itself
+[token map](../token/README.md) of its parent `Metadata` object. Keep in mind that `Metadata` is itself
 immutable; if you need to get the latest schema, be sure to call
 `session.getMetadata().getKeyspaces()` again (and not just `getKeyspaces()` on a stale `Metadata`
 reference).
@@ -207,7 +207,7 @@ a few filters:
 If an element is malformed, or if its regex has a syntax error, a warning is logged and that single
 element is ignored.
 
-The default configuration (see [reference.conf](../../configuration/reference/)) excludes all
+The default configuration (see [reference.conf](../../configuration/reference/README.md)) excludes all
 Cassandra and DSE system keyspaces.
 
 Try to use only exact name inclusions if possible. This allows the driver to filter on the server
@@ -331,14 +331,14 @@ changes at the same time.
 
 ### Relation to token metadata
 
-Some of the data in the [token map](../token/) relies on keyspace metadata (any method that takes a
+Some of the data in the [token map](../token/README.md) relies on keyspace metadata (any method that takes a
 `CqlIdentifier` argument). If schema metadata is disabled or filtered, token metadata will also be
 unavailable for the excluded keyspaces.
 
 ### Performing schema updates from the client
 
 If you issue schema-altering requests from the driver (e.g. `session.execute("CREATE TABLE ..")`),
-take a look at the [Performance](../../performance/#schema-updates) page for a few tips.
+take a look at the [Performance](../../performance/README.md#schema-updates) page for a few tips.
 
 [Metadata#getKeyspaces]:             https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/metadata/Metadata.html#getKeyspaces--
 [SchemaChangeListener]:              https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/metadata/schema/SchemaChangeListener.html

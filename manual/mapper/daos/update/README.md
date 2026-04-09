@@ -20,7 +20,7 @@ under the License.
 ## Update methods
 
 Annotate a DAO method with [@Update] to generate a query that updates one or more
-[entities](../../entities):
+[entities](../../entities/README.md):
 
 ```java
 @Dao
@@ -77,7 +77,7 @@ with `customIfClause` (if both are set, the mapper processor will generate a com
 boolean updateIfExists(Product product);
 ```
 
-The annotation can define a [null saving strategy](../null_saving/) that applies to the properties
+The annotation can define a [null saving strategy](../null_saving/README.md) that applies to the properties
 of the entity to update. This allows you to implement partial updates, by passing a "template"
 entity that only contains the properties you want to modify:
 
@@ -95,7 +95,7 @@ dao.updateWhereIdIn(template, 42, 43);  // Will only update 'description' on the
 A `Function<BoundStatementBuilder, BoundStatementBuilder>` or `UnaryOperator<BoundStatementBuilder>`
 can be added as the **last** parameter. It will be applied to the statement before execution. This
 allows you to customize certain aspects of the request (page size, timeout, etc) at runtime. See
-[statement attributes](../statement_attributes/).
+[statement attributes](../statement_attributes/README.md).
 
 ### Return type
 
@@ -150,11 +150,11 @@ The method can return:
     ReactiveResultSet updateReactive(Product product);
     ```
 
-* a [custom type](../custom_types).
+* a [custom type](../custom_types/README.md).
 
 ### Target keyspace and table
 
-If a keyspace was specified [when creating the DAO](../../mapper/#dao-factory-methods), then the
+If a keyspace was specified [when creating the DAO](../../mapper/README.md#dao-factory-methods), then the
 generated query targets that keyspace. Otherwise, it doesn't specify a keyspace, and will only work
 if the mapper was built from a session that has a [default keyspace] set.
 

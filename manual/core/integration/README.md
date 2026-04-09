@@ -25,7 +25,7 @@ under the License.
 * explanations about [driver dependencies](#driver-dependencies) and when they can be manually
   excluded.
 
-Note: guidelines to build a GraalVM native image can be found [here](../graalvm).
+Note: guidelines to build a GraalVM native image can be found [here](../graalvm/README.md).
 
 -----
 
@@ -177,7 +177,7 @@ dependencies, and tell Maven that we're going to use Java 8:
 ##### Application configuration
 
 `application.conf` is not stricly necessary, but it illustrates an important point about the
-driver's [configuration](../configuration/): you override any of the driver's default options here.
+driver's [configuration](../configuration/README.md): you override any of the driver's default options here.
 
 ```
 datastax-java-driver {
@@ -189,7 +189,7 @@ In this case, we just specify a custom name for our session, it will appear in t
 
 ##### Logging configuration
 
-For this example, we choose Logback as our [logging framework](../logging/) (we added the dependency
+For this example, we choose Logback as our [logging framework](../logging/README.md) (we added the dependency
 in `pom.xml`). `logback.xml` configures it to send the driver's `INFO` logs to the console.
 
 ```xml
@@ -211,7 +211,7 @@ dependency, or this file; but the default behavior is a bit verbose.
 
 ##### Main class
 
-`Main.java` is the canonical example introduced in our [quick start](../#quick-start); it connects
+`Main.java` is the canonical example introduced in our [quick start](../README.md#quick-start); it connects
 to Cassandra, queries the server version and prints it:
 
 ```java
@@ -357,17 +357,17 @@ Here's a rundown of what you can customize:
 
 [Netty](https://netty.io/) is the NIO framework that powers the driver's networking layer.
 
-It is a required dependency, but we provide a a [shaded JAR](../shaded_jar/) that relocates it to a
+It is a required dependency, but we provide a a [shaded JAR](../shaded_jar/README.md) that relocates it to a
 different Java package; this is useful to avoid dependency hell if you already use Netty in another
 part of your application.
 
 #### Typesafe config
 
 [Typesafe config](https://lightbend.github.io/config/) is used for our file-based
-[configuration](../configuration/).
+[configuration](../configuration/README.md).
 
 It is a required dependency if you use the driver's built-in configuration loader, but this can be
-[completely overridden](../configuration/#bypassing-typesafe-config) with your own implementation,
+[completely overridden](../configuration/README.md#bypassing-typesafe-config) with your own implementation,
 that could use a different framework or an ad-hoc solution.
 
 In that case, you can exclude the dependency:
@@ -390,7 +390,7 @@ In that case, you can exclude the dependency:
 
 The driver performs native calls with [JNR](https://github.com/jnr). This is used in two cases:
 
-* to access a microsecond-precision clock in [timestamp generators](../query_timestamps/);
+* to access a microsecond-precision clock in [timestamp generators](../query_timestamps/README.md);
 * to get the process ID when generating [UUIDs][Uuids].
 
 In both cases, this is completely optional; if system calls are not available on the current
@@ -420,11 +420,11 @@ The driver supports compression with either [LZ4](https://github.com/yawkat/lz4-
 [Snappy](http://google.github.io/snappy/).
 
 These dependencies are optional; you have to add them explicitly in your application in order to
-enable compression. See the [Compression](../compression/) page for more details.
+enable compression. See the [Compression](../compression/README.md) page for more details.
 
 #### Metrics
 
-The driver exposes [metrics](../metrics/) through the
+The driver exposes [metrics](../metrics/README.md) through the
 [Dropwizard](http://metrics.dropwizard.io/4.1.2/) library.
 
 The dependency is declared as required, but metrics are optional. If you've disabled all metrics, or
@@ -449,7 +449,7 @@ In addition, when using Dropwizard, "timer" metrics use
 [HdrHistogram](http://hdrhistogram.github.io/HdrHistogram/) to record latency percentiles. At the
 time of writing, these metrics are: `cql-requests`, `throttling.delay` and `cql-messages`; you can
 also identify them by reading the comments in the [configuration
-reference](../configuration/reference/) (look for "exposed as a Timer").
+reference](../configuration/reference/README.md) (look for "exposed as a Timer").
 
 If all of these metrics are disabled, or if you use a different metrics library, you can remove the
 dependency:
@@ -472,9 +472,9 @@ dependency:
 
 [Jackson](https://github.com/FasterXML/jackson) is used:
 
-* when connecting to [DataStax Astra](../../cloud/);
+* when connecting to [DataStax Astra](../../cloud/README.md);
 * when Insights monitoring is enabled;
-* when [Json codecs](../custom_codecs) are being used. 
+* when [Json codecs](../custom_codecs/README.md) are being used. 
  
 Jackson is declared as a required dependency, but the driver can operate normally without it. If you
 don't use any of the above features, you can safely exclude the dependency:
@@ -495,7 +495,7 @@ don't use any of the above features, you can safely exclude the dependency:
 
 #### Esri
 
-Our [geospatial types](../dse/geotypes/) implementation is based on the [Esri Geometry
+Our [geospatial types](../dse/geotypes/README.md) implementation is based on the [Esri Geometry
 API](https://github.com/Esri/geometry-api-java).
 
 For driver versions >= 4.4.0 and < 4.14.0 Esri is declared as a required dependency,
@@ -534,7 +534,7 @@ guaranteed to be fully compatible with DSE.
 
 #### TinkerPop
 
-[Apache TinkerPop™](http://tinkerpop.apache.org/) is used in our [graph API](../dse/graph/),
+[Apache TinkerPop™](http://tinkerpop.apache.org/) is used in our [graph API](../dse/graph/README.md),
 introduced in the OSS driver in version 4.4.0 (it was previously a feature only available in the
 now-retired DSE driver).
 
@@ -601,7 +601,7 @@ Here are the recommended TinkerPop versions for each driver version:
 #### Reactive Streams
 
 [Reactive Streams](https://www.reactive-streams.org/) types are referenced in our [reactive
-API](../reactive/).
+API](../reactive/README.md).
 
 The Reactive Streams API is declared as a required dependency, but the driver can operate normally
 without it. If you never call any of the `executeReactive` methods, you can exclude the dependency:
@@ -674,7 +674,7 @@ The remaining core driver dependencies are the only ones that are truly mandator
 * `java-driver-guava-shaded`, a shaded version of [Guava](https://github.com/google/guava). It is
   relocated to a different package, and only used by internal driver code, so it should be
   completely transparent to third-party code;
-* the [SLF4J](https://www.slf4j.org/) API for [logging](../logging/).
+* the [SLF4J](https://www.slf4j.org/) API for [logging](../logging/README.md).
 
 [central_oss]: https://search.maven.org/#search%7Cga%7C1%7Ccom.datastax.oss
 [maven_pom]: https://maven.apache.org/guides/introduction/introduction-to-the-pom.html

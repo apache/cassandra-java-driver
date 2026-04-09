@@ -1,0 +1,177 @@
+site_name: Java Driver for Apache Cassandra
+site_description: Java Driver for Apache Cassandra® Documentation
+site_url: https://apache.github.io/cassandra-java-driver
+repo_url: https://github.com/apache/cassandra-java-driver
+repo_name: apache/cassandra-java-driver
+
+docs_dir: mkdocs
+site_dir: docs
+
+theme:
+  name: material
+  logo: faq/logo.png
+  favicon: faq/favicon.ico
+  features:
+    - navigation.tabs
+    - navigation.top
+    - navigation.path
+    - search.highlight
+    - search.share
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - toc:
+      toc_depth: 2-3
+      permalink: true
+
+nav:
+  - Home: README.md
+  - Manual:
+    - Overview: manual/README.md
+    - API Conventions: manual/api_conventions/README.md
+    - Case Sensitivity: manual/case_sensitivity/README.md
+    - Cloud: manual/cloud/README.md
+    - Core:
+      - Overview: manual/core/README.md
+      - Integration: manual/core/integration/README.md
+      - Configuration:
+        - Overview: manual/core/configuration/README.md
+        - Reference: manual/core/configuration/reference/README.md
+      - Connection Management:
+        - Authentication: manual/core/authentication/README.md
+        - SSL: manual/core/ssl/README.md
+        - Pooling: manual/core/pooling/README.md
+        - Load Balancing: manual/core/load_balancing/README.md
+        - Reconnection: manual/core/reconnection/README.md
+        - Address Resolution: manual/core/address_resolution/README.md
+      - Statements:
+        - Overview: manual/core/statements/README.md
+        - Batch: manual/core/statements/batch/README.md
+        - Per Query Keyspace: manual/core/statements/per_query_keyspace/README.md
+        - Prepared: manual/core/statements/prepared/README.md
+        - Simple: manual/core/statements/simple/README.md
+      - Query Execution:
+        - Retries: manual/core/retries/README.md
+        - Idempotence: manual/core/idempotence/README.md
+        - Speculative Execution: manual/core/speculative_execution/README.md
+        - Paging: manual/core/paging/README.md
+        - Query Timestamps: manual/core/query_timestamps/README.md
+      - Advanced Types:
+        - Custom Codecs: manual/core/custom_codecs/README.md
+        - Temporal Types: manual/core/temporal_types/README.md
+        - Tuples: manual/core/tuples/README.md
+        - UDTs: manual/core/udts/README.md
+        - Detachable Types: manual/core/detachable_types/README.md
+      - Non-blocking:
+        - Overview: manual/core/non_blocking/README.md
+        - Async Programming: manual/core/async/README.md
+        - Reactive Streams: manual/core/reactive/README.md
+      - Observability:
+        - Request Tracker: manual/core/request_tracker/README.md
+        - Request ID: manual/core/request_id/README.md
+        - Metrics: manual/core/metrics/README.md
+        - Logging: manual/core/logging/README.md
+        - Tracing: manual/core/tracing/README.md
+      - Performance:
+        - Overview: manual/core/performance/README.md
+        - Throttling: manual/core/throttling/README.md
+        - Compression: manual/core/compression/README.md
+      - Metadata:
+        - Overview: manual/core/metadata/README.md
+        - Node: manual/core/metadata/node/README.md
+        - Schema: manual/core/metadata/schema/README.md
+        - Token: manual/core/metadata/token/README.md
+      - Driver Internals:
+        - Control Connection: manual/core/control_connection/README.md
+        - Native Protocol: manual/core/native_protocol/README.md
+      - DataStax DSE:
+        - Overview: manual/core/dse/README.md
+        - Geotypes: manual/core/dse/geotypes/README.md
+        - Graph:
+          - Overview: manual/core/dse/graph/README.md
+          - Fluent:
+            - Overview: manual/core/dse/graph/fluent/README.md
+            - Explicit: manual/core/dse/graph/fluent/explicit/README.md
+            - Implicit: manual/core/dse/graph/fluent/implicit/README.md
+          - Options: manual/core/dse/graph/options/README.md
+          - Results: manual/core/dse/graph/results/README.md
+          - Script: manual/core/dse/graph/script/README.md
+      - GraalVM: manual/core/graalvm/README.md
+      - Shaded JAR: manual/core/shaded_jar/README.md
+      - BOM: manual/core/bom/README.md
+    - Query Builder:
+      - Overview: manual/query_builder/README.md
+      - Select: manual/query_builder/select/README.md
+      - Insert: manual/query_builder/insert/README.md
+      - Update: manual/query_builder/update/README.md
+      - Delete: manual/query_builder/delete/README.md
+      - Schema:
+        - Overview: manual/query_builder/schema/README.md
+        - Aggregate: manual/query_builder/schema/aggregate/README.md
+        - Function: manual/query_builder/schema/function/README.md
+        - Index: manual/query_builder/schema/index/README.md
+        - Keyspace: manual/query_builder/schema/keyspace/README.md
+        - Materialized View: manual/query_builder/schema/materialized_view/README.md
+        - Table: manual/query_builder/schema/table/README.md
+        - Type: manual/query_builder/schema/type/README.md
+      - Truncate: manual/query_builder/truncate/README.md
+      - Condition: manual/query_builder/condition/README.md
+      - Relation: manual/query_builder/relation/README.md
+      - Term: manual/query_builder/term/README.md
+      - Idempotence: manual/query_builder/idempotence/README.md
+    - Mapper:
+      - Overview: manual/mapper/README.md
+      - Entities: manual/mapper/entities/README.md
+      - DAOs:
+        - Overview: manual/mapper/daos/README.md
+        - Custom Types: manual/mapper/daos/custom_types/README.md
+        - Delete: manual/mapper/daos/delete/README.md
+        - Get Entity: manual/mapper/daos/getentity/README.md
+        - Increment: manual/mapper/daos/increment/README.md
+        - Insert: manual/mapper/daos/insert/README.md
+        - Null Saving: manual/mapper/daos/null_saving/README.md
+        - Query: manual/mapper/daos/query/README.md
+        - Query Provider: manual/mapper/daos/queryprovider/README.md
+        - Select: manual/mapper/daos/select/README.md
+        - Set Entity: manual/mapper/daos/setentity/README.md
+        - Statement Attributes: manual/mapper/daos/statement_attributes/README.md
+        - Update: manual/mapper/daos/update/README.md
+      - Mapper: manual/mapper/mapper/README.md
+      - Configuration:
+        - Overview: manual/mapper/config/README.md
+        - Kotlin: manual/mapper/config/kotlin/README.md
+        - Lombok: manual/mapper/config/lombok/README.md
+        - Record: manual/mapper/config/record/README.md
+        - Scala: manual/mapper/config/scala/README.md
+    - Developer:
+      - Overview: manual/developer/README.md
+      - Common:
+        - Overview: manual/developer/common/README.md
+        - Concurrency: manual/developer/common/concurrency/README.md
+        - Context: manual/developer/common/context/README.md
+        - Event Bus: manual/developer/common/event_bus/README.md
+      - Native Protocol: manual/developer/native_protocol/README.md
+      - Netty Pipeline: manual/developer/netty_pipeline/README.md
+      - Request Execution: manual/developer/request_execution/README.md
+      - Admin: manual/developer/admin/README.md
+    - OSGi: manual/osgi/README.md
+  - API References: api/index.html
+  - FAQ: faq/README.md
+  - Changelog: changelog/README.md
+  - Upgrade Guide: upgrade_guide/README.md
+  - Contribute: CONTRIBUTING.md
+
+plugins:
+  - search
+  - awesome-pages
+  - macros
+  - mike:
+      alias_type: copy
+
+extra:
+  generator: false
+  version:
+    provider: mike

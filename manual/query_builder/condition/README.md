@@ -19,8 +19,8 @@ under the License.
 
 ## Conditions
 
-A condition is a clause that appears after the IF keyword in a conditional [UPDATE](../update/) or
-[DELETE](../delete/) statement.
+A condition is a clause that appears after the IF keyword in a conditional [UPDATE](../update/README.md) or
+[DELETE](../delete/README.md) statement.
 
 The easiest way to add a condition is with an `ifXxx` method in the fluent API:
 
@@ -59,7 +59,7 @@ deleteFrom("user")
 ```
 
 Conditions are composed of a left operand, an operator, and a right-hand-side
-[term](../term/).
+[term](../term/README.md).
 
 ### Simple columns
 

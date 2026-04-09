@@ -21,7 +21,7 @@ under the License.
 
 To start an INSERT query, use one of the `insertInto` methods in [QueryBuilder]. There are
 several variants depending on whether your table name is qualified, and whether you use
-[identifiers](../../case_sensitivity/) or raw strings:
+[identifiers](../../case_sensitivity/README.md) or raw strings:
 
 ```java
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.*;
@@ -46,7 +46,7 @@ insertInto("user")
 // INSERT INTO user (id,first_name,last_name) VALUES (?,'John','Doe')
 ```
 
-The column names can only be simple identifiers. The values are [terms](../term).
+The column names can only be simple identifiers. The values are [terms](../term/README.md).
 
 #### JSON insert
 

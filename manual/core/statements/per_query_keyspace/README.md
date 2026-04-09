@@ -33,7 +33,7 @@ switching the whole session to that keyspace either. For example, you might have
 setup where identical requests are executed against different keyspaces.
 
 **This feature is only available with Cassandra 4.0 or above** ([CASSANDRA-10145]). Make sure you
-are using [native protocol](../../native_protocol/) v5 or above to connect.
+are using [native protocol](../../native_protocol/README.md) v5 or above to connect.
 
 If you try against an older version, you will get an error:
 
@@ -57,7 +57,7 @@ SimpleStatement statement =
 session.execute(statement);
 ```
 
-You can do this on [simple](../simple/), [prepared](../prepared) or [batch](../batch/) statements.
+You can do this on [simple](../simple/README.md), [prepared](../prepared/README.md) or [batch](../batch/README.md) statements.
 
 If the session is connected to another keyspace, the per-query keyspace takes precedence:
 

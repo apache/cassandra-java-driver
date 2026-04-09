@@ -26,7 +26,7 @@ easy reference if you're benchmarking your application or diagnosing performance
 
 ### Statements
 
-[Statements](../statements/) are some of the driver types you'll use the most. Every request needs
+[Statements](../statements/README.md) are some of the driver types you'll use the most. Every request needs
 one -- even `session.execute(String)` creates a `SimpleStatement` under the hood.
 
 #### Immutability and builders
@@ -47,7 +47,7 @@ initialized statically and stored as constants.
 
 #### Prepared statements
 
-[Prepared statements](../statements/prepared) allow Cassandra to cache parsed query strings
+[Prepared statements](../statements/prepared/README.md) allow Cassandra to cache parsed query strings
 server-side, but that's not their only benefit for performance:
 
 * the driver also caches the response metadata, which can then be skipped in subsequent responses.
@@ -91,34 +91,34 @@ By default, the driver opens 1 connection per node, and allows 1024 concurrent r
 connection. In our experience this is enough for most scenarios. 
 
 If your application generates a very high throughput (hundreds of thousands of requests per second), 
-you might want to experiment with different settings. See the [tuning](../pooling/#tuning) section
+you might want to experiment with different settings. See the [tuning](../pooling/README.md#tuning) section
 in the connection pooling page.
 
 #### Compression
 
-Consider [compression](../compression/) if your queries return large payloads; it might help to
+Consider [compression](../compression/README.md) if your queries return large payloads; it might help to
 reduce network traffic.
 
 #### Timestamp generation
 
-Each query is assigned a [timestamp](../query_timestamps/) to order them relative to each other.
+Each query is assigned a [timestamp](../query_timestamps/README.md) to order them relative to each other.
 
 By default, this is done driver-side with
-[AtomicTimestampGenerator](../query_timestamps/#atomic-timestamp-generator). This is a very simple
+[AtomicTimestampGenerator](../query_timestamps/README.md#atomictimestampgenerator). This is a very simple
 operation so unlikely to be a bottleneck, but note that there are other options, such as a
-[thread-local](../query_timestamps/#thread-local-timestamp-generator) variant that creates slightly
+[thread-local](../query_timestamps/README.md#threadlocaltimestampgenerator) variant that creates slightly
 less contention, writing your own implementation or letting the server assign timestamps.
 
 #### Tracing
 
-[Tracing](../tracing/) should be used for only a small percentage of your queries. It consumes
+[Tracing](../tracing/README.md) should be used for only a small percentage of your queries. It consumes
 additional resources on the server, and fetching each trace requires background requests.
 
 Do not enable tracing for every request; it's a sure way to bring your performance down.
 
 #### Request trackers
 
-[Request trackers](../request_tracker/) are on the hot path (that is, invoked on I/O threads, each
+[Request trackers](../request_tracker/README.md) are on the hot path (that is, invoked on I/O threads, each
 time a request is executed), and users can plug custom implementations.
 
 If you experience throughput issues, check if any trackers are configured, and what they are doing.
@@ -126,7 +126,7 @@ They should avoid blocking calls, as well as any CPU-intensive computations.
 
 #### Metrics
 
-Similarly, some of the driver's [metrics](../metrics/) are updated for every request (if the metric
+Similarly, some of the driver's [metrics](../metrics/README.md) are updated for every request (if the metric
 is enabled).
 
 By default, the driver ships with all metrics disabled. Enable them conservatively, and if you're
@@ -135,7 +135,7 @@ cause.
 
 #### Throttling
 
-[Throttling](../throttling/) can help establish more predictable server performance, by controlling
+[Throttling](../throttling/README.md) can help establish more predictable server performance, by controlling
 how much load each driver instance is allowed to put on the cluster. The throttling algorithm itself
 incurs a bit of overhead in the driver, but that shouldn't be a problem since the goal is to stay
 under reasonable rates in the first place.
@@ -151,7 +151,7 @@ private fields or constants to alleviate GC pressure.
 
 #### Identifiers
 
-The driver uses [CqlIdentifier] to deal with [case sensitivity](../../case_sensitivity). When you
+The driver uses [CqlIdentifier] to deal with [case sensitivity](../../case_sensitivity/README.md). When you
 call methods that take raw strings, the driver generally wraps them under the hood:
 
 ```java
@@ -182,7 +182,7 @@ pst.bind().setInt("age", 25);
 #### Type tokens
 
 [GenericType] is used to express complex generic types -- such as
-[nested collections](../#collection-types) -- in getters and setters. These objects are immutable
+[nested collections](../README.md#collection-types) -- in getters and setters. These objects are immutable
 and stateless, so they are good candidates for constants:
 
 ```java
@@ -196,7 +196,7 @@ to store yours.
 
 #### Built queries
 
-Similarly, [built queries](../../query_builder/) are immutable and don't need a reference to a live
+Similarly, [built queries](../../query_builder/README.md) are immutable and don't need a reference to a live
 driver instance. If you create them statically, they can be stored as constants:
 
 ```java
@@ -209,7 +209,7 @@ already happens at initialization time.
 
 #### Derived configuration profiles
 
-The configuration API allows you to build [derived profiles](../configuration/#derived-profiles) at
+The configuration API allows you to build [derived profiles](../configuration/README.md#derived-profiles) at
 runtime.
 
 ```java
@@ -224,7 +224,7 @@ of recreating them each time.
 
 ### Metadata
 
-The driver maintains [metadata](../metadata/) about the state of the Cassandra cluster. This work is
+The driver maintains [metadata](../metadata/README.md) about the state of the Cassandra cluster. This work is
 done on dedicated "admin" threads (see the [thread pooling](#thread-pooling) section below), so it's
 not in direct competition with regular requests. 
 
@@ -245,12 +245,12 @@ This will save CPU and memory resources, but you lose some driver features:
 * if schema is disabled, `session.getMetadata().getKeyspaces()` will always be empty: your
   application won't be able to inspect the database schema dynamically.
 * if the token map is disabled, `session.getMetadata().getTokenMap()` will always be empty, and you
-  lose the ability to use [token-aware routing](../load_balancing/#token-aware).
+  lose the ability to use [token-aware routing](../load_balancing/README.md#token-aware).
 
 Note that disabling the schema implicitly disables the token map (because computing the token map
 requires the keyspace replication settings).
 
-Perhaps more interestingly, metadata can be [filtered](../metadata/schema/#filtering) to a specific
+Perhaps more interestingly, metadata can be [filtered](../metadata/schema/README.md#filtering) to a specific
 subset of keyspaces. This is handy if you connect to a shared cluster that holds data for multiple
 applications:
 
@@ -260,7 +260,7 @@ datastax-java-driver.advanced.metadata {
 }
 ```
 
-To get a sense of the time spent on metadata refreshes, enable [debug logs](../logging/) and look
+To get a sense of the time spent on metadata refreshes, enable [debug logs](../logging/README.md) and look
 for entries like this:
 
 ```
@@ -319,7 +319,7 @@ You should group your schema changes as much as possible.
 
 Every change made from a client will be pushed to all other clients, causing them to refresh their
 metadata. If you have multiple client instances, it might be a good idea to
-[deactivate the metadata](../metadata/schema/#enabling-disabling) on all clients while you apply the
+[deactivate the metadata](../metadata/schema/README.md#enablingdisabling) on all clients while you apply the
 updates, and reactivate it at the end (reactivating will trigger an immediate refresh, so you might
 want to ramp up clients to avoid a "thundering herd" effect).
 
@@ -327,7 +327,7 @@ Schema changes have to replicate to all nodes in the cluster. To minimize the ch
 disagreement errors:
 
 * apply your changes serially. The driver handles this automatically by checking for
-  [schema agreement](../metadata/schema/#schema-agreement) after each DDL query. Run them from the
+  [schema agreement](../metadata/schema/README.md#schema-agreement) after each DDL query. Run them from the
   same application thread, and, if you use the asynchronous API, chain the futures properly.
 * send all the changes to the same coordinator. This is one of the rare cases where we recommend
   using [Statement.setNode()].  
@@ -346,7 +346,7 @@ The driver architecture is designed around two code paths:
     * the driver's "timer" thread for request timeouts and speculative executions. See
       `datastax-java-driver.advanced.netty.timer`.
 * the **cold path** is for all administrative tasks: managing the
-  [control connection](../control_connection), parsing [metadata](../metadata/), reacting to cluster
+  [control connection](../control_connection/README.md), parsing [metadata](../metadata/README.md), reacting to cluster
   events (node going up/down, getting added/removed, etc), and scheduling periodic events
   (reconnections, reloading the configuration). Comparatively, these tasks happen less often, and
   are less critical (for example, stale schema metadata is not a blocker for request execution).
@@ -359,7 +359,7 @@ every case is different, but you might want to try lowering I/O threads, especia
 application already creates a lot of threads on its side. 
 
 Note that you can gain more fine-grained control over thread pools via the
-[internal](../../api_conventions) API (look at the `NettyOptions` interface). In particular, it is
+[internal](../../api_conventions/README.md) API (look at the `NettyOptions` interface). In particular, it is
 possible to reuse the same event loop group for I/O, admin tasks, and even your application code
 (the driver's internal code is fully asynchronous so it will never block any thread). The timer is
 the only one that will have to stay on a separate thread.

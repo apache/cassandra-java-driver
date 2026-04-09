@@ -34,7 +34,7 @@ Usage:
 
 ### Request Id Generator Configuration
 
-Request ID generator can be declared in the [configuration](../configuration/) as follows:
+Request ID generator can be declared in the [configuration](../configuration/README.md) as follows:
 
 ```
 datastax-java-driver.advanced.request-id.generator {

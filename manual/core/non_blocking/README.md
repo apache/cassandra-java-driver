@@ -37,7 +37,7 @@ These guarantees and their exceptions are detailed below. A final chapter explai
 driver with BlockHound.
 
 The developer guide also has more information on driver internals and its 
-[concurrency model](../../developer/common/concurrency).
+[concurrency model](../../developer/common/concurrency/README.md).
 
 ### Definition of "non-blocking"
 
@@ -61,8 +61,8 @@ The driver offers many execution models. For the built-in ones, the lock-free gu
 follows:
 
 * The synchronous API is blocking and does not offer any lock-free guarantee.
-* The [asynchronous](../async) API is implemented in lock-free algorithms.
-* The [reactive](../reactive) API is implemented in lock-free algorithms (it's actually wait-free).
+* The [asynchronous](../async/README.md) API is implemented in lock-free algorithms.
+* The [reactive](../reactive/README.md) API is implemented in lock-free algorithms (it's actually wait-free).
 
 For example, calling any synchronous method declared in [`SyncCqlSession`], such as [`execute`], 
 will block until the result is available. These methods should never be used in non-blocking 
@@ -119,7 +119,7 @@ thread, and partially asynchronously on an internal driver thread.
   the driver admin thread performing the initialization tasks must be allowed to block, at least
   temporarily.
 
-[driver context]: ../../developer/common/context
+[driver context]: ../../developer/common/context/README.md
 
 For the reasons above, the initialization phase obviously doesn't qualify as lock-free. For 
 non-blocking applications, it is generally advised to trigger session initialization during 
@@ -155,7 +155,7 @@ should not be used if strict lock-freedom is enforced.
 The `RateLimitingRequestThrottler` is currently blocking. The `ConcurrencyLimitingRequestThrottler`
 is lock-free.
 
-See the section about [throttling](../throttling) for details about these components. Depending on
+See the section about [throttling](../throttling/README.md) for details about these components. Depending on
 how many requests are being executed in parallel, the thread contention on these locks can be high:
 in short, if your application enforces strict lock-freedom, then you should not use the
 `RateLimitingRequestThrottler`.
@@ -182,12 +182,12 @@ this reason, it is advised that this method be called once during application st
 safe to use it afterwards in a non-blocking context.
 
 Alternatively, it's possible to disable the usage of client-side timestamp generation, and/or the
-usage of native libraries. See the manual sections on [query timestamps](../query_timestamps) and 
-[integration](../integration) for more information.
+usage of native libraries. See the manual sections on [query timestamps](../query_timestamps/README.md) and 
+[integration](../integration/README.md) for more information.
 
 One component, the codec registry, can block when its [`register`] method is called; it is 
 therefore advised that codecs should be registered during application startup exclusively. See the
-[custom codecs](../custom_codecs) section for more details about registering codecs.
+[custom codecs](../custom_codecs/README.md) section for more details about registering codecs.
 
 [`register`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/type/codec/registry/MutableCodecRegistry.html#register-com.datastax.oss.driver.api.core.type.codec.TypeCodec-
 
@@ -243,7 +243,7 @@ Beware that a hot-reloading of the default configuration mechanism is performed 
 admin thread. If hot-reloading is enabled, then this might be reported by lock-freedom infringement 
 detectors. If that is the case, it is advised to disable hot-reloading by setting the 
 `datastax-java-driver.basic.config-reload-interval` option to 0. See the manual page on 
-[configuration](../configuration) for more information.
+[configuration](../configuration/README.md) for more information.
 
 [`DriverConfigLoader`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html
 [hot-reloading]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#supportsReloading--
@@ -264,8 +264,8 @@ The driver has its own mechanism for detecting blocking calls happening on an in
 thread. This mechanism is capable of detecting and reporting blatant cases of misuse of the 
 asynchronous and reactive APIs, e.g. when the synchronous API is invoked inside a future or callback
 produced by the asynchronous execution of a statement. See the core manual page on the 
-[asynchronous](../async) API or the developer manual page on 
-[driver concurrency](../../developer/common/concurrency) for details.
+[asynchronous](../async/README.md) API or the developer manual page on 
+[driver concurrency](../../developer/common/concurrency/README.md) for details.
 
 The driver is not capable, however, of detecting low-level lock-freedom infringements, such as the
 usage of locks. You must use an external tool to achieve that. See below how to use BlockHound for 

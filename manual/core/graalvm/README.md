@@ -24,14 +24,14 @@ under the License.
 * [GraalVM native images](https://www.graalvm.org/reference-manual/native-image/) can be built with 
   no additional configuration starting with driver 4.13.0.
 * But extra configurations are required in a few cases:
-    * When using [reactive programming](../reactive);
-    * When using [Jackson](../integration#Jackson);
-    * When using LZ4 [compression](../compression/);
-    * Depending on the [logging backend](../logging) in use.
+    * When using [reactive programming](../reactive/README.md);
+    * When using [Jackson](../integration/README.md#jackson);
+    * When using LZ4 [compression](../compression/README.md);
+    * Depending on the [logging backend](../logging/README.md) in use.
 * DSE-specific features:
-    * [Geospatial types](../dse/geotypes) are supported.
-    * [DSE Graph](../dse/graph) is not officially supported, although it may work.
-* The [shaded jar](../shaded_jar) is not officially supported, although it may work.
+    * [Geospatial types](../dse/geotypes/README.md) are supported.
+    * [DSE Graph](../dse/graph/README.md) is not officially supported, although it may work.
+* The [shaded jar](../shaded_jar/README.md) is not officially supported, although it may work.
 
 -----
 
@@ -113,7 +113,7 @@ registered for reflection.
 
 ### Configuration resources 
 
-The default driver [configuration](../configuration) mechanism is based on the TypeSafe Config
+The default driver [configuration](../configuration/README.md) mechanism is based on the TypeSafe Config
 library. TypeSafe Config looks for a few classpath resources when initializing the configuration: 
 `reference.conf`, `application.conf`, `application.json`, `application.properties`. _These classpath 
 resources are all automatically included in the native image: you should not need to do it 
@@ -124,7 +124,7 @@ resources are handled in native images.
 
 ### Configuring the logging backend
 
-When configuring [logging](../logging), the choice of a backend must be considered carefully, as 
+When configuring [logging](../logging/README.md), the choice of a backend must be considered carefully, as 
 most logging backends resort to reflection during their configuration phase. 
 
 By default, GraalVM native images provide support for the java.util.logging (JUL) backend. See 
@@ -135,7 +135,7 @@ native images are supported.
 
 ### Using reactive-style programming
 
-The [reactive execution model](../reactive) is compatible with GraalVM native images, but the
+The [reactive execution model](../reactive/README.md) is compatible with GraalVM native images, but the
 following configurations must be added:
 
 1. Create the following reflection.json file, or add the entry to an existing file:
@@ -151,7 +151,7 @@ following configurations must be added:
 
 ### Using the Jackson JSON library
 
-[Jackson](https://github.com/FasterXML/jackson) is used in [a few places](../integration#jackson) in 
+[Jackson](https://github.com/FasterXML/jackson) is used in [a few places](../integration/README.md#jackson) in 
 the driver, but is an optional dependency; if you intend to use Jackson, the following 
 configurations must be added:
 
@@ -178,7 +178,7 @@ images, see below for more details – replace the above entries with the below 
 
 ### Enabling compression
 
-When using [compression](../compression/), only LZ4 can be enabled in native images. **Snappy
+When using [compression](../compression/README.md), only LZ4 can be enabled in native images. **Snappy
 compression is not supported.**
 
 In order for LZ4 compression to work in a native image, the following additional GraalVM
@@ -242,7 +242,7 @@ configuration is required:
 
 ### Native calls
 
-The driver performs a few [native calls](../integration#native-libraries) using 
+The driver performs a few [native calls](../integration/README.md#native-libraries) using 
 [JNR](https://github.com/jnr).
 
 Starting with driver 4.7.0, native calls are also possible in a GraalVM native image, without any
@@ -252,7 +252,7 @@ extra configuration.
 
 #### DSE Geospatial types
 
-DSE [Geospatial types](../dse/geotypes) are supported on GraalVM native images; the following
+DSE [Geospatial types](../dse/geotypes/README.md) are supported on GraalVM native images; the following
 configurations must be added:
 
 1. Create the following reflection.json file, or add the entry to an existing file:
@@ -277,7 +277,7 @@ images, as stated above – replace the above entry with the below one:
 
 #### DSE Graph
 
-**[DSE Graph](../dse/graph) is not officially supported on GraalVM native images.**
+**[DSE Graph](../dse/graph/README.md) is not officially supported on GraalVM native images.**
 
 The following configuration can be used as a starting point for users wishing to build a native
 image for a DSE Graph application. DataStax does not guarantee however that the below configuration
@@ -327,7 +327,7 @@ will work in all cases. If the native image build fails, a good option is to use
 
 ### Using the shaded jar
 
-**The [shaded jar](../shaded_jar) is not officially supported in a GraalVM native image.**
+**The [shaded jar](../shaded_jar/README.md) is not officially supported in a GraalVM native image.**
 
 However, it has been reported that the shaded jar can be included in a GraalVM native image as a
 drop-in replacement for the regular driver jar for simple applications, without any extra GraalVM

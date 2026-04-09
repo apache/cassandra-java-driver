@@ -73,7 +73,7 @@ ProtocolVersion currentVersion = session.getContext().getProtocolVersion();
 ```
 
 The protocol version cannot be changed at runtime. However, you can force a particular version in
-the [configuration](../configuration/):
+the [configuration](../configuration/README.md):
 
 ```
 datastax-java-driver {
@@ -117,7 +117,7 @@ force the protocol version manually anymore.
 
 ### Debugging protocol negotiation
 
-You can observe the negotiation process in the [logs](../logging/).
+You can observe the negotiation process in the [logs](../logging/README.md).
  
 The versions tried while negotiating with the first node are logged at level `DEBUG` in the category
 `com.datastax.oss.driver.internal.core.channel.ChannelFactory`:
@@ -142,13 +142,13 @@ If you want to see the details of mixed cluster negotiation, enable `DEBUG` leve
 #### v3 to v4
 
 * [query warnings][ExecutionInfo.getWarnings]
-* [unset values in bound statements](../statements/prepared/#unset-values)
+* [unset values in bound statements](../statements/prepared/README.md#unset-values)
 * [custom payloads][Request.getCustomPayload]
 
 #### v4 to v5
 
-* [per-query keyspace](../statements/per_query_keyspace)
-* [improved prepared statement resilience](../statements/prepared/#prepared-statements-and-schema-changes)
+* [per-query keyspace](../statements/per_query_keyspace/README.md)
+* [improved prepared statement resilience](../statements/prepared/README.md#prepared-statements-and-schema-changes)
   in the face of schema changes
 
 [protocol spec]: https://github.com/datastax/native-protocol/tree/1.x/src/main/resources

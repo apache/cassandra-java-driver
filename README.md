@@ -43,8 +43,8 @@ are multiple modules, all prefixed with `java-driver-`.
 Note that the query builder is now published as a separate artifact, you'll need to add the
 dependency if you plan to use it.
 
-Refer to each module's manual for more details ([core](manual/core/), [query
-builder](manual/query_builder/), [mapper](manual/mapper)).
+Refer to each module's manual for more details ([core](manual/core/README.md), [query
+builder](manual/query_builder/README.md), [mapper](manual/mapper/README.md)).
 
 [org.apache.cassandra]: http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.apache.cassandra%22
 
@@ -63,11 +63,11 @@ but DataStax does not officially support these systems.
 Java Driver 4 is **not binary compatible** with previous versions. However, most of the concepts
 remain unchanged, and the new API will look very familiar to 2.x and 3.x users.
 
-See the [upgrade guide](upgrade_guide/) for details.
+See the [upgrade guide](upgrade_guide/README.md) for details.
 
 ## Useful links
 
-* [Manual](manual/)
+* [Manual](manual/README.md)
 * [API docs]
 * Bug tracking: [JIRA]
 * [Mailing list]
@@ -77,8 +77,8 @@ See the [upgrade guide](upgrade_guide/) for details.
 [API docs]: https://docs.datastax.com/en/drivers/java/4.17
 [JIRA]: https://issues.apache.org/jira/issues/?jql=project%20%3D%20CASSJAVA%20ORDER%20BY%20key%20DESC
 [Mailing list]: https://lists.apache.org/list.html?user@cassandra.apache.org
-[Changelog]: changelog/
-[FAQ]: faq/
+[Changelog]: changelog/README.md
+[FAQ]: faq/README.md
 
 ## License
 

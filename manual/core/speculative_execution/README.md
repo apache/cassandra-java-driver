@@ -91,12 +91,12 @@ details and how to enable them.
 
 ### Query idempotence
 
-If a query is [not idempotent](../idempotence/), the driver will never schedule speculative
+If a query is [not idempotent](../idempotence/README.md), the driver will never schedule speculative
 executions for it, because there is no way to guarantee that only one node will apply the mutation.
 
 ### Configuration
 
-Speculative executions are controlled by a policy defined in the [configuration](../configuration/).
+Speculative executions are controlled by a policy defined in the [configuration](../configuration/README.md).
 The default implementation never schedules an execution:
 
 ```
@@ -138,7 +138,7 @@ referencing your implementation class from the configuration.
 
 ### How speculative executions affect retries
 
-Turning on speculative executions doesn't change the driver's [retry](../retries/) behavior. Each
+Turning on speculative executions doesn't change the driver's [retry](../retries/README.md) behavior. Each
 parallel execution will trigger retries independently:
 
 ```ditaa
@@ -183,7 +183,7 @@ executions increase the pressure on the cluster.
 
 If you use speculative executions to avoid unhealthy nodes, a good-behaving node should rarely hit
 the threshold. We recommend running a benchmark on a healthy platform (all nodes up and healthy) and
-monitoring the request percentiles with the `cql-requests` [metric](../metrics/). Then use the
+monitoring the request percentiles with the `cql-requests` [metric](../metrics/README.md). Then use the
 latency at a high percentile (for example p99.9) as the threshold.
 
 Alternatively, maybe low latency is your absolute priority, and you are willing to take the
@@ -191,27 +191,27 @@ increased throughput as a tradeoff. In that case, set the threshold to 0 and pro
 accordingly. 
 
 You can monitor the number of speculative executions triggered by each node with the
-`speculative-executions` [metric](../metrics/).
+`speculative-executions` [metric](../metrics/README.md).
 
 #### Stream id exhaustion
 
 One side-effect of speculative executions is that many requests get cancelled, which can lead to a
 phenomenon called *stream id exhaustion*: each TCP connection can handle multiple simultaneous
-requests, identified by a unique number called *stream id* (see also the [pooling](../pooling/)
+requests, identified by a unique number called *stream id* (see also the [pooling](../pooling/README.md)
 section). When a request gets cancelled, we can't reuse its stream id immediately because we might
 still receive a response from the server later. If this happens often, the number of available
 stream ids diminishes over time, and when it goes below a given threshold we close the connection
 and create a new one. If requests are often cancelled, you will see connections being recycled at a
 high rate.
 
-The best way to monitor this is to compare the `pool.orphaned-streams` [metric](../metrics/) to the
+The best way to monitor this is to compare the `pool.orphaned-streams` [metric](../metrics/README.md) to the
 total number of available stream ids (which can be computed from the configuration:
 `pool.local.size * max-requests-per-connection`). The `pool.available-streams` and `pool.in-flight`
 metrics will also give you an idea of how many stream ids are left for active queries.
 
 #### Request ordering
 
-Note: ordering issues are only a problem with [server-side timestamps](../query_timestamps/), which
+Note: ordering issues are only a problem with [server-side timestamps](../query_timestamps/README.md), which
 are not the default anymore in driver 4+. So unless you've explicitly enabled
 `ServerSideTimestampGenerator`, you can skip this section.
 
@@ -235,12 +235,12 @@ The workaround is to either specify a timestamp in your CQL queries:
 
     insert into my_table (k, v) values (1, 1) USING TIMESTAMP 1432764000;
     
-Or use a client-side [timestamp generator](../query_timestamps/).
+Or use a client-side [timestamp generator](../query_timestamps/README.md).
 
 ### Using multiple policies
 
 The speculative execution policy can be overridden in [execution
-profiles](../configuration/#profiles):
+profiles](../configuration/README.md#execution-profiles):
 
 ```
 datastax-java-driver {

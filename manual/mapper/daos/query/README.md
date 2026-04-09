@@ -41,13 +41,13 @@ placeholders: same name and a compatible Java type.
 long countByIdAndYear(int id, int year);
 ```
 
-The annotation can define a [null saving strategy](../null_saving/) that applies to the method
+The annotation can define a [null saving strategy](../null_saving/README.md) that applies to the method
 parameters.
 
 A `Function<BoundStatementBuilder, BoundStatementBuilder>` or `UnaryOperator<BoundStatementBuilder>`
 can be added as the **last** parameter. It will be applied to the statement before execution. This
 allows you to customize certain aspects of the request (page size, timeout, etc) at runtime. See
-[statement attributes](../statement_attributes/).
+[statement attributes](../statement_attributes/README.md).
 
 ### Return type
 
@@ -65,7 +65,7 @@ The method can return:
 * a [Row]. This means the result is not converted, the mapper only extracts the first row of the
   result set and returns it. The method will return `null` if the result set is empty.
 
-* a single instance of an [Entity](../../entities/) class. The method will extract the first row and
+* a single instance of an [Entity](../../entities/README.md) class. The method will extract the first row and
   convert it, or return `null` if the result set is empty.
   
 * an [Optional] of an entity class. The method will extract the first row and convert
@@ -87,14 +87,14 @@ The method can return:
   
 * a [ReactiveResultSet], or a [MappedReactiveResultSet] of the entity class.
 
-* a [custom type](../custom_types).
+* a [custom type](../custom_types/README.md).
 
 ### Target keyspace and table
 
 To avoid hard-coding the keyspace and table name, the query string supports 3 additional
 placeholders: `${keyspaceId}`, `${tableId}` and `${qualifiedTableId}`. They get substituted at DAO
 initialization time, with the [keyspace and table that the DAO was built
-with](../../mapper/#dao-factory-methods).
+with](../../mapper/README.md#dao-factory-methods).
 
 For example, given the following:
 

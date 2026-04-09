@@ -42,7 +42,7 @@ for (GraphNode node : result) {
 As shown above, [FluentGraphStatement.newInstance] creates a statement from a traversal directly.
 
 The default implementation returned by the driver is **immutable**; if you call additional methods
-on the statement -- for example to set [options](../../options/) -- each method call will create a
+on the statement -- for example to set [options](../../options/README.md) -- each method call will create a
 new copy:
 
 ```java
@@ -122,7 +122,7 @@ added in a future version.
 
 -----
 
-See also the [parent page](../) for topics common to all fluent traversals. 
+See also the [parent page](../README.md) for topics common to all fluent traversals. 
 
 [FluentGraphStatement]:             https://docs.datastax.com/en/drivers/java/4.17/com/datastax/dse/driver/api/core/graph/FluentGraphStatement.html
 [FluentGraphStatement.newInstance]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/dse/driver/api/core/graph/FluentGraphStatement.html#newInstance-org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal-

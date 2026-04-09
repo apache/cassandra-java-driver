@@ -42,7 +42,7 @@ results.
 ### Enabling tracing
 
 Set the tracing flag on the `Statement` instance. There are various ways depending on how you build
-it (see [statements](../statements/) for more details):
+it (see [statements](../statements/README.md) for more details):
 
 ```java
 // Setter-based:

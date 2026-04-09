@@ -53,14 +53,14 @@ Note that the following requests are also affected by throttling:
 
 * preparing a statement (either directly, or indirectly when the driver reprepares on other nodes,
   or when a node comes back up -- see
-  [how the driver prepares](../statements/prepared/#how-the-driver-prepares));
+  [how the driver prepares](../statements/prepared/README.md#how-the-driver-prepares));
 * fetching the next page of a result set (which happens in the background when you iterate the
   synchronous variant `ResultSet`).
-* fetching a [query trace](../tracing/).
+* fetching a [query trace](../tracing/README.md).
 
 ### Configuration
 
-Request throttling is parameterized in the [configuration](../configuration/) under
+Request throttling is parameterized in the [configuration](../configuration/README.md) under
 `advanced.throttler`. There are various implementations, detailed in the following sections:
 
 #### Pass through
@@ -77,7 +77,7 @@ This is a no-op implementation: requests are simply allowed to proceed all the t
 
 Note that you will still hit a limit if all your connections run out of stream ids. In that case,
 requests will fail with an [AllNodesFailedException], with the `getErrors()` method returning a
-[BusyConnectionException] for each node. See the [connection pooling](../pooling/) page.
+[BusyConnectionException] for each node. See the [connection pooling](../pooling/README.md) page.
 
 #### Concurrency-based
 
@@ -103,8 +103,8 @@ with [BusyConnectionException] instead of being throttled. The total number of s
 function of the number of connected nodes and the `connection.pool.*.size` and
 `connection.max-requests-per-connection` configuration options. Keep in mind that aggressive
 speculative executions and timeout options can inflate stream id consumption, so keep a safety
-margin. One good way to get this right is to track the `pool.available-streams` [metric](../metrics)
-on every node, and make sure it never reaches 0. See the [connection pooling](../pooling/) page.
+margin. One good way to get this right is to track the `pool.available-streams` [metric](../metrics/README.md)
+on every node, and make sure it never reaches 0. See the [connection pooling](../pooling/README.md) page.
 
 #### Rate-based
 
@@ -129,14 +129,14 @@ does not necessarily mean that the rate is back to normal. So instead the thrott
 rate periodically and dequeues when possible, this is controlled by the `drain-interval` option.
 Picking the right interval is a matter of balance: too low might consume too many resources and only
 dequeue a few requests at a time, but too high will delay your requests too much; start with a few
-milliseconds and use the `cql-requests` [metric](../metrics/) to check the impact on your latencies.
+milliseconds and use the `cql-requests` [metric](../metrics/README.md) to check the impact on your latencies.
 
 Like with the concurrency-based throttler, you should make sure that your target rate is in line
 with the pooling options; see the recommendations in the previous section.
 
 ### Monitoring
 
-Enable the following [metrics](../metrics/) to monitor how the throttler is performing:
+Enable the following [metrics](../metrics/README.md) to monitor how the throttler is performing:
 
 ```
 datastax-java-driver {

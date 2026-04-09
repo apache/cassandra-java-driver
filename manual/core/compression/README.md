@@ -36,7 +36,7 @@ you have larger payloads, such as:
 * requests with many values, or very large values; 
 * responses with many rows, or many columns per row, or very large columns.
 
-To enable compression, set the following option in the [configuration](../configuration):
+To enable compression, set the following option in the [configuration](../configuration/README.md):
 
 ```
 datastax-java-driver {
@@ -55,7 +55,7 @@ better performance and compression ratios over Snappy.
 Both implementations rely on third-party libraries, declared by the driver as *optional*
 dependencies; if you enable compression, you need to explicitly depend on the corresponding library
 to pull it into your project (see the [Integration>Driver
-dependencies](../integration/#driver-dependencies) section for more details).
+dependencies](../integration/README.md#driver-dependencies) section for more details).
 
 ### LZ4
 
@@ -78,7 +78,7 @@ LZ4-java has three internal implementations (from fastest to slowest):
 * pure Java using only "safe" classes.
 
 It will pick the best implementation depending on what's possible on your platform. To find out
-which one was chosen, [enable INFO logs](../logging/) on the category
+which one was chosen, [enable INFO logs](../logging/README.md) on the category
 `com.datastax.oss.driver.internal.core.protocol.Lz4Compressor` and look for the following message:
 
 ```
@@ -97,7 +97,7 @@ Dependency:
 </dependency>
 ```
 
-**Important: Snappy is not supported when building a [GraalVM native image](../graalvm).**
+**Important: Snappy is not supported when building a [GraalVM native image](../graalvm/README.md).**
 
 Always double-check the exact Snappy version needed; you can find it in the driver's [parent POM].
 

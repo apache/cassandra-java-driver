@@ -30,7 +30,7 @@ Interface annotated with [@Mapper], entry point to mapper features.
 -----
 
 The mapper interface is the top-level entry point to mapping features. It wraps a core driver
-session, and acts as a factory of [DAO](../daos/) objects that will be used to execute requests.
+session, and acts as a factory of [DAO](../daos/README.md) objects that will be used to execute requests.
 
 It must be annotated with [@Mapper]:
 
@@ -58,7 +58,7 @@ public interface InventoryMapper {
 ```
 
 The builder allows you to create a mapper instance, by wrapping a core `CqlSession` (if you need
-more details on how to create a session, refer to the [core driver documentation](../../core/)).
+more details on how to create a session, refer to the [core driver documentation](../../core/README.md)).
 
 ```java
 CqlSession session = CqlSession.builder().build();
@@ -161,7 +161,7 @@ ProductDao dao3 = inventoryMapper.productDao("keyspace3", "table3");
 
 * `dao1.findById` executes the query `SELECT ... FROM product WHERE id = ?`. No table name was
   specified for the DAO, so it uses the default name for the `Product` entity (which in this case is
-  the entity name converted with the default [naming strategy](../entities/#naming-strategy)). No
+  the entity name converted with the default [naming strategy](../entities/README.md#naming-strategy)). No
   keyspace was specified either, so the table is unqualified, and this DAO will only work with a
   session that was built with a default keyspace:
 
@@ -178,12 +178,12 @@ ProductDao dao3 = inventoryMapper.productDao("keyspace3", "table3");
   = ?`.
 
 The DAO's keyspace and table can also be injected into custom query strings; see [Query
-methods](../daos/query/).
+methods](../daos/query/README.md).
 
 #### Execution profile
 
 Similarly, a DAO can be parameterized to use a particular [configuration
-profile](../../core/configuration/#execution-profiles):
+profile](../../core/configuration/README.md#execution-profiles):
 
 ```java
 @Mapper
@@ -212,7 +212,7 @@ ProductDao dao2 = inventoryMapper.productDao("keyspace2", "product");
 ```
 
 For each entity referenced in the DAO, the mapper tries to find a schema element with the
-corresponding name (according to the [naming strategy](../entities/#naming-strategy)). It tries
+corresponding name (according to the [naming strategy](../entities/README.md#naming-strategy)). It tries
 tables first, then falls back to UDTs if there is no match. You can speed up this process by
 providing a hint:
 
@@ -228,12 +228,12 @@ public class Address { ... }
 The following checks are then performed:
 
 * for each entity field, the database table or UDT must contain a column with the corresponding name
-  (according to the [naming strategy](../entities/#naming-strategy)).
+  (according to the [naming strategy](../entities/README.md#naming-strategy)).
 * the types must be compatible, either according to the [default type
-  mappings](../../core/#cql-to-java-type-mapping), or via a [custom
-  codec](../../core/custom_codecs/) registered with the session.
+  mappings](../../core/README.md#cql-to-java-type-mapping), or via a [custom
+  codec](../../core/custom_codecs/README.md) registered with the session.
 * additionally, if the target element is a table, the primary key must be [properly
-  annotated](../entities/#primary-key-columns) in the entity.
+  annotated](../entities/README.md#primary-key-columns) in the entity.
  
 If any of those steps fails, an `IllegalArgumentException` is thrown.
 

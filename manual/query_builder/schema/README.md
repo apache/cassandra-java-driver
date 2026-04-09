@@ -19,7 +19,7 @@ under the License.
 
 # Schema builder
 
-The schema builder is an additional API provided by [java-driver-query-builder](../) that enables
+The schema builder is an additional API provided by [java-driver-query-builder](../README.md) that enables
 one to *generate CQL DDL queries programmatically**.  For example it could be used to:
 
 * based on application configuration, generate schema queries instead of building CQL strings by
@@ -46,7 +46,7 @@ try (CqlSession session = CqlSession.builder().build()) {
 }
 ```
 
-The [general concepts](../#general-concepts) and [non goals](../#non-goals) defined for the query
+The [general concepts](../README.md#general-concepts) and [non goals](../README.md#non-goals) defined for the query
 builder also apply for the schema builder.
 
 ### Building DDL Queries
@@ -55,12 +55,12 @@ The schema builder offers functionality for creating, altering and dropping elem
 schema.  For a complete tour of the API, browse the child pages in the manual for each schema
 element type:
 
-* [keyspace](keyspace/)
-* [table](table/)
-* [index](index/)
-* [materialized view](materialized_view/)
-* [type](type/)
-* [function](function/)
-* [aggregate](aggregate/)
+* [keyspace](keyspace/README.md)
+* [table](table/README.md)
+* [index](index/README.md)
+* [materialized view](materialized_view/README.md)
+* [type](type/README.md)
+* [function](function/README.md)
+* [aggregate](aggregate/README.md)
 
 [SchemaBuilder]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/querybuilder/SchemaBuilder.html

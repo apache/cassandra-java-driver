@@ -109,7 +109,7 @@ public class MyAddressTranslator implements AddressTranslator {
 }
 ```
 
-Then reference this class from the [configuration](../configuration/):
+Then reference this class from the [configuration](../configuration/README.md):
 
 ```
 datastax-java-driver.advanced.address-translator.class = com.mycompany.MyAddressTranslator
@@ -125,7 +125,7 @@ nodes are exposed via one hostname pointing to AWS Endpoint), you can configure 
 `FixedHostNameAddressTranslator` to always translate all node addresses to that same proxy hostname, no matter what IP
 address a node has but still using its native transport port.
 
-To use it, specify the following in the [configuration](../configuration):
+To use it, specify the following in the [configuration](../configuration/README.md):
 
 ```
 datastax-java-driver.advanced.address-translator.class = FixedHostNameAddressTranslator
@@ -146,7 +146,7 @@ datacenter that node belongs to by checking its IP address against the given dat
 For such scenarios you can use `SubnetAddressTranslator` to translate node IPs to the datacenter proxy address
 associated with it. 
 
-To use it, specify the following in the [configuration](../configuration):
+To use it, specify the following in the [configuration](../configuration/README.md):
 ```
 datastax-java-driver.advanced.address-translator {
   class = SubnetAddressTranslator
@@ -176,7 +176,7 @@ However, this is not always the most cost-effective: if a client and a node are 
 to connect over the private IP. Ideally, you'd want to pick the best address in each case.
 
 The driver provides `Ec2MultiRegionAddressTranslator` which does exactly that.  To use it, specify the following in
-the [configuration](../configuration/):
+the [configuration](../configuration/README.md):
 
 ```
 datastax-java-driver.advanced.address-translator.class = Ec2MultiRegionAddressTranslator

@@ -64,7 +64,7 @@ resultStage.whenComplete(
 The driver uses two internal thread pools: one for request I/O and one for administrative tasks
 (such as metadata refreshes, schema agreement or processing server events). Note that you can
 control the size of these pools with the `advanced.netty` options in the
-[configuration](../configuration).
+[configuration](../configuration/README.md).
 
 When you register a callback on a completion stage, it will execute on a thread in the corresponding
 pool:
@@ -82,7 +82,7 @@ resultStage.thenAccept(resultSet -> System.out.println(Thread.currentThread().ge
 
 As long as you use the asynchronous API, the driver will behave in a non-blocking manner: its 
 internal threads will almost never block. There are a few exceptions to the rule though: see the 
-manual page on [non-blocking programming](../non_blocking) for details. 
+manual page on [non-blocking programming](../non_blocking/README.md) for details. 
 
 Because the asynchronous API is non-blocking, you can safely call a driver method from inside a 
 callback, even when the callback's execution is triggered by a future returned by the driver:
@@ -221,7 +221,7 @@ be handled anywhere. Either add a `try/catch` block in the callback, or don't ig
 Unlike previous versions of the driver, the asynchronous API never triggers synchronous behavior,
 even when iterating through the results of a request. `session.executeAsync` returns a dedicated
 [AsyncResultSet] that only iterates the current page, the next pages must be fetched explicitly.
-This greatly simplifies asynchronous paging; see the [paging](../paging/#asynchronous-paging)
+This greatly simplifies asynchronous paging; see the [paging](../paging/README.md#asynchronous-paging)
 documentation for more details and an example. 
 
 [CompletionStage]: https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html

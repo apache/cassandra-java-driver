@@ -80,7 +80,7 @@ public class CqlVector<T> implements Iterable<T>, Serializable {
    * Create a new CqlVector instance from the specified string representation.
    *
    * @param str a String representation of a CqlVector
-   * @param subtypeCodec
+   * @param subtypeCodec the codec to use to parse the individual elements
    * @return a new CqlVector built from the String representation
    */
   public static <V> CqlVector<V> from(@NonNull String str, @NonNull TypeCodec<V> subtypeCodec) {

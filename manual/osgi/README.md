@@ -29,7 +29,7 @@ valid OSGi bundles:
 
 Note: some of the driver dependencies are not valid OSGi bundles. Most of them are optional, and the
 driver can work properly without them (see the
-[Integration>Driver dependencies](../core/integration/#driver-dependencies) section for more
+[Integration>Driver dependencies](../core/integration/README.md#driver-dependencies) section for more
 details); in such cases, the corresponding packages are declared with optional resolution in
 `Import-Package` directives. However, if you need to access such packages in an OSGi container you
 MUST wrap the corresponding jar in a valid OSGi bundle and make it available for provisioning to the
@@ -40,7 +40,7 @@ OSGi runtime.
 `java-driver-core-shaded` shares the same bundle name as `java-driver-core`
 (`com.datastax.oss.driver.core`).  It can be used as a drop-in replacement in cases where you have
 an explicit version of dependency in your project different than that of the driver's.  Refer to
-[shaded jar](../core/shaded_jar/) for more information.
+[shaded jar](../core/shaded_jar/README.md) for more information.
 
 ## Using a custom `ClassLoader`
 
@@ -136,7 +136,7 @@ The above configuration will honor all programmatic settings, but will look for 
 ## What does the "Error loading libc" DEBUG message mean?
 
 The driver is able to perform native system calls through [JNR] in some cases, for example to
-achieve microsecond resolution when [generating timestamps](../core/query_timestamps/).
+achieve microsecond resolution when [generating timestamps](../core/query_timestamps/README.md).
 
 Unfortunately, some of the JNR artifacts available from Maven are not valid OSGi bundles and cannot
 be used in OSGi applications.
@@ -154,7 +154,7 @@ starting the driver:
     system clock
 
 
-[driver configuration]: ../core/configuration
+[driver configuration]: ../core/configuration/README.md
 [OSGi]:https://www.osgi.org
 [JNR]: https://github.com/jnr/jnr-posix
 [withClassLoader()]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/session/SessionBuilder.html#withClassLoader-java.lang.ClassLoader-

@@ -39,13 +39,13 @@ For example:
   
 Idempotence matters because the driver sometimes re-runs requests automatically:
 
-* [retries](../retries): if we're waiting for a response from a node and the connection gets
+* [retries](../retries/README.md): if we're waiting for a response from a node and the connection gets
   dropped, the default retry policy automatically retries on another node. But we can't know what
   went wrong with the first node: maybe it went down, or maybe it was just a network issue; in any
   case, it might have applied the changes already. Therefore non-idempotent requests are never
   retried.
 
-* [speculative executions](../speculative_execution): if they are enabled and a node takes too long
+* [speculative executions](../speculative_execution/README.md): if they are enabled and a node takes too long
   to respond, the driver queries another node to get the response faster. But maybe both nodes will
   eventually apply the changes. Therefore non-idempotent requests are never speculatively executed.
 
@@ -63,7 +63,7 @@ SimpleStatement statement =
         .build();
 ```
 
-If you don't, they default to the value defined in the [configuration](../configuration/) by the
+If you don't, they default to the value defined in the [configuration](../configuration/README.md) by the
 `basic.request.default-idempotence` option; out of the box, it is set to `false`.
 
 When you prepare a statement, its idempotence carries over to bound statements:
@@ -77,7 +77,7 @@ assert bs.isIdempotent();
 ```
 
 The query builder tries to infer idempotence automatically; refer to
-[its manual](../../query_builder/idempotence/) for more details.
+[its manual](../../query_builder/idempotence/README.md) for more details.
 
 [Statement.setIdempotent]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/cql/Statement.html#setIdempotent-java.lang.Boolean-
 [StatementBuilder.setIdempotence]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/cql/StatementBuilder.html#setIdempotence-java.lang.Boolean-

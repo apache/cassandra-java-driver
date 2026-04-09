@@ -1,0 +1,101 @@
+name: publish-docs-gh-pages
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      # 1. Checkout doc branch
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+        with:
+          path: java-driver
+
+      # 2. Java 8
+      - name: Set up Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "8"
+          cache: maven
+
+      # 3. Python 3.10.19 + MkDocs + plugins
+      - name: Set up Python 3.10.19
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10.19"
+
+      - name: Install MkDocs dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install \
+            mkdocs \
+            mkdocs-material \
+            mkdocs-awesome-pages-plugin \
+            mkdocs-macros-plugin \
+            mike
+
+      # 4. Build docs via build-doc.sh
+      - name: Build documentation
+        working-directory: java-driver
+        run: |
+          chmod +x ./build-doc.sh
+          ./build-doc.sh
+
+      # 5. Checkout gh-pages branch
+      - name: Checkout GH pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Copy and version documentation
+        working-directory: gh-pages
+        run: |
+          git config --global user.email "gha@cassandra.apache.org"
+          git config --global user.name "GHA for Apache Cassandra Website"
+
+          cd ../java-driver
+          # lookup current project version
+          release_version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | cut -d- -f1)
+          # update links to contain version prefix
+          mike deploy --update-aliases $release_version
+          # copy documentation web page folder
+          cd ../gh-pages
+          cp -r ../java-driver/docs ./
+          rm -rf $release_version
+          mv docs $release_version
+
+          # update latest symlink
+          rm latest
+          ln -s $release_version latest
+
+          # remove latest tag
+          sed -i 's/\"latest\"//g' versions.json
+          # remove already present line if exists
+          sed -i '/'"$release_version"'/d' versions.json
+          # insert new version at the beginning
+          sed -i '2s/^/  { "version": "'"$release_version"'", "title": "'"$release_version"'", "aliases": ["latest"] },\'$'\n/g' versions.json
+
+          echo "release_version=$release_version" >> "$GITHUB_ENV"
+
+      - name: Commit and push documentation
+        working-directory: gh-pages
+        run: |
+          git config --global user.email "gha@cassandra.apache.org"
+          git config --global user.name "GHA for Apache Cassandra Website"
+
+          git add .
+
+          if git diff --cached --quiet; then
+            echo "No changes to push to gh-pages"
+            exit 0
+          fi
+
+          git commit -m "Update generated docs for release ${release_version}"
+          git push origin gh-pages

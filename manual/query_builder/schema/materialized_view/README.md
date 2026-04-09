@@ -45,7 +45,7 @@ There are a number of steps that must be executed to complete a materialized vie
 
 * Specify the base table using `asSelectFrom`
 * Specify the columns to include in the view via `column` or `columns` 
-* Specify the where clause using [relations](../../relation)
+* Specify the where clause using [relations](../../relation/README.md)
 * Specify the partition key columns using `withPartitionKey` and `withClusteringColumn`
 
 For example, the following defines a complete `CREATE MATERIALIZED VIEW` statement:
@@ -66,7 +66,7 @@ createMaterializedView("cycling", "cyclist_by_age")
 
 Please note that not all WHERE clause relations may be compatible with materialized views.
 
-Like a [table](../table), one may additionally provide configuration such as clustering order,
+Like a [table](../table/README.md), one may additionally provide configuration such as clustering order,
 compaction options and so on.  Refer to [RelationStructure] for documentation on additional
 configuration that may be provided for a view.
 

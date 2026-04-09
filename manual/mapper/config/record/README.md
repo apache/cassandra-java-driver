@@ -36,7 +36,7 @@ Annotate your records like regular classes:
 record Product(@PartitionKey int id, String description) {}
 ```
 
-Records are immutable and use the [fluent getter style](../../entities#getter-style), but you don't
+Records are immutable and use the [fluent getter style](../../entities/README.md#accessor-styles), but you don't
 need to declare that explicitly with [@PropertyStrategy]: the mapper detects when it's processing a
 record, and will assume `mutable = false, getterStyle = FLUENT` by default.
 

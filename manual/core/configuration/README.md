@@ -552,6 +552,6 @@ config.getDefaultProfile().getInt(MyCustomOption.AWESOMENESS_FACTOR);
 
 [Typesafe Config]: https://github.com/typesafehub/config
 [config standard behavior]: https://github.com/typesafehub/config#standard-behavior
-[reference.conf]: reference/
+[reference.conf]: ./reference/README.md
 [HOCON]: https://github.com/typesafehub/config/blob/master/HOCON.md
-[API conventions]: ../../api_conventions
+[API conventions]: ../../api_conventions/README.md

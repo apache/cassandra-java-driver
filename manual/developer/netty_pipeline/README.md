@@ -19,7 +19,7 @@ under the License.
 
 ## Netty pipeline
 
-With the [protocol layer](../native_protocol) in place, the next step is to build the logic for a
+With the [protocol layer](../native_protocol/README.md) in place, the next step is to build the logic for a
 single server connection.
 
 We use [Netty](https://netty.io/) for network I/O (to learn more about Netty, [this
@@ -81,7 +81,7 @@ See also the [Extension points](#extension-points) section below.
 ### FrameEncoder and FrameDecoder
 
 This is where we integrate the protocol layer, as explained
-[here](../native_protocol/#integration-in-the-driver).
+[here](../native_protocol/README.md#integration-in-the-driver).
 
 Unlike the other pipeline stages, we use separate handlers for incoming and outgoing messages.
 
@@ -121,7 +121,7 @@ with each other.
 
 In particular, a big difference from driver 3 is that stream ids are assigned within the event loop,
 instead of from client code before writing to the channel (see also [connection
-pooling](../request_execution/#connection_pooling)). `StreamIdGenerator` is not thread-safe.
+pooling](../request_execution/README.md#connection-pooling)). `StreamIdGenerator` is not thread-safe.
 
 All communication between the handler and the outside world must be done through messages or channel
 events. There are 3 exceptions to this rule: `getAvailableIds`, `getInflight` and `getOrphanIds`,
@@ -145,11 +145,11 @@ Once the initialization is complete, `ProtocolInitHandler` removes itself from t
 
 #### NettyOptions
 
-The `advanced.netty` section in the [configuration](../../core/configuration/reference/) exposes a
+The `advanced.netty` section in the [configuration](../../core/configuration/reference/README.md) exposes a
 few high-level options.
 
 For more elaborate customizations, you can [extend the
-context](../common/context/#overriding-a-context-component) to plug in a custom `NettyOptions`
+context](../common/context/README.md#overriding-a-context-component) to plug in a custom `NettyOptions`
 implementation. This allows you to do things such as:
  
 * reusing existing event loops;
@@ -158,7 +158,7 @@ implementation. This allows you to do things such as:
 
 #### SslHandlerFactory
 
-The [user-facing API](../../core/ssl/) (`advanced.ssl-engine-factory` in the configuration, or
+The [user-facing API](../../core/ssl/README.md) (`advanced.ssl-engine-factory` in the configuration, or
 `SessionBuilder.withSslContext` / `SessionBuilder.withSslEngineFactory`) only supports Java's
 default SSL implementation.
 
@@ -172,7 +172,7 @@ boringssl. This requires a bit of custom development against the internal API:
   * the constructor will create a Netty [SslContext] with [SslContextBuilder.forClient], and store
     it in a field;
   * `newSslHandler` will delegate to one of the [SslContext.newHandler] methods;  
-* [extend the context](../common/context/#overriding-a-context-component) and override
+* [extend the context](../common/context/README.md#overriding-a-context-component) and override
   `buildSslHandlerFactory` to plug your custom implementation.
 
 [SslContext]: https://netty.io/4.1/api/io/netty/handler/ssl/SslContext.html

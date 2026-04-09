@@ -89,7 +89,7 @@ session.execute(preparedInsert.bind(3, vector));
 
 In some cases, it makes sense to access the vector directly as an array of some numerical type. This version
 supports such use cases by providing a codec which translates a CQL vector to and from a primitive array. Only float arrays are supported. 
-You can find more information about this codec in the manual documentation on [custom codecs](../manual/core/custom_codecs/)
+You can find more information about this codec in the manual documentation on [custom codecs](../manual/core/custom_codecs/README.md)
 
 ### 4.15.0
 
@@ -158,7 +158,7 @@ explicitly declare a dependency on the Esri library:
 </dependency>
 ```
 
-See the [integration](../manual/core/integration/#esri) section in the manual for more details.
+See the [integration](../manual/core/integration/README.md#esri) section in the manual for more details.
 
 ### 4.13.0
 
@@ -171,7 +171,7 @@ If you were building a native image for your application, please verify your nat
 configuration. Most of the extra configuration required until now is likely to not be necessary
 anymore.
 
-Refer to this [manual page](../manual/core/graalvm) for details.
+Refer to this [manual page](../manual/core/graalvm/README.md) for details.
 
 #### Registration of multiple listeners and trackers
 
@@ -266,8 +266,8 @@ row or in the target statement, *leaving unmatched properties untouched*.
 This new, lenient behavior allows to achieve the equivalent of driver 3.x 
 [lenient mapping](https://docs.datastax.com/en/developer/java-driver/3.10/manual/object_mapper/using/#manual-mapping).
 
-Read the manual pages on [@GetEntity](../manual/mapper/daos/getentity) methods and
-[@SetEntity](../manual/mapper/daos/setentity) methods for more details and examples of lenient mode.
+Read the manual pages on [@GetEntity](../manual/mapper/daos/getentity/README.md) methods and
+[@SetEntity](../manual/mapper/daos/setentity/README.md) methods for more details and examples of lenient mode.
 
 ### 4.11.0
 
@@ -284,9 +284,9 @@ transparently selected as the protocol version to use.
 
 [JAVA-2872](https://datastax-oss.atlassian.net/browse/JAVA-2872) introduced the ability to configure
 how metric identifiers are generated. Metric names can now be configured, but most importantly,
-metric tags are now supported. See the [metrics](../manual/core/metrics/) section of the online
+metric tags are now supported. See the [metrics](../manual/core/metrics/README.md) section of the online
 manual, or the `advanced.metrics.id-generator` section in the
-[reference.conf](../manual/core/configuration/reference/) file for details.
+[reference.conf](../manual/core/configuration/reference/README.md) file for details.
 
 Users should not experience any disruption. However, those using metrics libraries that support tags
 are encouraged to try out the new `TaggingMetricIdGenerator`, as it generates metric names and tags
@@ -343,7 +343,7 @@ has been deprecated; it should be replaced with a node distance evaluator class 
 
 [JAVA-2899](https://datastax-oss.atlassian.net/browse/JAVA-2899) re-introduced the ability to
 perform cross-datacenter failover using the driver's built-in load balancing policies. See [Load
-balancing](../manual/core/loadbalancing/) in the manual for details.
+balancing](../manual/core/load_balancing/README.md) in the manual for details.
 
 Cross-datacenter failover is disabled by default, therefore existing applications should not
 experience any disruption.
@@ -452,7 +452,7 @@ your POM file:
 </dependency>
 ```
 
-See the [integration](../manual/core/integration/#tinker-pop) section in the manual for more details
+See the [integration](../manual/core/integration/README.md#tinkerpop) section in the manual for more details
 as well as a driver vs. TinkerPop version compatibility matrix.
 
 ### 4.5.x - 4.6.0
@@ -468,7 +468,7 @@ separate DSE driver.
 
 #### For Apache Cassandra® users
 
-The great news is that [reactive execution](../manual/core/reactive/) is now available for everyone.
+The great news is that [reactive execution](../manual/core/reactive/README.md) is now available for everyone.
 See the `CqlSession.executeReactive` methods.
 
 Apart from that, the only visible change is that DSE-specific features are now exposed in the API: 
@@ -477,7 +477,7 @@ Apart from that, the only visible change is that DSE-specific features are now e
   have default implementations so this doesn't break binary compatibility. You can just ignore them.
 * new driver dependencies: TinkerPop, ESRI, Reactive Streams. If you want to keep your classpath
   lean, you can exclude some dependencies when you don't use the corresponding DSE features; see the 
-  [Integration>Driver dependencies](../manual/core/integration/#driver-dependencies) section.
+  [Integration>Driver dependencies](../manual/core/integration/README.md#driver-dependencies) section.
 
 #### For DataStax Enterprise users
 
@@ -518,7 +518,7 @@ changes right away; but you will get deprecation warnings:
 * `DseDriverConfigLoader`: the driver no longer needs DSE-specific config loaders. All the factory
   methods in this class now redirect to `DriverConfigLoader`. On that note, `dse-reference.conf`
   does not exist anymore, all the driver defaults are now in
-  [reference.conf](../manual/core/configuration/reference/).
+  [reference.conf](../manual/core/configuration/reference/README.md).
 * plain-text authentication: there is now a single implementation that works with both Cassandra and
   DSE. If you used `DseProgrammaticPlainTextAuthProvider`, replace it by
   `PlainTextProgrammaticAuthProvider`. Similarly, if you wrote a custom implementation by
@@ -568,7 +568,7 @@ a few notable differences:
 * the "mapper" and "accessor" concepts have been unified into a single "DAO" component, that handles
   both pre-defined CRUD patterns, and user-provided queries.
 
-Refer to the [mapper manual](../manual/mapper/) for all the details.
+Refer to the [mapper manual](../manual/mapper/README.md) for all the details.
 
 #### Internal API
 
@@ -646,7 +646,7 @@ Notable changes:
 * simple statement instances are now created with the `newInstance` static factory method. This is
   because `SimpleStatement` is now an interface (as most public API types).
 
-[API conventions]: ../manual/api_conventions
+[API conventions]: ../manual/api_conventions/README.md
 
 #### Configuration
 
@@ -714,9 +714,9 @@ This is fully customizable: the configuration is exposed to the rest of the driv
 `DriverConfig` interface; if the default implementation doesn't work for you, you can write your
 own.
 
-For more details, refer to the [manual](../manual/core/configuration).
+For more details, refer to the [manual](../manual/core/configuration/README.md).
 
-[Typesafe Config]: https://github.com/typesafehub/config
+[Typesafe Config]: https://github.com/typesafehub/config/README.md
 
 #### Session
 
@@ -734,7 +734,7 @@ to the best common denominator (see
 [JAVA-1295](https://datastax-oss.atlassian.net/browse/JAVA-1295)).
 
 Reconnection is now possible at startup: if no contact point is reachable, the driver will retry at
-periodic intervals (controlled by the [reconnection policy](../manual/core/reconnection/)) instead
+periodic intervals (controlled by the [reconnection policy](../manual/core/reconnection/README.md)) instead
 of throwing an error. To turn this on, set the following configuration option:
 
 ```
@@ -743,7 +743,7 @@ datastax-java-driver {
 }
 ```
 
-The session now has a built-in [throttler](../manual/core/throttling/) to limit how many requests
+The session now has a built-in [throttler](../manual/core/throttling/README.md) to limit how many requests
 can execute concurrently. Here's an example based on the number of requests (a rate-based variant is
 also available):
 
@@ -763,7 +763,7 @@ Previous driver versions came with multiple load balancing policies that could b
 other. In our experience, this was one of the most complicated aspects of the configuration.
 
 In driver 4, we are taking a more opinionated approach: we provide a single [default
-policy](../manual/core/load_balancing/#default-policy), with what we consider as the best practices:
+policy](../manual/core/load_balancing/README.md), with what we consider as the best practices:
 
 * local only: we believe that failover should be handled at infrastructure level, not by application
   code.
@@ -774,7 +774,7 @@ You can still provide your own policy by implementing the `LoadBalancingPolicy` 
 
 #### Statements
 
-Simple, bound and batch [statements](../manual/core/statements/) are now exposed in the public API
+Simple, bound and batch [statements](../manual/core/statements/README.md) are now exposed in the public API
 as interfaces. The internal implementations are **immutable**. This makes them automatically
 thread-safe: you don't need to worry anymore about sharing them or reusing them between asynchronous
 executions.
@@ -802,7 +802,7 @@ maximum amount of time that `session.execute` will take, including any retry, sp
 etc. You can set it with `Statement.setTimeout`, or globally in the configuration with the
 `basic.request.timeout` option.
 
-[Prepared statements](../manual/core/statements/prepared/) are now cached client-side: if you call
+[Prepared statements](../manual/core/statements/prepared/README.md) are now cached client-side: if you call
 `session.prepare()` twice with the same query string, it will no longer log a warning. The second
 call will return the same statement instance, without sending anything to the server:
 
@@ -836,7 +836,7 @@ assert bs2.getConsistencyLevel() == DefaultConsistencyLevel.TWO;
 ```
 
 DDL statements are now debounced; see [Why do DDL queries have a higher latency than driver
-3?](../faq/#why-do-ddl-queries-have-a-higher-latency-than-driver-3) in the FAQ.
+3?](../faq/README.md#why-do-ddl-queries-have-a-higher-latency-than-driver-3) in the FAQ.
 
 #### Dual result set APIs
 
@@ -859,8 +859,8 @@ will find more information about asynchronous iterations in the manual pages abo
 programming][4.x async programming] and [paging][4.x paging].
 
 [3.x async paging]: http://docs.datastax.com/en/developer/java-driver/3.2/manual/async/#async-paging
-[4.x async programming]: ../manual/core/async/
-[4.x paging]: ../manual/core/paging/
+[4.x async programming]: ../manual/core/async/README.md
+[4.x paging]: ../manual/core/paging/README.md
 
 #### CQL to Java type mappings
 
@@ -875,8 +875,8 @@ changed when it comes to [temporal types] such as `date` and `timestamp`:
 
 The corresponding setter methods were also changed to expect these new types as inputs.
 
-[CQL to Java type mappings]: ../manual/core#cql-to-java-type-mapping
-[temporal types]: ../manual/core/temporal_types
+[CQL to Java type mappings]: ../manual/core/README.md#cql-to-java-type-mapping
+[temporal types]: ../manual/core/temporal_types/README.md
 [java.time.LocalDate]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalDate.html
 [java.time.LocalTime]: https://docs.oracle.com/javase/8/docs/api/java/time/LocalTime.html
 [java.time.Instant]: https://docs.oracle.com/javase/8/docs/api/java/time/Instant.html
@@ -884,7 +884,7 @@ The corresponding setter methods were also changed to expect these new types as 
 
 #### Metrics
 
-[Metrics](../manual/core/metrics/) are now divided into two categories: session-wide and per-node. 
+[Metrics](../manual/core/metrics/README.md) are now divided into two categories: session-wide and per-node. 
 Each metric can be enabled or disabled individually in the configuration:
 
 ```
@@ -949,7 +949,7 @@ datastax-java-driver {
 }
 ```
 
-See the [manual](../manual/core/metadata/) for all the details.
+See the [manual](../manual/core/metadata/README.md) for all the details.
 
 #### Query builder
 
@@ -989,14 +989,14 @@ SimpleStatement statement = query
 
 All query builder types are immutable, making them inherently thread-safe and share-safe.
 
-The query builder has its own [manual chapter](../manual/query_builder/), where the syntax is
+The query builder has its own [manual chapter](../manual/query_builder/README.md), where the syntax is
 covered in detail.
 
 #### Dedicated type for CQL identifiers
 
 Instead of raw strings, the names of schema objects (keyspaces, tables, columns, etc.) are now 
 wrapped in a dedicated `CqlIdentifier` type. This avoids ambiguities with regard to [case
-sensitivity](../manual/case_sensitivity).
+sensitivity](../manual/case_sensitivity/README.md).
 
 #### Pluggable request execution logic
 

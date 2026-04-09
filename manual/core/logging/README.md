@@ -25,7 +25,7 @@ under the License.
 * config file examples for Logback and Log4J. 
 
 **If you're looking for information about the request logger, see the [request
-tracker](../request_tracker/#request-logger) page.**
+tracker](../request_tracker/README.md#request-logger) page.**
 
 -----
 

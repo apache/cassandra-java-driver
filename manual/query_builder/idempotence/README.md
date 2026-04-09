@@ -20,7 +20,7 @@ under the License.
 ## Idempotence in the query builder
 
 When you generate a statement (or a statement builder) from the query builder, it automatically
-infers the [isIdempotent](../../core/idempotence/) flag:
+infers the [isIdempotent](../../core/idempotence/README.md) flag:
 
 ```java
 SimpleStatement statement =

@@ -21,16 +21,16 @@ under the License.
 
 Driver modules:
 
-* [Core](core/): the main entry point, deals with connectivity and query execution.
-* [Query builder](query_builder/): a fluent API to create CQL queries programmatically.
-* [Mapper](mapper/): generates the boilerplate to execute queries and convert the results into
+* [Core](core/README.md): the main entry point, deals with connectivity and query execution.
+* [Query builder](query_builder/README.md): a fluent API to create CQL queries programmatically.
+* [Mapper](mapper/README.md): generates the boilerplate to execute queries and convert the results into
   application-level objects.
-* [Developer docs](developer/): explains the codebase and internal extension points for advanced
+* [Developer docs](developer/README.md): explains the codebase and internal extension points for advanced
   customization.
 
 Common topics:
 
-* [API conventions](api_conventions/)
-* [Case sensitivity](case_sensitivity/)
-* [OSGi](osgi/)
-* [Cloud](cloud/)
+* [API conventions](api_conventions/README.md)
+* [Case sensitivity](case_sensitivity/README.md)
+* [OSGi](osgi/README.md)
+* [Cloud](cloud/README.md)

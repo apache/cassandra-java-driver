@@ -20,7 +20,7 @@ under the License.
 ## GetEntity methods
 
 Annotate a DAO method with [@GetEntity] to convert a core driver data structure into one or more
-[Entities](../../entities):
+[Entities](../../entities/README.md):
 
 ```java
 @Dao

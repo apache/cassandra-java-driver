@@ -74,7 +74,7 @@ configuration (make sure you use version 3.5 or higher):
 </build>
 ```
 
-Alternatively (e.g. if you are using the [BOM](../../core/bom/)), you may also declare the processor
+Alternatively (e.g. if you are using the [BOM](../../core/bom/README.md)), you may also declare the processor
 as a regular dependency in the "provided" scope:
 
 ```xml
@@ -128,7 +128,7 @@ You will find the generated files in `build/generated/sources/annotationProcesso
 
 ### Integration with other languages and libraries
 
-* <a name="kotlin"></a>[Kotlin](kotlin/)
-* <a name="lombok"></a>[Lombok](lombok/)
-* [Java 14 records](record/)
-* [Scala](scala/)
+* <a name="kotlin"></a>[Kotlin](kotlin/README.md)
+* <a name="lombok"></a>[Lombok](lombok/README.md)
+* [Java 14 records](record/README.md)
+* [Scala](scala/README.md)

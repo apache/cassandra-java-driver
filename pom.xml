@@ -798,6 +798,13 @@ limitations under the License.]]></inlineHeader>
           <quiet>true</quiet>
           <doclint>all,-missing</doclint>
           <excludePackageNames>com.datastax.*.driver.internal*</excludePackageNames>
+          <additionalDependencies>
+            <additionalDependency>
+              <groupId>com.google.errorprone</groupId>
+              <artifactId>error_prone_annotations</artifactId>
+              <version>2.3.4</version>
+            </additionalDependency>
+          </additionalDependencies>
           <tags>
             <tag>
               <name>apiNote</name>
@@ -874,6 +881,31 @@ limitations under the License.]]></inlineHeader>
                 <additionalparam>org.xerial.snappy</additionalparam>
               </additionalJOptions>
               <useStandardDocletOptions>false</useStandardDocletOptions>
+            </configuration>
+          </execution>
+          <execution>
+            <!-- Generate aggregated Javadoc for specified modules -->
+            <id>aggregate-javadoc</id>
+            <goals>
+              <goal>aggregate</goal>
+            </goals>
+            <phase>site</phase>
+            <configuration>
+              <includeDependencySources>false</includeDependencySources>
+              <dependencySourceIncludes>
+                <dependencySourceInclude>org.apache.cassandra:java-driver-core</dependencySourceInclude>
+                <dependencySourceInclude>org.apache.cassandra:java-driver-query-builder</dependencySourceInclude>
+                <dependencySourceInclude>org.apache.cassandra:java-driver-mapper-runtime</dependencySourceInclude>
+              </dependencySourceIncludes>
+              <reactorProjects>
+                <reactorProject>core</reactorProject>
+                <reactorProject>query-builder</reactorProject>
+                <reactorProject>mapper-runtime</reactorProject>
+              </reactorProjects>
+              <doctitle>Apache Cassandra Java Driver ${project.version} API</doctitle>
+              <bottom><![CDATA[
+                Copyright &#169; {inceptionYear}&#x2013;{currentYear} <a href="https://www.apache.org/">The Apache Software Foundation</a>. All rights reserved.
+                ]]></bottom>
             </configuration>
           </execution>
         </executions>
