@@ -21,6 +21,16 @@ under the License.
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.19.3
+
+- [bug] CASSJAVA-3: Fix ordering of LIMIT and PER PARTITION LIMIT clauses
+- [bug] PR 2050: Fix race condition in ClockSeqAndNodeContainer
+- [improvement] CASSJAVA-108: Update ESRI (and remove org.json) dependencies
+- [improvement] PR 2076: Bump Jackson to 2.20.1
+- [improvement] PR 2047: Re-work ordering clause support in query builder
+- [improvement] PR 2051: Bump logback to 1.3.15, slf4j to 2.0.16
+- [improvement] CASSJAVA-113: Bump LZ4 to 1.10.1, Netty to 4.1.130.Final
+
 ### 4.19.2
 
 - [bug] CASSJAVA-116: Retry or Speculative Execution with RequestIdGenerator throws "Duplicate Key"
