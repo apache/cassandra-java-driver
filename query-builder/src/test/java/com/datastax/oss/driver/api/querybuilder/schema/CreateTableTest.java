@@ -20,7 +20,9 @@ package com.datastax.oss.driver.api.querybuilder.schema;
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createTable;
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.udt;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
@@ -29,6 +31,7 @@ import com.datastax.oss.driver.api.querybuilder.schema.compaction.TimeWindowComp
 import com.datastax.oss.driver.api.querybuilder.schema.compaction.TimeWindowCompactionStrategy.TimestampResolution;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import org.junit.Test;
 
 public class CreateTableTest {
@@ -377,5 +380,64 @@ public class CreateTableTest {
                 .withPartitionKey("k", DataTypes.INT)
                 .withColumn("v", DataTypes.vectorOf(DataTypes.FLOAT, 3)))
         .hasCql("CREATE TABLE foo (k int PRIMARY KEY,v vector<float, 3>)");
+  }
+
+  @Test
+  public void should_expose_partition_key_columns() {
+    CreateTableWithOptions table =
+        createTable("foo")
+            .withPartitionKey("pk1", DataTypes.INT)
+            .withPartitionKey("pk2", DataTypes.TEXT)
+            .withClusteringColumn("cc", DataTypes.TIMEUUID)
+            .withColumn("v", DataTypes.BLOB);
+
+    List<ColumnSpec> pk = table.getPartitionKeyColumns();
+    assertThat(pk).hasSize(2);
+    assertThat(pk.get(0).getName()).isEqualTo(CqlIdentifier.fromCql("pk1"));
+    assertThat(pk.get(0).getType()).isEqualTo(DataTypes.INT);
+    assertThat(pk.get(1).getName()).isEqualTo(CqlIdentifier.fromCql("pk2"));
+    assertThat(pk.get(1).getType()).isEqualTo(DataTypes.TEXT);
+  }
+
+  @Test
+  public void should_expose_clustering_columns() {
+    CreateTableWithOptions table =
+        createTable("foo")
+            .withPartitionKey("pk", DataTypes.INT)
+            .withClusteringColumn("cc1", DataTypes.TIMEUUID)
+            .withClusteringColumn("cc2", DataTypes.TEXT)
+            .withColumn("v", DataTypes.BLOB);
+
+    List<ColumnSpec> cc = table.getClusteringColumns();
+    assertThat(cc).hasSize(2);
+    assertThat(cc.get(0).getName()).isEqualTo(CqlIdentifier.fromCql("cc1"));
+    assertThat(cc.get(0).getType()).isEqualTo(DataTypes.TIMEUUID);
+    assertThat(cc.get(1).getName()).isEqualTo(CqlIdentifier.fromCql("cc2"));
+    assertThat(cc.get(1).getType()).isEqualTo(DataTypes.TEXT);
+  }
+
+  @Test
+  public void should_expose_regular_columns() {
+    CreateTableWithOptions table =
+        createTable("foo")
+            .withPartitionKey("pk", DataTypes.INT)
+            .withColumn("v1", DataTypes.TEXT)
+            .withColumn("v2", DataTypes.BIGINT);
+
+    List<ColumnSpec> cols = table.getColumns();
+    assertThat(cols).hasSize(2);
+    assertThat(cols.get(0).getName()).isEqualTo(CqlIdentifier.fromCql("v1"));
+    assertThat(cols.get(0).getType()).isEqualTo(DataTypes.TEXT);
+    assertThat(cols.get(1).getName()).isEqualTo(CqlIdentifier.fromCql("v2"));
+    assertThat(cols.get(1).getType()).isEqualTo(DataTypes.BIGINT);
+  }
+
+  @Test
+  public void should_return_empty_lists_when_no_columns_added() {
+    CreateTableWithOptions table = createTable("foo").withPartitionKey("pk", DataTypes.INT);
+
+    assertThat(table.getColumns()).isEmpty();
+    assertThat(table.getClusteringColumns()).isEmpty();
+    assertThat(table.getPartitionKeyColumns()).hasSize(1);
   }
 }

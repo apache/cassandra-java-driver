@@ -22,15 +22,18 @@ import static com.datastax.oss.driver.internal.querybuilder.schema.Utils.appendS
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.core.type.DataType;
+import com.datastax.oss.driver.api.querybuilder.schema.ColumnSpec;
 import com.datastax.oss.driver.api.querybuilder.schema.CreateTable;
 import com.datastax.oss.driver.api.querybuilder.schema.CreateTableStart;
 import com.datastax.oss.driver.api.querybuilder.schema.CreateTableWithOptions;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
+import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import java.util.List;
 import java.util.Map;
 import net.jcip.annotations.Immutable;
 
@@ -394,5 +397,34 @@ public class DefaultCreateTable implements CreateTableStart, CreateTable, Create
   @NonNull
   public ImmutableMap<CqlIdentifier, ClusteringOrder> getOrderings() {
     return orderings;
+  }
+
+  @NonNull
+  @Override
+  public List<ColumnSpec> getColumns() {
+    return toColumnSpecList(regularColumns);
+  }
+
+  @NonNull
+  @Override
+  public List<ColumnSpec> getPartitionKeyColumns() {
+    return toColumnSpecList(partitionKeyColumns);
+  }
+
+  @NonNull
+  @Override
+  public List<ColumnSpec> getClusteringColumns() {
+    return toColumnSpecList(clusteringKeyColumns);
+  }
+
+  private List<ColumnSpec> toColumnSpecList(ImmutableSet<CqlIdentifier> ids) {
+    ImmutableList.Builder<ColumnSpec> result = ImmutableList.builderWithExpectedSize(ids.size());
+    // Walk columnsInOrder to preserve declaration order
+    for (Map.Entry<CqlIdentifier, DataType> entry : columnsInOrder.entrySet()) {
+      if (ids.contains(entry.getKey())) {
+        result.add(ColumnSpec.of(entry.getKey(), entry.getValue()));
+      }
+    }
+    return result.build();
   }
 }

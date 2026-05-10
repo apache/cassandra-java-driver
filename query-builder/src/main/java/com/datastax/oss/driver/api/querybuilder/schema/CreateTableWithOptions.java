@@ -22,6 +22,7 @@ import com.datastax.oss.driver.internal.querybuilder.schema.RawOptionsWrapper;
 import com.datastax.oss.driver.shaded.guava.common.collect.Maps;
 import edu.umd.cs.findbugs.annotations.CheckReturnValue;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.util.List;
 import java.util.Map;
 
 public interface CreateTableWithOptions
@@ -37,4 +38,25 @@ public interface CreateTableWithOptions
   default CreateTableWithOptions withExtensions(@NonNull Map<String, byte[]> extensions) {
     return withOption("extensions", Maps.transformValues(extensions, RawOptionsWrapper::of));
   }
+
+  /**
+   * Returns the regular (non-key, non-static) columns declared via {@code withColumn()}, in
+   * declaration order.
+   */
+  @NonNull
+  List<ColumnSpec> getColumns();
+
+  /**
+   * Returns the partition-key columns declared via {@code withPartitionKey()}, in declaration
+   * order.
+   */
+  @NonNull
+  List<ColumnSpec> getPartitionKeyColumns();
+
+  /**
+   * Returns the clustering columns declared via {@code withClusteringColumn()}, in declaration
+   * order.
+   */
+  @NonNull
+  List<ColumnSpec> getClusteringColumns();
 }
