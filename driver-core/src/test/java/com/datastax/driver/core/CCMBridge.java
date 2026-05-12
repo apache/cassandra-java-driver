@@ -682,11 +682,53 @@ public class CCMBridge implements CCMAccess {
 
   @Override
   public void updateConfig(Map<String, Object> configs) {
-    StringBuilder confStr = new StringBuilder();
+    VersionNumber cassandraVersion = getCassandraVersion();
     for (Map.Entry<String, Object> entry : configs.entrySet()) {
-      confStr.append(entry.getKey()).append(":").append(entry.getValue()).append(" ");
+
+      String originalKey = entry.getKey();
+      Object originalValue = entry.getValue();
+
+      String updateString =
+          String.join(
+              ":",
+              getConfigKey(originalKey, originalValue, cassandraVersion),
+              getConfigValue(originalKey, originalValue, cassandraVersion));
+      execute(CCM_COMMAND + " updateconf %s", updateString);
     }
-    execute(CCM_COMMAND + " updateconf " + confStr);
+  }
+
+  private static String IN_MS_STR = "_in_ms";
+  private static int IN_MS_STR_LENGTH = IN_MS_STR.length();
+  private static String ENABLE_STR = "enable_";
+  private static int ENABLE_STR_LENGTH = ENABLE_STR.length();
+  private static String IN_KB_STR = "_in_kb";
+  private static int IN_KB_STR_LENGTH = IN_KB_STR.length();
+
+  private static String getConfigKey(
+      String originalKey, Object originalValue, VersionNumber cassandraVersion) {
+
+    // At least for now we won't support substitutions on nested keys.  This requires an extra
+    // traversal of the string
+    // but we'll live with that for now
+    if (originalKey.contains(".")) return originalKey;
+    if (cassandraVersion.compareTo(VersionNumber.V4_1_0) < 0) return originalKey;
+    if (originalKey.endsWith(IN_MS_STR))
+      return originalKey.substring(0, originalKey.length() - IN_MS_STR_LENGTH);
+    if (originalKey.startsWith(ENABLE_STR))
+      return originalKey.substring(ENABLE_STR_LENGTH) + "_enabled";
+    if (originalKey.endsWith(IN_KB_STR))
+      return originalKey.substring(0, originalKey.length() - IN_KB_STR_LENGTH);
+    return originalKey;
+  }
+
+  private static String getConfigValue(
+      String originalKey, Object originalValue, VersionNumber cassandraVersion) {
+
+    String originalValueStr = originalValue.toString();
+    if (cassandraVersion.compareTo(VersionNumber.V4_1_0) < 0) return originalValueStr;
+    if (originalKey.endsWith(IN_MS_STR)) return originalValueStr + "ms";
+    if (originalKey.endsWith(IN_KB_STR)) return originalValueStr + "KiB";
+    return originalValueStr;
   }
 
   @Override
@@ -1081,11 +1123,13 @@ public class CCMBridge implements CCMAccess {
       if (!dse) {
         if (isMaterializedViewsDisabledByDefault(cassandraVersion)) {
           // enable materialized views
-          cassandraConfiguration.put("enable_materialized_views", true);
+          cassandraConfiguration.put(
+              getConfigKey("enable_materialized_views", true, cassandraVersion), true);
         }
         if (isSasiConfigEnablementRequired(cassandraVersion)) {
           // enable SASI indexing in config (disabled by default in C* 4.0)
-          cassandraConfiguration.put("enable_sasi_indexes", true);
+          cassandraConfiguration.put(
+              getConfigKey("enable_sasi_indexes", true, cassandraVersion), true);
         }
       }
       final CCMBridge ccm =

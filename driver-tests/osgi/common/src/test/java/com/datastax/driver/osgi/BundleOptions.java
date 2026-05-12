@@ -96,8 +96,10 @@ public class BundleOptions {
       @Override
       public Option[] getOptions() {
         return options(
-            systemProperty("cassandra.compression").value(ProtocolOptions.Compression.LZ4.name()),
-            mavenBundle("org.lz4", "lz4-java", getVersion("lz4.version")));
+            mavenBundle("at.yawk.lz4", "lz4-java", getVersion("lz4.version")),
+            mavenBundle("com.diffplug.osgi", "com.diffplug.osgi.extension.sun.misc")
+                .version("0.0.0"),
+            systemProperty("cassandra.compression").value(ProtocolOptions.Compression.LZ4.name()));
       }
     };
   }
@@ -182,13 +184,13 @@ public class BundleOptions {
                 mavenBundle(
                     "com.fasterxml.jackson.core",
                     "jackson-databind",
-                    getVersion("jackson-databind.version")),
+                    getVersion("jackson.version")),
                 mavenBundle(
                     "com.fasterxml.jackson.core", "jackson-core", getVersion("jackson.version")),
                 mavenBundle(
                     "com.fasterxml.jackson.core",
                     "jackson-annotations",
-                    getVersion("jackson.version")),
+                    getVersion("jackson-annotations.version")),
                 mavenBundle("org.testng", "testng", getVersion("testng.version")),
                 systemPackages(
                     "org.testng",

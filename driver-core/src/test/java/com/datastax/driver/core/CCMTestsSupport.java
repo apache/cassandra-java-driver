@@ -29,7 +29,6 @@ import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.CreateCCM.TestMode;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closer;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -74,14 +73,6 @@ public class CCMTestsSupport {
 
   private static final List<String> TEST_GROUPS =
       Lists.newArrayList("isolated", "short", "long", "stress", "duration");
-
-  // A mapping of cassandra.yaml config options to their version requirements.
-  // If a config is passed containing one of these options and the version requirement cannot be met
-  // the option is simply filtered.
-  private static final Map<String, VersionNumber> configVersionRequirements =
-      ImmutableMap.<String, VersionNumber>builder()
-          .put("enable_user_defined_functions", VersionNumber.parse("2.2.0"))
-          .build();
 
   private static class ReadOnlyCCMAccess implements CCMAccess {
 
@@ -386,21 +377,6 @@ public class CCMTestsSupport {
         if (tokens.length != 2) fail("Wrong configuration option: " + aConf);
         String key = tokens[0];
         String value = tokens[1];
-        // If we've detected a property with a version requirement, skip it if the version
-        // requirement
-        // cannot be met.
-        if (configVersionRequirements.containsKey(key)) {
-          VersionNumber requirement = configVersionRequirements.get(key);
-          if (version != null && version.compareTo(requirement) < 0) {
-            LOGGER.debug(
-                "Skipping inclusion of '{}' in cassandra.yaml since it requires >= C* {} and {} "
-                    + "was detected.",
-                aConf,
-                requirement,
-                version);
-            continue;
-          }
-        }
         config.put(key, value);
       }
     }
