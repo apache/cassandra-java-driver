@@ -914,6 +914,9 @@ public class TypedDriverOption<ValueT> {
       new TypedDriverOption<>(
           DefaultDriverOption.ADDRESS_TRANSLATOR_RESOLVE_ADDRESSES, GenericType.BOOLEAN);
 
+  public static final TypedDriverOption<Boolean> GRACEFUL_DISCONNECT_ENABLED =
+      new TypedDriverOption<>(DefaultDriverOption.GRACEFUL_DISCONNECT_ENABLED, GenericType.BOOLEAN);
+
   /**
    * Ordered preference list of remote dcs optionally supplied for automatic failover and included
    * in query plan. This feature is enabled only when max-nodes-per-remote-dc is greater than 0.

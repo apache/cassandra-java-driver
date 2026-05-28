@@ -233,6 +233,7 @@ public class ChannelPool implements AsyncAutoCloseable {
     private final DriverConfig config;
     private final ChannelFactory channelFactory;
     private final EventBus eventBus;
+    private final boolean gracefulDisconnectEnabled;
     // The channels that are currently connecting
     private final List<CompletionStage<DriverChannel>> pendingChannels = new ArrayList<>();
     private final Set<DriverChannel> closingChannels = new HashSet<>();
@@ -258,6 +259,11 @@ public class ChannelPool implements AsyncAutoCloseable {
       this.wantedCount = getConfiguredSize(distance);
       this.channelFactory = context.getChannelFactory();
       this.eventBus = context.getEventBus();
+      this.gracefulDisconnectEnabled =
+          config
+                  .getDefaultProfile()
+                  .getBoolean(DefaultDriverOption.GRACEFUL_DISCONNECT_ENABLED, true)
+              && channelFactory.isGracefulDisconnectSupported();
       ReconnectionPolicy reconnectionPolicy = context.getReconnectionPolicy();
       this.reconnection =
           new Reconnection(
@@ -303,19 +309,24 @@ public class ChannelPool implements AsyncAutoCloseable {
       LOG.debug("[{}] Trying to create {} missing channels", logPrefix, missing);
 
       for (int i = 0; i < missing; i++) {
-        // Create a separate event callback for each channel to handle GRACEFUL_DISCONNECT events
-        QueryConnectionEventCallback eventCallback = new QueryConnectionEventCallback();
-
-        DriverChannelOptions options =
+        DriverChannelOptions.Builder optionsBuilder =
             DriverChannelOptions.builder()
                 .withKeyspace(keyspaceName)
-                .withOwnerLogPrefix(sessionLogPrefix)
-                .withEvents(ImmutableList.of(GracefulDisconnectEvent.EVENT_TYPE), eventCallback)
-                .build();
+                .withOwnerLogPrefix(sessionLogPrefix);
 
+        QueryConnectionEventCallback eventCallback = null;
+        if (gracefulDisconnectEnabled) {
+          eventCallback = new QueryConnectionEventCallback();
+          optionsBuilder.withEvents(
+              ImmutableList.of(GracefulDisconnectEvent.EVENT_TYPE), eventCallback);
+        }
+
+        DriverChannelOptions options = optionsBuilder.build();
         CompletionStage<DriverChannel> channelFuture = channelFactory.connect(node, options);
-        // When the channel is ready, set it in the callback so it can be used when events arrive
-        channelFuture.thenAccept(eventCallback::setChannel);
+        if (eventCallback != null) {
+          QueryConnectionEventCallback cb = eventCallback;
+          channelFuture.thenAccept(cb::setChannel);
+        }
         pendingChannels.add(channelFuture);
       }
       return CompletableFutures.allDone(pendingChannels)
@@ -547,19 +558,15 @@ public class ChannelPool implements AsyncAutoCloseable {
         }
         Event event = (Event) eventMessage;
         if (GracefulDisconnectEvent.EVENT_TYPE.equals(event.type)) {
-          LOG.debug("[{}] Received GRACEFUL_DISCONNECT event on query connection!", logPrefix);
+          LOG.debug("[{}] Received GRACEFUL_DISCONNECT on query connection", logPrefix);
           DriverChannel currentChannel = this.channel;
           if (currentChannel != null) {
-            // Fire an internal event on the event bus to notify the pool.
-            // The pool's onGracefulDisconnect handler will mark the node as going away
-            // and close the channel gracefully, allowing in-flight requests to complete.
             eventBus.fire(new GracefulDisconnectEvent(node, currentChannel));
           } else {
-            LOG.error("[{}] Channel is null, cannot fire GracefulDisconnectEvent", logPrefix);
+            LOG.warn("[{}] Channel not yet set, cannot fire GracefulDisconnectEvent", logPrefix);
           }
         } else {
-          LOG.error(
-              "[{}] Received unexpected event type on query connection: {}", logPrefix, event.type);
+          LOG.warn("[{}] Unexpected event type on query connection: {}", logPrefix, event.type);
         }
       }
     }

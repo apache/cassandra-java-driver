@@ -33,6 +33,7 @@ import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.request.Query;
+import com.datastax.oss.protocol.internal.response.Event;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
@@ -218,16 +219,19 @@ public class InFlightHandler extends ChannelDuplexHandler {
 
     if (streamId < 0) {
       Message event = responseFrame.message;
-      LOG.error(
-          "[{}] Received frame with streamId < 0 (event). StreamId: {}, Message: {}, EventCallback: {}",
-          logPrefix,
-          streamId,
-          event,
-          eventCallback != null ? "present" : "null");
+      if (event instanceof Event
+          && GracefulDisconnectEvent.EVENT_TYPE.equals(((Event) event).type)) {
+        LOG.debug("[{}] Received GRACEFUL_DISCONNECT, initiating graceful drain", logPrefix);
+        startGracefulShutdown(ctx);
+        if (eventCallback != null) {
+          eventCallback.onEvent(event);
+        }
+        return;
+      }
       if (eventCallback == null) {
-        LOG.error("[{}] Received event {} but no callback was registered", logPrefix, event);
+        LOG.debug("[{}] Received event {} but no callback was registered", logPrefix, event);
       } else {
-        LOG.error("[{}] Received event {}, notifying callback", logPrefix, event);
+        LOG.debug("[{}] Received event {}, notifying callback", logPrefix, event);
         try {
           eventCallback.onEvent(event);
         } catch (Throwable t) {

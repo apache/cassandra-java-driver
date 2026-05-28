@@ -63,7 +63,6 @@ public class FrameDecoder extends LengthFieldBasedFrameDecoder {
       int protocolVersion = (int) in.getByte(startIndex) & 0b0111_1111;
       if (protocolVersion < 3) {
         int streamId = in.getByte(startIndex + 2);
-        LOG.info("FrameDecoder working version < 3 with stream ID {}", streamId);
         int length = in.getInt(startIndex + 4);
         // We don't need a full-blown decoder, just to signal the protocol error. So discard the
         // incoming data and spoof a server-side protocol error.
@@ -96,7 +95,6 @@ public class FrameDecoder extends LengthFieldBasedFrameDecoder {
       int streamId;
       try {
         streamId = in.getShort(startIndex + 2);
-        LOG.info("FrameDecoder working version >= 3 with stream ID {}", streamId);
       } catch (Exception e1) {
         // Should never happen, super.decode does not return a non-null buffer until the length
         // field has been read, and the stream id comes before

@@ -180,8 +180,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
       LOG.warn("[{}] Unsupported event class: {}", logPrefix, eventMessage.getClass().getName());
     } else {
       Event event = (Event) eventMessage;
-      LOG.error(
-          "[{}] Processing incoming event type: {}, message: {}", logPrefix, event.type, event);
+      LOG.debug("[{}] Processing incoming event {}", logPrefix, eventMessage);
       switch (event.type) {
         case ProtocolConstants.EventType.TOPOLOGY_CHANGE:
           processTopologyChange(event);
@@ -192,8 +191,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
         case ProtocolConstants.EventType.SCHEMA_CHANGE:
           processSchemaChange(event);
           break;
-        case ProtocolConstants.EventType.GRACEFUL_DISCONNECT:
-          LOG.error("[{}] Received GRACEFUL_DISCONNECT event!", logPrefix);
+        case GracefulDisconnectEvent.EVENT_TYPE:
           processGracefulDisconnect();
           break;
         default:
@@ -320,7 +318,13 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
       }
       initWasCalled = true;
       try {
-        ImmutableList<String> eventTypes = buildEventTypes(listenToClusterEvents);
+        boolean gracefulDisconnectEnabled =
+            context
+                .getConfig()
+                .getDefaultProfile()
+                .getBoolean(DefaultDriverOption.GRACEFUL_DISCONNECT_ENABLED, true);
+        ImmutableList<String> eventTypes =
+            buildEventTypes(listenToClusterEvents, gracefulDisconnectEnabled);
         LOG.debug("[{}] Initializing with event types {}", logPrefix, eventTypes);
         channelOptions =
             DriverChannelOptions.builder()
@@ -634,14 +638,17 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     return true;
   }
 
-  private static ImmutableList<String> buildEventTypes(boolean listenClusterEvents) {
+  private static ImmutableList<String> buildEventTypes(
+      boolean listenClusterEvents, boolean gracefulDisconnectEnabled) {
     ImmutableList.Builder<String> builder = ImmutableList.builder();
     builder.add(ProtocolConstants.EventType.SCHEMA_CHANGE);
     if (listenClusterEvents) {
       builder
           .add(ProtocolConstants.EventType.STATUS_CHANGE)
-          .add(ProtocolConstants.EventType.TOPOLOGY_CHANGE)
-          .add(GracefulDisconnectEvent.EVENT_TYPE);
+          .add(ProtocolConstants.EventType.TOPOLOGY_CHANGE);
+    }
+    if (gracefulDisconnectEnabled) {
+      builder.add(GracefulDisconnectEvent.EVENT_TYPE);
     }
     return builder.build();
   }

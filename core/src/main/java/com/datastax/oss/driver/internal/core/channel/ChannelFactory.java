@@ -106,6 +106,12 @@ public class ChannelFactory {
    */
   @VisibleForTesting volatile String productType;
 
+  @VisibleForTesting volatile boolean serverSupportsGracefulDisconnect;
+
+  public boolean isGracefulDisconnectSupported() {
+    return serverSupportsGracefulDisconnect;
+  }
+
   public ChannelFactory(InternalDriverContext context) {
     this.logPrefix = context.getSessionName();
     this.context = context;
@@ -232,6 +238,12 @@ public class ChannelFactory {
                             ConsistencyLevel.LOCAL_QUORUM.name()));
               }
             }
+            if (!serverSupportsGracefulDisconnect && supportedOptions != null) {
+              List<String> gdValues = supportedOptions.get(GracefulDisconnectEvent.EVENT_TYPE);
+              if (gdValues != null && gdValues.contains("true")) {
+                serverSupportsGracefulDisconnect = true;
+              }
+            }
             resultFuture.complete(driverChannel);
           } else {
             Throwable error = connectFuture.cause();
@@ -347,8 +359,7 @@ public class ChannelFactory {
                 endPoint,
                 options,
                 heartbeatHandler,
-                // TODO: check whether it's reasonable
-                true);
+                productType == null);
 
         ChannelPipeline pipeline = channel.pipeline();
         context
