@@ -369,7 +369,7 @@ public class RequestLoggerIT {
         .matches(WITH_EXECUTION_PREFIX);
     assertThat(events.get(1).getFormattedMessage())
         .contains("Success", "[0 values]", QUERY)
-        .matches(WITH_PER_REQUEST_PREFIX);
+        .matches(WITH_EXECUTION_PREFIX);
     assertThat(events.get(2).getFormattedMessage())
         .contains("Success", "[0 values]", QUERY)
         .matches(WITH_PER_REQUEST_PREFIX);
@@ -399,7 +399,7 @@ public class RequestLoggerIT {
     List<ILoggingEvent> events = loggingEventCaptor.getAllValues();
     assertThat(events.get(0).getFormattedMessage())
         .contains("Success", "[0 values]", QUERY)
-        .matches(WITH_PER_REQUEST_PREFIX);
+        .matches(WITH_EXECUTION_PREFIX);
     assertThat(events.get(1).getFormattedMessage())
         .contains("Success", "[0 values]", QUERY)
         .matches(WITH_PER_REQUEST_PREFIX);
