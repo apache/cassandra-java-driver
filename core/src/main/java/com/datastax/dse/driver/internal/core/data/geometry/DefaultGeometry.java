@@ -176,7 +176,7 @@ public abstract class DefaultGeometry implements Geometry, Serializable {
       return false;
     }
     DefaultGeometry that = (DefaultGeometry) o;
-    return this.getOgcGeometry().equals((Object) that.getOgcGeometry());
+    return this.getOgcGeometry().Equals(that.getOgcGeometry());
   }
 
   @Override
