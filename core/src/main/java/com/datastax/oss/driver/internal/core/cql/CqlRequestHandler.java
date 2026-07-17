@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.connection.FrameTooLongException;
 import com.datastax.oss.driver.api.core.cql.AsyncResultSet;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -300,12 +301,28 @@ public class CqlRequestHandler implements Throttled {
               currentExecutionIndex,
               retryCount,
               scheduleNextExecution,
-              logPrefixJoiner.join(this.sessionName, nodeRequestId, currentExecutionIndex));
+              logPrefixJoiner.join(this.sessionName, nodeRequestId, currentExecutionIndex),
+              resultMetadataSnapshot(statement));
       Message message = Conversions.toMessage(statement, executionProfile, context);
       channel
           .write(message, statement.isTracing(), statement.getCustomPayload(), nodeResponseCallback)
           .addListener(nodeResponseCallback);
     }
+  }
+
+  /**
+   * Captures the prepared statement's result metadata as it stands right now, so that decoding this
+   * request's response later (potentially after a concurrent execution has swapped that metadata,
+   * see CASSANDRA-10786) uses what was true when this request was actually encoded.
+   */
+  private static DefaultPreparedStatement.ResultMetadata resultMetadataSnapshot(
+      Statement<?> statement) {
+    if (!(statement instanceof BoundStatement)) {
+      return null;
+    }
+    DefaultPreparedStatement preparedStatement =
+        Conversions.asDefaultPreparedStatement(((BoundStatement) statement).getPreparedStatement());
+    return (preparedStatement == null) ? null : preparedStatement.getCurrentResultMetadata();
   }
 
   private void recordError(Node node, Throwable error) {
@@ -345,7 +362,8 @@ public class CqlRequestHandler implements Throttled {
       ExecutionInfo executionInfo =
           buildExecutionInfo(callback, resultMessage, responseFrame, schemaInAgreement);
       AsyncResultSet resultSet =
-          Conversions.toResultSet(resultMessage, executionInfo, session, context);
+          Conversions.toResultSet(
+              resultMessage, executionInfo, session, context, callback.resultMetadataSnapshot);
       if (result.complete(resultSet)) {
         cancelScheduledTasks();
         throttler.signalSuccess(this);
@@ -505,6 +523,9 @@ public class CqlRequestHandler implements Throttled {
     private final int retryCount;
     private final boolean scheduleNextExecution;
     private final String logPrefix;
+    // Snapshot of the prepared statement's result metadata taken when this execution's request
+    // was encoded (null for non-bound statements). See resultMetadataSnapshot(Statement).
+    private final DefaultPreparedStatement.ResultMetadata resultMetadataSnapshot;
 
     private NodeResponseCallback(
         Statement<?> statement,
@@ -514,7 +535,8 @@ public class CqlRequestHandler implements Throttled {
         int execution,
         int retryCount,
         boolean scheduleNextExecution,
-        String logPrefix) {
+        String logPrefix,
+        DefaultPreparedStatement.ResultMetadata resultMetadataSnapshot) {
       this.statement = statement;
       this.node = node;
       this.queryPlan = queryPlan;
@@ -523,6 +545,7 @@ public class CqlRequestHandler implements Throttled {
       this.retryCount = retryCount;
       this.scheduleNextExecution = scheduleNextExecution;
       this.logPrefix = logPrefix;
+      this.resultMetadataSnapshot = resultMetadataSnapshot;
     }
 
     // this gets invoked once the write completes.

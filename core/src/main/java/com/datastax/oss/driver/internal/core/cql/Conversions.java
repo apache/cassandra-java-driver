@@ -320,11 +320,13 @@ public class Conversions {
       Result result,
       ExecutionInfo executionInfo,
       CqlSession session,
-      InternalDriverContext context) {
+      InternalDriverContext context,
+      DefaultPreparedStatement.ResultMetadata resultMetadataSnapshot) {
     if (result instanceof Rows) {
       Rows rows = (Rows) result;
       Statement<?> statement = (Statement<?>) executionInfo.getRequest();
-      ColumnDefinitions columnDefinitions = getResultDefinitions(rows, statement, context);
+      ColumnDefinitions columnDefinitions =
+          getResultDefinitions(rows, statement, context, resultMetadataSnapshot);
       return new DefaultAsyncResultSet(
           columnDefinitions, executionInfo, rows.getData(), session, context);
     } else if (result instanceof Prepared) {
@@ -336,12 +338,31 @@ public class Conversions {
     }
   }
 
+  /**
+   * Returns {@code preparedStatement} narrowed to the internal implementation, or {@code null} if
+   * it isn't one (e.g. a test double implementing the public {@link PreparedStatement} interface
+   * directly).
+   */
+  static DefaultPreparedStatement asDefaultPreparedStatement(PreparedStatement preparedStatement) {
+    return (preparedStatement instanceof DefaultPreparedStatement)
+        ? (DefaultPreparedStatement) preparedStatement
+        : null;
+  }
+
   public static ColumnDefinitions getResultDefinitions(
-      Rows rows, Statement<?> statement, InternalDriverContext context) {
+      Rows rows,
+      Statement<?> statement,
+      InternalDriverContext context,
+      DefaultPreparedStatement.ResultMetadata resultMetadataSnapshot) {
     RowsMetadata rowsMetadata = rows.getMetadata();
     if (rowsMetadata.columnSpecs.isEmpty()) {
       // If the response has no metadata, it means the request had SKIP_METADATA set, the driver
-      // only ever does that for bound statements.
+      // only ever does that for bound statements. Use the snapshot taken when the request was
+      // encoded, since the prepared statement's cached copy may have since been overwritten by a
+      // concurrent execution's CASSANDRA-10786 schema-change update (see getCurrentResultMetadata).
+      if (resultMetadataSnapshot != null) {
+        return resultMetadataSnapshot.getResultSetDefinitions();
+      }
       BoundStatement boundStatement = (BoundStatement) statement;
       return boundStatement.getPreparedStatement().getResultSetDefinitions();
     } else {
