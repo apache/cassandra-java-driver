@@ -19,16 +19,27 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.any;
 
+import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.DefaultProtocolVersion;
+import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.Row;
+import com.datastax.oss.driver.api.core.time.TimestampGenerator;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
+import com.datastax.oss.driver.internal.core.DefaultConsistencyLevelRegistry;
+import com.datastax.oss.driver.internal.core.ProtocolFeature;
+import com.datastax.oss.driver.internal.core.ProtocolVersionRegistry;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
+import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import com.datastax.oss.protocol.internal.request.Execute;
 import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
 import com.datastax.oss.protocol.internal.response.result.DefaultRows;
 import com.datastax.oss.protocol.internal.response.result.RawType;
@@ -88,31 +99,7 @@ public class ConversionsMetadataRaceTest {
                 null),
             context);
 
-    DefaultPreparedStatement preparedStatement =
-        new DefaultPreparedStatement(
-            Bytes.fromHexString("0xAAAA"),
-            "SELECT * FROM t2 WHERE k = ?",
-            DefaultColumnDefinitions.valueOf(Collections.emptyList()),
-            Collections.emptyList(),
-            OLD_RESULT_METADATA_ID,
-            oldDefs,
-            null,
-            Collections.emptyMap(),
-            null,
-            null,
-            null,
-            null,
-            null,
-            Collections.emptyMap(),
-            null,
-            null,
-            null,
-            5000,
-            null,
-            null,
-            false,
-            CodecRegistry.DEFAULT,
-            DefaultProtocolVersion.V4);
+    DefaultPreparedStatement preparedStatement = preparedStatement(oldDefs);
 
     // Two concurrent executions of the same cached PreparedStatement, both encoded while OLD_DEFS
     // is current -- so both capture the same encode-time snapshot, exactly as
@@ -177,6 +164,112 @@ public class ConversionsMetadataRaceTest {
     assertThatCode(() -> row.getBoolean("is_deleted")).doesNotThrowAnyException();
     assertThat(row.getBoolean("is_deleted")).isFalse();
     assertThat(row.getLong("last_modified")).isEqualTo(1_700_000_000_001L);
+  }
+
+  /**
+   * Regression test for the encode-side half of the same race: {@code sendRequest} captures the
+   * snapshot and then calls {@link Conversions#toMessage} to build the outgoing Execute message. If
+   * that call read the prepared statement's live cache instead of the snapshot, a concurrent swap
+   * landing in the (tiny) window between the two would make the Execute message advertise the NEW
+   * resultMetadataId while the callback still decodes against the OLD snapshot -- the server would
+   * see its own current id and reply with SKIP_METADATA, corrupting decoding exactly like the
+   * scenario above, just triggered one step earlier.
+   */
+  @Test
+  public void should_encode_execute_message_using_encode_time_snapshot_despite_concurrent_swap() {
+    InternalDriverContext context = Mockito.mock(InternalDriverContext.class);
+    Mockito.when(context.getCodecRegistry()).thenReturn(CodecRegistry.DEFAULT);
+    Mockito.when(context.getProtocolVersion()).thenReturn(DefaultProtocolVersion.V4);
+    Mockito.when(context.getConsistencyLevelRegistry())
+        .thenReturn(new DefaultConsistencyLevelRegistry());
+    Mockito.when(context.getTimestampGenerator())
+        .thenReturn(Mockito.mock(TimestampGenerator.class));
+    ProtocolVersionRegistry protocolVersionRegistry = Mockito.mock(ProtocolVersionRegistry.class);
+    Mockito.when(
+            protocolVersionRegistry.supports(
+                any(ProtocolVersion.class), any(ProtocolFeature.class)))
+        .thenReturn(true);
+    Mockito.when(context.getProtocolVersionRegistry()).thenReturn(protocolVersionRegistry);
+    DriverExecutionProfile config = Mockito.mock(DriverExecutionProfile.class);
+    Mockito.when(config.getString(DefaultDriverOption.REQUEST_CONSISTENCY))
+        .thenReturn(DefaultConsistencyLevel.LOCAL_ONE.name());
+    Mockito.when(config.getInt(DefaultDriverOption.REQUEST_PAGE_SIZE)).thenReturn(5000);
+    Mockito.when(config.getString(DefaultDriverOption.REQUEST_SERIAL_CONSISTENCY))
+        .thenReturn(DefaultConsistencyLevel.SERIAL.name());
+
+    ColumnDefinitions oldDefs =
+        Conversions.toColumnDefinitions(
+            new RowsMetadata(
+                ImmutableList.of(
+                    columnSpec("group_id", 0, ProtocolConstants.DataType.VARCHAR),
+                    columnSpec("is_deleted", 1, ProtocolConstants.DataType.BOOLEAN),
+                    columnSpec("last_modified", 2, ProtocolConstants.DataType.BIGINT)),
+                null,
+                new int[0],
+                null),
+            context);
+    ColumnDefinitions newDefs =
+        Conversions.toColumnDefinitions(
+            new RowsMetadata(
+                ImmutableList.of(
+                    columnSpec("extra_0", 0, ProtocolConstants.DataType.BIGINT),
+                    columnSpec("group_id", 1, ProtocolConstants.DataType.VARCHAR),
+                    columnSpec("is_deleted", 2, ProtocolConstants.DataType.BOOLEAN),
+                    columnSpec("last_modified", 3, ProtocolConstants.DataType.BIGINT)),
+                null,
+                new int[0],
+                null),
+            context);
+
+    DefaultPreparedStatement preparedStatement = preparedStatement(oldDefs);
+    BoundStatement stmtA = preparedStatement.bind();
+
+    // sendRequest captures this before calling Conversions.toMessage.
+    DefaultPreparedStatement.ResultMetadata encodeTimeSnapshot =
+        preparedStatement.getCurrentResultMetadata();
+
+    // A concurrent execution's response lands in the window between the snapshot above and the
+    // toMessage call below, swapping the shared cache to NEW_DEFS.
+    preparedStatement.setResultMetadata(NEW_RESULT_METADATA_ID, newDefs);
+
+    Message message = Conversions.toMessage(stmtA, config, context, encodeTimeSnapshot);
+
+    assertThat(message).isInstanceOf(Execute.class);
+    Execute execute = (Execute) message;
+    // Must advertise the id snapshotted at encode time, not the live cache's NEW id, or the
+    // server (which still only knows about the id it sent back) would reply with SKIP_METADATA
+    // decoded by the caller against a snapshot that no longer matches what was sent on the wire.
+    assertThat(execute.resultMetadataId).isEqualTo(Bytes.getArray(OLD_RESULT_METADATA_ID));
+    // skipMetadata must also reflect the snapshot (3 columns), not the live cache.
+    assertThat(execute.options.skipMetadata).isTrue();
+  }
+
+  private static DefaultPreparedStatement preparedStatement(
+      ColumnDefinitions resultSetDefinitions) {
+    return new DefaultPreparedStatement(
+        Bytes.fromHexString("0xAAAA"),
+        "SELECT * FROM t2 WHERE k = ?",
+        DefaultColumnDefinitions.valueOf(Collections.emptyList()),
+        Collections.emptyList(),
+        OLD_RESULT_METADATA_ID,
+        resultSetDefinitions,
+        null,
+        Collections.emptyMap(),
+        null,
+        null,
+        null,
+        null,
+        null,
+        Collections.emptyMap(),
+        null,
+        null,
+        null,
+        5000,
+        null,
+        null,
+        false,
+        CodecRegistry.DEFAULT,
+        DefaultProtocolVersion.V4);
   }
 
   private static ColumnSpec columnSpec(String name, int index, int protocolDataType) {

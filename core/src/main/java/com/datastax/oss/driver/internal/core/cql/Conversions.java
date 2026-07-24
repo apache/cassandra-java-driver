@@ -120,7 +120,10 @@ public class Conversions {
   }
 
   public static Message toMessage(
-      Statement<?> statement, DriverExecutionProfile config, InternalDriverContext context) {
+      Statement<?> statement,
+      DriverExecutionProfile config,
+      InternalDriverContext context,
+      DefaultPreparedStatement.ResultMetadata resultMetadataSnapshot) {
     ConsistencyLevelRegistry consistencyLevelRegistry = context.getConsistencyLevelRegistry();
     ConsistencyLevel consistency = statement.getConsistencyLevel();
     int consistencyCode =
@@ -185,8 +188,22 @@ public class Conversions {
           protocolVersion, DefaultProtocolFeature.UNSET_BOUND_VALUES)) {
         ensureAllSet(boundStatement);
       }
-      boolean skipMetadata =
-          boundStatement.getPreparedStatement().getResultSetDefinitions().size() > 0;
+      PreparedStatement preparedStatement = boundStatement.getPreparedStatement();
+      // Use the snapshot taken when sendRequest captured it (before this method was called), not
+      // the prepared statement's live cache: a concurrent execution's CASSANDRA-10786 schema-change
+      // update could otherwise swap the cache between that snapshot and this read, so the
+      // resultMetadataId sent on the wire would no longer match the definitions the response will
+      // later be decoded against (see resultMetadataSnapshot in CqlRequestHandler).
+      ByteBuffer resultMetadataId;
+      ColumnDefinitions resultSetDefinitions;
+      if (resultMetadataSnapshot != null) {
+        resultMetadataId = resultMetadataSnapshot.getResultMetadataId();
+        resultSetDefinitions = resultMetadataSnapshot.getResultSetDefinitions();
+      } else {
+        resultMetadataId = preparedStatement.getResultMetadataId();
+        resultSetDefinitions = preparedStatement.getResultSetDefinitions();
+      }
+      boolean skipMetadata = resultSetDefinitions.size() > 0;
       QueryOptions queryOptions =
           new QueryOptions(
               consistencyCode,
@@ -199,9 +216,7 @@ public class Conversions {
               timestamp,
               null,
               nowInSeconds);
-      PreparedStatement preparedStatement = boundStatement.getPreparedStatement();
       ByteBuffer id = preparedStatement.getId();
-      ByteBuffer resultMetadataId = preparedStatement.getResultMetadataId();
       return new Execute(
           Bytes.getArray(id),
           (resultMetadataId == null) ? null : Bytes.getArray(resultMetadataId),

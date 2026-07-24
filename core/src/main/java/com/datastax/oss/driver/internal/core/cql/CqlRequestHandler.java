@@ -292,6 +292,11 @@ public class CqlRequestHandler implements Throttled {
               .map((g) -> g.getDecoratedStatement(finalStatement, nodeRequestId))
               .orElse(finalStatement);
 
+      // Captured once and reused for both the callback and the outgoing message, so a concurrent
+      // schema-change update racing between the two can't make the wire message's
+      // resultMetadataId disagree with the definitions the response will later be decoded against.
+      DefaultPreparedStatement.ResultMetadata resultMetadataSnapshot =
+          resultMetadataSnapshot(statement);
       NodeResponseCallback nodeResponseCallback =
           new NodeResponseCallback(
               statement,
@@ -302,8 +307,9 @@ public class CqlRequestHandler implements Throttled {
               retryCount,
               scheduleNextExecution,
               logPrefixJoiner.join(this.sessionName, nodeRequestId, currentExecutionIndex),
-              resultMetadataSnapshot(statement));
-      Message message = Conversions.toMessage(statement, executionProfile, context);
+              resultMetadataSnapshot);
+      Message message =
+          Conversions.toMessage(statement, executionProfile, context, resultMetadataSnapshot);
       channel
           .write(message, statement.isTracing(), statement.getCustomPayload(), nodeResponseCallback)
           .addListener(nodeResponseCallback);
