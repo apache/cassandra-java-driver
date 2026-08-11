@@ -29,6 +29,10 @@ pipeline {
         cron(branchPatternCron().matcher(env.BRANCH_NAME).matches() ? '@weekly' : '')
     }
 
+    options {
+        buildDiscarder(logRotator(daysToKeepStr: '60', numToKeepStr: '30'))
+    }
+
     stages {
         stage('Matrix') {
             matrix {
