@@ -31,28 +31,24 @@ def initializeEnvironment() {
   env.PATH = "${env.MAVEN_HOME}/bin:${env.PATH}"
 
   /*
-  * As of JAVA-3042 JAVA_HOME is always set to JDK8 and this is currently necessary for mvn compile and DSE Search/Graph.
-  * To facilitate testing with JDK11/17 we feed the appropriate JAVA_HOME into the maven build via commandline.
-  *
-  * Maven command-line flags:
-  * - -DtestJavaHome=/path/to/java/home: overrides JAVA_HOME for surefire/failsafe tests, defaults to environment JAVA_HOME.
-  * - -Ptest-jdk-N: enables profile for running tests with a specific JDK version (substitute N for 8/11/17).
-  *
-  * Note test-jdk-N is also automatically loaded based off JAVA_HOME SDK version so testing with an older SDK is not supported.
+  * JAVA_HOME is always set to the specified runtime JDK (i.e. whatever is in JABBA_VERSION).  This covers all Maven
+  * invocations.  Actual tests run by Maven's surefire/failsafe plugin will be managed via test testJavaHome param.
   *
   * Environment variables:
-  * - JAVA_HOME: Path to JDK used for mvn (all steps except surefire/failsafe), Cassandra, DSE.
-  * - JAVA8_HOME: Path to JDK8 used for Cassandra/DSE if ccm determines JAVA_HOME is not compatible with the chosen backend.
-  * - TEST_JAVA_HOME: PATH to JDK used for surefire/failsafe testing.
-  * - TEST_JAVA_VERSION: TEST_JAVA_HOME SDK version number [8/11/17], used to configure test-jdk-N profile in maven (see above)
+  * - JAVA_HOME: Path to JDK used for mvn.  ccm may use this if applicable, otherwise it falls back to JAVA8_HOME and JAVA11_HOME
+  *              for older Cassandra/DSE/HCD instances.
+  * - JAVA8_HOME: Path to JDK8 used for Cassandra/DSE if ccm determines JAVA_HOME is not compatible with the chosen backend
+  * - JAVA11_HOME: Similar to JAVA8_HOME for Java11
   */
-
   env.JAVA_HOME = sh(label: 'Get JAVA_HOME',script: '''#!/bin/bash -le
     . ${JABBA_SHELL}
     jabba which ${JABBA_VERSION}''', returnStdout: true).trim()
-  env.JAVA8_HOME = sh(label: 'Get JAVA8_HOME',script: '''#!/bin/bash -le
+  env.JAVA8_HOME = sh(label: 'Get JAVA8_HOME (in case ccm needs it)',script: '''#!/bin/bash -le
     . ${JABBA_SHELL}
     jabba which 1.8''', returnStdout: true).trim()
+  env.JAVA11_HOME = sh(label: 'Get JAVA11_HOME (in case ccm needs it)',script: '''#!/bin/bash -le
+    . ${JABBA_SHELL}
+    jabba which openjdk@11''', returnStdout: true).trim()
 
   sh label: 'Download Apache CassandraⓇ, DataStax Enterprise or DataStax HCD ',script: '''#!/bin/bash -le
     . ${JABBA_SHELL}
@@ -88,14 +84,14 @@ ENVIRONMENT_EOF
       '''
   }
 
-  sh label: 'Display Java and environment information',script: '''#!/bin/bash -le
+  sh label: 'Display Java and environment information for Maven',script: '''#!/bin/bash -le
     # Load CCM environment variables
     set -o allexport
     . ${HOME}/environment.txt
     set +o allexport
 
     . ${JABBA_SHELL}
-    jabba use 1.8
+    jabba use ${JABBA_VERSION}
 
     java -version
     mvn -v
@@ -103,17 +99,16 @@ ENVIRONMENT_EOF
   '''
 }
 
-def buildDriver(jabbaVersion) {
-  def buildDriverScript = '''#!/bin/bash -le
+def buildDriver() {
+  sh label: 'Build driver', script: '''#!/bin/bash -le
 
     . ${JABBA_SHELL}
-    jabba use '''+jabbaVersion+'''
+    jabba use ${BUILD_JAVA_VERSION}
 
-    echo "Building with Java version '''+jabbaVersion+'''"
+    echo "Building with Java version ${BUILD_JAVA_VERSION}"
 
     mvn -B -V install -DskipTests -Dmaven.javadoc.skip=true
   '''
-  sh label: 'Build driver', script: buildDriverScript
 }
 
 def executeTests() {
@@ -129,13 +124,7 @@ def executeTests() {
     set +o allexport
 
     . ${JABBA_SHELL}
-    jabba use 1.8
-
-    if [ "${JABBA_VERSION}" != "1.8" ]; then
-      SKIP_JAVADOCS=true
-    else
-      SKIP_JAVADOCS=false
-    fi
+    jabba use ${BUILD_JAVA_VERSION}
 
     INTEGRATION_TESTS_FILTER_ARGUMENT=""
     if [ ! -z "${INTEGRATION_TESTS_FILTER}" ]; then
@@ -144,14 +133,12 @@ def executeTests() {
     printenv | sort
 
     mvn -B -V ${INTEGRATION_TESTS_FILTER_ARGUMENT} -T 1 verify \
-      -Ptest-jdk-'''+testJavaVersion+''' \
       -DtestJavaHome='''+testJavaHome+''' \
       -DfailIfNoTests=false \
       -Dmaven.test.failure.ignore=true \
-      -Dmaven.javadoc.skip=${SKIP_JAVADOCS} \
+      -Dmaven.javadoc.skip=true \
       -Dccm.version=${CCM_CASSANDRA_VERSION} \
       -Dccm.distribution=${CCM_SERVER_TYPE:cassandra} \
-      -Dproxy.path=${HOME}/proxy \
       ${SERIAL_ITS_ARGUMENT} \
       ${ISOLATED_ITS_ARGUMENT} \
       ${PARALLELIZABLE_ITS_ARGUMENT}
@@ -344,19 +331,11 @@ pipeline {
                           <th align="left">Description</th>
                         </tr>
                         <tr>
-                          <td><strong>1.8</strong></td>
-                          <td>Oracle JDK version 1.8 (<i>Used for compiling regardless of choice</i>)</td>
-                        </tr>
-                        <tr>
-                          <td><strong>openjdk@1.11</strong></td>
-                          <td>OpenJDK version 11</td>
-                        </tr>
-                        <tr>
                           <td><strong>openjdk@1.17</strong></td>
                           <td>OpenJDK version 17</td>
                         </tr>
                         <tr>
-                          <td><strong>openjdk@1.21</strong></td>
+                          <td><strong>openjdk@21</strong></td>
                           <td>OpenJDK version 21</td>
                         </tr>
                         <tr>
@@ -399,9 +378,8 @@ pipeline {
     // schedules only run against release branches (i.e. 3.x, 4.x, 4.5.x, etc.)
     parameterizedCron(branchPatternCron().matcher(env.BRANCH_NAME).matches() ? """
       # Every weekend (Saturday, Sunday) around 2:00 AM
-      H 2 * * 0 %CI_SCHEDULE=WEEKENDS;CI_SCHEDULE_SERVER_VERSIONS=4.0 4.1 5.0 dse-4.8.16 dse-5.0.15 dse-5.1.35 dse-6.0.18 dse-6.7.17;CI_SCHEDULE_JABBA_VERSION=1.8
+      H 2 * * 0 %CI_SCHEDULE=WEEKENDS;CI_SCHEDULE_SERVER_VERSIONS=4.0 4.1 5.0 dse-4.8.16 dse-5.0.15 dse-5.1.35 dse-6.0.18 dse-6.7.17;CI_SCHEDULE_JABBA_VERSION=openjdk@1.17
       # Every weeknight (Monday - Friday) around 12:00 PM noon
-      H 12 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=4.1 5.0 dse-6.8.30 dse-6.9.0 hcd-1.0.0;CI_SCHEDULE_JABBA_VERSION=openjdk@1.11
       H 12 * * 1-5 %CI_SCHEDULE=WEEKNIGHTS;CI_SCHEDULE_SERVER_VERSIONS=4.1 5.0 dse-6.8.30 dse-6.9.0 hcd-1.0.0;CI_SCHEDULE_JABBA_VERSION=openjdk@1.17
     """ : "")
   }
@@ -409,6 +387,7 @@ pipeline {
   environment {
     OS_VERSION = 'ubuntu/focal64/java-driver'
     JABBA_SHELL = '/usr/lib/jabba/jabba.sh'
+    BUILD_JAVA_VERSION = "openjdk@1.17"
     CCM_ENVIRONMENT_SHELL = '/usr/local/bin/ccm_environment.sh'
     SERIAL_ITS_ARGUMENT = "-DskipSerialITs=${params.SKIP_SERIAL_ITS}"
     ISOLATED_ITS_ARGUMENT = "-DskipIsolatedITs=${params.SKIP_ISOLATED_ITS}"
@@ -474,7 +453,7 @@ pipeline {
           }
           stage('Build-Driver') {
             steps {
-              buildDriver('1.8')
+              buildDriver()
             }
           }
           stage('Execute-Tests') {
@@ -589,7 +568,7 @@ pipeline {
           }
           stage('Build-Driver') {
             steps {
-              buildDriver('1.8')
+              buildDriver()
             }
           }
           stage('Execute-Tests') {
@@ -617,7 +596,7 @@ pipeline {
             when {
               allOf {
                 environment name: 'SERVER_VERSION', value: '4.0'
-                environment name: 'JABBA_VERSION', value: '1.8'
+                environment name: 'JABBA_VERSION', value: 'openjdk@1.17'
               }
             }
             steps {
