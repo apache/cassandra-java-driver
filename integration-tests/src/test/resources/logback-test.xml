@@ -24,17 +24,14 @@
       <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
     </encoder>
   </appender>
-  <root level="INFO">
+  <root level="ERROR">
     <appender-ref ref="STDOUT"/>
   </root>
   <logger name="org.apache.directory" level="${adsServerLevel:-ERROR}"/>
+  <logger name="com.datastax.oss.driver" level="${ossDriverLevel:-ERROR}"/>
+  <logger name="com.datastax.dse.driver" level="${dseDriverLevel:-ERROR}"/>
+  <logger name="com.datastax.oss.simulacron" level="${simulacronLevel:-ERROR}"/>
   <logger name="com.datastax.oss.driver.api.testinfra.ccm" level="${ccmLevel:-INFO}"/>
-  <logger name="com.datastax.oss.driver.internal.core.pool.ChannelPool" level="DEBUG"/>
-  <logger name="com.datastax.oss.driver.internal.core.control.ControlConnection" level="DEBUG"/>
-  <logger name="com.datastax.oss.driver.internal.core.channel.ProtocolInitHandler" level="DEBUG"/>
-  <logger name="com.datastax.oss.driver.internal.core.channel.ChannelFactory" level="DEBUG"/>
-  <logger name="com.datastax.oss.protocol.internal.Frame" level="DEBUG"/>
-  <logger name="com.datastax.oss.protocol.internal.response.event.TopologyChangeEvent" level="DEBUG"/>
   <!-- Set this logger to DEBUG to help debugging OSGi tests -->
   <logger name="org.ops4j" level="${osgiLevel:-ERROR}"/>
 </configuration>
