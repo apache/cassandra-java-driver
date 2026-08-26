@@ -24,9 +24,9 @@ set -u
 install_snapshot()
 {
   URL=$1
-  DIRECTORY_NAME=$2
-  # Assume the snapshot we want is on the head of the default branch
-  git clone --depth 1 ${URL} /tmp/${DIRECTORY_NAME}
+  BRANCH=$2
+  DIRECTORY_NAME=$3
+  git clone --depth 1 --branch ${BRANCH} ${URL} /tmp/${DIRECTORY_NAME}
   {
     cd /tmp/${DIRECTORY_NAME}
     mvn install -DskipTests
@@ -37,5 +37,7 @@ mvn --projects core dependency:list -DincludeArtifactIds=native-protocol | \
   tee /dev/tty | \
   grep -q native-protocol.*SNAPSHOT
 if [ $? -eq 0 ] ; then
-  install_snapshot https://github.com/datastax/native-protocol.git native-protocol
+  # TODO: revert to https://github.com/datastax/native-protocol.git and its default branch once
+  # native-protocol 1.5.3 (which adds the CEP-59 GRACEFUL_DISCONNECT protocol types) is released.
+  install_snapshot https://github.com/SiyaoIsHiding/native-protocol.git cep-59 native-protocol
 fi
