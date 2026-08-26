@@ -40,16 +40,12 @@ public class GracefulDisconnectEvent {
   /** The node that sent the graceful disconnect event. */
   public final Node node;
 
-  /** The channel that received the graceful disconnect event. */
-  public final DriverChannel channel;
-
-  public GracefulDisconnectEvent(Node node, DriverChannel channel) {
+  public GracefulDisconnectEvent(Node node) {
     this.node = node;
-    this.channel = channel;
   }
 
   @Override
   public String toString() {
-    return "GracefulDisconnectEvent{node=" + node + ", channel=" + channel + '}';
+    return "GracefulDisconnectEvent{node=" + node + '}';
   }
 }

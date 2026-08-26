@@ -106,12 +106,6 @@ public class ChannelFactory {
    */
   @VisibleForTesting volatile String productType;
 
-  @VisibleForTesting volatile boolean serverSupportsGracefulDisconnect;
-
-  public boolean isGracefulDisconnectSupported() {
-    return serverSupportsGracefulDisconnect;
-  }
-
   public ChannelFactory(InternalDriverContext context) {
     this.logPrefix = context.getSessionName();
     this.context = context;
@@ -238,12 +232,6 @@ public class ChannelFactory {
                             ConsistencyLevel.LOCAL_QUORUM.name()));
               }
             }
-            if (!serverSupportsGracefulDisconnect && supportedOptions != null) {
-              List<String> gdValues = supportedOptions.get(GracefulDisconnectEvent.EVENT_TYPE);
-              if (gdValues != null && gdValues.contains("true")) {
-                serverSupportsGracefulDisconnect = true;
-              }
-            }
             resultFuture.complete(driverChannel);
           } else {
             Throwable error = connectFuture.cause();
@@ -351,6 +339,12 @@ public class ChannelFactory {
                 options.eventCallback,
                 options.ownerLogPrefix);
         HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultConfig);
+        // Always query OPTIONS on the first channel (to discover the product type), and on any
+        // channel that intends to register for GRACEFUL_DISCONNECT: capabilities can differ from
+        // node to node (e.g. mixed-version clusters), so each channel must filter its REGISTER
+        // against its own SUPPORTED response.
+        boolean querySupportedOptions =
+            productType == null || options.eventTypes.contains(GracefulDisconnectEvent.EVENT_TYPE);
         ProtocolInitHandler initHandler =
             new ProtocolInitHandler(
                 context,
@@ -359,7 +353,7 @@ public class ChannelFactory {
                 endPoint,
                 options,
                 heartbeatHandler,
-                productType == null);
+                querySupportedOptions);
 
         ChannelPipeline pipeline = channel.pipeline();
         context

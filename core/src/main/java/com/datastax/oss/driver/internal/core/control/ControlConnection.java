@@ -26,6 +26,7 @@ import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
+import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
@@ -251,6 +252,10 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
         "[{}] Received GRACEFUL_DISCONNECT event on control connection, "
             + "the server is shutting down gracefully",
         logPrefix);
+    context
+        .getMetricsFactory()
+        .getSessionUpdater()
+        .incrementCounter(DefaultSessionMetric.GRACEFUL_DISCONNECTS, null);
     // Fire an internal event to notify other components (particularly the ChannelPool)
     DriverChannel currentChannel = channel;
     if (currentChannel != null) {
@@ -258,9 +263,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
           .getMetadataManager()
           .getMetadata()
           .findNode(currentChannel.getEndPoint())
-          .ifPresent(
-              node ->
-                  context.getEventBus().fire(new GracefulDisconnectEvent(node, currentChannel)));
+          .ifPresent(node -> context.getEventBus().fire(new GracefulDisconnectEvent(node)));
     }
     // The control connection will handle reconnection automatically when the channel closes.
     // The ChannelPool will close all its channels when it receives the GracefulDisconnectEvent,

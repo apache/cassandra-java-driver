@@ -221,12 +221,10 @@ public class InFlightHandler extends ChannelDuplexHandler {
       Message event = responseFrame.message;
       if (event instanceof Event
           && GracefulDisconnectEvent.EVENT_TYPE.equals(((Event) event).type)) {
+        // Start draining this channel first, so that the drain is not compromised if the
+        // callback below misbehaves.
         LOG.debug("[{}] Received GRACEFUL_DISCONNECT, initiating graceful drain", logPrefix);
         startGracefulShutdown(ctx);
-        if (eventCallback != null) {
-          eventCallback.onEvent(event);
-        }
-        return;
       }
       if (eventCallback == null) {
         LOG.debug("[{}] Received event {} but no callback was registered", logPrefix, event);
