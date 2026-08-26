@@ -39,5 +39,6 @@ mvn --projects core dependency:list -DincludeArtifactIds=native-protocol | \
 if [ $? -eq 0 ] ; then
   # TODO: revert to https://github.com/datastax/native-protocol.git and its default branch once
   # native-protocol 1.5.3 (which adds the CEP-59 GRACEFUL_DISCONNECT protocol types) is released.
-  install_snapshot https://github.com/SiyaoIsHiding/native-protocol.git cep-59 native-protocol
+  # This is the branch behind datastax/native-protocol PR #61.
+  install_snapshot https://github.com/Shanzita/native-protocol.git cep-59 native-protocol
 fi
