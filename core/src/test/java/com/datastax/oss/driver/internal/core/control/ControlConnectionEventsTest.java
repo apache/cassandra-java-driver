@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
 import com.datastax.oss.driver.internal.core.channel.EventCallback;
@@ -149,13 +150,12 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
 
     // Then
     verify(eventBus).fire(org.mockito.ArgumentMatchers.any(GracefulDisconnectEvent.class));
+    verify(sessionMetricUpdater).incrementCounter(DefaultSessionMetric.GRACEFUL_DISCONNECTS, null);
   }
 
   @Test
   public void should_process_status_change_events() {
     // Given
-    when(defaultProfile.getBoolean(DefaultDriverOption.GRACEFUL_DISCONNECT_ENABLED, true))
-        .thenReturn(true);
     DriverChannel channel1 = newMockDriverChannel(1);
     ArgumentCaptor<DriverChannelOptions> optionsCaptor =
         ArgumentCaptor.forClass(DriverChannelOptions.class);
@@ -177,8 +177,6 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
   @Test
   public void should_process_topology_change_events() {
     // Given
-    when(defaultProfile.getBoolean(DefaultDriverOption.GRACEFUL_DISCONNECT_ENABLED, true))
-        .thenReturn(true);
     DriverChannel channel1 = newMockDriverChannel(1);
     ArgumentCaptor<DriverChannelOptions> optionsCaptor =
         ArgumentCaptor.forClass(DriverChannelOptions.class);
@@ -200,8 +198,6 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
   @Test
   public void should_process_schema_change_events() {
     // Given
-    when(defaultProfile.getBoolean(DefaultDriverOption.GRACEFUL_DISCONNECT_ENABLED, true))
-        .thenReturn(true);
     DriverChannel channel1 = newMockDriverChannel(1);
     ArgumentCaptor<DriverChannelOptions> optionsCaptor =
         ArgumentCaptor.forClass(DriverChannelOptions.class);
