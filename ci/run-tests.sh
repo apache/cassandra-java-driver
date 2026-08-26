@@ -4,6 +4,8 @@
 . ~/env.txt
 cd $(dirname "$(readlink -f "$0")")/..
 printenv | sort
+# Install snapshot dependencies (e.g. native-protocol) that are not published to a public repo yet
+./install-snapshots.sh
 mvn -B -V install -DskipTests -Dmaven.javadoc.skip=true
 jabba use ${TEST_JAVA_VERSION}
 # Find out the latest patch version of Cassandra

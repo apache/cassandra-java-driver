@@ -33,8 +33,8 @@ install_snapshot()
   }
 }
 
+# Note: no tee to /dev/tty here, it breaks in CI containers where no tty is allocated
 mvn --projects core dependency:list -DincludeArtifactIds=native-protocol | \
-  tee /dev/tty | \
   grep -q native-protocol.*SNAPSHOT
 if [ $? -eq 0 ] ; then
   # TODO: revert to https://github.com/datastax/native-protocol.git and its default branch once
