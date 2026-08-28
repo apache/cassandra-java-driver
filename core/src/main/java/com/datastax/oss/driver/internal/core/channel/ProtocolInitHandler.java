@@ -144,18 +144,15 @@ class ProtocolInitHandler extends ConnectInitHandler {
   }
 
   /**
-   * Whether a SUPPORTED response advertises the CEP-59 graceful disconnect capability.
-   *
-   * <p>The server signals support with a {@code GRACEFUL_DISCONNECT} key; depending on the code
-   * path it may also send the key with an explicit {@code "false"} value when the feature is
-   * disabled, so any value other than {@code false} (in any case) is treated as supported.
+   * Whether a SUPPORTED response advertises the CEP-59 graceful disconnect capability. The server
+   * may send the key with an explicit {@code "false"} value when the feature is disabled.
    */
   @VisibleForTesting
   static boolean supportsGracefulDisconnect(Map<String, List<String>> supportedOptions) {
     if (supportedOptions == null) {
       return false;
     }
-    List<String> values = supportedOptions.get(GracefulDisconnectEvent.EVENT_TYPE);
+    List<String> values = supportedOptions.get(ProtocolConstants.EventType.GRACEFUL_DISCONNECT);
     if (values == null) {
       return false;
     }
@@ -184,12 +181,14 @@ class ProtocolInitHandler extends ConnectInitHandler {
     private Message request;
     private Authenticator authenticator;
     private ByteBuffer authResponseToken;
-    private List<String> lastRegisterEventTypes;
-    private boolean retriedRegisterWithoutGracefulDisconnect;
+    // The event types to register for; GRACEFUL_DISCONNECT is removed if this channel's SUPPORTED
+    // response does not advertise it (capability is negotiated per connection).
+    private List<String> eventTypes;
 
     InitRequest(ChannelHandlerContext ctx) {
       super(ctx, timeoutMillis);
       this.step = querySupportedOptions ? Step.OPTIONS : Step.STARTUP;
+      this.eventTypes = options.eventTypes;
     }
 
     @Override
@@ -212,34 +211,10 @@ class ProtocolInitHandler extends ConnectInitHandler {
         case AUTH_RESPONSE:
           return request = new AuthResponse(authResponseToken);
         case REGISTER:
-          return request = new Register(lastRegisterEventTypes = filterSupportedEventTypes());
+          return request = new Register(eventTypes);
         default:
           throw new AssertionError("unhandled step: " + step);
       }
-    }
-
-    /**
-     * Filters the requested event types to only include those supported by the server.
-     *
-     * <p>Specifically, GRACEFUL_DISCONNECT is only included if this channel's own SUPPORTED
-     * response advertises the capability. Capabilities are tracked per connection: in a
-     * mixed-version cluster (e.g. during a rolling upgrade), some nodes may support graceful
-     * disconnect while others don't, so a channel never relies on what another channel negotiated.
-     * Channels that request this event type always run the OPTIONS step (see {@link
-     * ChannelFactory}), so the channel attribute is populated by the time REGISTER is sent.
-     */
-    private List<String> filterSupportedEventTypes() {
-      List<String> filteredEventTypes = new ArrayList<>(options.eventTypes);
-
-      if (filteredEventTypes.contains(GracefulDisconnectEvent.EVENT_TYPE)) {
-        Map<String, List<String>> supportedOptions = channel.attr(DriverChannel.OPTIONS_KEY).get();
-        if (!supportsGracefulDisconnect(supportedOptions)
-            || retriedRegisterWithoutGracefulDisconnect) {
-          filteredEventTypes.remove(GracefulDisconnectEvent.EVENT_TYPE);
-        }
-      }
-
-      return filteredEventTypes;
     }
 
     @Override
@@ -257,7 +232,13 @@ class ProtocolInitHandler extends ConnectInitHandler {
           ProtocolUtils.opcodeString(response.opcode));
       try {
         if (step == Step.OPTIONS && response instanceof Supported) {
-          channel.attr(DriverChannel.OPTIONS_KEY).set(((Supported) response).options);
+          Map<String, List<String>> supportedOptions = ((Supported) response).options;
+          channel.attr(DriverChannel.OPTIONS_KEY).set(supportedOptions);
+          if (eventTypes.contains(ProtocolConstants.EventType.GRACEFUL_DISCONNECT)
+              && !supportsGracefulDisconnect(supportedOptions)) {
+            eventTypes = new ArrayList<>(eventTypes);
+            eventTypes.remove(ProtocolConstants.EventType.GRACEFUL_DISCONNECT);
+          }
           step = Step.STARTUP;
           send();
         } else if (step == Step.STARTUP && response instanceof Ready) {
@@ -356,7 +337,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
             if (options.keyspace != null) {
               step = Step.SET_KEYSPACE;
               send();
-            } else if (!options.eventTypes.isEmpty()) {
+            } else if (!eventTypes.isEmpty()) {
               step = Step.REGISTER;
               send();
             } else {
@@ -364,7 +345,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
             }
           }
         } else if (step == Step.SET_KEYSPACE && response instanceof SetKeyspace) {
-          if (!options.eventTypes.isEmpty()) {
+          if (!eventTypes.isEmpty()) {
             step = Step.REGISTER;
             send();
           } else {
@@ -392,23 +373,6 @@ class ProtocolInitHandler extends ConnectInitHandler {
           } else if (step == Step.SET_KEYSPACE
               && error.code == ProtocolConstants.ErrorCode.INVALID) {
             fail(new InvalidKeyspaceException(error.message));
-          } else if (step == Step.REGISTER
-              && !retriedRegisterWithoutGracefulDisconnect
-              && lastRegisterEventTypes != null
-              && lastRegisterEventTypes.contains(GracefulDisconnectEvent.EVENT_TYPE)
-              && (serverOrProtocolError || error.code == ProtocolConstants.ErrorCode.INVALID)) {
-            // The server rejected our REGISTER, most likely because it does not recognize the
-            // GRACEFUL_DISCONNECT event type: a pre-CEP-59 node in a mixed-version cluster, or a
-            // node where the (still evolving) CEP-59 wire contract has changed. Losing graceful
-            // disconnect on this connection is benign; failing channel init is disruptive. So
-            // retry once without the event type instead of failing.
-            LOG.warn(
-                "[{}] Server rejected REGISTER including {} ({}), retrying without it",
-                logPrefix,
-                GracefulDisconnectEvent.EVENT_TYPE,
-                error.message);
-            retriedRegisterWithoutGracefulDisconnect = true;
-            send();
           } else {
             failOnUnexpected(error);
           }
