@@ -6,9 +6,9 @@
 # to you under the Apache License, Version 2.0 (the
 # "License"); you may not use this file except in compliance
 # with the License.  You may obtain a copy of the License at
-#
+# 
 #   http://www.apache.org/licenses/LICENSE-2.0
-#
+# 
 # Unless required by applicable law or agreed to in writing,
 # software distributed under the License is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -16,32 +16,26 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# Install snapshot dependencies that are not published to a public repository yet.
-#
-# The driver currently depends on native-protocol 1.5.3-SNAPSHOT (CEP-59 protocol types),
-# which only exists on the branch behind datastax/native-protocol PR #61. Install it
-# unconditionally: a probing "is the dependency a snapshot?" mvn run would write a
-# resolution-failure marker into the local repository, which then blocks the main build
-# even after the snapshot is installed.
-#
-# TODO: remove this script's invocation from ci/run-tests.sh (and revert this file to
-# cloning https://github.com/datastax/native-protocol.git) once native-protocol 1.5.3
-# is released.
+# Install dependencies in the Travis build environment if they are snapshots.
+# See .travis.yml
 
-set -eu
+set -u
 
 install_snapshot()
 {
   URL=$1
-  BRANCH=$2
-  # Clone into a unique directory so concurrent builds on the same host cannot collide.
-  CLONE_DIR=$(mktemp -d)/$(basename ${URL} .git)
-  git clone --depth 1 --branch ${BRANCH} ${URL} ${CLONE_DIR}
-  (
-    cd ${CLONE_DIR}
-    mvn -B install -DskipTests
-  )
-  rm -rf ${CLONE_DIR}
+  DIRECTORY_NAME=$2
+  # Assume the snapshot we want is on the head of the default branch
+  git clone --depth 1 ${URL} /tmp/${DIRECTORY_NAME}
+  {
+    cd /tmp/${DIRECTORY_NAME}
+    mvn install -DskipTests
+  }
 }
 
-install_snapshot https://github.com/Shanzita/native-protocol.git cep-59
+mvn --projects core dependency:list -DincludeArtifactIds=native-protocol | \
+  tee /dev/tty | \
+  grep -q native-protocol.*SNAPSHOT
+if [ $? -eq 0 ] ; then
+  install_snapshot https://github.com/datastax/native-protocol.git native-protocol
+fi
