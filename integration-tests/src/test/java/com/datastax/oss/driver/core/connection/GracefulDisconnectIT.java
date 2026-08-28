@@ -119,7 +119,12 @@ public class GracefulDisconnectIT {
       } finally {
         stopped.set(true);
         load.join(TimeUnit.SECONDS.toMillis(10));
+        if (load.isAlive()) {
+          load.interrupt();
+          load.join(TimeUnit.SECONDS.toMillis(5));
+        }
       }
+      assertThat(load.isAlive()).as("load thread should have terminated").isFalse();
 
       // The whole point of graceful disconnect: the shutdown must be invisible to the
       // application, no request may fail.
