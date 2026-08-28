@@ -42,6 +42,7 @@ import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.TestNodeFactory;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
+import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import io.netty.channel.Channel;
 import io.netty.channel.DefaultChannelPromise;
@@ -79,6 +80,7 @@ abstract class ControlConnectionTestBase {
   @Mock protected MetadataManager metadataManager;
   @Mock protected MetricsFactory metricsFactory;
   @Mock protected SessionMetricUpdater sessionMetricUpdater;
+  @Mock protected NodeMetricUpdater nodeMetricUpdater;
 
   protected DefaultNode node1;
   protected DefaultNode node2;
@@ -121,6 +123,7 @@ abstract class ControlConnectionTestBase {
 
     when(context.getMetricsFactory()).thenReturn(metricsFactory);
     when(metricsFactory.getSessionUpdater()).thenReturn(sessionMetricUpdater);
+    when(metricsFactory.newNodeUpdater(any(Node.class))).thenReturn(nodeMetricUpdater);
     node1 = TestNodeFactory.newNode(1, context);
     node2 = TestNodeFactory.newNode(2, context);
     mockQueryPlan(node1, node2);

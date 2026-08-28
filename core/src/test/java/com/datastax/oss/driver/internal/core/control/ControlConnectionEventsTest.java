@@ -26,11 +26,12 @@ import static org.mockito.Mockito.when;
 
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
 import com.datastax.oss.driver.internal.core.channel.EventCallback;
-import com.datastax.oss.driver.internal.core.channel.GracefulDisconnectEvent;
+import com.datastax.oss.driver.internal.core.metadata.GracefulDisconnectEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -68,7 +69,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
                       ProtocolConstants.EventType.SCHEMA_CHANGE,
                       ProtocolConstants.EventType.STATUS_CHANGE,
                       ProtocolConstants.EventType.TOPOLOGY_CHANGE,
-                      GracefulDisconnectEvent.EVENT_TYPE);
+                      ProtocolConstants.EventType.GRACEFUL_DISCONNECT);
               assertThat(channelOptions.eventCallback).isEqualTo(controlConnection);
             });
   }
@@ -151,6 +152,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     // Then
     verify(eventBus).fire(org.mockito.ArgumentMatchers.any(GracefulDisconnectEvent.class));
     verify(sessionMetricUpdater).incrementCounter(DefaultSessionMetric.GRACEFUL_DISCONNECTS, null);
+    verify(nodeMetricUpdater).incrementCounter(DefaultNodeMetric.GRACEFUL_DISCONNECTS, null);
   }
 
   @Test

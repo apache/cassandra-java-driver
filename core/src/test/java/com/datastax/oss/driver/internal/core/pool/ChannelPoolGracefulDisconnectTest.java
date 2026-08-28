@@ -30,10 +30,11 @@ import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
-import com.datastax.oss.driver.internal.core.channel.GracefulDisconnectEvent;
 import com.datastax.oss.driver.internal.core.channel.MockChannelFactoryHelper;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
+import com.datastax.oss.driver.internal.core.metadata.GracefulDisconnectEvent;
 import com.datastax.oss.driver.internal.core.metadata.TestNodeFactory;
+import com.datastax.oss.protocol.internal.ProtocolConstants;
 import java.util.concurrent.CompletionStage;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -71,7 +72,7 @@ public class ChannelPoolGracefulDisconnectTest extends ChannelPoolTestBase {
         ArgumentCaptor.forClass(DriverChannelOptions.class);
     verify(channelFactory).connect(eq(node), optionsCaptor.capture());
     assertThat(optionsCaptor.getValue().eventTypes)
-        .containsExactly(GracefulDisconnectEvent.EVENT_TYPE);
+        .containsExactly(ProtocolConstants.EventType.GRACEFUL_DISCONNECT);
     assertThat(optionsCaptor.getValue().eventCallback).isNotNull();
   }
 

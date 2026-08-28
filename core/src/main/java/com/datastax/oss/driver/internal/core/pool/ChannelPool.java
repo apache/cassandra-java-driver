@@ -35,11 +35,11 @@ import com.datastax.oss.driver.internal.core.channel.ClusterNameMismatchExceptio
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
 import com.datastax.oss.driver.internal.core.channel.EventCallback;
-import com.datastax.oss.driver.internal.core.channel.GracefulDisconnectEvent;
 import com.datastax.oss.driver.internal.core.config.ConfigChangeEvent;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
+import com.datastax.oss.driver.internal.core.metadata.GracefulDisconnectEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import com.datastax.oss.driver.internal.core.util.Loggers;
@@ -51,6 +51,7 @@ import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.Sets;
 import com.datastax.oss.protocol.internal.Message;
+import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.Event;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.netty.util.concurrent.EventExecutor;
@@ -263,9 +264,6 @@ public class ChannelPool implements AsyncAutoCloseable {
       this.channelFactory = context.getChannelFactory();
       this.eventBus = context.getEventBus();
       this.sessionMetricUpdater = context.getMetricsFactory().getSessionUpdater();
-      // Whether graceful disconnect is enabled in the configuration. Server-side support is
-      // negotiated per connection: each channel checks its own SUPPORTED response and only
-      // registers for the event if its node advertises the capability (see ProtocolInitHandler).
       this.gracefulDisconnectEnabled =
           config
               .getDefaultProfile()
@@ -322,7 +320,7 @@ public class ChannelPool implements AsyncAutoCloseable {
 
         if (gracefulDisconnectEnabled) {
           optionsBuilder.withEvents(
-              ImmutableList.of(GracefulDisconnectEvent.EVENT_TYPE),
+              ImmutableList.of(ProtocolConstants.EventType.GRACEFUL_DISCONNECT),
               new QueryConnectionEventCallback());
         }
 
@@ -506,9 +504,6 @@ public class ChannelPool implements AsyncAutoCloseable {
 
     private void onGracefulDisconnect(GracefulDisconnectEvent event) {
       assert adminExecutor.inEventLoop();
-      // The event signals that the node is shutting down, so it is scoped to the node, not to the
-      // channel it arrived on: it may have been received on the control connection (which never
-      // belongs to this pool), or on a pool channel that has already moved to closingChannels.
       if (!event.node.equals(node)) {
         return;
       }
@@ -516,15 +511,10 @@ public class ChannelPool implements AsyncAutoCloseable {
         return;
       }
       LOG.info(
-          "[{}] Received GRACEFUL_DISCONNECT for {}, closing all channels gracefully",
+          "[{}] Received GRACEFUL_DISCONNECT for {}, closing all channels for this node gracefully",
           logPrefix,
           node);
-      // Close ALL channels in the pool gracefully to immediately stop accepting new requests.
-      // When all channels are closed, the NodeStateManager will automatically set the node to
-      // DOWN state, which will trigger the LoadBalancingPolicy to remove it from the live set.
-      // The graceful close allows in-flight requests to complete before channels are fully
-      // closed.
-      // Reconnection will start automatically once all channels are closed.
+      // The graceful close allows in-flight requests to complete before channels are fully closed.
       for (DriverChannel channel : channels) {
         channel.close();
       }
@@ -546,7 +536,7 @@ public class ChannelPool implements AsyncAutoCloseable {
           return;
         }
         Event event = (Event) eventMessage;
-        if (GracefulDisconnectEvent.EVENT_TYPE.equals(event.type)) {
+        if (ProtocolConstants.EventType.GRACEFUL_DISCONNECT.equals(event.type)) {
           LOG.debug("[{}] Received GRACEFUL_DISCONNECT on query connection", logPrefix);
           if (node instanceof DefaultNode) {
             ((DefaultNode) node)

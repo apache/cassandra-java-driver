@@ -26,15 +26,17 @@ import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
+import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
 import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
 import com.datastax.oss.driver.internal.core.channel.EventCallback;
-import com.datastax.oss.driver.internal.core.channel.GracefulDisconnectEvent;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.DefaultTopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.DistanceEvent;
+import com.datastax.oss.driver.internal.core.metadata.GracefulDisconnectEvent;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.NodeStateEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
@@ -180,8 +182,8 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     if (!(eventMessage instanceof Event)) {
       LOG.warn("[{}] Unsupported event class: {}", logPrefix, eventMessage.getClass().getName());
     } else {
-      Event event = (Event) eventMessage;
       LOG.debug("[{}] Processing incoming event {}", logPrefix, eventMessage);
+      Event event = (Event) eventMessage;
       switch (event.type) {
         case ProtocolConstants.EventType.TOPOLOGY_CHANGE:
           processTopologyChange(event);
@@ -192,7 +194,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
         case ProtocolConstants.EventType.SCHEMA_CHANGE:
           processSchemaChange(event);
           break;
-        case GracefulDisconnectEvent.EVENT_TYPE:
+        case ProtocolConstants.EventType.GRACEFUL_DISCONNECT:
           processGracefulDisconnect();
           break;
         default:
@@ -263,12 +265,16 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
           .getMetadataManager()
           .getMetadata()
           .findNode(currentChannel.getEndPoint())
-          .ifPresent(node -> context.getEventBus().fire(new GracefulDisconnectEvent(node)));
+          .ifPresent(
+              node -> {
+                if (node instanceof DefaultNode) {
+                  ((DefaultNode) node)
+                      .getMetricUpdater()
+                      .incrementCounter(DefaultNodeMetric.GRACEFUL_DISCONNECTS, null);
+                }
+                context.getEventBus().fire(new GracefulDisconnectEvent(node));
+              });
     }
-    // The control connection will handle reconnection automatically when the channel closes.
-    // The ChannelPool will close all its channels when it receives the GracefulDisconnectEvent,
-    // which will cause the NodeStateManager to set the node to DOWN state and trigger the
-    // LoadBalancingPolicy to remove it from the live set.
   }
 
   private class SingleThreaded {
@@ -651,7 +657,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
           .add(ProtocolConstants.EventType.TOPOLOGY_CHANGE);
     }
     if (gracefulDisconnectEnabled) {
-      builder.add(GracefulDisconnectEvent.EVENT_TYPE);
+      builder.add(ProtocolConstants.EventType.GRACEFUL_DISCONNECT);
     }
     return builder.build();
   }

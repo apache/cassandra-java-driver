@@ -39,6 +39,7 @@ import com.datastax.oss.driver.internal.core.protocol.FrameEncoder;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
+import com.datastax.oss.protocol.internal.ProtocolConstants;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -339,12 +340,11 @@ public class ChannelFactory {
                 options.eventCallback,
                 options.ownerLogPrefix);
         HeartbeatHandler heartbeatHandler = new HeartbeatHandler(defaultConfig);
-        // Always query OPTIONS on the first channel (to discover the product type), and on any
-        // channel that intends to register for GRACEFUL_DISCONNECT: capabilities can differ from
-        // node to node (e.g. mixed-version clusters), so each channel must filter its REGISTER
-        // against its own SUPPORTED response.
+        // Channels that register for GRACEFUL_DISCONNECT always query OPTIONS, so that support
+        // can be checked against this channel's own SUPPORTED response.
         boolean querySupportedOptions =
-            productType == null || options.eventTypes.contains(GracefulDisconnectEvent.EVENT_TYPE);
+            productType == null
+                || options.eventTypes.contains(ProtocolConstants.EventType.GRACEFUL_DISCONNECT);
         ProtocolInitHandler initHandler =
             new ProtocolInitHandler(
                 context,

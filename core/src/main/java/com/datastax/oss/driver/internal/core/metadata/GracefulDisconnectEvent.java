@@ -15,29 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datastax.oss.driver.internal.core.channel;
+package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.metadata.Node;
+import java.util.Objects;
 import net.jcip.annotations.Immutable;
 
 /**
- * This event indicates that the server is shutting down gracefully and the driver should:
- *
- * <ul>
- *   <li>Stop sending new requests on the affected connection
- *   <li>Allow in-flight requests to complete
- *   <li>Begin reconnection attempts with exponential backoff
- * </ul>
- *
- * <p>This is part of CEP-59: Graceful Disconnect – In-Band Connection Draining for Node Shutdown.
+ * Indicates that a node announced a graceful shutdown (CEP-59): a {@code GRACEFUL_DISCONNECT}
+ * protocol event was received on one of its connections.
  */
 @Immutable
 public class GracefulDisconnectEvent {
 
-  /** The event type string as defined in the native protocol. */
-  public static final String EVENT_TYPE = "GRACEFUL_DISCONNECT";
-
-  /** The node that sent the graceful disconnect event. */
+  /** The node that is shutting down. */
   public final Node node;
 
   public GracefulDisconnectEvent(Node node) {
@@ -45,7 +36,24 @@ public class GracefulDisconnectEvent {
   }
 
   @Override
+  public boolean equals(Object other) {
+    if (other == this) {
+      return true;
+    } else if (other instanceof GracefulDisconnectEvent) {
+      GracefulDisconnectEvent that = (GracefulDisconnectEvent) other;
+      return Objects.equals(this.node, that.node);
+    } else {
+      return false;
+    }
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.node);
+  }
+
+  @Override
   public String toString() {
-    return "GracefulDisconnectEvent{node=" + node + '}';
+    return "GracefulDisconnectEvent(" + node + ")";
   }
 }
