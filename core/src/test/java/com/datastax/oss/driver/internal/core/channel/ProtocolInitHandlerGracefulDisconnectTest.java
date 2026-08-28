@@ -38,7 +38,6 @@ import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Options;
 import com.datastax.oss.protocol.internal.request.Register;
 import com.datastax.oss.protocol.internal.request.Startup;
-import com.datastax.oss.protocol.internal.response.Error;
 import com.datastax.oss.protocol.internal.response.Ready;
 import com.datastax.oss.protocol.internal.response.Supported;
 import io.netty.channel.ChannelFuture;
@@ -51,20 +50,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 /**
- * Coverage for the driver's tolerance to CEP-59 server-side variations during channel
- * initialization.
- *
- * <p>Capabilities are negotiated per connection: each channel checks its own SUPPORTED response
- * (nodes in a mixed-version cluster may differ). These tests pin down how the driver must behave
- * when the server:
- *
- * <ul>
- *   <li>advertises the capability in SUPPORTED (registers for the event),
- *   <li>does not advertise it, or advertises it with an explicit {@code false} value (never
- *       registers, so old or disabled servers never see an unknown event type),
- *   <li>rejects a REGISTER that includes the event type (degrades by retrying without it instead of
- *       failing the connection — the mixed-version-cluster / rolling-upgrade case).
- * </ul>
+ * Coverage for GRACEFUL_DISCONNECT (CEP-59) registration during channel initialization: support is
+ * checked against each channel's own SUPPORTED response, and the event type is only included in
+ * REGISTER if the server advertises it.
  */
 public class ProtocolInitHandlerGracefulDisconnectTest extends ChannelHandlerTestBase {
 
@@ -73,10 +61,12 @@ public class ProtocolInitHandlerGracefulDisconnectTest extends ChannelHandlerTes
   private static final Supported SUPPORTED_WITH_GRACEFUL_DISCONNECT =
       new Supported(
           ImmutableMap.of(
-              GracefulDisconnectEvent.EVENT_TYPE,
+              ProtocolConstants.EventType.GRACEFUL_DISCONNECT,
               ImmutableList.of("true"),
               "CQL_VERSION",
               ImmutableList.of("3.4.7")));
+  private static final Supported SUPPORTED_WITHOUT_GRACEFUL_DISCONNECT =
+      new Supported(ImmutableMap.of("CQL_VERSION", ImmutableList.of("3.4.7")));
 
   @Mock private InternalDriverContext internalDriverContext;
   @Mock private DriverConfig driverConfig;
@@ -115,13 +105,9 @@ public class ProtocolInitHandlerGracefulDisconnectTest extends ChannelHandlerTes
     heartbeatHandler = new HeartbeatHandler(defaultProfile);
   }
 
-  private ChannelFuture connectWithEvents(boolean querySupportedOptions) {
+  private ChannelFuture connectWithEvents(List<String> eventTypes) {
     DriverChannelOptions driverChannelOptions =
-        DriverChannelOptions.builder()
-            .withEvents(
-                ImmutableList.of("STATUS_CHANGE", GracefulDisconnectEvent.EVENT_TYPE),
-                mock(EventCallback.class))
-            .build();
+        DriverChannelOptions.builder().withEvents(eventTypes, mock(EventCallback.class)).build();
     channel
         .pipeline()
         .addLast(
@@ -133,128 +119,84 @@ public class ProtocolInitHandlerGracefulDisconnectTest extends ChannelHandlerTes
                 END_POINT,
                 driverChannelOptions,
                 heartbeatHandler,
-                querySupportedOptions));
+                true));
     return channel.connect(new InetSocketAddress("localhost", 9042));
   }
 
-  /** Completes the OPTIONS and STARTUP steps, then returns the outbound REGISTER frame. */
-  private Frame initUntilRegister(Supported supportedResponse) {
-    if (supportedResponse != null) {
-      Frame optionsFrame = readOutboundFrame();
-      assertThat(optionsFrame.message).isInstanceOf(Options.class);
-      writeInboundFrame(optionsFrame, supportedResponse);
-    }
+  /** Completes the OPTIONS and STARTUP steps. */
+  private void initUntilAfterClusterName(Supported supportedResponse) {
+    Frame optionsFrame = readOutboundFrame();
+    assertThat(optionsFrame.message).isInstanceOf(Options.class);
+    writeInboundFrame(optionsFrame, supportedResponse);
     Frame startupFrame = readOutboundFrame();
     assertThat(startupFrame.message).isInstanceOf(Startup.class);
     writeInboundFrame(startupFrame, new Ready());
     writeInboundFrame(readOutboundFrame(), TestResponses.clusterNameResponse("someClusterName"));
-    Frame registerFrame = readOutboundFrame();
-    assertThat(registerFrame.message).isInstanceOf(Register.class);
-    return registerFrame;
   }
 
   @Test
   public void should_register_graceful_disconnect_when_advertised_in_supported() {
-    ChannelFuture connectFuture = connectWithEvents(true);
+    ChannelFuture connectFuture =
+        connectWithEvents(
+            ImmutableList.of("STATUS_CHANGE", ProtocolConstants.EventType.GRACEFUL_DISCONNECT));
 
-    Frame registerFrame = initUntilRegister(SUPPORTED_WITH_GRACEFUL_DISCONNECT);
+    initUntilAfterClusterName(SUPPORTED_WITH_GRACEFUL_DISCONNECT);
+    Frame registerFrame = readOutboundFrame();
+    assertThat(registerFrame.message).isInstanceOf(Register.class);
 
-    List<String> eventTypes = ((Register) registerFrame.message).eventTypes;
-    assertThat(eventTypes).containsExactly("STATUS_CHANGE", GracefulDisconnectEvent.EVENT_TYPE);
+    assertThat(((Register) registerFrame.message).eventTypes)
+        .containsExactly("STATUS_CHANGE", ProtocolConstants.EventType.GRACEFUL_DISCONNECT);
     writeInboundFrame(registerFrame, new Ready());
     assertThat(connectFuture).isSuccess();
   }
 
   @Test
   public void should_not_register_graceful_disconnect_when_server_does_not_advertise_it() {
-    ChannelFuture connectFuture = connectWithEvents(true);
+    ChannelFuture connectFuture =
+        connectWithEvents(
+            ImmutableList.of("STATUS_CHANGE", ProtocolConstants.EventType.GRACEFUL_DISCONNECT));
 
-    Frame registerFrame =
-        initUntilRegister(new Supported(ImmutableMap.of("CQL_VERSION", ImmutableList.of("3.4.7"))));
+    initUntilAfterClusterName(SUPPORTED_WITHOUT_GRACEFUL_DISCONNECT);
+    Frame registerFrame = readOutboundFrame();
+    assertThat(registerFrame.message).isInstanceOf(Register.class);
 
-    List<String> eventTypes = ((Register) registerFrame.message).eventTypes;
-    assertThat(eventTypes).containsExactly("STATUS_CHANGE");
+    assertThat(((Register) registerFrame.message).eventTypes).containsExactly("STATUS_CHANGE");
     writeInboundFrame(registerFrame, new Ready());
     assertThat(connectFuture).isSuccess();
   }
 
   @Test
   public void should_not_register_graceful_disconnect_when_advertised_as_false() {
-    // The pre-STARTUP OPTIONS path on the server sends the key with an explicit "false" value
-    // when the feature is disabled.
-    ChannelFuture connectFuture = connectWithEvents(true);
+    ChannelFuture connectFuture =
+        connectWithEvents(
+            ImmutableList.of("STATUS_CHANGE", ProtocolConstants.EventType.GRACEFUL_DISCONNECT));
 
-    Frame registerFrame =
-        initUntilRegister(
-            new Supported(
-                ImmutableMap.of(
-                    GracefulDisconnectEvent.EVENT_TYPE,
-                    ImmutableList.of("false"),
-                    "CQL_VERSION",
-                    ImmutableList.of("3.4.7"))));
+    initUntilAfterClusterName(
+        new Supported(
+            ImmutableMap.of(
+                ProtocolConstants.EventType.GRACEFUL_DISCONNECT,
+                ImmutableList.of("false"),
+                "CQL_VERSION",
+                ImmutableList.of("3.4.7"))));
+    Frame registerFrame = readOutboundFrame();
+    assertThat(registerFrame.message).isInstanceOf(Register.class);
 
-    List<String> eventTypes = ((Register) registerFrame.message).eventTypes;
-    assertThat(eventTypes).containsExactly("STATUS_CHANGE");
+    assertThat(((Register) registerFrame.message).eventTypes).containsExactly("STATUS_CHANGE");
     writeInboundFrame(registerFrame, new Ready());
     assertThat(connectFuture).isSuccess();
   }
 
   @Test
-  public void should_not_register_graceful_disconnect_when_options_not_queried() {
-    // Capability is strictly per-connection: if for any reason the channel did not run the
-    // OPTIONS step, it must be conservative and not register for the event.
-    ChannelFuture connectFuture = connectWithEvents(false);
+  public void should_skip_register_when_graceful_disconnect_was_the_only_event_type() {
+    // Pool channels only register for GRACEFUL_DISCONNECT; if the server does not support it,
+    // there is nothing left to register for.
+    ChannelFuture connectFuture =
+        connectWithEvents(ImmutableList.of(ProtocolConstants.EventType.GRACEFUL_DISCONNECT));
 
-    Frame registerFrame = initUntilRegister(null);
-
-    List<String> eventTypes = ((Register) registerFrame.message).eventTypes;
-    assertThat(eventTypes).containsExactly("STATUS_CHANGE");
-    writeInboundFrame(registerFrame, new Ready());
-    assertThat(connectFuture).isSuccess();
-  }
-
-  @Test
-  public void should_retry_register_without_graceful_disconnect_when_server_rejects_it() {
-    // Simulates a node that advertises the capability but rejects the event type (e.g. the
-    // still-evolving server implementation changed the wire contract): the driver must degrade
-    // (lose graceful disconnect on this connection) instead of failing channel init.
-    ChannelFuture connectFuture = connectWithEvents(true);
-
-    Frame registerFrame = initUntilRegister(SUPPORTED_WITH_GRACEFUL_DISCONNECT);
-    assertThat(((Register) registerFrame.message).eventTypes)
-        .contains(GracefulDisconnectEvent.EVENT_TYPE);
-    writeInboundFrame(
-        registerFrame,
-        new Error(
-            ProtocolConstants.ErrorCode.PROTOCOL_ERROR,
-            "Invalid value 'GRACEFUL_DISCONNECT' for Type"));
-
-    // The driver retries REGISTER without the unsupported event type:
-    Frame retryFrame = readOutboundFrame();
-    assertThat(retryFrame.message).isInstanceOf(Register.class);
-    assertThat(((Register) retryFrame.message).eventTypes).containsExactly("STATUS_CHANGE");
-    writeInboundFrame(retryFrame, new Ready());
+    initUntilAfterClusterName(SUPPORTED_WITHOUT_GRACEFUL_DISCONNECT);
 
     assertThat(connectFuture).isSuccess();
-  }
-
-  @Test
-  public void should_fail_when_register_rejected_even_without_graceful_disconnect() {
-    // The degradation retry must not loop: if the server keeps rejecting REGISTER after
-    // GRACEFUL_DISCONNECT was removed, fail the connection like any other unexpected error.
-    ChannelFuture connectFuture = connectWithEvents(true);
-
-    Frame registerFrame = initUntilRegister(SUPPORTED_WITH_GRACEFUL_DISCONNECT);
-    writeInboundFrame(
-        registerFrame, new Error(ProtocolConstants.ErrorCode.PROTOCOL_ERROR, "Invalid event type"));
-
-    Frame retryFrame = readOutboundFrame();
-    assertThat(((Register) retryFrame.message).eventTypes)
-        .doesNotContain(GracefulDisconnectEvent.EVENT_TYPE);
-    writeInboundFrame(
-        retryFrame, new Error(ProtocolConstants.ErrorCode.PROTOCOL_ERROR, "Invalid event type"));
-
-    assertThat(connectFuture).isFailed();
+    assertThat((Object) channel.readOutbound()).isNull();
   }
 
   @Test
@@ -267,24 +209,23 @@ public class ProtocolInitHandlerGracefulDisconnectTest extends ChannelHandlerTes
         .isFalse();
     assertThat(
             ProtocolInitHandler.supportsGracefulDisconnect(
-                ImmutableMap.of(GracefulDisconnectEvent.EVENT_TYPE, ImmutableList.of())))
+                ImmutableMap.of(
+                    ProtocolConstants.EventType.GRACEFUL_DISCONNECT, ImmutableList.of())))
         .isTrue();
     assertThat(
             ProtocolInitHandler.supportsGracefulDisconnect(
-                ImmutableMap.of(GracefulDisconnectEvent.EVENT_TYPE, ImmutableList.of("true"))))
+                ImmutableMap.of(
+                    ProtocolConstants.EventType.GRACEFUL_DISCONNECT, ImmutableList.of("true"))))
         .isTrue();
     assertThat(
             ProtocolInitHandler.supportsGracefulDisconnect(
-                ImmutableMap.of(GracefulDisconnectEvent.EVENT_TYPE, ImmutableList.of("false"))))
-        .isFalse();
-    assertThat(
-            ProtocolInitHandler.supportsGracefulDisconnect(
-                ImmutableMap.of(GracefulDisconnectEvent.EVENT_TYPE, ImmutableList.of("FALSE"))))
+                ImmutableMap.of(
+                    ProtocolConstants.EventType.GRACEFUL_DISCONNECT, ImmutableList.of("false"))))
         .isFalse();
     assertThat(
             ProtocolInitHandler.supportsGracefulDisconnect(
                 ImmutableMap.of(
-                    GracefulDisconnectEvent.EVENT_TYPE, ImmutableList.of("true", "false"))))
+                    ProtocolConstants.EventType.GRACEFUL_DISCONNECT, ImmutableList.of("FALSE"))))
         .isFalse();
   }
 }
