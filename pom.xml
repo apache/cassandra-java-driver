@@ -53,20 +53,19 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <cassandra.version>3.11.2</cassandra.version>
-        <java.version>1.6</java.version>
+        <java.version>1.8</java.version>
         <log4j.version>1.2.17</log4j.version>
-        <slf4j.version>1.7.25</slf4j.version>
-        <slf4j-log4j12.version>1.7.25</slf4j-log4j12.version>
+        <slf4j.version>1.7.26</slf4j.version>
+        <slf4j-log4j12.version>1.7.26</slf4j-log4j12.version>
         <guava.version>19.0</guava.version>
-        <netty.version>4.1.119.Final</netty.version>
-        <netty-tcnative.version>2.0.70.Final</netty-tcnative.version>
+        <netty.version>4.1.130.Final</netty.version>
+        <netty-tcnative.version>2.0.74.Final</netty-tcnative.version>
         <metrics.version>3.2.2</metrics.version>
         <snappy.version>1.1.2.6</snappy.version>
-        <lz4.version>1.4.1</lz4.version>
+        <lz4.version>1.10.3</lz4.version>
         <hdr.version>2.1.10</hdr.version>
-        <jackson.version>2.8.11</jackson.version>
-        <!-- jackson-databind 2.7.x is the last to support java 6 -->
-        <jackson-databind.version>2.7.9.7</jackson-databind.version>
+        <jackson.version>2.20.1</jackson.version>
+        <jackson-annotations.version>2.20</jackson-annotations.version>
         <joda.version>2.9.9</joda.version>
         <jsr353-api.version>1.0</jsr353-api.version>
         <jsr353-ri.version>1.0.4</jsr353-ri.version>
@@ -78,17 +77,16 @@
         <jax-rs.version>2.0.1</jax-rs.version>
         <jersey.version>2.23.1</jersey.version>
         <hk2.version>2.4.0-b34</hk2.version>
-        <felix.version>4.4.1</felix.version>
-        <!-- more recent versions of pax-exam require JDK7+ -->
-        <pax-exam.version>3.6.0</pax-exam.version>
-        <url.version>2.4.0</url.version>
+        <felix.version>7.0.1</felix.version>
+        <pax-exam.version>4.13.4</pax-exam.version>
+        <url.version>2.6.4</url.version>
         <testng.version>6.8.8</testng.version>
         <assertj.version>1.7.0</assertj.version>
         <mockito.version>1.10.8</mockito.version>
         <wiremock.version>2.25.0</wiremock.version>
         <commons-exec.version>1.3</commons-exec.version>
         <scassandra.version>1.1.2</scassandra.version>
-        <logback.version>1.2.3</logback.version>
+        <logback.version>1.2.13</logback.version>
         <byteman.version>3.0.8</byteman.version>
         <ipprefix>127.0.1.</ipprefix>
         <!-- defaults below are overridden by profiles and/or submodules -->
@@ -176,7 +174,7 @@
             </dependency>
 
             <dependency>
-                <groupId>org.lz4</groupId>
+                <groupId>at.yawk.lz4</groupId>
                 <artifactId>lz4-java</artifactId>
                 <version>${lz4.version}</version>
             </dependency>
@@ -202,13 +200,13 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>${jackson-databind.version}</version>
+                <version>${jackson.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
-                <version>${jackson.version}</version>
+                <version>${jackson-annotations.version}</version>
             </dependency>
 
             <dependency>
@@ -666,23 +664,6 @@ limitations under the License.
                     <version>1.16</version>
                     <executions>
                         <execution>
-                            <id>check-jdk6</id>
-                            <phase>process-classes</phase>
-                            <goals>
-                                <goal>check</goal>
-                            </goals>
-                            <configuration>
-                                <signature>
-                                    <groupId>org.codehaus.mojo.signature</groupId>
-                                    <artifactId>java16</artifactId>
-                                    <version>1.0</version>
-                                </signature>
-                                <annotations>
-                                    <annotation>com.datastax.driver.core.IgnoreJDK6Requirement</annotation>
-                                </annotations>
-                            </configuration>
-                        </execution>
-                        <execution>
                             <id>check-jdk8</id>
                             <goals>
                                 <goal>check</goal>
@@ -1006,18 +987,6 @@ limitations under the License.
                             <skipLocalStaging>true</skipLocalStaging>
                         </configuration>
                     </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>modern-jdks</id>
-            <activation>
-                <jdk>[1.8,)</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <!-- only activate for jdk8+ since requires java 8 -->
                     <plugin>
                         <groupId>com.coveo</groupId>
                         <artifactId>fmt-maven-plugin</artifactId>
@@ -1031,39 +1000,11 @@ limitations under the License.
                             </execution>
                         </executions>
                     </plugin>
-		    <plugin>
-		      <groupId>org.apache.maven.plugins</groupId>
-		      <artifactId>maven-javadoc-plugin</artifactId>
-		      <configuration combine.self="override">
-			<doclint>none</doclint>
-		      </configuration>
-		    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>legacy-jdks</id>
-            <activation>
-                <jdk>[,1.8)</jdk>
-            </activation>
-            <build>
-                <plugins>
                     <plugin>
-                        <!--
-                        Exclude Jdk* test classes from being run
-                        This is needed in event that code was built with JDK8
-                        and tests are ran with JDK6 or 7.
-                        Note that running CCM tests with a legacy JDK require
-                        setting two system properties: ccm.java.home and ccm.path;
-                        both should point to a valid JDK8+ installation.
-                        -->
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <excludes>
-                                <exclude>**/jdk8/*.java</exclude>
-                                <exclude>**/Jdk8*.java</exclude>
-                            </excludes>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <configuration combine.self="override">
+                            <doclint>none</doclint>
                         </configuration>
                     </plugin>
                 </plugins>

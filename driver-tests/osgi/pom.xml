@@ -129,7 +129,6 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -166,11 +165,8 @@
                         <testng.version>${testng.version}</testng.version>
                         <jsr353-api.version>${jsr353-api.version}</jsr353-api.version>
                         <jackson.version>${jackson.version}</jackson.version>
-                        <jackson-databind.version>${jackson-databind.version}</jackson-databind.version>
+                        <jackson-annotations.version>${jackson-annotations.version}</jackson-annotations.version>
                         <ipprefix>${ipprefix}</ipprefix>
-                        <org.ops4j.pax.url.mvn.useFallbackRepositories>false</org.ops4j.pax.url.mvn.useFallbackRepositories>
-                        <!-- repo1.maven.org requires https but the old version of pax-exam we use hard-codes http -->
-                        <org.ops4j.pax.url.mvn.repositories>https://repo1.maven.org/maven2@id=central</org.ops4j.pax.url.mvn.repositories>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>

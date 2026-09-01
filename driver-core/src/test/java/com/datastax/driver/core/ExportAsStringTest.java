@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.driver.core.schemabuilder.SchemaBuilder;
-import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closer;
 import java.io.BufferedReader;
@@ -34,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
-@CassandraVersion("2.0")
 @CCMConfig(config = "enable_user_defined_functions:true")
 public class ExportAsStringTest extends CCMTestsSupport {
 

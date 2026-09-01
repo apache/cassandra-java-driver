@@ -100,8 +100,7 @@ def executeTests() {
       -Dccm.maxNumberOfNodes=3 \
       -DfailIfNoTests=false \
       -Dmaven.test.failure.ignore=true \
-      -Dmaven.javadoc.skip=true \
-      -Dproxy.path=${HOME}/proxy
+      -Dmaven.javadoc.skip=true
 
     # run isolated tests
     mvn -B -V verify \
@@ -220,67 +219,61 @@ pipeline {
                       </table>''')
     choice(
       name: 'ADHOC_BUILD_AND_EXECUTE_TESTS_SERVER_VERSION',
-      choices: ['2.1',       // Legacy Apache CassandraⓇ
-                '2.2',       // Legacy Apache CassandraⓇ
-                '3.0',       // Previous Apache CassandraⓇ
-                '3.11',      // Current Apache CassandraⓇ
-                '4.0',       // Development Apache CassandraⓇ
-                'dse-5.1',   // Legacy DataStax Enterprise
-                'dse-6.0',   // Previous DataStax Enterprise
-                'dse-6.7',   // Previous DataStax Enterprise
-                'dse-6.8.0', // Current DataStax Enterprise
+      choices: ['4.0',
+                '4.1',
+                '5.0',
+                'dse-5.1.35',
+                'dse-6.0.18',
+                'dse-6.7.17',
+                'dse-6.8.30',
+                'dse-6.9.0',
+                'hcd-1.0.0',
                 'ALL'],
       description: '''Apache Cassandra&reg; or DataStax Enterprise server version to use for adhoc <b>BUILD-AND-EXECUTE-TESTS</b> builds
                       <table style="width:100%">
                         <col width="15%">
                         <col width="85%">
                         <tr>
-                          <th align="left">Choice</th>
-                          <th align="left">Description</th>
-                        </tr>
-                        <tr>
-                          <td><strong>2.1</strong></td>
-                          <td>Apache Cassandra&reg; v2.1.x</td>
-                        </tr>
-                        <tr>
-                          <td><strong>2.2</strong></td>
-                          <td>Apache Cassandra&reg; v2.2.x</td>
-                        </tr>
-                        <tr>
-                          <td><strong>3.0</strong></td>
-                          <td>Apache Cassandra&reg; v3.0.x</td>
-                        </tr>
-                        <tr>
-                          <td><strong>3.11</strong></td>
-                          <td>Apache Cassandra&reg; v3.11.x</td>
-                        </tr>
-                        <tr>
                           <td><strong>4.0</strong></td>
-                          <td>Apache Cassandra&reg; v4.x (<b>CURRENTLY UNDER DEVELOPMENT</b>)</td>
+                          <td>Apache Cassandra&reg; v4.0.x</td>
                         </tr>
                         <tr>
-                          <td><strong>dse-5.1</strong></td>
-                          <td>DataStax Enterprise v5.1.x</td>
+                          <td><strong>4.1</strong></td>
+                          <td>Apache Cassandra&reg; v4.1.x</td>
                         </tr>
                         <tr>
-                          <td><strong>dse-6.0</strong></td>
-                          <td>DataStax Enterprise v6.0.x</td>
+                          <td><strong>5.0</strong></td>
+                          <td>Apache Cassandra&reg; v5.0.x</td>
                         </tr>
                         <tr>
-                          <td><strong>dse-6.7</strong></td>
-                          <td>DataStax Enterprise v6.7.x</td>
+                          <td><strong>dse-5.1.35</strong></td>
+                          <td>DataStax Enterprise v5.1.35</td>
                         </tr>
                         <tr>
-                          <td><strong>dse-6.8.0</strong></td>
-                          <td>DataStax Enterprise v6.8.0</td>
+                          <td><strong>dse-6.0.18</strong></td>
+                          <td>DataStax Enterprise v6.0.18</td>
+                        </tr>
+                        <tr>
+                          <td><strong>dse-6.7.17</strong></td>
+                          <td>DataStax Enterprise v6.7.17</td>
+                        </tr>
+                        <tr>
+                          <td><strong>dse-6.8.30</strong></td>
+                          <td>DataStax Enterprise v6.8.30</td>
+                        </tr>
+                        <tr>
+                          <td><strong>dse-6.9.0</strong></td>
+                          <td>DataStax Enterprise v6.9.0</td>
+                        </tr>
+                        <tr>
+                          <td><strong>hcd-1.0.0</strong></td>
+                          <td>DataStax HCD v1.0.0</td>
                         </tr>
                       </table>''')
     choice(
       name: 'ADHOC_BUILD_AND_EXECUTE_TESTS_JABBA_VERSION',
-      choices: ['zulu@1.6',      // Zulu JDK 1.6
-                'zulu@1.7',      // Zulu JDK 1.7
-                '1.8',           // Oracle JDK version 1.8 (current default)
-                'openjdk@1.11'], // OpenJDK version 11
+      choices: ['1.8',
+                'openjdk@1.11'],
       description: '''JDK version to use for <b>TESTING</b> when running adhoc <b>BUILD-AND-EXECUTE-TESTS</b> builds. <i>All builds will use JDK8 for building the driver</i>
                       <table style="width:100%">
                         <col width="15%">
@@ -288,14 +281,6 @@ pipeline {
                         <tr>
                           <th align="left">Choice</th>
                           <th align="left">Description</th>
-                        </tr>
-                        <tr>
-                          <td><strong>zulu@1.6</strong></td>
-                          <td>Zulu JDK version 1.6</td>
-                        </tr>
-                        <tr>
-                          <td><strong>zulu@1.7</strong></td>
-                          <td>Zulu JDK version 1.7</td>
                         </tr>
                         <tr>
                           <td><strong>1.8</strong></td>
@@ -341,7 +326,7 @@ pipeline {
   }
 
   environment {
-    OS_VERSION = 'ubuntu/jammy64/java-driver'
+    OS_VERSION = 'ubuntu/focal64/java-driver'
     JABBA_SHELL = '/usr/lib/jabba/jabba.sh'
     CCM_ENVIRONMENT_SHELL = '/usr/local/bin/ccm_environment.sh'
   }
@@ -367,8 +352,9 @@ pipeline {
         axes {
           axis {
             name 'SERVER_VERSION'
-            values '3.11',      // Current Apache CassandraⓇ
-                   '4.0'        // Development Apache CassandraⓇ
+            values '4.0',
+                   '4.1',
+                    '5.0'
           }
         }
 
@@ -474,14 +460,15 @@ pipeline {
         axes {
           axis {
             name 'SERVER_VERSION'
-            values '2.1',       // Legacy Apache CassandraⓇ
-                   '3.0',       // Previous Apache CassandraⓇ
-                   '3.11',      // Current Apache CassandraⓇ
-                   '4.0',       // Development Apache CassandraⓇ
-                   'dse-5.1',   // Legacy DataStax Enterprise
-                   'dse-6.0',   // Previous DataStax Enterprise
-                   'dse-6.7',   // Previous DataStax Enterprise
-                   'dse-6.8.0'  // Current DataStax Enterprise
+            values '4.0',
+                    '4.1',
+                    '5.0',
+                    'dse-5.1.35',
+                    'dse-6.0.18',
+                    'dse-6.7.17',
+                    'dse-6.8.30',
+                    'dse-6.9.0',
+                    'hcd-1.0.0'
           }
         }
         when {
