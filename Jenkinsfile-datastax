@@ -332,7 +332,8 @@ pipeline {
                 '1.8',           // Oracle JDK version 1.8 (current default)
                 'openjdk@1.11',  // OpenJDK version 11
                 'openjdk@1.17',  // OpenJDK version 17
-                'openjdk@1.21'   // OpenJDK version 21
+                'openjdk@1.21',   // OpenJDK version 21
+                'openjdk@1.25'   // OpenJDK version 25
                 ],
       description: '''JDK version to use for <b>TESTING</b> when running adhoc <b>BUILD-AND-EXECUTE-TESTS</b> builds. <i>All builds will use JDK8 for building the driver</i>
                       <table style="width:100%">
@@ -357,6 +358,10 @@ pipeline {
                         <tr>
                           <td><strong>openjdk@1.21</strong></td>
                           <td>OpenJDK version 21</td>
+                        </tr>
+                        <tr>
+                          <td><strong>openjdk@1.25</strong></td>
+                          <td>OpenJDK version 25</td>
                         </tr>
                       </table>''')
     booleanParam(
@@ -442,7 +447,8 @@ pipeline {
             values '1.8',           // jdk8
                    'openjdk@1.11',  // jdk11
                    'openjdk@1.17',  // jdk17
-                   'openjdk@1.21'   // jdk21
+                   'openjdk@1.21',   // jdk21
+                   'openjdk@1.25'   // jdk25
           }
         }
 

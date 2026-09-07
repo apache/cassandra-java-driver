@@ -391,9 +391,23 @@ public class ContinuousPagingIT extends ContinuousPagingITBase {
       CompletableFutures.getUninterruptibly(fetchNextPageFuture);
       fail("Expected an execution exception since paging was cancelled.");
     } catch (CancellationException e) {
-      assertThat(e)
-          .hasMessageContaining("Can't get more results")
-          .hasMessageContaining("query was cancelled");
+        /**
+         * Since Java 25 has a breaking change in CompletableFuture.get()
+         * See: https://github.com/openjdk/jdk/commit/8a4315f833f3700075d65fae6bc566011c837c07
+         * CancellationException will be wrapped in a new CancellationException, with "get" as the message,
+         * and the original CancellationException as the cause
+         */
+
+        boolean exceptionHasBothMessages = e.getMessage() != null
+                && e.getMessage().contains("Can't get more results")
+                && e.getMessage().contains("query was cancelled");
+
+        boolean causeHasBothMessages = e.getCause() != null
+                && e.getCause().getMessage() != null
+                && e.getCause().getMessage().contains("Can't get more results")
+                && e.getCause().getMessage().contains("query was cancelled");
+
+        assertThat(exceptionHasBothMessages || causeHasBothMessages).isTrue();
     }
     int i = 0;
     for (Row row : pagingResult.currentPage()) {
