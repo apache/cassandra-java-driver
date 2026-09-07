@@ -445,12 +445,12 @@
       <dependency>
         <groupId>io.projectreactor.tools</groupId>
         <artifactId>blockhound</artifactId>
-        <version>1.0.8.RELEASE</version>
+        <version>1.0.16.RELEASE</version>
       </dependency>
       <dependency>
         <groupId>io.projectreactor.tools</groupId>
         <artifactId>blockhound-junit-platform</artifactId>
-        <version>1.0.8.RELEASE</version>
+        <version>1.0.16.RELEASE</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -545,7 +545,7 @@
         <plugin>
           <groupId>org.jacoco</groupId>
           <artifactId>jacoco-maven-plugin</artifactId>
-          <version>0.8.10</version>
+          <version>0.8.14</version>
         </plugin>
         <plugin>
           <groupId>org.apache.felix</groupId>
