@@ -282,6 +282,7 @@ public class Strings {
           "allow",
           "alter",
           "and",
+          "ann",
           "apply",
           "asc",
           "authorize",
