@@ -18,7 +18,9 @@
 package com.datastax.oss.driver.api.testinfra;
 
 import com.datastax.oss.driver.api.core.ProtocolVersion;
+import com.datastax.oss.driver.api.core.Version;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.internal.core.metadata.DefaultEndPoint;
 import java.net.InetSocketAddress;
@@ -58,4 +60,21 @@ public abstract class CassandraResourceRule extends ExternalResource {
 
   /** @return The highest protocol version supported by this resource. */
   public abstract ProtocolVersion getHighestProtocolVersion();
+
+  /** @return The backend distribution type (CASSANDRA, DSE, HCD, ASTRA). */
+  public abstract BackendType getDistribution();
+
+  /**
+   * Checks if this resource is of the specified backend type.
+   *
+   * @param type the backend type to check
+   * @return true if this resource is of the specified type
+   */
+  public abstract boolean isDistributionOf(BackendType type);
+
+  /** @return The distribution version (e.g., DSE version, Cassandra version). */
+  public abstract Version getDistributionVersion();
+
+  /** @return The Cassandra version (may differ from distribution version for DSE/HCD). */
+  public abstract Version getCassandraVersion();
 }

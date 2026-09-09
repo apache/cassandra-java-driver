@@ -33,6 +33,9 @@
     <skipParallelizableITs>${skipITs}</skipParallelizableITs>
     <skipSerialITs>${skipITs}</skipSerialITs>
     <skipIsolatedITs>${skipITs}</skipIsolatedITs>
+    <!-- Default: run test classes in parallel for CCM/Cassandra -->
+    <astra.parallel.mode>classes</astra.parallel.mode>
+    <astra.thread.count>8</astra.thread.count>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -238,8 +241,10 @@
             <configuration>
               <jvm>${testing.jvm}/bin/java</jvm>
               <groups>com.datastax.oss.driver.categories.ParallelizableTests</groups>
-              <parallel>classes</parallel>
-              <threadCountClasses>8</threadCountClasses>
+              <!-- When running against Astra, run test classes sequentially to avoid conflicts
+                   in the shared keyspace. For CCM/Cassandra, run in parallel for speed. -->
+              <parallel>${astra.parallel.mode}</parallel>
+              <threadCountClasses>${astra.thread.count}</threadCountClasses>
               <summaryFile>${project.build.directory}/failsafe-reports/failsafe-summary-parallelized.xml</summaryFile>
               <skipITs>${skipParallelizableITs}</skipITs>
               <argLine>${blockhound.argline}</argLine>
@@ -335,4 +340,23 @@
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <!-- When running against Astra, run test classes sequentially to avoid conflicts
+         in the shared keyspace. Astra uses a single shared database/keyspace for all tests,
+         so parallel execution causes race conditions when creating/dropping tables. -->
+    <profile>
+      <id>astra-sequential</id>
+      <activation>
+        <property>
+          <name>ccm.distribution</name>
+          <value>Astra</value>
+        </property>
+      </activation>
+      <properties>
+        <!-- Run test classes sequentially (one at a time) -->
+        <astra.parallel.mode>none</astra.parallel.mode>
+        <astra.thread.count>1</astra.thread.count>
+      </properties>
+    </profile>
+  </profiles>
 </project>

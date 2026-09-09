@@ -1,0 +1,179 @@
+#!groovy
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+def initializeEnvironment() {
+  env.DRIVER_DISPLAY_NAME = 'Java Driver for Apache Cassandra® - Astra Tests'
+  env.DRIVER_METRIC_TYPE = 'oss'
+
+  env.GIT_SHA = "${env.GIT_COMMIT.take(7)}"
+  env.GITHUB_PROJECT_URL = "https://${GIT_URL.replaceFirst(/(git@|http:\/\/|https:\/\/)/, '').replace(':', '/').replace('.git', '')}"
+  env.GITHUB_BRANCH_URL = "${GITHUB_PROJECT_URL}/tree/${env.BRANCH_NAME}"
+  env.GITHUB_COMMIT_URL = "${GITHUB_PROJECT_URL}/commit/${env.GIT_COMMIT}"
+
+  env.MAVEN_HOME = "${env.HOME}/.mvn/apache-maven-3.8.8"
+  env.PATH = "${env.MAVEN_HOME}/bin:/home/jenkins/.astra/cli:${env.PATH}"
+
+  env.JAVA_HOME = sh(label: 'Get JAVA_HOME',script: '''#!/bin/bash -le
+    . ${JABBA_SHELL}
+    jabba which 1.8''', returnStdout: true).trim()
+
+  sh label: 'Display Java and environment information',script: '''#!/bin/bash -le
+    . ${JABBA_SHELL}
+    jabba use 1.8
+
+    java -version
+    mvn -v
+    printenv | sort
+    astra help
+  '''
+}
+
+def buildDriver() {
+  sh label: 'Build driver', script: '''#!/bin/bash -le
+    . ${JABBA_SHELL}
+    jabba use 1.8
+
+    echo "Building with Java version 1.8"
+
+    mvn -B -V install -DskipTests -Dmaven.javadoc.skip=true
+  '''
+}
+
+def executeAstraTests() {
+  withCredentials([
+    string(credentialsId: 'astra-integration-test-token', variable: 'ASTRA_TOKEN')
+  ]) {
+    sh label: 'Execute Astra integration tests', script: '''#!/bin/bash -lex
+      . ${JABBA_SHELL}
+      jabba use 1.8
+
+      printenv | sort
+
+      mvn -B -V verify \
+        -DfailIfNoTests=false \
+        -Dmaven.test.failure.ignore=true \
+        -Dmaven.javadoc.skip=true \
+        -Dccm.distribution=Astra \
+        -Dastra.token=${ASTRA_TOKEN}
+    '''
+  }
+}
+
+def notifySlack(status = 'started') {
+  def color = 'good' // Green
+  if (status.equalsIgnoreCase('aborted')) {
+    color = '808080' // Grey
+  } else if (status.equalsIgnoreCase('unstable')) {
+    color = 'warning' // Orange
+  } else if (status.equalsIgnoreCase('failed')) {
+    color = 'danger' // Red
+  }
+
+  def message = """Build ${status} for ${env.DRIVER_DISPLAY_NAME}
+<${env.GITHUB_BRANCH_URL}|${env.BRANCH_NAME}> - <${env.RUN_DISPLAY_URL}|#${env.BUILD_NUMBER}> - <${env.GITHUB_COMMIT_URL}|${env.GIT_SHA}>"""
+  if (!status.equalsIgnoreCase('Started')) {
+    message += """
+${status} after ${currentBuild.durationString - ' and counting'}"""
+  }
+
+  slackSend color: "${color}",
+            channel: "#java-driver-dev-bots",
+            message: "${message}"
+}
+
+pipeline {
+  agent {
+    label 'ubuntu/jammy64/java-driver'
+  }
+
+  // Global pipeline timeout
+  options {
+    timeout(time: 2, unit: 'HOURS')
+    buildDiscarder(logRotator(artifactNumToKeepStr: '10', // Keep only the last 10 artifacts
+                              numToKeepStr: '50'))        // Keep only the last 50 build records
+  }
+
+  environment {
+    JABBA_SHELL = '/usr/lib/jabba/jabba.sh'
+    SERIAL_ITS_ARGUMENT = "-DskipSerialITs=${params.SKIP_SERIAL_ITS}"
+    ISOLATED_ITS_ARGUMENT = "-DskipIsolatedITs=${params.SKIP_ISOLATED_ITS}"
+    PARALLELIZABLE_ITS_ARGUMENT = "-DskipParallelizableITs=${params.SKIP_PARALLELIZABLE_ITS}"
+    INTEGRATION_TESTS_FILTER = "${params.INTEGRATION_TESTS_FILTER}"
+  }
+
+  stages {
+    stage('Initialize-Environment') {
+      steps {
+        initializeEnvironment()
+        notifySlack()
+      }
+    }
+
+    stage('Describe-Build') {
+      steps {
+        script {
+          currentBuild.displayName = "Astra Integration Tests"
+          currentBuild.description = "Running integration tests against DataStax Astra"
+        }
+      }
+    }
+
+    stage('Build-Driver') {
+      steps {
+        buildDriver()
+      }
+    }
+
+    stage('Execute-Astra-Tests') {
+      steps {
+        catchError {
+          executeAstraTests()
+        }
+      }
+      post {
+        always {
+          /*
+           * Empty results are possible
+           *
+           *  - Build failures during mvn verify may exist so report may not be available
+           *  - With boolean parameters to skip tests a failsafe report may not be available
+           */
+          junit testResults: '**/target/surefire-reports/TEST-*.xml', allowEmptyResults: true
+          junit testResults: '**/target/failsafe-reports/TEST-*.xml', allowEmptyResults: true
+        }
+      }
+    }
+  }
+
+  post {
+    aborted {
+      notifySlack('aborted')
+    }
+    success {
+      notifySlack('completed')
+    }
+    unstable {
+      notifySlack('unstable')
+    }
+    failure {
+      notifySlack('FAILED')
+    }
+  }
+}

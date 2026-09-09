@@ -31,12 +31,14 @@ import com.datastax.oss.driver.api.core.type.codec.MappingCodec;
 import com.datastax.oss.driver.api.core.type.reflect.GenericType;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.api.testinfra.session.SessionUtils;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.type.codec.IntCodec;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.function.UnaryOperator;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -108,6 +110,7 @@ public class PagingStateIT {
 
   @Test
   public void should_inject_in_simple_statement_with_custom_codecs() {
+    Assume.assumeFalse("Skipped for Astra", CCM_RULE.isDistributionOf(BackendType.ASTRA));
     try (CqlSession session =
         (CqlSession)
             SessionUtils.baseBuilder()

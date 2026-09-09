@@ -17,7 +17,9 @@
  */
 package com.datastax.oss.driver.api.testinfra.ccm;
 
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import java.util.concurrent.atomic.AtomicReference;
+import org.junit.Assume;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +43,7 @@ public class CustomCcmRule extends BaseCcmRule {
 
   @Override
   protected void before() {
+    Assume.assumeTrue("Skipping for Astra", !isDistributionOf(BackendType.ASTRA));
     if (CURRENT.get() == null && CURRENT.compareAndSet(null, this)) {
       try {
         super.before();

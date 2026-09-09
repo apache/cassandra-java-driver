@@ -31,7 +31,7 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
 
   protected final CcmBridge ccmBridge;
 
-  BaseCcmRule(CcmBridge ccmBridge) {
+  protected BaseCcmRule(CcmBridge ccmBridge) {
     this.ccmBridge = ccmBridge;
     Runtime.getRuntime()
         .addShutdownHook(
@@ -72,22 +72,26 @@ public abstract class BaseCcmRule extends CassandraResourceRule {
     }
   }
 
+  @Override
   public BackendType getDistribution() {
-    return CcmBridge.DISTRIBUTION;
+    return ccmBridge.getDistribution();
   }
 
+  @Override
   public boolean isDistributionOf(BackendType type) {
-    return CcmBridge.isDistributionOf(type);
+    return ccmBridge.getDistribution() == type;
   }
 
   public boolean isDistributionOf(BackendType type, CcmBridge.VersionComparator comparator) {
     return CcmBridge.isDistributionOf(type, comparator);
   }
 
+  @Override
   public Version getDistributionVersion() {
     return CcmBridge.getDistributionVersion();
   }
 
+  @Override
   public Version getCassandraVersion() {
     return CcmBridge.getCassandraVersion();
   }

@@ -132,7 +132,7 @@ public class CcmBridge implements AutoCloseable {
   private final List<String> dseWorkloads;
   private final String jvmArgs;
 
-  private CcmBridge(
+  protected CcmBridge(
       Path configDirectory,
       int[] nodes,
       String ipPrefix,
@@ -429,6 +429,10 @@ public class CcmBridge implements AutoCloseable {
     }
   }
 
+  public BackendType getDistribution() {
+    return DISTRIBUTION;
+  }
+
   /**
    * Extracts a keystore from the classpath into a temporary file.
    *
@@ -538,7 +542,7 @@ public class CcmBridge implements AutoCloseable {
 
     private final Path configDirectory;
 
-    private Builder() {
+    protected Builder() {
       try {
         this.configDirectory = Files.createTempDirectory("ccm");
         // mark the ccm temp directories for deletion when the JVM exits
