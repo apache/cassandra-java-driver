@@ -114,8 +114,6 @@ public class MicrometerNodeMetricUpdater extends MicrometerMetricUpdater<NodeMet
           .percentilePrecision(
               profile.getInt(DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_DIGITS));
 
-      configurePercentilesPublishIfDefined(
-          builder, profile, DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_PUBLISH_PERCENTILES);
     } else if (metric == DseNodeMetric.GRAPH_MESSAGES) {
       builder
           .minimumExpectedValue(
@@ -129,9 +127,6 @@ public class MicrometerNodeMetricUpdater extends MicrometerMetricUpdater<NodeMet
                       .toArray(new Duration[0])
                   : null)
           .percentilePrecision(profile.getInt(DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_DIGITS));
-
-      configurePercentilesPublishIfDefined(
-          builder, profile, DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_PUBLISH_PERCENTILES);
     }
     return builder;
   }
