@@ -39,6 +39,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
@@ -48,6 +50,7 @@ import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.LogOutputStream;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.assertj.core.util.Lists;
+import org.assertj.core.util.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,6 +118,9 @@ public class CcmBridge implements AutoCloseable {
 
   // mapped C* versions from HCD versions
   public static final Version V4_0_11 = Version.parse("4.0.11");
+
+  private static final Pattern JVM_VERSION_PATTERN =
+      Pattern.compile("^(1\\.)?(?<major>[0-9]+)\\..*$");
 
   static {
     LOG.info("CCM Bridge configured with {} version {}", DISTRIBUTION.getFriendlyName(), VERSION);
@@ -454,17 +460,18 @@ public class CcmBridge implements AutoCloseable {
    *
    * @return major version of current JVM
    */
-  private static int getCurrentJvmMajorVersion() {
-    String version = System.getProperty("java.version");
-    if (version.startsWith("1.")) {
-      version = version.substring(2, 3);
-    } else {
-      int dot = version.indexOf(".");
-      if (dot != -1) {
-        version = version.substring(0, dot);
-      }
+  @VisibleForTesting
+  static int getCurrentJvmMajorVersion() {
+    return getJvmMajorVersion(System.getProperty("java.version"));
+  }
+
+  @VisibleForTesting
+  static int getJvmMajorVersion(String version) {
+    Matcher matcher = version != null ? JVM_VERSION_PATTERN.matcher(version) : null;
+    if (matcher == null || !matcher.matches() || matcher.group("major") == null) {
+      throw new IllegalStateException("Unable to parse JVM version: " + version);
     }
-    return Integer.parseInt(version);
+    return Integer.parseInt(matcher.group("major"));
   }
 
   private Optional<Integer> overrideJvmVersionForDseWorkloads() {
