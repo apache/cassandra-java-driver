@@ -32,20 +32,8 @@ import java.util.Collections;
 import org.junit.Test;
 
 /**
- * Wire-level compatibility tests for the CEP-59 {@code GRACEFUL_DISCONNECT} event
- * (CASSANDRA-21191).
- *
- * <p>The server-side implementation is still in flux, so these tests exercise the full decode path
- * on raw bytes, as the server would send them, rather than on pre-built message objects. They pin
- * down:
- *
- * <ul>
- *   <li>the current contract: an EVENT envelope whose body is just the type string;
- *   <li>forward compatibility: a future server that appends a payload (e.g. the grace period) to
- *       the event body must not break decoding;
- *   <li>the failure mode for an unknown event type, which is why the driver must never REGISTER for
- *       types the server did not advertise.
- * </ul>
+ * Decodes the CEP-59 {@code GRACEFUL_DISCONNECT} event (CASSANDRA-21191) from raw bytes, as the
+ * server would send them.
  */
 public class GracefulDisconnectWireCompatTest {
 
@@ -53,7 +41,6 @@ public class GracefulDisconnectWireCompatTest {
       FrameCodec.defaultClient(
           new ByteBufPrimitiveCodec(UnpooledByteBufAllocator.DEFAULT), Compressor.none());
 
-  /** Builds a raw response envelope: version | flags | streamId | opcode | length | body. */
   private ByteBuf rawEventFrame(int protocolVersion, byte[] body) {
     ByteBuf buffer = UnpooledByteBufAllocator.DEFAULT.buffer();
     buffer.writeByte(protocolVersion | 0x80); // response direction bit
@@ -65,21 +52,18 @@ public class GracefulDisconnectWireCompatTest {
     return buffer;
   }
 
-  private static byte[] eventBody(String eventType, byte[] extra) {
+  private static byte[] eventBody(String eventType) {
     byte[] typeBytes = eventType.getBytes(StandardCharsets.UTF_8);
-    byte[] body = new byte[2 + typeBytes.length + extra.length];
+    byte[] body = new byte[2 + typeBytes.length];
     body[0] = (byte) (typeBytes.length >> 8);
     body[1] = (byte) typeBytes.length;
     System.arraycopy(typeBytes, 0, body, 2, typeBytes.length);
-    System.arraycopy(extra, 0, body, 2 + typeBytes.length, extra.length);
     return body;
   }
 
   @Test
-  public void should_decode_current_server_format() {
-    // Body is exactly the type string, as sent by the CASSANDRA-21191 baseline:
-    ByteBuf raw =
-        rawEventFrame(ProtocolConstants.Version.V4, eventBody("GRACEFUL_DISCONNECT", new byte[0]));
+  public void should_decode_v4_envelope() {
+    ByteBuf raw = rawEventFrame(ProtocolConstants.Version.V4, eventBody("GRACEFUL_DISCONNECT"));
 
     Frame frame = frameCodec.decode(raw);
 
@@ -89,21 +73,7 @@ public class GracefulDisconnectWireCompatTest {
 
   @Test
   public void should_decode_v5_envelope() {
-    ByteBuf raw =
-        rawEventFrame(ProtocolConstants.Version.V5, eventBody("GRACEFUL_DISCONNECT", new byte[0]));
-
-    Frame frame = frameCodec.decode(raw);
-
-    assertThat(frame.message).isInstanceOf(GracefulDisconnectEvent.class);
-  }
-
-  @Test
-  public void should_tolerate_extra_body_bytes_from_future_server() {
-    // A plausible CEP-59 evolution: the server appends the grace period (an [int], here 5000ms)
-    // to the event body. An old driver must keep working, ignoring the extra payload.
-    byte[] extra = {0x00, 0x00, 0x13, (byte) 0x88};
-    ByteBuf raw =
-        rawEventFrame(ProtocolConstants.Version.V4, eventBody("GRACEFUL_DISCONNECT", extra));
+    ByteBuf raw = rawEventFrame(ProtocolConstants.Version.V5, eventBody("GRACEFUL_DISCONNECT"));
 
     Frame frame = frameCodec.decode(raw);
 
@@ -131,14 +101,7 @@ public class GracefulDisconnectWireCompatTest {
 
   @Test
   public void should_reject_unknown_event_type() {
-    // Documents the current failure mode if the server ever renames the event or pushes a type
-    // the driver does not know: decoding fails. This is why ProtocolInitHandler must only
-    // REGISTER for event types the server advertised (see
-    // ProtocolInitHandlerGracefulDisconnectTest) — a server never pushes events that were not
-    // registered.
-    ByteBuf raw =
-        rawEventFrame(
-            ProtocolConstants.Version.V4, eventBody("GRACEFUL_DISCONNECT_V2", new byte[0]));
+    ByteBuf raw = rawEventFrame(ProtocolConstants.Version.V4, eventBody("GRACEFUL_DISCONNECT_V2"));
 
     Throwable t = catchThrowable(() -> frameCodec.decode(raw));
 

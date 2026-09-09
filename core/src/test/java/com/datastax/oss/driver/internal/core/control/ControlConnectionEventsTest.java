@@ -19,6 +19,7 @@ package com.datastax.oss.driver.internal.core.control;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -47,9 +48,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
 
   @Test
   public void should_register_for_all_events_if_topology_requested() {
-    // Given
-    when(defaultProfile.getBoolean(DefaultDriverOption.GRACEFUL_DISCONNECT_ENABLED, true))
-        .thenReturn(true);
+    // Given (graceful disconnect is enabled by default)
     DriverChannel channel1 = newMockDriverChannel(1);
     ArgumentCaptor<DriverChannelOptions> optionsCaptor =
         ArgumentCaptor.forClass(DriverChannelOptions.class);
@@ -129,9 +128,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
 
   @Test
   public void should_process_graceful_disconnect_event() {
-    // Given
-    when(defaultProfile.getBoolean(DefaultDriverOption.GRACEFUL_DISCONNECT_ENABLED, true))
-        .thenReturn(true);
+    // Given (graceful disconnect is enabled by default)
     DriverChannel channel1 = newMockDriverChannel(1);
     Metadata metadata = mock(Metadata.class);
     when(metadataManager.getMetadata()).thenReturn(metadata);
@@ -143,14 +140,13 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     controlConnection.init(true, false, false);
     await().until(() -> optionsCaptor.getValue() != null);
     EventCallback callback = optionsCaptor.getValue().eventCallback;
-    com.datastax.oss.protocol.internal.response.event.GracefulDisconnectEvent event =
-        new com.datastax.oss.protocol.internal.response.event.GracefulDisconnectEvent();
 
     // When
-    callback.onEvent(event);
+    callback.onEvent(
+        new com.datastax.oss.protocol.internal.response.event.GracefulDisconnectEvent());
 
     // Then
-    verify(eventBus).fire(org.mockito.ArgumentMatchers.any(GracefulDisconnectEvent.class));
+    verify(eventBus).fire(any(GracefulDisconnectEvent.class));
     verify(sessionMetricUpdater).incrementCounter(DefaultSessionMetric.GRACEFUL_DISCONNECTS, null);
     verify(nodeMetricUpdater).incrementCounter(DefaultNodeMetric.GRACEFUL_DISCONNECTS, null);
   }

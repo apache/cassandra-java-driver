@@ -138,14 +138,18 @@ public class ProtocolInitHandlerGracefulDisconnectTest extends ChannelHandlerTes
   public void should_register_graceful_disconnect_when_advertised_in_supported() {
     ChannelFuture connectFuture =
         connectWithEvents(
-            ImmutableList.of("STATUS_CHANGE", ProtocolConstants.EventType.GRACEFUL_DISCONNECT));
+            ImmutableList.of(
+                ProtocolConstants.EventType.STATUS_CHANGE,
+                ProtocolConstants.EventType.GRACEFUL_DISCONNECT));
 
     initUntilAfterClusterName(SUPPORTED_WITH_GRACEFUL_DISCONNECT);
     Frame registerFrame = readOutboundFrame();
     assertThat(registerFrame.message).isInstanceOf(Register.class);
 
     assertThat(((Register) registerFrame.message).eventTypes)
-        .containsExactly("STATUS_CHANGE", ProtocolConstants.EventType.GRACEFUL_DISCONNECT);
+        .containsExactly(
+            ProtocolConstants.EventType.STATUS_CHANGE,
+            ProtocolConstants.EventType.GRACEFUL_DISCONNECT);
     writeInboundFrame(registerFrame, new Ready());
     assertThat(connectFuture).isSuccess();
   }
@@ -154,13 +158,16 @@ public class ProtocolInitHandlerGracefulDisconnectTest extends ChannelHandlerTes
   public void should_not_register_graceful_disconnect_when_server_does_not_advertise_it() {
     ChannelFuture connectFuture =
         connectWithEvents(
-            ImmutableList.of("STATUS_CHANGE", ProtocolConstants.EventType.GRACEFUL_DISCONNECT));
+            ImmutableList.of(
+                ProtocolConstants.EventType.STATUS_CHANGE,
+                ProtocolConstants.EventType.GRACEFUL_DISCONNECT));
 
     initUntilAfterClusterName(SUPPORTED_WITHOUT_GRACEFUL_DISCONNECT);
     Frame registerFrame = readOutboundFrame();
     assertThat(registerFrame.message).isInstanceOf(Register.class);
 
-    assertThat(((Register) registerFrame.message).eventTypes).containsExactly("STATUS_CHANGE");
+    assertThat(((Register) registerFrame.message).eventTypes)
+        .containsExactly(ProtocolConstants.EventType.STATUS_CHANGE);
     writeInboundFrame(registerFrame, new Ready());
     assertThat(connectFuture).isSuccess();
   }
@@ -169,7 +176,9 @@ public class ProtocolInitHandlerGracefulDisconnectTest extends ChannelHandlerTes
   public void should_not_register_graceful_disconnect_when_advertised_as_false() {
     ChannelFuture connectFuture =
         connectWithEvents(
-            ImmutableList.of("STATUS_CHANGE", ProtocolConstants.EventType.GRACEFUL_DISCONNECT));
+            ImmutableList.of(
+                ProtocolConstants.EventType.STATUS_CHANGE,
+                ProtocolConstants.EventType.GRACEFUL_DISCONNECT));
 
     initUntilAfterClusterName(
         new Supported(
@@ -181,7 +190,8 @@ public class ProtocolInitHandlerGracefulDisconnectTest extends ChannelHandlerTes
     Frame registerFrame = readOutboundFrame();
     assertThat(registerFrame.message).isInstanceOf(Register.class);
 
-    assertThat(((Register) registerFrame.message).eventTypes).containsExactly("STATUS_CHANGE");
+    assertThat(((Register) registerFrame.message).eventTypes)
+        .containsExactly(ProtocolConstants.EventType.STATUS_CHANGE);
     writeInboundFrame(registerFrame, new Ready());
     assertThat(connectFuture).isSuccess();
   }

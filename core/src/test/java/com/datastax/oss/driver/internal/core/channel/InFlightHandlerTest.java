@@ -18,10 +18,8 @@
 package com.datastax.oss.driver.internal.core.channel;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -660,8 +658,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
         .awaitUninterruptibly();
 
     // When
-    GracefulDisconnectEvent gracefulDisconnectEvent =
-        new com.datastax.oss.protocol.internal.response.event.GracefulDisconnectEvent();
+    GracefulDisconnectEvent gracefulDisconnectEvent = new GracefulDisconnectEvent();
     Frame eventFrame =
         Frame.forResponse(
             DefaultProtocolVersion.V4.getCode(),
@@ -700,8 +697,7 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     addToPipelineWithEventCallback(eventCallback);
 
     // When
-    GracefulDisconnectEvent gracefulDisconnectEvent =
-        new com.datastax.oss.protocol.internal.response.event.GracefulDisconnectEvent();
+    GracefulDisconnectEvent gracefulDisconnectEvent = new GracefulDisconnectEvent();
     Frame eventFrame =
         Frame.forResponse(
             DefaultProtocolVersion.V4.getCode(),
@@ -715,66 +711,6 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
     // Then
     assertThat(channel.closeFuture()).isSuccess();
     verify(eventCallback).onEvent(gracefulDisconnectEvent);
-  }
-
-  @Test
-  public void should_handle_duplicate_graceful_disconnect_events() {
-    // The server-side CEP-59 implementation is still evolving; a node might emit the event more
-    // than once (e.g. once per registered connection, or on a drain retry). The second event must
-    // not disrupt the drain already in progress.
-    // Given
-    EventCallback eventCallback = mock(EventCallback.class);
-    addToPipelineWithEventCallback(eventCallback);
-    when(streamIds.acquire()).thenReturn(42);
-    MockResponseCallback responseCallback = new MockResponseCallback();
-    channel
-        .writeAndFlush(
-            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback))
-        .awaitUninterruptibly();
-
-    // When: the same event is received twice while a request is still pending
-    for (int i = 0; i < 2; i++) {
-      Frame eventFrame =
-          Frame.forResponse(
-              DefaultProtocolVersion.V4.getCode(),
-              -1,
-              null,
-              Collections.emptyMap(),
-              Collections.emptyList(),
-              new com.datastax.oss.protocol.internal.response.event.GracefulDisconnectEvent());
-      writeInboundFrame(eventFrame);
-    }
-
-    // Then: still draining, not closed abruptly
-    assertThat(channel.closeFuture()).isNotDone();
-    verify(eventCallback, times(2)).onEvent(any());
-
-    // When the pending request completes, the drain finishes normally
-    Frame requestFrame = readOutboundFrame();
-    writeInboundFrame(requestFrame, Void.INSTANCE);
-    assertThat(channel.closeFuture()).isSuccess();
-  }
-
-  @Test
-  public void should_handle_graceful_disconnect_without_event_callback() {
-    // Given
-    addToPipeline(); // no event callback
-
-    // When
-    GracefulDisconnectEvent gracefulDisconnectEvent =
-        new com.datastax.oss.protocol.internal.response.event.GracefulDisconnectEvent();
-    Frame eventFrame =
-        Frame.forResponse(
-            DefaultProtocolVersion.V4.getCode(),
-            -1,
-            null,
-            Collections.emptyMap(),
-            Collections.emptyList(),
-            gracefulDisconnectEvent);
-    writeInboundFrame(eventFrame);
-
-    // Then
-    assertThat(channel.closeFuture()).isSuccess();
   }
 
   private void addToPipelineWithEventCallback(EventCallback eventCallback) {

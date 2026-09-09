@@ -20,6 +20,7 @@ package com.datastax.oss.driver.internal.core.control;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
@@ -137,6 +138,12 @@ abstract class ControlConnectionTestBase {
     when(config.getDefaultProfile()).thenReturn(defaultProfile);
     when(defaultProfile.getBoolean(DefaultDriverOption.CONNECTION_WARN_INIT_ERROR))
         .thenReturn(false);
+    // Simulate the real config behavior for options that are read with a call-site default (the
+    // mock would otherwise always return false): return the provided default unless a test
+    // overrides the stub.
+    when(defaultProfile.getBoolean(
+            eq(DefaultDriverOption.GRACEFUL_DISCONNECT_ENABLED), anyBoolean()))
+        .thenAnswer(invocation -> invocation.getArgument(1));
 
     controlConnection = new ControlConnection(context);
   }

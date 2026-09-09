@@ -45,19 +45,25 @@ import org.junit.Test;
  * exception to the application.
  *
  * <p>Requires a server that implements the GRACEFUL_DISCONNECT event; on older servers the test is
- * skipped by the version requirement below.
+ * skipped by the version requirement below (the requirement is on the class so that the {@link
+ * ClassRule} sees it and does not start the cluster at all).
  */
+@BackendRequirement(
+    type = BackendType.CASSANDRA,
+    minInclusive = "7.0",
+    description = "Graceful disconnect (CEP-59 / CASSANDRA-21191) requires server-side support")
 public class GracefulDisconnectIT {
 
   @ClassRule
-  public static final CustomCcmRule CCM_RULE = CustomCcmRule.builder().withNodes(2).build();
+  public static final CustomCcmRule CCM_RULE =
+      CustomCcmRule.builder()
+          .withNodes(2)
+          // The server-side feature is disabled by default:
+          .withCassandraConfiguration("graceful_disconnect_enabled", true)
+          .build();
 
   private static final String QUERY = "SELECT * FROM system.local";
 
-  @BackendRequirement(
-      type = BackendType.CASSANDRA,
-      minInclusive = "7.0",
-      description = "Graceful disconnect (CEP-59 / CASSANDRA-21191) requires server-side support")
   @Test
   public void should_fail_over_without_disruption_when_node_drains() throws Exception {
     DriverConfigLoader loader =
@@ -84,6 +90,10 @@ public class GracefulDisconnectIT {
                   try {
                     session.execute(QUERY);
                     successes.incrementAndGet();
+                    Thread.sleep(5);
+                  } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
                   } catch (RuntimeException e) {
                     failures.add(e);
                   }

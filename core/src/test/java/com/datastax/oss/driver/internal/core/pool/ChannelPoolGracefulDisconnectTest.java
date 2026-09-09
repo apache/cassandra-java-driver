@@ -19,6 +19,7 @@ package com.datastax.oss.driver.internal.core.pool;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -38,7 +39,6 @@ import com.datastax.oss.protocol.internal.ProtocolConstants;
 import java.util.concurrent.CompletionStage;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
 
 public class ChannelPoolGracefulDisconnectTest extends ChannelPoolTestBase {
 
@@ -109,7 +109,7 @@ public class ChannelPoolGracefulDisconnectTest extends ChannelPoolTestBase {
     eventBus.fire(new GracefulDisconnectEvent(otherNode));
 
     // Wait for the event to be processed on the admin executor, then check nothing was closed:
-    verify(eventBus, VERIFY_TIMEOUT).fire(ArgumentMatchers.any(GracefulDisconnectEvent.class));
+    verify(eventBus, VERIFY_TIMEOUT).fire(any(GracefulDisconnectEvent.class));
     Thread.sleep(200);
     verify(channel1, never()).close();
   }
@@ -134,7 +134,7 @@ public class ChannelPoolGracefulDisconnectTest extends ChannelPoolTestBase {
         .incrementCounter(DefaultNodeMetric.GRACEFUL_DISCONNECTS, null);
     verify(sessionMetricUpdater, VERIFY_TIMEOUT)
         .incrementCounter(DefaultSessionMetric.GRACEFUL_DISCONNECTS, null);
-    verify(eventBus, VERIFY_TIMEOUT).fire(ArgumentMatchers.any(GracefulDisconnectEvent.class));
+    verify(eventBus, VERIFY_TIMEOUT).fire(any(GracefulDisconnectEvent.class));
     verify(channel1, VERIFY_TIMEOUT).close();
   }
 }
