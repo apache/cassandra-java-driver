@@ -74,6 +74,7 @@ import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Batch;
 import com.datastax.oss.protocol.internal.request.Execute;
+import com.datastax.oss.protocol.internal.request.Prepare;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.request.query.QueryOptions;
 import com.datastax.oss.protocol.internal.response.Error;
@@ -357,6 +358,10 @@ public class Conversions {
       }
       return definitions;
     }
+  }
+
+  public static PrepareRequest toPrepareRequest(Prepare request) {
+    return new DefaultPrepareRequest(SimpleStatement.newInstance(request.cqlQuery));
   }
 
   public static DefaultPreparedStatement toPreparedStatement(

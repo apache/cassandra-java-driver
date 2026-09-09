@@ -28,6 +28,8 @@ import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.protocol.internal.Frame;
+import com.datastax.oss.protocol.internal.response.Result;
+import com.datastax.oss.protocol.internal.response.result.Rows;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.nio.ByteBuffer;
@@ -45,6 +47,7 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   private final Node coordinator;
   private final int speculativeExecutionCount;
   private final int successfulExecutionIndex;
+  private final Throwable driverError;
   private final List<Map.Entry<Node, Throwable>> errors;
   private final ByteBuffer pagingState;
   private final UUID tracingId;
@@ -57,11 +60,12 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   private final InternalDriverContext context;
   private final DriverExecutionProfile executionProfile;
 
-  public DefaultExecutionInfo(
+  private DefaultExecutionInfo(
       Request request,
       Node coordinator,
       int speculativeExecutionCount,
       int successfulExecutionIndex,
+      Throwable driverError,
       List<Map.Entry<Node, Throwable>> errors,
       ByteBuffer pagingState,
       Frame frame,
@@ -74,6 +78,7 @@ public class DefaultExecutionInfo implements ExecutionInfo {
     this.coordinator = coordinator;
     this.speculativeExecutionCount = speculativeExecutionCount;
     this.successfulExecutionIndex = successfulExecutionIndex;
+    this.driverError = driverError;
     this.errors = errors;
     this.pagingState = pagingState;
 
@@ -102,6 +107,11 @@ public class DefaultExecutionInfo implements ExecutionInfo {
     return request;
   }
 
+  @Override
+  public DriverExecutionProfile getExecutionProfile() {
+    return executionProfile;
+  }
+
   @Nullable
   @Override
   public Node getCoordinator() {
@@ -116,6 +126,12 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   @Override
   public int getSuccessfulExecutionIndex() {
     return successfulExecutionIndex;
+  }
+
+  @Nullable
+  @Override
+  public Throwable getDriverError() {
+    return driverError;
   }
 
   @NonNull
@@ -188,5 +204,100 @@ public class DefaultExecutionInfo implements ExecutionInfo {
   @Override
   public int getCompressedResponseSizeInBytes() {
     return compressedResponseSizeInBytes;
+  }
+
+  public static Builder builder(
+      Request request,
+      Node coordinator,
+      int speculativeExecutionCount,
+      int successfulExecutionIndex,
+      Throwable driverError,
+      List<Map.Entry<Node, Throwable>> errors,
+      DefaultSession session,
+      InternalDriverContext context,
+      DriverExecutionProfile executionProfile) {
+    return new Builder(
+        request,
+        coordinator,
+        speculativeExecutionCount,
+        successfulExecutionIndex,
+        driverError,
+        errors,
+        session,
+        context,
+        executionProfile);
+  }
+
+  public static class Builder {
+    private final Request request;
+    private final Node coordinator;
+    private final int speculativeExecutionCount;
+    private final int successfulExecutionIndex;
+    private final Throwable driverError;
+    private final List<Map.Entry<Node, Throwable>> errors;
+    private final DefaultSession session;
+    private final InternalDriverContext context;
+    private final DriverExecutionProfile executionProfile;
+
+    private Result response;
+    private Frame frame;
+    private boolean schemaInAgreement = true;
+
+    public Builder(
+        Request request,
+        Node coordinator,
+        int speculativeExecutionCount,
+        int successfulExecutionIndex,
+        Throwable driverError,
+        List<Map.Entry<Node, Throwable>> errors,
+        DefaultSession session,
+        InternalDriverContext context,
+        DriverExecutionProfile executionProfile) {
+      this.request = request;
+      this.coordinator = coordinator;
+      this.speculativeExecutionCount = speculativeExecutionCount;
+      this.successfulExecutionIndex = successfulExecutionIndex;
+      this.driverError = driverError;
+      this.errors = errors;
+      this.session = session;
+      this.context = context;
+      this.executionProfile = executionProfile;
+    }
+
+    public Builder withServerResponse(Result response, Frame frame) {
+      this.response = response;
+      this.frame = frame;
+      return this;
+    }
+
+    /** Client received a response, but it could not be parsed to expected message. */
+    public Builder withServerResponse(Frame frame) {
+      return withServerResponse(null, frame);
+    }
+
+    public Builder withSchemaInAgreement(boolean schemaInAgreement) {
+      this.schemaInAgreement = schemaInAgreement;
+      return this;
+    }
+
+    public DefaultExecutionInfo build() {
+      final ByteBuffer pagingState =
+          (response instanceof Rows) ? ((Rows) response).getMetadata().pagingState : null;
+      DefaultExecutionInfo executionInfo =
+          new DefaultExecutionInfo(
+              request,
+              coordinator,
+              speculativeExecutionCount,
+              successfulExecutionIndex,
+              driverError,
+              errors,
+              pagingState,
+              frame,
+              schemaInAgreement,
+              session,
+              context,
+              executionProfile);
+      return executionInfo;
+    }
   }
 }
