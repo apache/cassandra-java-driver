@@ -152,6 +152,16 @@ public class DefaultPreparedStatement implements PreparedStatement {
     this.resultMetadata = new ResultMetadata(newResultMetadataId, newResultSetDefinitions);
   }
 
+  /**
+   * Returns an atomic snapshot of the id+definitions pair currently in effect, in a single volatile
+   * read. Used to capture the metadata that was in effect when a request was encoded, so that
+   * decoding its response later can use that snapshot instead of racing against a concurrent {@link
+   * #setResultMetadata} call (see CASSANDRA-10786 and the SKIP_METADATA optimization).
+   */
+  ResultMetadata getCurrentResultMetadata() {
+    return this.resultMetadata;
+  }
+
   @NonNull
   @Override
   public BoundStatement bind(@NonNull Object... values) {
@@ -210,13 +220,21 @@ public class DefaultPreparedStatement implements PreparedStatement {
     return this.repreparePayload;
   }
 
-  private static class ResultMetadata {
-    private ByteBuffer resultMetadataId;
-    private ColumnDefinitions resultSetDefinitions;
+  static class ResultMetadata {
+    private final ByteBuffer resultMetadataId;
+    private final ColumnDefinitions resultSetDefinitions;
 
     private ResultMetadata(ByteBuffer resultMetadataId, ColumnDefinitions resultSetDefinitions) {
       this.resultMetadataId = resultMetadataId;
       this.resultSetDefinitions = resultSetDefinitions;
+    }
+
+    ByteBuffer getResultMetadataId() {
+      return resultMetadataId;
+    }
+
+    ColumnDefinitions getResultSetDefinitions() {
+      return resultSetDefinitions;
     }
   }
 }
