@@ -106,6 +106,7 @@ public class MicroProfileMetricsIT extends MetricsITBase {
           assertThat(((Meter) m).getCount()).isGreaterThan(0);
           break;
         case CQL_CLIENT_TIMEOUTS:
+        case GRACEFUL_DISCONNECTS:
         case THROTTLING_ERRORS:
           assertThat(m).isInstanceOf(Counter.class);
           assertThat(((Counter) m).getCount()).isZero();
@@ -160,6 +161,7 @@ public class MicroProfileMetricsIT extends MetricsITBase {
           case SPECULATIVE_EXECUTIONS:
           case CONNECTION_INIT_ERRORS:
           case AUTHENTICATION_ERRORS:
+          case GRACEFUL_DISCONNECTS:
             assertThat(m).isInstanceOf(Counter.class);
             assertThat(((Counter) m).getCount()).isZero();
             break;

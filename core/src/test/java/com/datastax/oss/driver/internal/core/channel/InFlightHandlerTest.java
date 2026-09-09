@@ -33,6 +33,7 @@ import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Query;
 import com.datastax.oss.protocol.internal.response.Error;
+import com.datastax.oss.protocol.internal.response.event.GracefulDisconnectEvent;
 import com.datastax.oss.protocol.internal.response.event.StatusChangeEvent;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import com.datastax.oss.protocol.internal.response.result.Void;
@@ -642,6 +643,74 @@ public class InFlightHandlerTest extends ChannelHandlerTestBase {
 
   private void addToPipeline() {
     addToPipelineWithEventCallback(null);
+  }
+
+  @Test
+  public void should_initiate_graceful_drain_on_graceful_disconnect_event() {
+    // Given
+    EventCallback eventCallback = mock(EventCallback.class);
+    addToPipelineWithEventCallback(eventCallback);
+    when(streamIds.acquire()).thenReturn(42);
+    MockResponseCallback responseCallback = new MockResponseCallback();
+    channel
+        .writeAndFlush(
+            new DriverChannel.RequestMessage(QUERY, false, Frame.NO_PAYLOAD, responseCallback))
+        .awaitUninterruptibly();
+
+    // When
+    GracefulDisconnectEvent gracefulDisconnectEvent = new GracefulDisconnectEvent();
+    Frame eventFrame =
+        Frame.forResponse(
+            DefaultProtocolVersion.V4.getCode(),
+            -1,
+            null,
+            Collections.emptyMap(),
+            Collections.emptyList(),
+            gracefulDisconnectEvent);
+    writeInboundFrame(eventFrame);
+
+    // Then
+    // channel not closed yet because there is a pending request
+    assertThat(channel.closeFuture()).isNotDone();
+    // callback was still notified
+    verify(eventCallback).onEvent(gracefulDisconnectEvent);
+    // new writes should be refused
+    ChannelFuture otherWriteFuture =
+        channel.writeAndFlush(
+            new DriverChannel.RequestMessage(
+                QUERY, false, Frame.NO_PAYLOAD, new MockResponseCallback()));
+    assertThat(otherWriteFuture)
+        .isFailed(e -> assertThat(e).isInstanceOf(IllegalStateException.class));
+
+    // When the pending request completes
+    Frame requestFrame = readOutboundFrame();
+    writeInboundFrame(requestFrame, Void.INSTANCE);
+
+    // Then the channel closes
+    assertThat(channel.closeFuture()).isSuccess();
+  }
+
+  @Test
+  public void should_close_immediately_on_graceful_disconnect_if_no_pending() {
+    // Given
+    EventCallback eventCallback = mock(EventCallback.class);
+    addToPipelineWithEventCallback(eventCallback);
+
+    // When
+    GracefulDisconnectEvent gracefulDisconnectEvent = new GracefulDisconnectEvent();
+    Frame eventFrame =
+        Frame.forResponse(
+            DefaultProtocolVersion.V4.getCode(),
+            -1,
+            null,
+            Collections.emptyMap(),
+            Collections.emptyList(),
+            gracefulDisconnectEvent);
+    writeInboundFrame(eventFrame);
+
+    // Then
+    assertThat(channel.closeFuture()).isSuccess();
+    verify(eventCallback).onEvent(gracefulDisconnectEvent);
   }
 
   private void addToPipelineWithEventCallback(EventCallback eventCallback) {
