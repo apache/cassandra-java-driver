@@ -50,10 +50,15 @@ public class ChannelHandlerTestBase {
 
   /** Reads a request frame that we expect the tested handler to have sent outbound. */
   protected Frame readOutboundFrame() {
+    return readOutboundT(Frame.class);
+  }
+
+  /** Reads a request object that we expect the tested handler to have sent outbound. */
+  protected <T> T readOutboundT(Class<T> clazz) {
     channel.runPendingTasks();
     Object o = channel.readOutbound();
-    assertThat(o).isInstanceOf(Frame.class);
-    return ((Frame) o);
+    assertThat(o).isInstanceOf(clazz);
+    return (T) o;
   }
 
   protected void assertNoOutboundFrame() {

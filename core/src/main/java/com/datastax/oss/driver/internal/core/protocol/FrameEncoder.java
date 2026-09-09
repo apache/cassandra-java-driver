@@ -43,12 +43,17 @@ public class FrameEncoder extends MessageToMessageEncoder<Frame> {
   @Override
   protected void encode(ChannelHandlerContext ctx, Frame frame, List<Object> out) throws Exception {
     ByteBuf buffer = frameCodec.encode(frame);
-    int actualLength = buffer.readableBytes();
-    if (actualLength > maxFrameLength) {
-      throw new FrameTooLongException(
-          ctx.channel().remoteAddress(),
-          String.format("Outgoing frame length exceeds %d: %d", maxFrameLength, actualLength));
+    try {
+      int actualLength = buffer.readableBytes();
+      if (actualLength > maxFrameLength) {
+        throw new FrameTooLongException(
+            ctx.channel().remoteAddress(),
+            String.format("Outgoing frame length exceeds %d: %d", maxFrameLength, actualLength));
+      }
+      out.add(buffer);
+    } catch (Exception e) {
+      buffer.release();
+      throw e;
     }
-    out.add(buffer);
   }
 }
