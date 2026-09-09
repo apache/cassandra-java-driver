@@ -144,6 +144,15 @@ session.execute(
 // Invalid amount of bind variables
 ```
 
+> **NOTE:** 
+> Guardrails ensure consistent behavior by limiting the number of partition keys selected by an `IN` restriction and the cartesian product of multiple `IN` restrictions.
+> 
+> **Example 1:** Providing a `WHERE` clause with a high number of elements in the `IN` clause (not part of the same partitions) causes the coordinator receiving the request to trigger other internal requests to cope, making
+> one node unnecessarily busy. Instead, distribute a simple request with `WHERE` and a single value.
+> 
+> **Example 2:** Using more than 25 values in the `IN` clause is an invalid pattern because the load is transferred from the client to the coordinator. Use parallel queries and reduce on the client side for faster speed and
+> to distribute the load on the nodes.
+
 ### Type inference
 
 Another consequence of not parsing query strings is that the driver has to guess how to serialize 
