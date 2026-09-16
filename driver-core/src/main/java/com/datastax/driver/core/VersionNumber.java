@@ -21,6 +21,7 @@ import com.datastax.driver.core.utils.MoreObjects;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,6 +39,17 @@ public class VersionNumber implements Comparable<VersionNumber> {
   private static final String VERSION_REGEXP =
       "(\\d+)\\.(\\d+)(\\.\\d+)?(\\.\\d+)?([~\\-]\\w[.\\w]*(?:\\-\\w[.\\w]*)*)?(\\+[.\\w]+)?";
   private static final Pattern pattern = Pattern.compile(VERSION_REGEXP);
+
+  public static final VersionNumber V1_0_0 = Objects.requireNonNull(parse("1.0.0"));
+  public static final VersionNumber V2_1_0 = Objects.requireNonNull(parse("2.1.0"));
+  public static final VersionNumber V2_2_0 = Objects.requireNonNull(parse("2.2.0"));
+  public static final VersionNumber V3_0_0 = Objects.requireNonNull(parse("3.0.0"));
+  public static final VersionNumber V4_0_0 = Objects.requireNonNull(parse("4.0.0"));
+  public static final VersionNumber V4_1_0 = Objects.requireNonNull(parse("4.1.0"));
+  public static final VersionNumber V5_0_0 = Objects.requireNonNull(parse("5.0.0"));
+  public static final VersionNumber V6_7_0 = Objects.requireNonNull(parse("6.7.0"));
+  public static final VersionNumber V6_8_0 = Objects.requireNonNull(parse("6.8.0"));
+  public static final VersionNumber V6_9_0 = Objects.requireNonNull(parse("6.9.0"));
 
   private final int major;
   private final int minor;

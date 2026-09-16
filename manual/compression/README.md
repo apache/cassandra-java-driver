@@ -30,7 +30,7 @@ It reduces network traffic at the cost of CPU overhead, therefore it
 will likely be beneficial when you have larger payloads.
 
 Two algorithms are available:
-[LZ4](https://github.com/jpountz/lz4-java) and
+[LZ4](https://github.com/yawkat/lz4-java) and
 [Snappy](https://code.google.com/p/snappy/).  The LZ4 implementation is a good
 first choice; it offers fallback implementations in case native libraries fail
 to load and
@@ -47,9 +47,9 @@ Maven dependency:
 
 ```xml
 <dependency>
-    <groupId>org.lz4</groupId>
+    <groupId>at.yawk.lz4</groupId>
     <artifactId>lz4-java</artifactId>
-    <version>1.4.1</version>
+    <version>1.10.2</version>
 </dependency>
 ```
 

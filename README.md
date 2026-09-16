@@ -93,26 +93,10 @@ The 'extras' module is also published as a separate artifact:
 We also provide a [shaded JAR](manual/shaded_jar/)
 to avoid the explicit dependency to Netty.
 
-If you can't use a dependency management tool, a
-[binary tarball](https://cassandra.apache.org/_/download.html)
-is available for download.
-
 ## Compatibility
 
-The Java client driver 3.12.1 ([branch 3.x](https://github.com/apache/cassandra-java-driver/tree/3.x)) is compatible with Apache
-Cassandra 2.1, 2.2 and 3.0+ (see [this page](http://docs.datastax.com/en/developer/java-driver/3.11/manual/native_protocol/) for
-the most up-to-date compatibility information).
-
-UDT and tuple support is available only when using Apache Cassandra 2.1 or higher (see [CQL improvements in Cassandra 2.1](http://www.datastax.com/dev/blog/cql-in-2-1)).
-
-Other features are available only when using Apache Cassandra 2.0 or higher (e.g. result set paging,
-[BatchStatement](https://github.com/apache/cassandra-java-driver/blob/3.x/driver-core/src/main/java/com/datastax/driver/core/BatchStatement.java),
-[lightweight transactions](http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_ltweight_transaction_t.html) 
--- see [What's new in Cassandra 2.0](http://www.datastax.com/documentation/cassandra/2.0/cassandra/features/features_key_c.html)). 
-Trying to use these with a cluster running Cassandra 1.2 will result in 
-an [UnsupportedFeatureException](https://github.com/apache/cassandra-java-driver/blob/3.x/driver-core/src/main/java/com/datastax/driver/core/exceptions/UnsupportedFeatureException.java) being thrown.
-
-The java driver supports Java JDK versions 6 and above.
+The Java client driver 3.13.0 ([branch 3.x](https://github.com/apache/cassandra-java-driver/tree/3.x)) has been tested against Apache
+Cassandra 4.0.x, 4.1.x and 5.0.x.  The Java driver supports Java 8 and above.
 
 ## Upgrading from previous versions
 
