@@ -21,6 +21,7 @@ import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createTable;
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.udt;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
@@ -42,6 +43,25 @@ public class CreateTableTest {
   public void should_generate_create_table_if_not_exists() {
     assertThat(createTable("bar").ifNotExists().withPartitionKey("k", DataTypes.INT))
         .hasCql("CREATE TABLE IF NOT EXISTS bar (k int PRIMARY KEY)");
+  }
+
+  @Test
+  public void should_generate_create_table_with_correct_quoting() {
+    assertThat(
+            createTable("bAr")
+                .withPartitionKey("kY", DataTypes.INT)
+                .withClusteringColumn("xZ", DataTypes.INT)
+                .withStaticColumn("sT", DataTypes.TEXT)
+                .withColumn("cL", DataTypes.BLOB))
+        .hasCql("CREATE TABLE bar (ky int,xz int,st text STATIC,cl blob,PRIMARY KEY(ky,xz))");
+    assertThat(
+            createTable(CqlIdentifier.fromInternal("bAr"))
+                .withPartitionKey(CqlIdentifier.fromInternal("kY"), DataTypes.INT)
+                .withClusteringColumn(CqlIdentifier.fromInternal("xZ"), DataTypes.INT)
+                .withStaticColumn(CqlIdentifier.fromInternal("sT"), DataTypes.TEXT)
+                .withColumn(CqlIdentifier.fromInternal("cL"), DataTypes.BLOB))
+        .hasCql(
+            "CREATE TABLE \"bAr\" (\"kY\" int,\"xZ\" int,\"sT\" text STATIC,\"cL\" blob,PRIMARY KEY(\"kY\",\"xZ\"))");
   }
 
   @Test
