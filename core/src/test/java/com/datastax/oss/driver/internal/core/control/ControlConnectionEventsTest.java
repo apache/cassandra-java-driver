@@ -152,6 +152,6 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     callback.onEvent(event);
 
     // Then
-    verify(metadataManager).refreshSchema("ks", false, false);
+    verify(metadataManager).refreshSchema("ks", false, false, null);
   }
 }

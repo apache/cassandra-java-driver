@@ -228,7 +228,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     SchemaChangeEvent sce = (SchemaChangeEvent) event;
     context
         .getMetadataManager()
-        .refreshSchema(sce.keyspace, false, false)
+        .refreshSchema(sce.keyspace, false, false, null)
         .whenComplete(
             (metadata, error) -> {
               if (error != null) {
@@ -479,7 +479,7 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
                       context.getLoadBalancingPolicyWrapper().init();
                       context
                           .getMetadataManager()
-                          .refreshSchema(null, false, true)
+                          .refreshSchema(null, false, true, null)
                           .whenComplete(
                               (metadata, schemaError) -> {
                                 if (schemaError != null) {
