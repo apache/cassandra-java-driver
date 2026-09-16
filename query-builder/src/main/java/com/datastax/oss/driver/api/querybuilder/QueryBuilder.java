@@ -28,6 +28,7 @@ import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.datastax.oss.driver.api.querybuilder.delete.DeleteSelection;
 import com.datastax.oss.driver.api.querybuilder.insert.InsertInto;
+import com.datastax.oss.driver.api.querybuilder.relation.OngoingWhereClause;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.select.SelectFrom;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
@@ -43,6 +44,7 @@ import com.datastax.oss.driver.internal.querybuilder.DefaultLiteral;
 import com.datastax.oss.driver.internal.querybuilder.DefaultRaw;
 import com.datastax.oss.driver.internal.querybuilder.delete.DefaultDelete;
 import com.datastax.oss.driver.internal.querybuilder.insert.DefaultInsert;
+import com.datastax.oss.driver.internal.querybuilder.relation.DefaultSubConditionRelation;
 import com.datastax.oss.driver.internal.querybuilder.select.DefaultBindMarker;
 import com.datastax.oss.driver.internal.querybuilder.select.DefaultSelect;
 import com.datastax.oss.driver.internal.querybuilder.term.BinaryArithmeticTerm;
@@ -537,5 +539,11 @@ public class QueryBuilder {
   public static Truncate truncate(@Nullable String keyspace, @NonNull String table) {
     return truncate(
         keyspace == null ? null : CqlIdentifier.fromCql(keyspace), CqlIdentifier.fromCql(table));
+  }
+
+  /** Creates new sub-condition in the WHERE clause, surrounded by parenthesis. */
+  @NonNull
+  public static OngoingWhereClause<DefaultSubConditionRelation> subCondition() {
+    return new DefaultSubConditionRelation(true);
   }
 }
