@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.dse.driver.api.core.cql.reactive.ReactiveResultSet;
 import com.datastax.dse.driver.api.core.cql.reactive.ReactiveRow;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
@@ -34,6 +35,8 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.cql.EmptyColumnDefinitions;
@@ -55,6 +58,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(DataProviderRunner.class)
 @Category(ParallelizableTests.class)
+@BackendRequirement(type = BackendType.ASTRA, include = false)
 public class DefaultReactiveResultSetIT {
 
   private static CcmRule ccmRule = CcmRule.getInstance();
@@ -310,10 +314,27 @@ public class DefaultReactiveResultSetIT {
 
   private static void partiallyDeleteInsertedRows() {
     CqlSession session = sessionRule.session();
-    session.execute(" DELETE FROM test_reactive_write WHERE pk = 0 and cc = 5");
-    session.execute(" DELETE FROM test_reactive_write WHERE pk = 0 and cc = 6");
-    session.execute(" DELETE FROM test_reactive_write WHERE pk = 0 and cc = 7");
-    session.execute(" DELETE FROM test_reactive_write WHERE pk = 0 and cc = 8");
-    session.execute(" DELETE FROM test_reactive_write WHERE pk = 0 and cc = 9");
+    // Use ALL consistency level to ensure deletes are immediately visible across all replicas
+    // This is important for Astra (distributed system) to avoid eventual consistency issues
+    session.execute(
+        SimpleStatement.builder("DELETE FROM test_reactive_write WHERE pk = 0 and cc = 5")
+            .setConsistencyLevel(DefaultConsistencyLevel.ALL)
+            .build());
+    session.execute(
+        SimpleStatement.builder("DELETE FROM test_reactive_write WHERE pk = 0 and cc = 6")
+            .setConsistencyLevel(DefaultConsistencyLevel.ALL)
+            .build());
+    session.execute(
+        SimpleStatement.builder("DELETE FROM test_reactive_write WHERE pk = 0 and cc = 7")
+            .setConsistencyLevel(DefaultConsistencyLevel.ALL)
+            .build());
+    session.execute(
+        SimpleStatement.builder("DELETE FROM test_reactive_write WHERE pk = 0 and cc = 8")
+            .setConsistencyLevel(DefaultConsistencyLevel.ALL)
+            .build());
+    session.execute(
+        SimpleStatement.builder("DELETE FROM test_reactive_write WHERE pk = 0 and cc = 9")
+            .setConsistencyLevel(DefaultConsistencyLevel.ALL)
+            .build());
   }
 }
