@@ -65,7 +65,7 @@ Dependency:
 <dependency>
   <groupId>at.yawk.lz4</groupId>
   <artifactId>lz4-java</artifactId>
-  <version>1.10.1</version>
+  <version>1.11.3</version>
 </dependency>
 ```
 
