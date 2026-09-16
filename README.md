@@ -4,16 +4,17 @@
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.apache.cassandra/java-driver-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.apache.cassandra/java-driver-core)
 
 *If you're reading this on github.com, please note that this is the readme for the development 
-version and that some features described here might not yet have been released. You can find the
-documentation for latest version through [DataStax Docs] or via the release tags, e.g. 
-[4.17.0](https://github.com/datastax/java-driver/tree/4.17.0).*
+version and that some features described here might not yet have been released. You can find the documentation for latest version at [apache.github.io] or via the release tags, e.g. 
+[4.19.2](https://github.com/apache/cassandra-java-driver/tree/4.19.2). For versions earlier than 4.18.0, see the [DataStax Docs].*
 
 A modern, feature-rich and highly tunable Java client library for [Apache Cassandra®] \(2.1+) and 
 [DataStax Enterprise] \(4.7+), and [DataStax Astra], using exclusively Cassandra's binary protocol
 and Cassandra Query Language (CQL) v3.
 
+[apache.github.io]: https://apache.github.io/cassandra-java-driver/
 [DataStax Docs]: http://docs.datastax.com/en/developer/java-driver/
 [Apache Cassandra®]: http://cassandra.apache.org/
+[DataStax Astra]: https://astra.datastax.com/
 
 ## Getting the driver
 
