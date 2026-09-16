@@ -31,7 +31,6 @@ import com.datastax.oss.driver.api.core.AllNodesFailedException;
 import com.datastax.oss.driver.api.core.NodeUnavailableException;
 import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
-import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
@@ -39,42 +38,15 @@ import com.datastax.oss.driver.api.core.retry.RetryPolicy;
 import com.datastax.oss.driver.api.core.retry.RetryVerdict;
 import com.datastax.oss.driver.api.core.servererrors.OverloadedException;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
-import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
-import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Prepare;
 import com.datastax.oss.protocol.internal.response.Error;
-import com.datastax.oss.protocol.internal.response.result.ColumnSpec;
-import com.datastax.oss.protocol.internal.response.result.Prepared;
-import com.datastax.oss.protocol.internal.response.result.RawType;
-import com.datastax.oss.protocol.internal.response.result.RowsMetadata;
-import com.datastax.oss.protocol.internal.util.Bytes;
-import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
-import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
-public class CqlPrepareHandlerTest {
-
-  private static final DefaultPrepareRequest PREPARE_REQUEST =
-      new DefaultPrepareRequest("mock query");
-
-  @Mock private Node node1;
-  @Mock private Node node2;
-  @Mock private Node node3;
-
-  private final Map<String, ByteBuffer> payload =
-      ImmutableMap.of("key1", ByteBuffer.wrap(new byte[] {1, 2, 3, 4}));
-
-  @Before
-  public void setup() {
-    MockitoAnnotations.initMocks(this);
-  }
+public class CqlPrepareHandlerTest extends CqlPrepareHandlerTestBase {
 
   @Test
   public void should_prepare_on_first_node_and_reprepare_on_others() {
@@ -354,46 +326,5 @@ public class CqlPrepareHandlerTest {
           .write(any(Prepare.class), anyBoolean(), eq(payload), any(ResponseCallback.class));
       assertThatStage(prepareFuture).isSuccess(CqlPrepareHandlerTest::assertMatchesSimplePrepared);
     }
-  }
-
-  private static Message simplePrepared() {
-    RowsMetadata variablesMetadata =
-        new RowsMetadata(
-            ImmutableList.of(
-                new ColumnSpec(
-                    "ks",
-                    "table",
-                    "key",
-                    0,
-                    RawType.PRIMITIVES.get(ProtocolConstants.DataType.VARCHAR))),
-            null,
-            new int[] {0},
-            null);
-    RowsMetadata resultMetadata =
-        new RowsMetadata(
-            ImmutableList.of(
-                new ColumnSpec(
-                    "ks",
-                    "table",
-                    "message",
-                    0,
-                    RawType.PRIMITIVES.get(ProtocolConstants.DataType.VARCHAR))),
-            null,
-            new int[] {},
-            null);
-    return new Prepared(
-        Bytes.fromHexString("0xffff").array(), null, variablesMetadata, resultMetadata);
-  }
-
-  private static void assertMatchesSimplePrepared(PreparedStatement statement) {
-    assertThat(Bytes.toHexString(statement.getId())).isEqualTo("0xffff");
-
-    ColumnDefinitions variableDefinitions = statement.getVariableDefinitions();
-    assertThat(variableDefinitions).hasSize(1);
-    assertThat(variableDefinitions.get(0).getName().asInternal()).isEqualTo("key");
-
-    ColumnDefinitions resultSetDefinitions = statement.getResultSetDefinitions();
-    assertThat(resultSetDefinitions).hasSize(1);
-    assertThat(resultSetDefinitions.get(0).getName().asInternal()).isEqualTo("message");
   }
 }

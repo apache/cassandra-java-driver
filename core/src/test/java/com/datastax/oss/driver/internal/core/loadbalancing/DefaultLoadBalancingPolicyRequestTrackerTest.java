@@ -23,6 +23,10 @@ import static org.mockito.BDDMockito.given;
 
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.cql.DefaultExecutionInfo;
+import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
+import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import java.util.UUID;
@@ -34,6 +38,8 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
 
   @Mock Request request;
   @Mock DriverExecutionProfile profile;
+  @Mock DefaultSession session;
+  @Mock InternalDriverContext driverContext;
   final String logPrefix = "lbp-test-log-prefix";
 
   private DefaultLoadBalancingPolicy policy;
@@ -65,7 +71,7 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     nextNanoTime = 123;
 
     // When
-    policy.onNodeSuccess(request, 0, profile, node1, logPrefix);
+    policy.onNodeSuccess(0, createExecutionInfo(node1, null), logPrefix);
 
     // Then
     assertThat(policy.responseTimes)
@@ -83,7 +89,7 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     nextNanoTime = 456;
 
     // When
-    policy.onNodeSuccess(request, 0, profile, node1, logPrefix);
+    policy.onNodeSuccess(0, createExecutionInfo(node1, null), logPrefix);
 
     // Then
     assertThat(policy.responseTimes)
@@ -107,8 +113,8 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     nextNanoTime = 789;
 
     // When
-    policy.onNodeSuccess(request, 0, profile, node1, logPrefix);
-    policy.onNodeSuccess(request, 0, profile, node2, logPrefix);
+    policy.onNodeSuccess(0, createExecutionInfo(node1, null), logPrefix);
+    policy.onNodeSuccess(0, createExecutionInfo(node2, null), logPrefix);
 
     // Then
     assertThat(policy.responseTimes)
@@ -133,7 +139,7 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     Throwable iae = new IllegalArgumentException();
 
     // When
-    policy.onNodeError(request, iae, 0, profile, node1, logPrefix);
+    policy.onNodeError(0, createExecutionInfo(node1, iae), logPrefix);
 
     // Then
     assertThat(policy.responseTimes)
@@ -152,7 +158,7 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     Throwable iae = new IllegalArgumentException();
 
     // When
-    policy.onNodeError(request, iae, 0, profile, node1, logPrefix);
+    policy.onNodeError(0, createExecutionInfo(node1, iae), logPrefix);
 
     // Then
     assertThat(policy.responseTimes)
@@ -177,8 +183,8 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     Throwable iae = new IllegalArgumentException();
 
     // When
-    policy.onNodeError(request, iae, 0, profile, node1, logPrefix);
-    policy.onNodeError(request, iae, 0, profile, node2, logPrefix);
+    policy.onNodeError(0, createExecutionInfo(node1, iae), logPrefix);
+    policy.onNodeError(0, createExecutionInfo(node2, iae), logPrefix);
 
     // Then
     assertThat(policy.responseTimes)
@@ -194,5 +200,11 @@ public class DefaultLoadBalancingPolicyRequestTrackerTest extends LoadBalancingP
     assertThat(policy.isResponseRateInsufficient(node1, nextNanoTime)).isFalse();
     assertThat(policy.isResponseRateInsufficient(node2, nextNanoTime)).isFalse();
     assertThat(policy.isResponseRateInsufficient(node3, nextNanoTime)).isFalse();
+  }
+
+  private DefaultExecutionInfo createExecutionInfo(DefaultNode node, Throwable error) {
+    return new DefaultExecutionInfo.Builder(
+            request, node, -1, 0, error, null, session, driverContext, profile)
+        .build();
   }
 }
