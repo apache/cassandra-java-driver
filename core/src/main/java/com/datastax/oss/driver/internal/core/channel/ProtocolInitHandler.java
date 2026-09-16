@@ -36,6 +36,7 @@ import com.datastax.oss.driver.internal.core.protocol.SegmentToBytesEncoder;
 import com.datastax.oss.driver.internal.core.protocol.SegmentToFrameDecoder;
 import com.datastax.oss.driver.internal.core.util.ProtocolUtils;
 import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.ProtocolConstants.ErrorCode;
@@ -55,7 +56,9 @@ import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import net.jcip.annotations.NotThreadSafe;
 import org.slf4j.Logger;
@@ -140,6 +143,27 @@ class ProtocolInitHandler extends ConnectInitHandler {
     return result;
   }
 
+  /**
+   * Whether a SUPPORTED response advertises the CEP-59 graceful disconnect capability. The server
+   * may send the key with an explicit {@code "false"} value when the feature is disabled.
+   */
+  @VisibleForTesting
+  static boolean supportsGracefulDisconnect(Map<String, List<String>> supportedOptions) {
+    if (supportedOptions == null) {
+      return false;
+    }
+    List<String> values = supportedOptions.get(ProtocolConstants.EventType.GRACEFUL_DISCONNECT);
+    if (values == null) {
+      return false;
+    }
+    for (String value : values) {
+      if ("false".equalsIgnoreCase(value)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private enum Step {
     OPTIONS,
     STARTUP,
@@ -157,10 +181,14 @@ class ProtocolInitHandler extends ConnectInitHandler {
     private Message request;
     private Authenticator authenticator;
     private ByteBuffer authResponseToken;
+    // The event types to register for; GRACEFUL_DISCONNECT is removed if this channel's SUPPORTED
+    // response does not advertise it (capability is negotiated per connection).
+    private List<String> eventTypes;
 
     InitRequest(ChannelHandlerContext ctx) {
       super(ctx, timeoutMillis);
       this.step = querySupportedOptions ? Step.OPTIONS : Step.STARTUP;
+      this.eventTypes = options.eventTypes;
     }
 
     @Override
@@ -183,7 +211,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
         case AUTH_RESPONSE:
           return request = new AuthResponse(authResponseToken);
         case REGISTER:
-          return request = new Register(options.eventTypes);
+          return request = new Register(eventTypes);
         default:
           throw new AssertionError("unhandled step: " + step);
       }
@@ -204,7 +232,13 @@ class ProtocolInitHandler extends ConnectInitHandler {
           ProtocolUtils.opcodeString(response.opcode));
       try {
         if (step == Step.OPTIONS && response instanceof Supported) {
-          channel.attr(DriverChannel.OPTIONS_KEY).set(((Supported) response).options);
+          Map<String, List<String>> supportedOptions = ((Supported) response).options;
+          channel.attr(DriverChannel.OPTIONS_KEY).set(supportedOptions);
+          if (eventTypes.contains(ProtocolConstants.EventType.GRACEFUL_DISCONNECT)
+              && !supportsGracefulDisconnect(supportedOptions)) {
+            eventTypes = new ArrayList<>(eventTypes);
+            eventTypes.remove(ProtocolConstants.EventType.GRACEFUL_DISCONNECT);
+          }
           step = Step.STARTUP;
           send();
         } else if (step == Step.STARTUP && response instanceof Ready) {
@@ -303,7 +337,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
             if (options.keyspace != null) {
               step = Step.SET_KEYSPACE;
               send();
-            } else if (!options.eventTypes.isEmpty()) {
+            } else if (!eventTypes.isEmpty()) {
               step = Step.REGISTER;
               send();
             } else {
@@ -311,7 +345,7 @@ class ProtocolInitHandler extends ConnectInitHandler {
             }
           }
         } else if (step == Step.SET_KEYSPACE && response instanceof SetKeyspace) {
-          if (!options.eventTypes.isEmpty()) {
+          if (!eventTypes.isEmpty()) {
             step = Step.REGISTER;
             send();
           } else {

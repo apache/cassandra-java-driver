@@ -19,19 +19,27 @@ package com.datastax.oss.driver.internal.core.control;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.datastax.oss.driver.api.core.config.DefaultDriverOption;
+import com.datastax.oss.driver.api.core.metadata.Metadata;
+import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
+import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
 import com.datastax.oss.driver.internal.core.channel.EventCallback;
+import com.datastax.oss.driver.internal.core.metadata.GracefulDisconnectEvent;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.response.event.SchemaChangeEvent;
 import com.datastax.oss.protocol.internal.response.event.StatusChangeEvent;
 import com.datastax.oss.protocol.internal.response.event.TopologyChangeEvent;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -40,7 +48,61 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
 
   @Test
   public void should_register_for_all_events_if_topology_requested() {
+    // Given (graceful disconnect is enabled by default)
+    DriverChannel channel1 = newMockDriverChannel(1);
+    ArgumentCaptor<DriverChannelOptions> optionsCaptor =
+        ArgumentCaptor.forClass(DriverChannelOptions.class);
+    when(channelFactory.connect(eq(node1), optionsCaptor.capture()))
+        .thenReturn(CompletableFuture.completedFuture(channel1));
+
+    // When
+    controlConnection.init(true, false, false);
+
+    // Then
+    await()
+        .untilAsserted(
+            () -> {
+              DriverChannelOptions channelOptions = optionsCaptor.getValue();
+              assertThat(channelOptions.eventTypes)
+                  .containsExactly(
+                      ProtocolConstants.EventType.SCHEMA_CHANGE,
+                      ProtocolConstants.EventType.STATUS_CHANGE,
+                      ProtocolConstants.EventType.TOPOLOGY_CHANGE,
+                      ProtocolConstants.EventType.GRACEFUL_DISCONNECT);
+              assertThat(channelOptions.eventCallback).isEqualTo(controlConnection);
+            });
+  }
+
+  @Test
+  public void should_register_for_schema_events_only_if_topology_not_requested() {
     // Given
+    when(defaultProfile.getBoolean(DefaultDriverOption.GRACEFUL_DISCONNECT_ENABLED, true))
+        .thenReturn(false);
+    DriverChannel channel1 = newMockDriverChannel(1);
+    ArgumentCaptor<DriverChannelOptions> optionsCaptor =
+        ArgumentCaptor.forClass(DriverChannelOptions.class);
+    when(channelFactory.connect(eq(node1), optionsCaptor.capture()))
+        .thenReturn(CompletableFuture.completedFuture(channel1));
+
+    // When
+    controlConnection.init(false, false, false);
+
+    // Then
+    await()
+        .untilAsserted(
+            () -> {
+              DriverChannelOptions channelOptions = optionsCaptor.getValue();
+              assertThat(channelOptions.eventTypes)
+                  .containsExactly(ProtocolConstants.EventType.SCHEMA_CHANGE);
+              assertThat(channelOptions.eventCallback).isEqualTo(controlConnection);
+            });
+  }
+
+  @Test
+  public void should_not_register_for_graceful_disconnect_when_disabled() {
+    // Given
+    when(defaultProfile.getBoolean(DefaultDriverOption.GRACEFUL_DISCONNECT_ENABLED, true))
+        .thenReturn(false);
     DriverChannel channel1 = newMockDriverChannel(1);
     ArgumentCaptor<DriverChannelOptions> optionsCaptor =
         ArgumentCaptor.forClass(DriverChannelOptions.class);
@@ -65,26 +127,28 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
   }
 
   @Test
-  public void should_register_for_schema_events_only_if_topology_not_requested() {
-    // Given
+  public void should_process_graceful_disconnect_event() {
+    // Given (graceful disconnect is enabled by default)
     DriverChannel channel1 = newMockDriverChannel(1);
+    Metadata metadata = mock(Metadata.class);
+    when(metadataManager.getMetadata()).thenReturn(metadata);
+    when(metadata.findNode(channel1.getEndPoint())).thenReturn(Optional.of(node1));
     ArgumentCaptor<DriverChannelOptions> optionsCaptor =
         ArgumentCaptor.forClass(DriverChannelOptions.class);
     when(channelFactory.connect(eq(node1), optionsCaptor.capture()))
         .thenReturn(CompletableFuture.completedFuture(channel1));
+    controlConnection.init(true, false, false);
+    await().until(() -> optionsCaptor.getValue() != null);
+    EventCallback callback = optionsCaptor.getValue().eventCallback;
 
     // When
-    controlConnection.init(false, false, false);
+    callback.onEvent(
+        new com.datastax.oss.protocol.internal.response.event.GracefulDisconnectEvent());
 
     // Then
-    await()
-        .untilAsserted(
-            () -> {
-              DriverChannelOptions channelOptions = optionsCaptor.getValue();
-              assertThat(channelOptions.eventTypes)
-                  .containsExactly(ProtocolConstants.EventType.SCHEMA_CHANGE);
-              assertThat(channelOptions.eventCallback).isEqualTo(controlConnection);
-            });
+    verify(eventBus).fire(any(GracefulDisconnectEvent.class));
+    verify(sessionMetricUpdater).incrementCounter(DefaultSessionMetric.GRACEFUL_DISCONNECTS, null);
+    verify(nodeMetricUpdater).incrementCounter(DefaultNodeMetric.GRACEFUL_DISCONNECTS, null);
   }
 
   @Test
