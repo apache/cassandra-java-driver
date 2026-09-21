@@ -282,12 +282,14 @@ class ProtocolInitHandler extends ConnectInitHandler {
         } else if (step == Step.AUTH_RESPONSE
             && response instanceof Error
             && ((Error) response).code == ProtocolConstants.ErrorCode.AUTH_ERROR) {
-          fail(
+          AuthenticationException cause =
               new AuthenticationException(
                   endPoint,
                   String.format(
                       "server replied with '%s' to AuthResponse request",
-                      ((Error) response).message)));
+                      ((Error) response).message));
+          authenticator.onAuthenticationFailure(cause);
+          fail(cause);
         } else if (step == Step.GET_CLUSTER_NAME && response instanceof Rows) {
           Rows rows = (Rows) response;
           List<ByteBuffer> row = Objects.requireNonNull(rows.getData().poll());

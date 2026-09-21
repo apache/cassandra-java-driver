@@ -41,6 +41,9 @@ import java.util.concurrent.CompletionStage;
  *   <li>When the server indicates that authentication is successful, the {@link
  *       #onAuthenticationSuccess} method will be called with the last information that the server
  *       may optionally have sent.
+ *   <li>When the server indicates that authentication has failed, the {@link
+ *       #onAuthenticationFailure} method will be called with {@link AuthenticationException}
+ *       encapsulating the server error message
  * </ol>
  *
  * The exact nature of the negotiation between client and server is specific to the authentication
@@ -95,4 +98,11 @@ public interface Authenticator {
    */
   @NonNull
   CompletionStage<Void> onAuthenticationSuccess(@Nullable ByteBuffer token);
+
+  /**
+   * Called when authentication fails.
+   *
+   * @param exception contains authentication error message
+   */
+  default void onAuthenticationFailure(AuthenticationException exception) {}
 }
