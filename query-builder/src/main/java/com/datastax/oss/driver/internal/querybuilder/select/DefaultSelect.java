@@ -32,6 +32,7 @@ import com.datastax.oss.driver.api.querybuilder.select.SelectFrom;
 import com.datastax.oss.driver.api.querybuilder.select.Selector;
 import com.datastax.oss.driver.internal.querybuilder.CqlHelper;
 import com.datastax.oss.driver.internal.querybuilder.ImmutableCollections;
+import com.datastax.oss.driver.internal.querybuilder.relation.DefaultSubConditionRelation;
 import com.datastax.oss.driver.shaded.guava.common.base.Preconditions;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -420,7 +421,8 @@ public class DefaultSelect implements SelectFrom, Select {
     builder.append(" FROM ");
     CqlHelper.qualify(keyspace, table, builder);
 
-    CqlHelper.append(relations, builder, " WHERE ", " AND ", null);
+    DefaultSubConditionRelation.appendWhereClause(builder, relations, false);
+
     CqlHelper.append(groupByClauses, builder, " GROUP BY ", ",", null);
 
     orderingClause.ifPresent(c -> c.appendTo(builder));
