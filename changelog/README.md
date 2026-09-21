@@ -24,6 +24,10 @@ under the License.
   3.x versions get published.
 -->
 
+## 3.13.0
+- [bug] CASSJAVA-85: decode custom payload and warnings in correct order
+- [improvement] CASSJAVA-128: Update Netty to 4.1.138 and migrate to Java8
+
 ## 3.12.1
 - [improvement] CASSJAVA-55: Remove setting "Host" header for metadata requests.
 - [bug] JAVA-3125: Match broadcast RPC for control connection and Astra events

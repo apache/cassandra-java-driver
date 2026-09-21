@@ -22,6 +22,10 @@ under the License.
 The purpose of this guide is to detail changes made by successive
 versions of the Java Driver.
 
+### 3.13.0
+
+With this version the Java driver now requires Java8 to build and run.
+
 ### 3.6.0
 
 1.  `ConsistencyLevel.LOCAL_SERIAL.isDCLocal()` now returns true. In driver
