@@ -167,6 +167,9 @@ public final class CodecUtils {
    *
    * <p>The protocol encodes DATE values as <em>unsigned</em> ints with the Epoch in the middle of
    * the range (2^31). This method handles the conversion from an "unsigned" to a signed int.
+   *
+   * @param unsigned the (unsigned) value to convert
+   * @return the input arg as a signed value
    */
   public static int fromUnsignedToSignedInt(int unsigned) {
     return unsigned + Integer.MIN_VALUE; // this relies on overflow for "negative" values
@@ -177,6 +180,9 @@ public final class CodecUtils {
    *
    * <p>The protocol encodes DATE values as <em>unsigned</em> ints with the Epoch in the middle of
    * the range (2^31). This method handles the conversion from a signed to an "unsigned" int.
+   *
+   * @param signed the (signed) value to convert
+   * @return the input arg as an unsigned value
    */
   public static int fromSignedToUnsignedInt(int signed) {
     return signed - Integer.MIN_VALUE;

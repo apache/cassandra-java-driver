@@ -96,9 +96,7 @@
     </properties>
 
     <dependencyManagement>
-
         <dependencies>
-
             <dependency>
                 <groupId>org.apache.cassandra</groupId>
                 <artifactId>cassandra-driver-core</artifactId>
@@ -389,21 +387,16 @@
                 <artifactId>groovy-all</artifactId>
                 <version>${groovy.version}</version>
             </dependency>
-
         </dependencies>
-
     </dependencyManagement>
 
     <build>
-
         <extensions>
-
             <extension>
                 <groupId>kr.motd.maven</groupId>
                 <artifactId>os-maven-plugin</artifactId>
                 <version>1.4.1.Final</version>
             </extension>
-
         </extensions>
 
         <!--
@@ -411,9 +404,8 @@
         mvn versions:display-plugin-updates
         -->
         <pluginManagement>
-
             <plugins>
-
+                <!-- Maven plugins -->
                 <plugin>
                     <artifactId>maven-clean-plugin</artifactId>
                     <version>3.0.0</version>
@@ -430,15 +422,132 @@
                 </plugin>
 
                 <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>build-helper-maven-plugin</artifactId>
-                    <!-- last version compatible with Java 6 -->
-                    <version>1.9.1</version>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.6</version>
+                </plugin>
+
+                <plugin>
+                   <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.2.0</version>
                 </plugin>
 
                 <plugin>
                     <artifactId>maven-enforcer-plugin</artifactId>
                     <version>1.4.1</version>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.0.2</version>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>2.5.2</version>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>2.8.2</version>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <!-- do not upgrade until https://issues.apache.org/jira/browse/SUREFIRE-1302 is fixed -->
+                    <version>2.18</version>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <!-- do not upgrade until https://issues.apache.org/jira/browse/SUREFIRE-1302 is fixed -->
+                    <version>2.18</version>
+                </plugin>
+
+                <!-- Third-party plugins -->
+                <plugin>
+                    <groupId>com.coveo</groupId>
+                    <artifactId>fmt-maven-plugin</artifactId>
+                    <version>2.9</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>clirr-maven-plugin</artifactId>
+                    <!-- Last version compatible with Java 6 -->
+                    <version>2.7</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>com.mycila</groupId>
+                    <artifactId>license-maven-plugin</artifactId>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>animal-sniffer-maven-plugin</artifactId>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.ops4j</groupId>
+                    <artifactId>maven-pax-plugin</artifactId>
+                    <version>1.6.0</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>maven-bundle-plugin</artifactId>
+                    <!-- last version compatible with Java 6 -->
+                    <version>2.5.4</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <!-- last version compatible with Java 6 -->
+                    <version>1.9.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+
+                <!-- Maven plugins -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <configuration>
+                        <verbose>false</verbose>
+                        <quiet>true</quiet>
+                        <doclint>none</doclint>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>enforce-java8</id>
+                            <goals>
+                                <goal>enforce</goal>
+                            </goals>
+                            <configuration>
+                                <rules>
+                                    <requireJavaVersion>
+                                        <version>1.8</version>
+                                    </requireJavaVersion>
+                                </rules>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
 
                 <plugin>
@@ -514,35 +623,6 @@
                 </plugin>
 
                 <plugin>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.0.2</version>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.apache.felix</groupId>
-                    <artifactId>maven-bundle-plugin</artifactId>
-                    <extensions>true</extensions>
-                    <!-- last version compatible with Java 6 -->
-                    <version>2.5.4</version>
-                    <configuration>
-                        <instructions>
-                            <Bundle-Version>${project.version}</Bundle-Version>
-                            <_include>-osgi.bnd</_include>
-                        </instructions>
-                        <supportedProjectTypes>
-                            <supportedProjectType>jar</supportedProjectType>
-                            <supportedProjectType>bundle</supportedProjectType>
-                            <supportedProjectType>pom</supportedProjectType>
-                        </supportedProjectTypes>
-                    </configuration>
-                </plugin>
-
-                <plugin>
-                    <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.0.0</version>
-                </plugin>
-
-                <plugin>
                     <artifactId>maven-release-plugin</artifactId>
                     <version>2.5.3</version>
                     <configuration>
@@ -555,25 +635,88 @@
                 </plugin>
 
                 <plugin>
-                    <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <configuration>
+                        <groups>${test.groups}</groups>
+                        <useFile>false</useFile>
+                        <argLine>-Djdk.attach.allowAttachSelf=true</argLine>
+                        <systemPropertyVariables>
+                            <cassandra.version>${cassandra.version}</cassandra.version>
+                            <ipprefix>${ipprefix}</ipprefix>
+                            <com.datastax.driver.NEW_NODE_DELAY_SECONDS>60</com.datastax.driver.NEW_NODE_DELAY_SECONDS>
+                        </systemPropertyVariables>
+                        <classpathDependencyExcludes>
+                            <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
+                        </classpathDependencyExcludes>
+                        <properties>
+                            <property>
+                                <name>usedefaultlisteners</name>
+                                <value>false
+                                </value> <!-- disable default listeners as some of the html reports do a lot of File I/O -->
+                            </property>
+                            <property>
+                                <!-- Don't skip tests after a @Before method throws a SkipException -->
+                                <name>configfailurepolicy</name>
+                                <value>continue</value>
+                            </property>
+                        </properties>
+                    </configuration>
                 </plugin>
 
                 <plugin>
-                    <artifactId>maven-install-plugin</artifactId>
-                    <version>2.5.2</version>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <configuration>
+                        <groups>${test.groups}</groups>
+                        <useFile>false</useFile>
+                        <systemPropertyVariables>
+                            <cassandra.version>${cassandra.version}</cassandra.version>
+                            <ipprefix>${ipprefix}</ipprefix>
+                            <com.datastax.driver.NEW_NODE_DELAY_SECONDS>60</com.datastax.driver.NEW_NODE_DELAY_SECONDS>
+                        </systemPropertyVariables>
+                        <classpathDependencyExcludes>
+                            <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
+                        </classpathDependencyExcludes>
+                        <properties>
+                            <property>
+                                <name>usedefaultlisteners</name>
+                                <value>false
+                                </value> <!-- disable default listeners as some of the html reports do a lot of File I/O -->
+                            </property>
+                            <property>
+                                <!-- Don't skip tests after a @Before method throws a SkipException -->
+                                <name>configfailurepolicy</name>
+                                <value>continue</value>
+                            </property>
+                        </properties>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>integration-test</goal>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
 
+                <!-- Third-party plugins -->
                 <plugin>
-                    <artifactId>maven-deploy-plugin</artifactId>
-                    <version>2.8.2</version>
+                    <groupId>com.coveo</groupId>
+                    <artifactId>fmt-maven-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>check-format</id>
+                            <phase>initialize</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
 
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>clirr-maven-plugin</artifactId>
-                    <!-- Last version compatible with Java 6 -->
-                    <version>2.7</version>
                     <executions>
                         <execution>
                             <phase>compile</phase>
@@ -602,12 +745,6 @@
                             <version>6.0</version>
                         </dependency>
                     </dependencies>
-                </plugin>
-
-                <plugin>
-                    <groupId>com.coveo</groupId>
-                    <artifactId>fmt-maven-plugin</artifactId>
-                    <version>2.9</version>
                 </plugin>
 
                 <plugin>
@@ -680,90 +817,8 @@ limitations under the License.
                 </plugin>
 
                 <plugin>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <!-- do not upgrade until https://issues.apache.org/jira/browse/SUREFIRE-1302 is fixed -->
-                    <version>2.18</version>
-                    <configuration>
-                        <groups>${test.groups}</groups>
-                        <useFile>false</useFile>
-                        <argLine>-Djdk.attach.allowAttachSelf=true</argLine>
-                        <systemPropertyVariables>
-                            <cassandra.version>${cassandra.version}</cassandra.version>
-                            <ipprefix>${ipprefix}</ipprefix>
-                            <com.datastax.driver.NEW_NODE_DELAY_SECONDS>60</com.datastax.driver.NEW_NODE_DELAY_SECONDS>
-                        </systemPropertyVariables>
-                        <classpathDependencyExcludes>
-                            <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
-                        </classpathDependencyExcludes>
-                        <properties>
-                            <property>
-                                <name>usedefaultlisteners</name>
-                                <value>false
-                                </value> <!-- disable default listeners as some of the html reports do a lot of File I/O -->
-                            </property>
-                            <property>
-                                <!-- Don't skip tests after a @Before method throws a SkipException -->
-                                <name>configfailurepolicy</name>
-                                <value>continue</value>
-                            </property>
-                        </properties>
-                    </configuration>
-                </plugin>
-
-                <plugin>
-                    <artifactId>maven-failsafe-plugin</artifactId>
-                    <!-- do not upgrade until https://issues.apache.org/jira/browse/SUREFIRE-1302 is fixed -->
-                    <version>2.18</version>
-                    <configuration>
-                        <groups>${test.groups}</groups>
-                        <useFile>false</useFile>
-                        <systemPropertyVariables>
-                            <cassandra.version>${cassandra.version}</cassandra.version>
-                            <ipprefix>${ipprefix}</ipprefix>
-                            <com.datastax.driver.NEW_NODE_DELAY_SECONDS>60</com.datastax.driver.NEW_NODE_DELAY_SECONDS>
-                        </systemPropertyVariables>
-                        <classpathDependencyExcludes>
-                            <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
-                        </classpathDependencyExcludes>
-                        <properties>
-                            <property>
-                                <name>usedefaultlisteners</name>
-                                <value>false
-                                </value> <!-- disable default listeners as some of the html reports do a lot of File I/O -->
-                            </property>
-                            <property>
-                                <!-- Don't skip tests after a @Before method throws a SkipException -->
-                                <name>configfailurepolicy</name>
-                                <value>continue</value>
-                            </property>
-                        </properties>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>integration-test</goal>
-                                <goal>verify</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-
-                <plugin>
-                    <artifactId>maven-gpg-plugin</artifactId>
-                    <version>1.5</version>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.sonatype.plugins</groupId>
-                    <artifactId>nexus-staging-maven-plugin</artifactId>
-                    <version>1.6.8</version>
-                    <extensions>true</extensions>
-                </plugin>
-
-                <plugin>
                     <groupId>org.ops4j</groupId>
                     <artifactId>maven-pax-plugin</artifactId>
-                    <version>1.6.0</version>
                     <configuration>
                         <framework>felix</framework>
                         <showWarnings>true</showWarnings>
@@ -776,57 +831,23 @@ limitations under the License.
                     </configuration>
                 </plugin>
 
-                <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
                 <plugin>
-                    <groupId>org.eclipse.m2e</groupId>
-                    <artifactId>lifecycle-mapping</artifactId>
-                    <version>1.0.0</version>
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>maven-bundle-plugin</artifactId>
+                    <extensions>true</extensions>
                     <configuration>
-                        <lifecycleMappingMetadata>
-                            <pluginExecutions>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>org.apache.maven.plugins</groupId>
-                                        <artifactId>maven-jar-plugin</artifactId>
-                                        <versionRange>[2.2,)</versionRange>
-                                        <goals>
-                                            <goal>test-jar</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <ignore />
-                                    </action>
-                                </pluginExecution>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>org.codehaus.mojo</groupId>
-                                        <artifactId>clirr-maven-plugin</artifactId>
-                                        <versionRange>[2.7,)</versionRange>
-                                        <goals>
-                                            <goal>check</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <ignore />
-                                    </action>
-                                </pluginExecution>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>org.codehaus.gmaven</groupId>
-                                        <artifactId>gmaven-plugin</artifactId>
-                                        <versionRange>[1.5,)</versionRange>
-                                        <goals>
-                                            <goal>testCompile</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <ignore />
-                                    </action>
-                                </pluginExecution>
-                            </pluginExecutions>
-                        </lifecycleMappingMetadata>
+                        <instructions>
+                            <Bundle-Version>${project.version}</Bundle-Version>
+                            <_include>-osgi.bnd</_include>
+                        </instructions>
+                        <supportedProjectTypes>
+                            <supportedProjectType>jar</supportedProjectType>
+                            <supportedProjectType>bundle</supportedProjectType>
+                            <supportedProjectType>pom</supportedProjectType>
+                        </supportedProjectTypes>
                     </configuration>
                 </plugin>
+
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-remote-resources-plugin</artifactId>
@@ -835,34 +856,10 @@ limitations under the License.
                         <skip>true</skip>
                     </configuration>
                 </plugin>
-
             </plugins>
-
-        </pluginManagement>
-
-        <plugins>
-
-            <plugin>
-                <groupId>com.mycila</groupId>
-                <artifactId>license-maven-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>animal-sniffer-maven-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>clirr-maven-plugin</artifactId>
-            </plugin>
-
-        </plugins>
-
     </build>
 
     <profiles>
-
         <profile>
             <id>short</id>
             <properties>
@@ -928,24 +925,6 @@ limitations under the License.
             <build>
                 <plugins>
                     <plugin>
-                        <artifactId>maven-enforcer-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>enforce-java8</id>
-                                <goals>
-                                    <goal>enforce</goal>
-                                </goals>
-                                <configuration>
-                                    <rules>
-                                        <requireJavaVersion>
-                                            <version>1.8</version>
-                                        </requireJavaVersion>
-                                    </rules>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
                         <artifactId>maven-source-plugin</artifactId>
                         <executions>
                             <execution>
@@ -975,37 +954,6 @@ limitations under the License.
                                 </goals>
                             </execution>
                         </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
-                            <skipLocalStaging>true</skipLocalStaging>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>com.coveo</groupId>
-                        <artifactId>fmt-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>check-format</id>
-                                <phase>initialize</phase>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <configuration combine.self="override">
-                            <doclint>none</doclint>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>
@@ -1048,13 +996,6 @@ limitations under the License.
             <comments>Apache License Version 2.0</comments>
         </license>
     </licenses>
-
-    <scm>
-        <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
-        <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
-        <url>https://github.com/apache/cassandra-java-driver</url>
-        <tag>HEAD</tag>
-    </scm>
 
     <developers>
         <developer>

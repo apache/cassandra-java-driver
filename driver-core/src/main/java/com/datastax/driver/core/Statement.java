@@ -445,6 +445,7 @@ public abstract class Statement {
    *
    * @param pagingState the paging state to set, or {@code null} to remove any state that was
    *     previously set on this statement.
+   * @return this {@code Statement} object.
    */
   public Statement setPagingState(PagingState pagingState) {
     return setPagingState(pagingState, CodecRegistry.DEFAULT_INSTANCE);
@@ -595,6 +596,10 @@ public abstract class Statement {
    *
    * <p>Note that the returned value is not cached, but instead recomputed at every method call.
    *
+   * @param protocolVersion the protocol version that will be used to serialize values in order to
+   *     determine their size.
+   * @param codecRegistry the codec registry that will be used to serialize values in order to
+   *     determine their size.
    * @return the number of bytes required to encode this statement.
    */
   public int requestSizeInBytes(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
@@ -663,6 +668,9 @@ public abstract class Statement {
   /**
    * Sets the "now in seconds" to use when applying the request (for testing purposes). {@link
    * Integer#MIN_VALUE} means "no value".
+   *
+   * @param nowInSeconds the value of "now in seconds" to use with this statement
+   * @return this {@link Statement} object.
    */
   public Statement setNowInSeconds(int nowInSeconds) {
     this.nowInSeconds = nowInSeconds;

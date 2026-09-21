@@ -421,7 +421,7 @@ public class TableMetadataTest extends CCMTestsSupport {
         .contains("'sstable_size_in_mb' : 15")
         .contains(
             "'class' : 'org.apache.cassandra.io.compress.SnappyCompressor'") // sstable_compression
-                                                                             // becomes class
+        // becomes class
         .contains("'chunk_length_in_kb' : 128") // note the "in" prefix
         .contains("default_time_to_live = 0")
         .contains(

@@ -305,6 +305,7 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
    * reason, it is generally preferable to use the more deterministic methods {@link #setList(int,
    * List, Class)} or {@link #setList(int, List, TypeToken)}.
    *
+   * @param <E> the type of element in the list
    * @param i the index of the value to set.
    * @param v the value to set. Note that {@code null} values inside collections are not supported
    *     by CQL.
@@ -325,6 +326,7 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
    *
    * <p>If the type of the elements is generic, use {@link #setList(int, List, TypeToken)}.
    *
+   * @param <E> the type of element in the list
    * @param i the index of the value to set.
    * @param v the value to set. Note that {@code null} values inside collections are not supported
    *     by CQL.
@@ -344,6 +346,7 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
    * <p>This method uses the {@link CodecRegistry} to find a codec to handle the conversion of lists
    * of the given Java type to the underlying CQL type.
    *
+   * @param <E> the type of element in the list
    * @param i the index of the value to set.
    * @param v the value to set. Note that {@code null} values inside collections are not supported
    *     by CQL.
@@ -366,6 +369,8 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
    * reason, it is generally preferable to use the more deterministic methods {@link #setMap(int,
    * Map, Class, Class)} or {@link #setMap(int, Map, TypeToken, TypeToken)}.
    *
+   * @param <K> the type of element used for keys in the map
+   * @param <V> the type of element used for values in the map
    * @param i the index of the value to set.
    * @param v the value to set. Note that {@code null} values inside collections are not supported
    *     by CQL.
@@ -388,6 +393,8 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
    * <p>If the type of the keys or values is generic, use {@link #setMap(int, Map, TypeToken,
    * TypeToken)}.
    *
+   * @param <K> the type of element used for keys in the map
+   * @param <V> the type of element used for values in the map
    * @param i the index of the value to set.
    * @param v the value to set. Note that {@code null} values inside collections are not supported
    *     by CQL.
@@ -409,6 +416,8 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
    * <p>This method uses the {@link CodecRegistry} to find a codec to handle the conversion of lists
    * of the given Java types to the underlying CQL type.
    *
+   * @param <K> the type of element used for keys in the map
+   * @param <V> the type of element used for values in the map
    * @param i the index of the value to set.
    * @param v the value to set. Note that {@code null} values inside collections are not supported
    *     by CQL.
@@ -432,6 +441,7 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
    * reason, it is generally preferable to use the more deterministic methods {@link #setSet(int,
    * Set, Class)} or {@link #setSet(int, Set, TypeToken)}.
    *
+   * @param <E> the type of element in the set
    * @param i the index of the value to set.
    * @param v the value to set. Note that {@code null} values inside collections are not supported
    *     by CQL.
@@ -452,6 +462,7 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
    *
    * <p>If the type of the elements is generic, use {@link #setSet(int, Set, TypeToken)}.
    *
+   * @param <E> the type of element in the set
    * @param i the index of the value to set.
    * @param v the value to set. Note that {@code null} values inside collections are not supported
    *     by CQL.
@@ -471,6 +482,7 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
    * <p>This method uses the {@link CodecRegistry} to find a codec to handle the conversion of sets
    * of the given Java type to the underlying CQL type.
    *
+   * @param <E> the type of element in the set
    * @param i the index of the value to set.
    * @param v the value to set. Note that {@code null} values inside collections are not supported
    *     by CQL.
@@ -533,6 +545,7 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
    *
    * <p>If the Java type is generic, use {@link #set(int, Object, TypeToken)} instead.
    *
+   * @param <V> the type of element to set
    * @param i the index of the value to set.
    * @param v the value to set; may be {@code null}.
    * @param targetClass The Java class to convert to; must not be {@code null};
@@ -549,6 +562,7 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
    * <p>This method uses the {@link CodecRegistry} to find a codec to handle the conversion of the
    * provided Java type to the underlying CQL type.
    *
+   * @param <V> the type of element to set
    * @param i the index of the value to set.
    * @param v the value to set; may be {@code null}.
    * @param targetType The Java type to convert to; must not be {@code null};
@@ -570,6 +584,7 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
    * TypeCodec#accepts(DataType) accepts} the underlying CQL type; failing to do so may result in
    * {@link InvalidTypeException}s being thrown.
    *
+   * @param <V> the type of element to set
    * @param i the index of the value to set.
    * @param v the value to set; may be {@code null}.
    * @param codec The {@link TypeCodec} to use to serialize the value; may not be {@code null}.

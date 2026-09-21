@@ -841,8 +841,6 @@ public class Cluster implements Closeable {
      * protocol have more features and should be preferred, but this also depends on the Cassandra
      * version:
      *
-     * <p>
-     *
      * <table>
      * <caption>Native protocol version to Cassandra version correspondence</caption>
      * <tr><th>Protocol version</th><th>Minimum Cassandra version</th></tr>
@@ -952,6 +950,9 @@ public class Cluster implements Closeable {
      * <p>You only need this method if you use a custom connection mechanism and have configured a
      * custom {@link EndPointFactory}; otherwise, you can safely ignore it and use the higher level,
      * host-and-port-based variants such as {@link #addContactPoint(String)}.
+     *
+     * @param contactPoint instance of {@link EndPoint} to add as a contact point to this cluster
+     * @return this Builder
      */
     public Builder addContactPoint(EndPoint contactPoint) {
       failIfCloud();
@@ -1158,6 +1159,9 @@ public class Cluster implements Closeable {
      * <p>This is a low-level component for advanced scenarios where connecting to a node requires
      * more than its socket address. If you're simply using host+port, the default factory is
      * sufficient.
+     *
+     * @param endPointFactory instance of {@link EndPointFactory} to use with this cluster
+     * @return this Builder
      */
     public Builder withEndPointFactory(EndPointFactory endPointFactory) {
       policiesBuilder.withEndPointFactory(endPointFactory);
@@ -1361,13 +1365,13 @@ public class Cluster implements Closeable {
 
     /**
      * Enables the <code>NO_COMPACT</code> startup option.
-     * <p>
-     * When this option is supplied, <code>SELECT</code>, <code>UPDATE</code>, <code>DELETE</code> and
-     * <code>BATCH</code> statements on <code>COMPACT STORAGE</code> tables function in "compatibility" mode which
-     * allows seeing these tables as if they were "regular" CQL tables.
-     * <p>
-     * This option only effects interactions with tables using <code>COMPACT STORAGE<code> and is only supported by
-     * C* 4.0+ and DSE 6.0+.
+     *
+     * <p>When this option is supplied, <code>SELECT</code>, <code>UPDATE</code>, <code>DELETE
+     * </code> and <code>BATCH</code> statements on <code>COMPACT STORAGE</code> tables function in
+     * "compatibility" mode which allows seeing these tables as if they were "regular" CQL tables.
+     *
+     * <p>This option only effects interactions with tables using <code>COMPACT STORAGE</code> and
+     * is only supported by C* 4.0+ and DSE 6.0+.
      *
      * @return this builder.
      * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-10857">CASSANDRA-10857</a>
@@ -1391,6 +1395,7 @@ public class Cluster implements Closeable {
      * return; attempting to reuse it afterwards will result in an error being thrown.
      *
      * @param cloudConfigFile File that contains secure connect bundle zip file.
+     * @return this builder.
      * @see #withCloudSecureConnectBundle(URL)
      * @see #withCloudSecureConnectBundle(InputStream)
      */
@@ -1417,6 +1422,7 @@ public class Cluster implements Closeable {
      * return; attempting to reuse it afterwards will result in an error being thrown.
      *
      * @param cloudConfigUrl URL to the secure connect bundle zip file.
+     * @return this builder.
      * @see #withCloudSecureConnectBundle(File)
      * @see #withCloudSecureConnectBundle(InputStream)
      */
@@ -1449,6 +1455,7 @@ public class Cluster implements Closeable {
      * return; attempting to reuse it afterwards will result in an error being thrown.
      *
      * @param cloudConfigInputStream A stream containing the secure connect bundle zip file.
+     * @return this builder.
      * @see #withCloudSecureConnectBundle(File)
      * @see #withCloudSecureConnectBundle(URL)
      */

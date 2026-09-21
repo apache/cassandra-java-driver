@@ -73,6 +73,10 @@ public abstract class GuavaCompatibility {
    * Returns a {@code Future} whose result is taken from the given primary {@code input} or, if the
    * primary input fails, from the {@code Future} provided by the {@code fallback}.
    *
+   * @param <V> the type returned by the future
+   * @param input the {@link ListenableFuture} whose value we return on successful completion
+   * @param fallback the {@link AsyncFunction} invoked if the input {@link ListenableFuture} fails
+   * @return a {@link ListenableFuture} composed from the supplied parameters
    * @see Futures#withFallback(ListenableFuture, com.google.common.util.concurrent.FutureFallback)
    * @see Futures#catchingAsync(ListenableFuture, Class, AsyncFunction)
    */
@@ -83,6 +87,11 @@ public abstract class GuavaCompatibility {
    * Returns a {@code Future} whose result is taken from the given primary {@code input} or, if the
    * primary input fails, from the {@code Future} provided by the {@code fallback}.
    *
+   * @param <V> the type returned by the future
+   * @param input the {@link ListenableFuture} whose value we return on successful completion
+   * @param fallback the {@link AsyncFunction} invoked if the input {@link ListenableFuture} fails
+   * @param executor the {@link Executor} used to run the {@link AsyncFunction} if necessary
+   * @return a {@link ListenableFuture} composed from the supplied parameters
    * @see Futures#withFallback(ListenableFuture, com.google.common.util.concurrent.FutureFallback,
    *     Executor)
    * @see Futures#catchingAsync(ListenableFuture, Class, AsyncFunction, Executor)
@@ -97,6 +106,9 @@ public abstract class GuavaCompatibility {
    *
    * <p>The callback is run in {@link #sameThreadExecutor()}.
    *
+   * @param <I> the type returned by the future
+   * @param input the {@link ListenableFuture} to add the callback to
+   * @param callback the {@link FutureCallback} to be added to the {@link ListenableFuture}
    * @see Futures#addCallback(ListenableFuture, FutureCallback, Executor)
    */
   public <I> void addCallback(ListenableFuture<I> input, FutureCallback<? super I> callback) {
@@ -108,6 +120,10 @@ public abstract class GuavaCompatibility {
    * computation is {@linkplain java.util.concurrent.Future#isDone() complete} or, if the
    * computation is already complete, immediately.
    *
+   * @param <I> the type returned by the future
+   * @param input the {@link ListenableFuture} to add the callback to
+   * @param callback the {@link FutureCallback} to be added to the {@link ListenableFuture}
+   * @param executor the {@link Executor} used to run the {@link FutureCallback}
    * @see Futures#addCallback(ListenableFuture, FutureCallback, Executor)
    */
   public <I> void addCallback(
@@ -121,6 +137,11 @@ public abstract class GuavaCompatibility {
    *
    * <p>The callback is run in {@link #sameThreadExecutor()}.
    *
+   * @param <I> the type returned by the future (and accepted by the supplied function)
+   * @param <O> the type returned by the supplied function
+   * @param input the {@link ListenableFuture} whose value we return on successful completion
+   * @param function the {@link Function} used to transform the function output
+   * @return a {@link ListenableFuture} composed from the supplied parameters
    * @see Futures#transform(ListenableFuture, Function, Executor)
    */
   public <I, O> ListenableFuture<O> transform(
@@ -132,6 +153,12 @@ public abstract class GuavaCompatibility {
    * Returns a new {@code ListenableFuture} whose result is the product of applying the given {@code
    * Function} to the result of the given {@code Future}.
    *
+   * @param <I> the type returned by the future (and accepted by the supplied function)
+   * @param <O> the type returned by the supplied function
+   * @param input the {@link ListenableFuture} whose value we return on successful completion
+   * @param function the {@link Function} used to transform the function output
+   * @param executor the {@link Executor} used to run the transform function
+   * @return a {@link ListenableFuture} composed from the supplied parameters
    * @see Futures#transform(ListenableFuture, Function, Executor)
    */
   public <I, O> ListenableFuture<O> transform(
@@ -145,6 +172,11 @@ public abstract class GuavaCompatibility {
    * a {@code Future} produced by applying the given {@code AsyncFunction} to the result of the
    * original {@code Future}.
    *
+   * @param <I> the type returned by the future (and accepted by the supplied function)
+   * @param <O> the type returned by the supplied function
+   * @param input the {@link ListenableFuture} whose value we return on successful completion
+   * @param function the {@link AsyncFunction} used to transform the function output
+   * @return a {@link ListenableFuture} composed from the supplied parameters
    * @see Futures#transform(ListenableFuture, AsyncFunction)
    * @see Futures#transformAsync(ListenableFuture, AsyncFunction)
    */
@@ -157,6 +189,12 @@ public abstract class GuavaCompatibility {
    * a {@code Future} produced by applying the given {@code AsyncFunction} to the result of the
    * original {@code Future}.
    *
+   * @param <I> the type returned by the future (and accepted by the supplied function)
+   * @param <O> the type returned by the supplied function
+   * @param input the {@link ListenableFuture} whose value we return on successful completion
+   * @param function the {@link AsyncFunction} used to transform the function output
+   * @param executor the {@link Executor} used to run the transform function
+   * @return a {@link ListenableFuture} composed from the supplied parameters
    * @see Futures#transform(ListenableFuture, AsyncFunction, Executor)
    * @see Futures#transformAsync(ListenableFuture, AsyncFunction, Executor)
    */
@@ -168,6 +206,9 @@ public abstract class GuavaCompatibility {
    * according to <a href="http://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.5.1"
    * >the rules for type arguments</a> introduced with Java generics.
    *
+   * @param target the suspected supertype
+   * @param argument the suspected subtype
+   * @return true if {@code target} is a supertype of {@code argument}, false otherwise
    * @see TypeToken#isAssignableFrom(Type)
    * @see TypeToken#isSupertypeOf(Type)
    */
@@ -178,6 +219,7 @@ public abstract class GuavaCompatibility {
    * Executor#execute execute}, as in {@link
    * java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy}.
    *
+   * @return an {@link Executor} instance which runs each in the thread that invokes it
    * @see MoreExecutors#sameThreadExecutor()
    * @see MoreExecutors#directExecutor()
    */
@@ -189,6 +231,9 @@ public abstract class GuavaCompatibility {
    *
    * <p>The method {@code HostAndPort.getHostText} has been replaced with {@code
    * HostAndPort.getHost} starting with Guava 20.0; it has been completely removed in Guava 22.0.
+   *
+   * @param hostAndPort the {@link HostAndPort} instance to be evaluated
+   * @return a {@code String} representing the host
    */
   @SuppressWarnings("JavaReflectionMemberAccess")
   public String getHost(HostAndPort hostAndPort) {

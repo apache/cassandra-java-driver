@@ -224,8 +224,6 @@ public class BoundStatement extends Statement
    *
    * Otherwise, {@code null} is returned.
    *
-   * <p>
-   *
    * <p>Note that if the routing key has been set through {@link BoundStatement#setRoutingKey}, then
    * that takes precedence. If the routing key has been set through {@link
    * PreparedStatement#setRoutingKey} then that is used next. If neither of those are set then it is
