@@ -263,7 +263,7 @@ public class MicrometerNodeMetricUpdaterTest {
         DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_HIGHEST,
         DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_DIGITS,
         DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_SLO,
-        DefaultDriverOption.METRICS_NODE_CQL_MESSAGES_PUBLISH_PERCENTILES,
+        DefaultDriverOption.METRICS_HISTOGRAM_PUBLISH_LOCAL_PERCENTILES,
       },
       {
         DseNodeMetric.GRAPH_MESSAGES,
@@ -271,7 +271,7 @@ public class MicrometerNodeMetricUpdaterTest {
         DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_HIGHEST,
         DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_DIGITS,
         DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_SLO,
-        DseDriverOption.METRICS_NODE_GRAPH_MESSAGES_PUBLISH_PERCENTILES,
+        DefaultDriverOption.METRICS_HISTOGRAM_PUBLISH_LOCAL_PERCENTILES,
       },
     };
   }

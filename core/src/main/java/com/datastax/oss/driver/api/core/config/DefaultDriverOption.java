@@ -942,32 +942,14 @@ public enum DefaultDriverOption implements DriverOption {
    */
   METADATA_SCHEMA_CHANGE_LISTENER_CLASSES("advanced.schema-change-listener.classes"),
   /**
-   * Optional list of percentiles to publish for cql-requests metric. Produces an additional time
+   * Optional list of percentiles to publish for histogram metrics. Produces an additional time
    * series for each requested percentile. This percentile is computed locally, and so can't be
    * aggregated with percentiles computed across other dimensions (e.g. in a different instance).
    *
    * <p>Value type: {@link java.util.List List}&#60;{@link Double}&#62;
    */
-  METRICS_SESSION_CQL_REQUESTS_PUBLISH_PERCENTILES(
-      "advanced.metrics.session.cql-requests.publish-percentiles"),
-  /**
-   * Optional list of percentiles to publish for node cql-messages metric. Produces an additional
-   * time series for each requested percentile. This percentile is computed locally, and so can't be
-   * aggregated with percentiles computed across other dimensions (e.g. in a different instance).
-   *
-   * <p>Value type: {@link java.util.List List}&#60;{@link Double}&#62;
-   */
-  METRICS_NODE_CQL_MESSAGES_PUBLISH_PERCENTILES(
-      "advanced.metrics.node.cql-messages.publish-percentiles"),
-  /**
-   * Optional list of percentiles to publish for throttling delay metric.Produces an additional time
-   * series for each requested percentile. This percentile is computed locally, and so can't be
-   * aggregated with percentiles computed across other dimensions (e.g. in a different instance).
-   *
-   * <p>Value type: {@link java.util.List List}&#60;{@link Double}&#62;
-   */
-  METRICS_SESSION_THROTTLING_PUBLISH_PERCENTILES(
-      "advanced.metrics.session.throttling.delay.publish-percentiles"),
+  METRICS_HISTOGRAM_PUBLISH_LOCAL_PERCENTILES(
+      "advanced.metrics.histograms.publish-local-percentiles"),
   /**
    * Adds histogram buckets used to generate aggregable percentile approximations in monitoring
    * systems that have query facilities to do so (e.g. Prometheus histogram_quantile, Atlas
