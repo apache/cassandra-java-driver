@@ -102,6 +102,7 @@ public class MicrometerMetricsIT extends MetricsITBase {
           break;
         case CQL_CLIENT_TIMEOUTS:
         case THROTTLING_ERRORS:
+        case GRACEFUL_DISCONNECTS:
           assertThat(m).isInstanceOf(Counter.class);
           assertThat(((Counter) m).count()).isZero();
           break;
@@ -154,6 +155,7 @@ public class MicrometerMetricsIT extends MetricsITBase {
           case SPECULATIVE_EXECUTIONS:
           case CONNECTION_INIT_ERRORS:
           case AUTHENTICATION_ERRORS:
+          case GRACEFUL_DISCONNECTS:
             assertThat(m).isInstanceOf(Counter.class);
             assertThat(((Counter) m).count()).isZero();
             break;

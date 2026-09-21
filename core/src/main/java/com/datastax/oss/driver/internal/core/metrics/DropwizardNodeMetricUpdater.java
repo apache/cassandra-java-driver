@@ -71,6 +71,7 @@ public class DropwizardNodeMetricUpdater extends DropwizardMetricUpdater<NodeMet
     initializeCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS, profile);
     initializeCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, profile);
     initializeCounter(DefaultNodeMetric.AUTHENTICATION_ERRORS, profile);
+    initializeCounter(DefaultNodeMetric.GRACEFUL_DISCONNECTS, profile);
 
     initializeHdrTimer(
         DefaultNodeMetric.CQL_MESSAGES,

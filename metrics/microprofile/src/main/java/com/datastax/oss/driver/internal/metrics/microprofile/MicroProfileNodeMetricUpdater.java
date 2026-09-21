@@ -71,6 +71,7 @@ public class MicroProfileNodeMetricUpdater extends MicroProfileMetricUpdater<Nod
     initializeCounter(DefaultNodeMetric.SPECULATIVE_EXECUTIONS, profile);
     initializeCounter(DefaultNodeMetric.CONNECTION_INIT_ERRORS, profile);
     initializeCounter(DefaultNodeMetric.AUTHENTICATION_ERRORS, profile);
+    initializeCounter(DefaultNodeMetric.GRACEFUL_DISCONNECTS, profile);
 
     initializeTimer(DefaultNodeMetric.CQL_MESSAGES, profile);
     initializeTimer(DseNodeMetric.GRAPH_MESSAGES, profile);
