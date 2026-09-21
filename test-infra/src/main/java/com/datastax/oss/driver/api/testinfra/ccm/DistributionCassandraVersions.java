@@ -25,6 +25,7 @@ import java.util.Map;
 
 /** Defines mapping of various distributions to shipped Apache Cassandra version. */
 public abstract class DistributionCassandraVersions {
+
   private static final Map<BackendType, ImmutableSortedMap<Version, Version>> mappings =
       new HashMap<>();
 
@@ -44,6 +45,13 @@ public abstract class DistributionCassandraVersions {
       ImmutableSortedMap<Version, Version> hcd =
           ImmutableSortedMap.of(Version.V1_0_0, CcmBridge.V4_0_11);
       mappings.put(BackendType.HCD, hcd);
+    }
+    {
+      // Astra
+      // TODO: to be confirmed
+      ImmutableSortedMap<Version, Version> astra =
+          ImmutableSortedMap.of(Version.V1_0_0, CcmBridge.V4_0_11);
+      mappings.put(BackendType.ASTRA, astra);
     }
   }
 

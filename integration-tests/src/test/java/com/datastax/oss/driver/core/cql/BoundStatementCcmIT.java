@@ -38,6 +38,7 @@ import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.Statement;
 import com.datastax.oss.driver.api.core.metadata.token.Token;
+import com.datastax.oss.driver.api.core.session.SessionBuilder;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodecs;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
 import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
@@ -434,12 +435,9 @@ public class BoundStatementCcmIT {
 
   @SuppressWarnings("unchecked")
   private CqlSession sessionWithCustomCodec(CqlIntToStringCodec codec) {
-    return (CqlSession)
-        SessionUtils.baseBuilder()
-            .addContactEndPoints(ccmRule.getContactPoints())
-            .withKeyspace(sessionRule.keyspace())
-            .addTypeCodecs(codec)
-            .build();
+    SessionBuilder<?, CqlSession> builder =
+        SessionUtils.baseBuilder(ccmRule, sessionRule.keyspace());
+    return (CqlSession) builder.addTypeCodecs(codec).build();
   }
 
   private boolean supportsPerRequestKeyspace(CqlSession session) {

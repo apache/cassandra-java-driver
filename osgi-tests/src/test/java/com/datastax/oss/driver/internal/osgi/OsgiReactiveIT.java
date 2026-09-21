@@ -21,6 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.oss.driver.api.osgi.service.MailboxService;
 import com.datastax.oss.driver.api.osgi.service.reactive.ReactiveMailboxService;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.internal.osgi.checks.DefaultServiceChecks;
 import com.datastax.oss.driver.internal.osgi.checks.ReactiveServiceChecks;
 import com.datastax.oss.driver.internal.osgi.support.BundleOptions;
@@ -36,6 +38,7 @@ import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 
 @RunWith(CcmPaxExam.class)
 @ExamReactorStrategy(CcmExamReactorFactory.class)
+@BackendRequirement(type = BackendType.ASTRA, include = false)
 public class OsgiReactiveIT {
 
   @Inject MailboxService service;
