@@ -10,7 +10,7 @@ for the development version and that some features described here might
 not yet have been released. You can find the documentation for the latest
 version through the [Java Driver
 docs](http://docs.datastax.com/en/developer/java-driver/3.11/index.html) or via the release tags,
-[e.g. 3.12.1](https://github.com/apache/cassandra-java-driver/tree/3.12.1).*
+[e.g. 3.13.0](https://github.com/apache/cassandra-java-driver/tree/3.13.0).*
 
 A modern, [feature-rich](manual/) and highly tunable Java client
 library for Apache Cassandra (2.1+) and using exclusively Cassandra's binary protocol 
@@ -65,7 +65,7 @@ using DataStax Enterprise, install the [DataStax Enterprise Java Driver][dse-dri
 <dependency>
   <groupId>org.apache.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>3.12.1</version>
+  <version>3.13.0</version>
 </dependency>
 ```
 
@@ -75,7 +75,7 @@ Note that the object mapper is published as a separate artifact:
 <dependency>
   <groupId>org.apache.cassandra</groupId>
   <artifactId>cassandra-driver-mapping</artifactId>
-  <version>3.12.1</version>
+  <version>3.13.0</version>
 </dependency>
 ```
 
@@ -85,7 +85,7 @@ The 'extras' module is also published as a separate artifact:
 <dependency>
   <groupId>org.apache.cassandra</groupId>
   <artifactId>cassandra-driver-extras</artifactId>
-  <version>3.12.1</version>
+  <version>3.13.0</version>
 </dependency>
 ```
 
