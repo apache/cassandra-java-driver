@@ -27,6 +27,8 @@ public interface EndPoint {
    *
    * <p>This will be called each time the driver opens a new connection to the node. The returned
    * address cannot be null.
+   *
+   * @return an {@link InetSocketAddress} representing the resolved IP address
    */
   InetSocketAddress resolve();
 }

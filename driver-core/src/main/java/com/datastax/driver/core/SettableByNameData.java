@@ -324,6 +324,7 @@ public interface SettableByNameData<T extends SettableData<T>> {
    * reason, it is generally preferable to use the more deterministic methods {@link
    * #setList(String, List, Class)} or {@link #setList(String, List, TypeToken)}.
    *
+   * @param <E> the type of element in the list
    * @param name the name of the value to set; if {@code name} is present multiple times, all its
    *     values are set.
    * @param v the value to set. Note that {@code null} values inside collections are not supported
@@ -346,6 +347,7 @@ public interface SettableByNameData<T extends SettableData<T>> {
    *
    * <p>If the type of the elements is generic, use {@link #setList(String, List, TypeToken)}.
    *
+   * @param <E> the type of element in the list
    * @param name the name of the value to set; if {@code name} is present multiple
    * @param v the value to set. Note that {@code null} values inside collections are not supported
    *     by CQL.
@@ -366,6 +368,7 @@ public interface SettableByNameData<T extends SettableData<T>> {
    * <p>This method uses the {@link CodecRegistry} to find a codec to handle the conversion of lists
    * of the given Java type to the underlying CQL type.
    *
+   * @param <E> the type of element in the list
    * @param name the name of the value to set; if {@code name} is present multiple
    * @param v the value to set. Note that {@code null} values inside collections are not supported
    *     by CQL.
@@ -388,6 +391,8 @@ public interface SettableByNameData<T extends SettableData<T>> {
    * reason, it is generally preferable to use the more deterministic methods {@link #setMap(String,
    * Map, Class, Class)} or {@link #setMap(String, Map, TypeToken, TypeToken)}.
    *
+   * @param <K> the type of element used for keys in the map
+   * @param <V> the type of element used for values in the map
    * @param name the name of the value to set; if {@code name} is present multiple times, all its
    *     values are set.
    * @param v the value to set. Note that {@code null} values inside collections are not supported
@@ -411,6 +416,8 @@ public interface SettableByNameData<T extends SettableData<T>> {
    * <p>If the type of the keys or values is generic, use {@link #setMap(String, Map, TypeToken,
    * TypeToken)}.
    *
+   * @param <K> the type of element used for keys in the map
+   * @param <V> the type of element used for values in the map
    * @param name the name of the value to set; if {@code name} is present multiple times, all its
    *     values are set.
    * @param v the value to set. Note that {@code null} values inside collections are not supported
@@ -433,6 +440,8 @@ public interface SettableByNameData<T extends SettableData<T>> {
    * <p>This method uses the {@link CodecRegistry} to find a codec to handle the conversion of lists
    * of the given Java types to the underlying CQL type.
    *
+   * @param <K> the type of element used for keys in the map
+   * @param <V> the type of element used for values in the map
    * @param name the name of the value to set; if {@code name} is present multiple times, all its
    *     values are set.
    * @param v the value to set. Note that {@code null} values inside collections are not supported
@@ -457,6 +466,7 @@ public interface SettableByNameData<T extends SettableData<T>> {
    * reason, it is generally preferable to use the more deterministic methods {@link #setSet(String,
    * Set, Class)} or {@link #setSet(String, Set, TypeToken)}.
    *
+   * @param <E> the type of element in the set
    * @param name the name of the value to set; if {@code name} is present multiple times, all its
    *     values are set.
    * @param v the value to set. Note that {@code null} values inside collections are not supported
@@ -479,6 +489,7 @@ public interface SettableByNameData<T extends SettableData<T>> {
    *
    * <p>If the type of the elements is generic, use {@link #setSet(String, Set, TypeToken)}.
    *
+   * @param <E> the type of element in the set
    * @param name the name of the value to set; if {@code name} is present multiple
    * @param v the value to set. Note that {@code null} values inside collections are not supported
    *     by CQL.
@@ -499,6 +510,7 @@ public interface SettableByNameData<T extends SettableData<T>> {
    * <p>This method uses the {@link CodecRegistry} to find a codec to handle the conversion of sets
    * of the given Java type to the underlying CQL type.
    *
+   * @param <E> the type of element in the set
    * @param name the name of the value to set; if {@code name} is present multiple
    * @param v the value to set. Note that {@code null} values inside collections are not supported
    *     by CQL.
@@ -565,6 +577,7 @@ public interface SettableByNameData<T extends SettableData<T>> {
    *
    * <p>If the Java type is generic, use {@link #set(String, Object, TypeToken)} instead.
    *
+   * @param <V> the type of element to set
    * @param name the name of the value to set; if {@code name} is present multiple times, all its
    *     values are set.
    * @param v the value to set; may be {@code null}.
@@ -583,6 +596,7 @@ public interface SettableByNameData<T extends SettableData<T>> {
    * <p>This method uses the {@link CodecRegistry} to find a codec to handle the conversion of the
    * provided Java type to the underlying CQL type.
    *
+   * @param <V> the type of element to set
    * @param name the name of the value to set; if {@code name} is present multiple times, all its
    *     values are set.
    * @param v the value to set; may be {@code null}.
@@ -606,6 +620,7 @@ public interface SettableByNameData<T extends SettableData<T>> {
    * TypeCodec#accepts(DataType) accepts} the underlying CQL type; failing to do so may result in
    * {@link InvalidTypeException}s being thrown.
    *
+   * @param <V> the type of element to set
    * @param name the name of the value to set; if {@code name} is present multiple times, all its
    *     values are set.
    * @param v the value to set; may be {@code null}.

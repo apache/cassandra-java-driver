@@ -89,6 +89,7 @@ public final class Duration {
    * @param months the number of months
    * @param days the number of days
    * @param nanoseconds the number of nanoseconds
+   * @return a {@link Duration} built from the supplied arguments
    * @throws IllegalArgumentException if the values are not all negative or all positive
    */
   public static Duration newInstance(int months, int days, long nanoseconds) {

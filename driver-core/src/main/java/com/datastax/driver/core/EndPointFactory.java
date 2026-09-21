@@ -34,6 +34,9 @@ public interface EndPointFactory {
   /**
    * Creates an instance from a row in {@code system.peers}, or returns {@code null} if there is no
    * sufficient information.
+   *
+   * @param peersRow the row we wish to create an {@link EndPoint} for
+   * @return the generated {@link EndPoint}
    */
   EndPoint create(Row peersRow);
 }

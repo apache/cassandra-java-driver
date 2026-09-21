@@ -320,6 +320,7 @@ public interface GettableByIndexData {
    * instances, and a CQL {@code NULL} will be mapped to an empty collection (note that Cassandra
    * makes no distinction between {@code NULL} and an empty collection).
    *
+   * @param <T> the type of element in the list
    * @param i the index ({@code 0 <= i < size()}) to retrieve.
    * @param elementsClass the class for the elements of the list to retrieve.
    * @return the value of the {@code i}th element as a list of {@code T} objects.
@@ -348,6 +349,7 @@ public interface GettableByIndexData {
    * instances, and a CQL {@code NULL} will mapped to an empty collection (note that Cassandra makes
    * no distinction between {@code NULL} and an empty collection).
    *
+   * @param <T> the type of element in the list
    * @param i the index ({@code 0 <= i < size()}) to retrieve.
    * @param elementsType the type of the elements of the list to retrieve.
    * @return the value of the {@code i}th element as a list of {@code T} objects.
@@ -372,6 +374,7 @@ public interface GettableByIndexData {
    * instances, and a CQL {@code NULL} will mapped to an empty collection (note that Cassandra makes
    * no distinction between {@code NULL} and an empty collection).
    *
+   * @param <T> the type of element in the set
    * @param i the index ({@code 0 <= i < size()}) to retrieve.
    * @param elementsClass the class for the elements of the set to retrieve.
    * @return the value of the {@code i}th element as a set of {@code T} objects.
@@ -400,6 +403,7 @@ public interface GettableByIndexData {
    * instances, and a CQL {@code NULL} will mapped to an empty collection (note that Cassandra makes
    * no distinction between {@code NULL} and an empty collection).
    *
+   * @param <T> the type of element in the set
    * @param i the index ({@code 0 <= i < size()}) to retrieve.
    * @param elementsType the type for the elements of the set to retrieve.
    * @return the value of the {@code i}th element as a set of {@code T} objects.
@@ -425,6 +429,8 @@ public interface GettableByIndexData {
    * instances, and a CQL {@code NULL} will mapped to an empty collection (note that Cassandra makes
    * no distinction between {@code NULL} and an empty collection).
    *
+   * @param <K> the type of element used for keys in the map
+   * @param <V> the type of element used for values in the map
    * @param i the index ({@code 0 <= i < size()}) to retrieve.
    * @param keysClass the class for the keys of the map to retrieve.
    * @param valuesClass the class for the values of the map to retrieve.
@@ -454,6 +460,8 @@ public interface GettableByIndexData {
    * instances, and a CQL {@code NULL} will mapped to an empty collection (note that Cassandra makes
    * no distinction between {@code NULL} and an empty collection).
    *
+   * @param <K> the type of element used for keys in the map
+   * @param <V> the type of element used for values in the map
    * @param i the index ({@code 0 <= i < size()}) to retrieve.
    * @param keysType the type for the keys of the map to retrieve.
    * @param valuesType the type for the values of the map to retrieve.
@@ -531,6 +539,7 @@ public interface GettableByIndexData {
    * {@code null} for simple CQL types, UDTs and tuples, and to empty collections for all CQL
    * collection types.
    *
+   * @param <T> the type of element to get
    * @param i the index to retrieve.
    * @param targetClass The Java type the value should be converted to.
    * @return the value of the {@code i}th value converted to the given Java type.
@@ -553,6 +562,7 @@ public interface GettableByIndexData {
    * {@code null} for simple CQL types, UDTs and tuples, and to empty collections for all CQL
    * collection types.
    *
+   * @param <T> the type of element to get
    * @param i the index to retrieve.
    * @param targetType The Java type the value should be converted to.
    * @return the value of the {@code i}th value converted to the given Java type.
@@ -580,6 +590,7 @@ public interface GettableByIndexData {
    * {@code null} for simple CQL types, UDTs and tuples, and to empty collections for all CQL
    * collection types.
    *
+   * @param <T> the type of element to get
    * @param i the index to retrieve.
    * @param codec The {@link TypeCodec} to use to deserialize the value; may not be {@code null}.
    * @return the value of the {@code i}th value converted using the given {@link TypeCodec}.

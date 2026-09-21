@@ -470,6 +470,7 @@ public final class CodecRegistry {
    * <p>Codecs returned by this method are <em>NOT</em> cached (see the {@link CodecRegistry
    * top-level documentation} of this class for more explanations about caching).
    *
+   * @param <T> the type accepted by the requested codec
    * @param value The value the codec should accept; must not be {@code null}.
    * @return A suitable codec.
    * @throws CodecNotFoundException if a suitable codec cannot be found.
@@ -489,6 +490,7 @@ public final class CodecRegistry {
    * <p>Codecs returned by this method are cached (see the {@link CodecRegistry top-level
    * documentation} of this class for more explanations about caching).
    *
+   * @param <T> the type accepted by the requested codec
    * @param cqlType The {@link DataType CQL type} the codec should accept; must not be {@code null}.
    * @return A suitable codec.
    * @throws CodecNotFoundException if a suitable codec cannot be found.
@@ -507,6 +509,7 @@ public final class CodecRegistry {
    * <p>Codecs returned by this method are cached (see the {@link CodecRegistry top-level
    * documentation} of this class for more explanations about caching).
    *
+   * @param <T> the type accepted by the requested codec
    * @param cqlType The {@link DataType CQL type} the codec should accept; must not be {@code null}.
    * @param javaType The Java type the codec should accept; can be {@code null}.
    * @return A suitable codec.
@@ -526,6 +529,7 @@ public final class CodecRegistry {
    * <p>Codecs returned by this method are cached (see the {@link CodecRegistry top-level
    * documentation} of this class for more explanations about caching).
    *
+   * @param <T> the type accepted by the requested codec
    * @param cqlType The {@link DataType CQL type} the codec should accept; must not be {@code null}.
    * @param javaType The {@link TypeToken Java type} the codec should accept; can be {@code null}.
    * @return A suitable codec.
@@ -549,6 +553,7 @@ public final class CodecRegistry {
    * <p>Codecs returned by this method are <em>NOT</em> cached (see the {@link CodecRegistry
    * top-level documentation} of this class for more explanations about caching).
    *
+   * @param <T> the type accepted by the requested codec
    * @param cqlType The {@link DataType CQL type} the codec should accept; can be {@code null}.
    * @param value The value the codec should accept; must not be {@code null}.
    * @return A suitable codec.

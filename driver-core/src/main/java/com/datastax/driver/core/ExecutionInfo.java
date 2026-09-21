@@ -175,6 +175,7 @@ public class ExecutionInfo {
    * executions are disabled, this will always be 0. If they are enabled and one speculative
    * execution was triggered in addition to the initial execution, this will be 1, etc.
    *
+   * @return the number of speculative executions
    * @see #getSuccessfulExecutionIndex()
    * @see
    *     Cluster.Builder#withSpeculativeExecutionPolicy(com.datastax.driver.core.policies.SpeculativeExecutionPolicy)
@@ -189,6 +190,7 @@ public class ExecutionInfo {
    * <p>0 represents the initial, normal execution of the query, 1 represents the first speculative
    * execution, etc.
    *
+   * @return the index of the specific speculative execution which completed this query
    * @see #getSpeculativeExecutions()
    * @see
    *     Cluster.Builder#withSpeculativeExecutionPolicy(com.datastax.driver.core.policies.SpeculativeExecutionPolicy)
