@@ -20,6 +20,7 @@ package com.datastax.oss.driver.api.querybuilder.schema;
 import static com.datastax.oss.driver.api.querybuilder.Assertions.assertThat;
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createIndex;
 
+import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableMap;
 import org.junit.Test;
 
@@ -80,6 +81,17 @@ public class CreateIndexTest {
   public void should_generate_create_index_with_name_if_not_exists() {
     assertThat(createIndex("bar").ifNotExists().onTable("x").andColumn("y"))
         .hasCql("CREATE INDEX IF NOT EXISTS bar ON x (y)");
+  }
+
+  @Test
+  public void should_generate_create_index_with_correct_quoting() {
+    assertThat(createIndex("bAr").onTable("xY").andColumn("aB"))
+        .hasCql("CREATE INDEX bar ON xy (ab)");
+    assertThat(
+            createIndex(CqlIdentifier.fromInternal("bAr"))
+                .onTable(CqlIdentifier.fromInternal("xY"))
+                .andColumn(CqlIdentifier.fromInternal("aB")))
+        .hasCql("CREATE INDEX \"bAr\" ON \"xY\" (\"aB\")");
   }
 
   @Test
