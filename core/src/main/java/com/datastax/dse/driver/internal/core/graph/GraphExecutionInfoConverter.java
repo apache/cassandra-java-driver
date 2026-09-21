@@ -18,6 +18,7 @@
 package com.datastax.dse.driver.internal.core.graph;
 
 import com.datastax.dse.driver.api.core.graph.GraphStatement;
+import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.cql.QueryTrace;
 import com.datastax.oss.driver.api.core.cql.Statement;
@@ -62,6 +63,11 @@ public class GraphExecutionInfoConverter {
         throw new ClassCastException("GraphStatement cannot be cast to Statement");
       }
 
+      @Override
+      public DriverExecutionProfile getExecutionProfile() {
+        return graphExecutionInfo.getExecutionProfile();
+      }
+
       @Nullable
       @Override
       public Node getCoordinator() {
@@ -76,6 +82,12 @@ public class GraphExecutionInfoConverter {
       @Override
       public int getSuccessfulExecutionIndex() {
         return graphExecutionInfo.getSuccessfulExecutionIndex();
+      }
+
+      @Nullable
+      @Override
+      public Throwable getDriverError() {
+        return graphExecutionInfo.getDriverError();
       }
 
       @NonNull
@@ -147,6 +159,11 @@ public class GraphExecutionInfoConverter {
       }
 
       @Override
+      public DriverExecutionProfile getExecutionProfile() {
+        return executionInfo.getExecutionProfile();
+      }
+
+      @Override
       public Node getCoordinator() {
         return executionInfo.getCoordinator();
       }
@@ -159,6 +176,11 @@ public class GraphExecutionInfoConverter {
       @Override
       public int getSuccessfulExecutionIndex() {
         return executionInfo.getSuccessfulExecutionIndex();
+      }
+
+      @Override
+      public Throwable getDriverError() {
+        return executionInfo.getDriverError();
       }
 
       @Override
