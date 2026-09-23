@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.apache.cassandra</groupId>
         <artifactId>cassandra-driver-tests-parent</artifactId>
-        <version>3.13.0-SNAPSHOT</version>
+        <version>3.13.0</version>
     </parent>
 
     <packaging>pom</packaging>
