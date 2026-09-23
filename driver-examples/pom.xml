@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.apache.cassandra</groupId>
         <artifactId>cassandra-driver-parent</artifactId>
-        <version>3.13.0</version>
+        <version>3.13.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>cassandra-driver-examples</artifactId>
