@@ -21,6 +21,11 @@ under the License.
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.19.4
+
+- [improvement] CASSJAVA-137: Bump Netty to 4.1.138
+- [bug] CASSJAVA-136: Ninja fix to correct geometry equality actually broke geometry equality
+
 ### 4.19.3
 
 - [bug] CASSJAVA-3: Fix ordering of LIMIT and PER PARTITION LIMIT clauses
