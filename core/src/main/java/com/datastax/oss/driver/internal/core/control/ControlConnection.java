@@ -26,11 +26,14 @@ import com.datastax.oss.driver.api.core.connection.ReconnectionPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
+import com.datastax.oss.driver.api.core.metrics.DefaultNodeMetric;
+import com.datastax.oss.driver.api.core.metrics.DefaultSessionMetric;
 import com.datastax.oss.driver.internal.core.channel.ChannelEvent;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
 import com.datastax.oss.driver.internal.core.channel.EventCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.DefaultTopologyMonitor;
 import com.datastax.oss.driver.internal.core.metadata.DistanceEvent;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
@@ -190,6 +193,9 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
         case ProtocolConstants.EventType.SCHEMA_CHANGE:
           processSchemaChange(event);
           break;
+        case ProtocolConstants.EventType.GRACEFUL_DISCONNECT:
+          processGracefulDisconnect();
+          break;
         default:
           LOG.warn("[{}] Unsupported event type: {}", logPrefix, event.type);
       }
@@ -242,6 +248,35 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
             });
   }
 
+  private void processGracefulDisconnect() {
+    LOG.info(
+        "[{}] Received GRACEFUL_DISCONNECT event on control connection, "
+            + "the server is shutting down gracefully",
+        logPrefix);
+    // Per CEP-59 the event stays local to the connection that received it: the control channel
+    // drains itself (handled by InFlightHandler) and the control connection reconnects to another
+    // node. We only record the metrics here; the event is not propagated to other connections.
+    context
+        .getMetricsFactory()
+        .getSessionUpdater()
+        .incrementCounter(DefaultSessionMetric.GRACEFUL_DISCONNECTS, null);
+    DriverChannel currentChannel = channel;
+    if (currentChannel != null) {
+      context
+          .getMetadataManager()
+          .getMetadata()
+          .findNode(currentChannel.getEndPoint())
+          .ifPresent(
+              node -> {
+                if (node instanceof DefaultNode) {
+                  ((DefaultNode) node)
+                      .getMetricUpdater()
+                      .incrementCounter(DefaultNodeMetric.GRACEFUL_DISCONNECTS, null);
+                }
+              });
+    }
+  }
+
   private class SingleThreaded {
     private final InternalDriverContext context;
     private final DriverConfig config;
@@ -292,7 +327,13 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
       }
       initWasCalled = true;
       try {
-        ImmutableList<String> eventTypes = buildEventTypes(listenToClusterEvents);
+        boolean gracefulDisconnectEnabled =
+            context
+                .getConfig()
+                .getDefaultProfile()
+                .getBoolean(DefaultDriverOption.GRACEFUL_DISCONNECT_ENABLED, true);
+        ImmutableList<String> eventTypes =
+            buildEventTypes(listenToClusterEvents, gracefulDisconnectEnabled);
         LOG.debug("[{}] Initializing with event types {}", logPrefix, eventTypes);
         channelOptions =
             DriverChannelOptions.builder()
@@ -606,13 +647,17 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
     return true;
   }
 
-  private static ImmutableList<String> buildEventTypes(boolean listenClusterEvents) {
+  private static ImmutableList<String> buildEventTypes(
+      boolean listenClusterEvents, boolean gracefulDisconnectEnabled) {
     ImmutableList.Builder<String> builder = ImmutableList.builder();
     builder.add(ProtocolConstants.EventType.SCHEMA_CHANGE);
     if (listenClusterEvents) {
       builder
           .add(ProtocolConstants.EventType.STATUS_CHANGE)
           .add(ProtocolConstants.EventType.TOPOLOGY_CHANGE);
+    }
+    if (gracefulDisconnectEnabled) {
+      builder.add(ProtocolConstants.EventType.GRACEFUL_DISCONNECT);
     }
     return builder.build();
   }

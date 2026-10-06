@@ -1041,7 +1041,15 @@ public enum DefaultDriverOption implements DriverOption {
    *
    * <p>Value-Type: boolean
    */
-  ADDRESS_TRANSLATOR_RESOLVE_ADDRESSES("advanced.address-translator.resolve-addresses");
+  ADDRESS_TRANSLATOR_RESOLVE_ADDRESSES("advanced.address-translator.resolve-addresses"),
+  /**
+   * Whether to register for GRACEFUL_DISCONNECT events from the server (CEP-59). When enabled and
+   * the server advertises support, the driver will gracefully drain connections when a node shuts
+   * down.
+   *
+   * <p>Value-type: boolean
+   */
+  GRACEFUL_DISCONNECT_ENABLED("advanced.connection.graceful-disconnect-enabled");
 
   private final String path;
 
