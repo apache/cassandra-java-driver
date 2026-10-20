@@ -35,8 +35,12 @@ import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
 import com.datastax.oss.driver.internal.core.control.ControlConnection;
+import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParser;
 import com.datastax.oss.driver.internal.core.metadata.schema.parsing.SchemaParserFactory;
+import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueries;
 import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaQueriesFactory;
+import com.datastax.oss.driver.internal.core.metadata.schema.queries.SchemaRows;
+import com.datastax.oss.driver.internal.core.metadata.schema.refresh.SchemaRefresh;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
@@ -313,6 +317,118 @@ public class MetadataManagerTest {
     assertThatStage(result).isFailed(t -> assertThat(t).isEqualTo(expectedException));
   }
 
+  @Test
+  public void should_run_queued_request_after_schema_queries_factory_throws() {
+    // Given
+    IllegalStateException expectedException =
+        new IllegalStateException("Control channel not available, aborting schema refresh");
+    CompletableFuture<Boolean> firstAgreement = new CompletableFuture<>();
+    SchemaQueries schemaQueries = stubSchemaQueriesAndParser();
+    when(schemaQueriesFactory.newInstance()).thenThrow(expectedException).thenReturn(schemaQueries);
+    when(topologyMonitor.checkSchemaAgreement())
+        .thenReturn(firstAgreement)
+        .thenReturn(CompletableFuture.completedFuture(Boolean.TRUE));
+    initNodesForSchemaRefresh();
+    CompletionStage<MetadataManager.RefreshSchemaResult> first =
+        metadataManager.refreshSchema("foo", true, true);
+    verify(topologyMonitor, timeout(500)).checkSchemaAgreement();
+    waitForPendingAdminTasks();
+    CompletionStage<MetadataManager.RefreshSchemaResult> second =
+        metadataManager.refreshSchema("foo", true, true);
+    waitForPendingAdminTasks();
+    assertThat(second.toCompletableFuture().isDone()).isFalse();
+
+    // When
+    firstAgreement.complete(Boolean.FALSE);
+
+    // Then
+    waitForPendingAdminTasks(() -> first.toCompletableFuture().isDone());
+    assertThatStage(first).isFailed(t -> assertThat(t).isEqualTo(expectedException));
+    waitForPendingAdminTasks(() -> second.toCompletableFuture().isDone());
+    assertThatStage(second).isSuccess();
+    assertThat(metadataManager.refreshes).hasSize(2);
+  }
+
+  @Test
+  public void should_run_next_request_after_schema_agreement_fails() {
+    // Given
+    IllegalStateException expectedException = new IllegalStateException("Agreement failed");
+    CompletableFuture<Boolean> failedAgreement = new CompletableFuture<>();
+    SchemaQueries schemaQueries = stubSchemaQueriesAndParser();
+    when(schemaQueriesFactory.newInstance()).thenReturn(schemaQueries);
+    when(topologyMonitor.checkSchemaAgreement())
+        .thenReturn(failedAgreement)
+        .thenReturn(CompletableFuture.completedFuture(Boolean.TRUE));
+    initNodesForSchemaRefresh();
+    CompletionStage<MetadataManager.RefreshSchemaResult> first =
+        metadataManager.refreshSchema("foo", true, true);
+    verify(topologyMonitor, timeout(500)).checkSchemaAgreement();
+    waitForPendingAdminTasks();
+
+    // When
+    failedAgreement.completeExceptionally(expectedException);
+    waitForPendingAdminTasks(() -> first.toCompletableFuture().isDone());
+    CompletionStage<MetadataManager.RefreshSchemaResult> second =
+        metadataManager.refreshSchema("foo", true, true);
+
+    // Then
+    assertThatStage(first).isFailed(t -> assertThat(t).isEqualTo(expectedException));
+    waitForPendingAdminTasks(() -> second.toCompletableFuture().isDone());
+    assertThatStage(second).isSuccess();
+    assertThat(metadataManager.refreshes).hasSize(2);
+  }
+
+  @Test
+  public void should_run_queued_request_after_schema_queries_fail() {
+    // Given
+    IllegalStateException expectedException = new IllegalStateException("Schema query failed");
+    CompletableFuture<SchemaRows> failingRows = new CompletableFuture<>();
+    SchemaQueries failingQueries = mock(SchemaQueries.class);
+    when(failingQueries.execute()).thenReturn(failingRows);
+    SchemaQueries schemaQueries = stubSchemaQueriesAndParser();
+    when(schemaQueriesFactory.newInstance()).thenReturn(failingQueries).thenReturn(schemaQueries);
+    when(topologyMonitor.checkSchemaAgreement())
+        .thenReturn(CompletableFuture.completedFuture(Boolean.TRUE));
+    initNodesForSchemaRefresh();
+    CompletionStage<MetadataManager.RefreshSchemaResult> first =
+        metadataManager.refreshSchema("foo", true, true);
+    verify(failingQueries, timeout(500)).execute();
+    waitForPendingAdminTasks();
+    CompletionStage<MetadataManager.RefreshSchemaResult> second =
+        metadataManager.refreshSchema("foo", true, true);
+    waitForPendingAdminTasks();
+    assertThat(second.toCompletableFuture().isDone()).isFalse();
+
+    // When
+    failingRows.completeExceptionally(expectedException);
+
+    // Then
+    waitForPendingAdminTasks(() -> first.toCompletableFuture().isDone());
+    assertThatStage(first).isFailed(t -> assertThat(t).isEqualTo(expectedException));
+    waitForPendingAdminTasks(() -> second.toCompletableFuture().isDone());
+    assertThatStage(second).isSuccess();
+    assertThat(metadataManager.refreshes).hasSize(2);
+  }
+
+  private SchemaQueries stubSchemaQueriesAndParser() {
+    SchemaQueries schemaQueries = mock(SchemaQueries.class);
+    SchemaRows schemaRows = mock(SchemaRows.class);
+    SchemaParser schemaParser = mock(SchemaParser.class);
+    when(schemaQueries.execute()).thenReturn(CompletableFuture.completedFuture(schemaRows));
+    when(schemaParserFactory.newInstance(schemaRows)).thenReturn(schemaParser);
+    when(schemaParser.parse()).thenReturn(mock(SchemaRefresh.class));
+    return schemaQueries;
+  }
+
+  private void initNodesForSchemaRefresh() {
+    when(topologyMonitor.refreshNodeList())
+        .thenReturn(CompletableFuture.completedFuture(ImmutableList.of(mock(NodeInfo.class))));
+    when(controlConnection.init(anyBoolean(), anyBoolean(), anyBoolean()))
+        .thenReturn(CompletableFuture.completedFuture(null));
+    metadataManager.refreshNodes();
+    waitForPendingAdminTasks(() -> metadataManager.refreshes.size() == 1);
+  }
+
   private static class TestMetadataManager extends MetadataManager {
 
     private List<MetadataRefresh> refreshes = new CopyOnWriteArrayList<>();
@@ -352,5 +468,11 @@ public class MetadataManagerTest {
   // Wait for all the tasks on the pool's admin executor to complete.
   private void waitForPendingAdminTasks(Callable<Boolean> condition) {
     await().atMost(500, TimeUnit.MILLISECONDS).until(condition);
+  }
+
+  private void waitForPendingAdminTasks() {
+    assertThat(
+            adminEventLoopGroup.submit(() -> null).awaitUninterruptibly(500, TimeUnit.MILLISECONDS))
+        .isTrue();
   }
 }
