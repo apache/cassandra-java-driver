@@ -43,14 +43,14 @@
         "old": "field com.fasterxml.jackson.annotation.JacksonInject.Value.serialVersionUID",
         "new": "field com.fasterxml.jackson.annotation.JacksonInject.Value.serialVersionUID",
         "serialVersionUID": "1",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.numberOfParametersChanged",
         "old": "method void com.fasterxml.jackson.annotation.JacksonInject.Value::<init>(java.lang.Object, java.lang.Boolean)",
         "new": "method void com.fasterxml.jackson.annotation.JacksonInject.Value::<init>(java.lang.Object, java.lang.Boolean, java.lang.Boolean)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -58,179 +58,179 @@
         "old": "field com.fasterxml.jackson.annotation.JsonAutoDetect.Value.serialVersionUID",
         "new": "field com.fasterxml.jackson.annotation.JsonAutoDetect.Value.serialVersionUID",
         "serialVersionUID": "1",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_VALUES",
         "new": "field com.fasterxml.jackson.annotation.JsonFormat.Feature.ACCEPT_CASE_INSENSITIVE_VALUES",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.JsonFormat.Feature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE",
         "new": "field com.fasterxml.jackson.annotation.JsonFormat.Feature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.JsonFormat.Feature.WRITE_DATES_WITH_ZONE_ID",
         "new": "field com.fasterxml.jackson.annotation.JsonFormat.Feature.WRITE_DATES_WITH_ZONE_ID",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.JsonFormat.Feature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS",
         "new": "field com.fasterxml.jackson.annotation.JsonFormat.Feature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED",
         "new": "field com.fasterxml.jackson.annotation.JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.JsonFormat.Feature.WRITE_SORTED_MAP_ENTRIES",
         "new": "field com.fasterxml.jackson.annotation.JsonFormat.Feature.WRITE_SORTED_MAP_ENTRIES",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.ANY",
         "new": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.ANY",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.ARRAY",
         "new": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.ARRAY",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.BINARY",
         "new": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.BINARY",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.BOOLEAN",
         "new": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.BOOLEAN",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.NATURAL",
         "new": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.NATURAL",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.NUMBER",
         "new": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.NUMBER",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.NUMBER_FLOAT",
         "new": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.NUMBER_FLOAT",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.NUMBER_INT",
         "new": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.NUMBER_INT",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.OBJECT",
         "new": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.OBJECT",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.SCALAR",
         "new": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.SCALAR",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING",
         "new": "field com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method void com.fasterxml.jackson.annotation.JsonFormat.Value::<init>(java.lang.String, com.fasterxml.jackson.annotation.JsonFormat.Shape, java.util.Locale, java.util.TimeZone, com.fasterxml.jackson.annotation.JsonFormat.Features)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method void com.fasterxml.jackson.annotation.JsonFormat.Value::<init>(java.lang.String, com.fasterxml.jackson.annotation.JsonFormat.Shape, java.util.Locale, java.lang.String, java.util.TimeZone, com.fasterxml.jackson.annotation.JsonFormat.Features)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method void com.fasterxml.jackson.annotation.JsonFormat.Value::<init>(java.lang.String, com.fasterxml.jackson.annotation.JsonFormat.Shape, java.lang.String, java.lang.String, com.fasterxml.jackson.annotation.JsonFormat.Features)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.PropertyAccessor.ALL",
         "new": "field com.fasterxml.jackson.annotation.PropertyAccessor.ALL",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.PropertyAccessor.CREATOR",
         "new": "field com.fasterxml.jackson.annotation.PropertyAccessor.CREATOR",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.PropertyAccessor.FIELD",
         "new": "field com.fasterxml.jackson.annotation.PropertyAccessor.FIELD",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.PropertyAccessor.IS_GETTER",
         "new": "field com.fasterxml.jackson.annotation.PropertyAccessor.IS_GETTER",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.annotation.PropertyAccessor.NONE",
         "new": "field com.fasterxml.jackson.annotation.PropertyAccessor.NONE",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -238,157 +238,157 @@
         "old": "field com.fasterxml.jackson.core.JsonFactory.serialVersionUID",
         "new": "field com.fasterxml.jackson.core.JsonFactory.serialVersionUID",
         "serialVersionUID": "2",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.finalMethodAddedToNonFinalClass",
         "new": "method int com.fasterxml.jackson.core.JsonFactory::getFactoryFeatures()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER",
         "new": "field com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS",
         "new": "field com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_MISSING_VALUES",
         "new": "field com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_MISSING_VALUES",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_NON_NUMERIC_NUMBERS",
         "new": "field com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_NON_NUMERIC_NUMBERS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_NUMERIC_LEADING_ZEROS",
         "new": "field com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_NUMERIC_LEADING_ZEROS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_TRAILING_COMMA",
         "new": "field com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_TRAILING_COMMA",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.JsonParser.Feature.IGNORE_UNDEFINED",
         "new": "field com.fasterxml.jackson.core.JsonParser.Feature.IGNORE_UNDEFINED",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.JsonParser.Feature.INCLUDE_SOURCE_IN_LOCATION",
         "new": "field com.fasterxml.jackson.core.JsonParser.Feature.INCLUDE_SOURCE_IN_LOCATION",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.JsonParser.Feature.STRICT_DUPLICATE_DETECTION",
         "new": "field com.fasterxml.jackson.core.JsonParser.Feature.STRICT_DUPLICATE_DETECTION",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.numberOfParametersChanged",
         "old": "method void com.fasterxml.jackson.core.JsonPointer::<init>(java.lang.String, java.lang.String, com.fasterxml.jackson.core.JsonPointer)",
         "new": "method void com.fasterxml.jackson.core.JsonPointer::<init>(com.fasterxml.jackson.core.JsonPointer, com.fasterxml.jackson.core.JsonPointer)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.numberOfParametersChanged",
         "old": "method void com.fasterxml.jackson.core.JsonPointer::<init>(java.lang.String, java.lang.String, int, com.fasterxml.jackson.core.JsonPointer)",
         "new": "method void com.fasterxml.jackson.core.JsonPointer::<init>(com.fasterxml.jackson.core.JsonPointer, java.lang.String, int)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.core.JsonPointer com.fasterxml.jackson.core.JsonPointer::_constructHead(int, com.fasterxml.jackson.core.JsonPointer)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.core.JsonPointer com.fasterxml.jackson.core.JsonPointer::_parseQuotedTail(java.lang.String, int)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.finalMethodAddedToNonFinalClass",
         "new": "method int com.fasterxml.jackson.core.JsonStreamContext::getNestingDepth()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.StreamReadFeature.IGNORE_UNDEFINED",
         "new": "field com.fasterxml.jackson.core.StreamReadFeature.IGNORE_UNDEFINED",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION",
         "new": "field com.fasterxml.jackson.core.StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.StreamReadFeature.STRICT_DUPLICATE_DETECTION",
         "new": "field com.fasterxml.jackson.core.StreamReadFeature.STRICT_DUPLICATE_DETECTION",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.StreamWriteFeature.AUTO_CLOSE_CONTENT",
         "new": "field com.fasterxml.jackson.core.StreamWriteFeature.AUTO_CLOSE_CONTENT",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.StreamWriteFeature.AUTO_CLOSE_TARGET",
         "new": "field com.fasterxml.jackson.core.StreamWriteFeature.AUTO_CLOSE_TARGET",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.StreamWriteFeature.IGNORE_UNKNOWN",
         "new": "field com.fasterxml.jackson.core.StreamWriteFeature.IGNORE_UNKNOWN",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.StreamWriteFeature.STRICT_DUPLICATE_DETECTION",
         "new": "field com.fasterxml.jackson.core.StreamWriteFeature.STRICT_DUPLICATE_DETECTION",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -396,96 +396,96 @@
         "old": "field com.fasterxml.jackson.core.io.ContentReference.serialVersionUID",
         "new": "field com.fasterxml.jackson.core.io.ContentReference.serialVersionUID",
         "serialVersionUID": "1",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method int com.fasterxml.jackson.core.io.ContentReference::maxContentSnippetLength()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.json.JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER",
         "new": "field com.fasterxml.jackson.core.json.JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.json.JsonReadFeature.ALLOW_LEADING_ZEROS_FOR_NUMBERS",
         "new": "field com.fasterxml.jackson.core.json.JsonReadFeature.ALLOW_LEADING_ZEROS_FOR_NUMBERS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.json.JsonReadFeature.ALLOW_MISSING_VALUES",
         "new": "field com.fasterxml.jackson.core.json.JsonReadFeature.ALLOW_MISSING_VALUES",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.json.JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS",
         "new": "field com.fasterxml.jackson.core.json.JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.json.JsonReadFeature.ALLOW_SINGLE_QUOTES",
         "new": "field com.fasterxml.jackson.core.json.JsonReadFeature.ALLOW_SINGLE_QUOTES",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.json.JsonReadFeature.ALLOW_TRAILING_COMMA",
         "new": "field com.fasterxml.jackson.core.json.JsonReadFeature.ALLOW_TRAILING_COMMA",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.json.JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES",
         "new": "field com.fasterxml.jackson.core.json.JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.json.JsonWriteFeature.ESCAPE_NON_ASCII",
         "new": "field com.fasterxml.jackson.core.json.JsonWriteFeature.ESCAPE_NON_ASCII",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.json.JsonWriteFeature.QUOTE_FIELD_NAMES",
         "new": "field com.fasterxml.jackson.core.json.JsonWriteFeature.QUOTE_FIELD_NAMES",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.json.JsonWriteFeature.WRITE_NAN_AS_STRINGS",
         "new": "field com.fasterxml.jackson.core.json.JsonWriteFeature.WRITE_NAN_AS_STRINGS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.core.json.JsonWriteFeature.WRITE_NUMBERS_AS_STRINGS",
         "new": "field com.fasterxml.jackson.core.json.JsonWriteFeature.WRITE_NUMBERS_AS_STRINGS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.removed",
         "old": "field com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer._intern",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -493,7 +493,7 @@
         "old": "method void com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer::_reportTooManyCollisions()",
         "new": "method void com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer::_reportTooManyCollisions() throws com.fasterxml.jackson.core.exc.StreamConstraintsException",
         "exception": "com.fasterxml.jackson.core.exc.StreamConstraintsException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -501,7 +501,7 @@
         "old": "method java.lang.String com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer::addName(java.lang.String, int)",
         "new": "method java.lang.String com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer::addName(java.lang.String, int) throws com.fasterxml.jackson.core.exc.StreamConstraintsException",
         "exception": "com.fasterxml.jackson.core.exc.StreamConstraintsException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -509,7 +509,7 @@
         "old": "method java.lang.String com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer::addName(java.lang.String, int, int)",
         "new": "method java.lang.String com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer::addName(java.lang.String, int, int) throws com.fasterxml.jackson.core.exc.StreamConstraintsException",
         "exception": "com.fasterxml.jackson.core.exc.StreamConstraintsException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -517,7 +517,7 @@
         "old": "method java.lang.String com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer::addName(java.lang.String, int, int, int)",
         "new": "method java.lang.String com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer::addName(java.lang.String, int, int, int) throws com.fasterxml.jackson.core.exc.StreamConstraintsException",
         "exception": "com.fasterxml.jackson.core.exc.StreamConstraintsException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -525,13 +525,13 @@
         "old": "method java.lang.String com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer::addName(java.lang.String, int[], int)",
         "new": "method java.lang.String com.fasterxml.jackson.core.sym.ByteQuadsCanonicalizer::addName(java.lang.String, int[], int) throws com.fasterxml.jackson.core.exc.StreamConstraintsException",
         "exception": "com.fasterxml.jackson.core.exc.StreamConstraintsException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.removed",
         "old": "field com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer._flags",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -539,7 +539,7 @@
         "old": "method void com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer::_reportTooManyCollisions(int)",
         "new": "method void com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer::_reportTooManyCollisions(int) throws com.fasterxml.jackson.core.exc.StreamConstraintsException",
         "exception": "com.fasterxml.jackson.core.exc.StreamConstraintsException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -548,7 +548,7 @@
         "new": "method com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer::createRoot(int)",
         "oldVisibility": "protected",
         "newVisibility": "public",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -556,7 +556,7 @@
         "old": "method java.lang.String com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer::findSymbol(char[], int, int, int)",
         "new": "method java.lang.String com.fasterxml.jackson.core.sym.CharsToNameCanonicalizer::findSymbol(char[], int, int, int) throws java.io.IOException",
         "exception": "java.io.IOException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -564,7 +564,7 @@
         "old": "field com.fasterxml.jackson.core.util.Separators.serialVersionUID",
         "new": "field com.fasterxml.jackson.core.util.Separators.serialVersionUID",
         "serialVersionUID": "1",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -572,7 +572,7 @@
         "old": "method void com.fasterxml.jackson.core.util.TextBuffer::append(char)",
         "new": "method void com.fasterxml.jackson.core.util.TextBuffer::append(char) throws java.io.IOException",
         "exception": "java.io.IOException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -580,7 +580,7 @@
         "old": "method void com.fasterxml.jackson.core.util.TextBuffer::append(char[], int, int)",
         "new": "method void com.fasterxml.jackson.core.util.TextBuffer::append(char[], int, int) throws java.io.IOException",
         "exception": "java.io.IOException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -588,7 +588,7 @@
         "old": "method void com.fasterxml.jackson.core.util.TextBuffer::append(java.lang.String, int, int)",
         "new": "method void com.fasterxml.jackson.core.util.TextBuffer::append(java.lang.String, int, int) throws java.io.IOException",
         "exception": "java.io.IOException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -596,7 +596,7 @@
         "old": "method char[] com.fasterxml.jackson.core.util.TextBuffer::contentsAsArray()",
         "new": "method char[] com.fasterxml.jackson.core.util.TextBuffer::contentsAsArray() throws java.io.IOException",
         "exception": "java.io.IOException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -604,7 +604,7 @@
         "old": "method java.lang.String com.fasterxml.jackson.core.util.TextBuffer::contentsAsString()",
         "new": "method java.lang.String com.fasterxml.jackson.core.util.TextBuffer::contentsAsString() throws java.io.IOException",
         "exception": "java.io.IOException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -612,7 +612,7 @@
         "old": "method char[] com.fasterxml.jackson.core.util.TextBuffer::finishCurrentSegment()",
         "new": "method char[] com.fasterxml.jackson.core.util.TextBuffer::finishCurrentSegment() throws java.io.IOException",
         "exception": "java.io.IOException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -620,7 +620,7 @@
         "old": "method char[] com.fasterxml.jackson.core.util.TextBuffer::getTextBuffer()",
         "new": "method char[] com.fasterxml.jackson.core.util.TextBuffer::getTextBuffer() throws java.io.IOException",
         "exception": "java.io.IOException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -628,7 +628,7 @@
         "old": "method void com.fasterxml.jackson.core.util.TextBuffer::resetWithCopy(char[], int, int)",
         "new": "method void com.fasterxml.jackson.core.util.TextBuffer::resetWithCopy(char[], int, int) throws java.io.IOException",
         "exception": "java.io.IOException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -636,7 +636,7 @@
         "old": "method void com.fasterxml.jackson.core.util.TextBuffer::resetWithCopy(java.lang.String, int, int)",
         "new": "method void com.fasterxml.jackson.core.util.TextBuffer::resetWithCopy(java.lang.String, int, int) throws java.io.IOException",
         "exception": "java.io.IOException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -644,7 +644,7 @@
         "old": "method void com.fasterxml.jackson.core.util.TextBuffer::resetWithString(java.lang.String)",
         "new": "method void com.fasterxml.jackson.core.util.TextBuffer::resetWithString(java.lang.String) throws java.io.IOException",
         "exception": "java.io.IOException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -652,152 +652,152 @@
         "old": "method java.lang.String com.fasterxml.jackson.core.util.TextBuffer::setCurrentAndReturn(int)",
         "new": "method java.lang.String com.fasterxml.jackson.core.util.TextBuffer::setCurrentAndReturn(int) throws java.io.IOException",
         "exception": "java.io.IOException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method java.lang.Class<?> com.fasterxml.jackson.databind.AnnotationIntrospector::findDeserializationContentType(com.fasterxml.jackson.databind.introspect.Annotated, com.fasterxml.jackson.databind.JavaType)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method java.lang.Class<?> com.fasterxml.jackson.databind.AnnotationIntrospector::findDeserializationKeyType(com.fasterxml.jackson.databind.introspect.Annotated, com.fasterxml.jackson.databind.JavaType)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method java.lang.Class<?> com.fasterxml.jackson.databind.AnnotationIntrospector::findDeserializationType(com.fasterxml.jackson.databind.introspect.Annotated, com.fasterxml.jackson.databind.JavaType)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method java.lang.Boolean com.fasterxml.jackson.databind.AnnotationIntrospector::findIgnoreUnknownProperties(com.fasterxml.jackson.databind.introspect.AnnotatedClass)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method java.lang.String[] com.fasterxml.jackson.databind.AnnotationIntrospector::findPropertiesToIgnore(com.fasterxml.jackson.databind.introspect.Annotated, boolean)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method java.lang.Class<?> com.fasterxml.jackson.databind.AnnotationIntrospector::findSerializationContentType(com.fasterxml.jackson.databind.introspect.Annotated, com.fasterxml.jackson.databind.JavaType)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.annotation.JsonInclude.Include com.fasterxml.jackson.databind.AnnotationIntrospector::findSerializationInclusion(com.fasterxml.jackson.databind.introspect.Annotated, com.fasterxml.jackson.annotation.JsonInclude.Include)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.annotation.JsonInclude.Include com.fasterxml.jackson.databind.AnnotationIntrospector::findSerializationInclusionForContent(com.fasterxml.jackson.databind.introspect.Annotated, com.fasterxml.jackson.annotation.JsonInclude.Include)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method java.lang.Class<?> com.fasterxml.jackson.databind.AnnotationIntrospector::findSerializationKeyType(com.fasterxml.jackson.databind.introspect.Annotated, com.fasterxml.jackson.databind.JavaType)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method java.lang.Class<?> com.fasterxml.jackson.databind.AnnotationIntrospector::findSerializationType(com.fasterxml.jackson.databind.introspect.Annotated)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.class.defaultSerializationChanged",
         "old": "class com.fasterxml.jackson.databind.AnnotationIntrospector",
         "new": "class com.fasterxml.jackson.databind.AnnotationIntrospector",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.type.TypeBindings com.fasterxml.jackson.databind.BeanDescription::bindingsForBeanType()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.introspect.AnnotatedMethod com.fasterxml.jackson.databind.BeanDescription::findAnySetter()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.introspect.AnnotatedMember com.fasterxml.jackson.databind.BeanDescription::findAnySetterField()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method java.util.Map<java.lang.String, com.fasterxml.jackson.databind.introspect.AnnotatedMember> com.fasterxml.jackson.databind.BeanDescription::findBackReferenceProperties()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.abstractMethodAdded",
         "new": "method com.fasterxml.jackson.annotation.JsonFormat.Value com.fasterxml.jackson.databind.BeanDescription::findExpectedFormat()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method java.lang.reflect.Method com.fasterxml.jackson.databind.BeanDescription::findFactoryMethod(java.lang.Class<?>[])",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.introspect.AnnotatedMethod com.fasterxml.jackson.databind.BeanDescription::findJsonValueMethod()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method java.lang.reflect.Constructor<?> com.fasterxml.jackson.databind.BeanDescription::findSingleArgConstructor(java.lang.Class<?>[])",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.abstractMethodAdded",
         "new": "method com.fasterxml.jackson.databind.introspect.PotentialCreators com.fasterxml.jackson.databind.BeanDescription::getPotentialCreators()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.JavaType com.fasterxml.jackson.databind.BeanDescription::resolveType(java.lang.reflect.Type)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.abstractMethodAdded",
         "new": "method com.fasterxml.jackson.databind.cfg.DatatypeFeatures com.fasterxml.jackson.databind.DatabindContext::getDatatypeFeatures()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.abstractMethodAdded",
         "new": "method boolean com.fasterxml.jackson.databind.DatabindContext::isEnabled(com.fasterxml.jackson.databind.cfg.DatatypeFeature)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.abstractMethodAdded",
         "new": "method <T> T com.fasterxml.jackson.databind.DatabindContext::reportBadTypeDefinition(com.fasterxml.jackson.databind.BeanDescription, java.lang.String, java.lang.Object[]) throws com.fasterxml.jackson.databind.JsonMappingException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -805,440 +805,440 @@
         "old": "field com.fasterxml.jackson.databind.DeserializationConfig.serialVersionUID",
         "new": "field com.fasterxml.jackson.databind.DeserializationConfig.serialVersionUID",
         "serialVersionUID": "2",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.numberOfParametersChanged",
         "old": "method void com.fasterxml.jackson.databind.DeserializationConfig::<init>(com.fasterxml.jackson.databind.DeserializationConfig, com.fasterxml.jackson.databind.introspect.SimpleMixInResolver, com.fasterxml.jackson.databind.util.RootNameLookup, com.fasterxml.jackson.databind.cfg.ConfigOverrides)",
         "new": "method void com.fasterxml.jackson.databind.DeserializationConfig::<init>(com.fasterxml.jackson.databind.DeserializationConfig, com.fasterxml.jackson.databind.cfg.DatatypeFeatures)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.numberOfParametersChanged",
         "old": "method void com.fasterxml.jackson.databind.DeserializationConfig::<init>(com.fasterxml.jackson.databind.cfg.BaseSettings, com.fasterxml.jackson.databind.jsontype.SubtypeResolver, com.fasterxml.jackson.databind.introspect.SimpleMixInResolver, com.fasterxml.jackson.databind.util.RootNameLookup, com.fasterxml.jackson.databind.cfg.ConfigOverrides)",
         "new": "method void com.fasterxml.jackson.databind.DeserializationConfig::<init>(com.fasterxml.jackson.databind.cfg.BaseSettings, com.fasterxml.jackson.databind.jsontype.SubtypeResolver, com.fasterxml.jackson.databind.introspect.SimpleMixInResolver, com.fasterxml.jackson.databind.util.RootNameLookup, com.fasterxml.jackson.databind.cfg.ConfigOverrides, com.fasterxml.jackson.databind.cfg.CoercionConfigs, com.fasterxml.jackson.databind.cfg.DatatypeFeatures)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method void com.fasterxml.jackson.databind.DeserializationConfig::<init>(com.fasterxml.jackson.databind.cfg.BaseSettings, com.fasterxml.jackson.databind.jsontype.SubtypeResolver, com.fasterxml.jackson.databind.introspect.SimpleMixInResolver, com.fasterxml.jackson.databind.util.RootNameLookup, com.fasterxml.jackson.databind.cfg.ConfigOverrides, com.fasterxml.jackson.databind.cfg.CoercionConfigs)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.BeanDescription com.fasterxml.jackson.databind.DeserializationConfig::introspectForBuilder(com.fasterxml.jackson.databind.JavaType)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.numberOfParametersChanged",
         "old": "method void com.fasterxml.jackson.databind.DeserializationContext::<init>(com.fasterxml.jackson.databind.deser.DeserializerFactory)",
         "new": "method void com.fasterxml.jackson.databind.DeserializationContext::<init>(com.fasterxml.jackson.databind.DeserializationContext, com.fasterxml.jackson.databind.deser.DeserializerCache)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.JsonMappingException com.fasterxml.jackson.databind.DeserializationContext::endOfInputException(java.lang.Class<?>)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.finalMethodAddedToNonFinalClass",
         "new": "method java.lang.Object com.fasterxml.jackson.databind.DeserializationContext::findInjectableValue(java.lang.Object, com.fasterxml.jackson.databind.BeanProperty, java.lang.Object, java.lang.Boolean, java.lang.Boolean) throws com.fasterxml.jackson.databind.JsonMappingException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.finalMethodAddedToNonFinalClass",
         "new": "method com.fasterxml.jackson.databind.cfg.DatatypeFeatures com.fasterxml.jackson.databind.DeserializationContext::getDatatypeFeatures()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method java.text.DateFormat com.fasterxml.jackson.databind.DeserializationContext::getDateFormat()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.finalMethodAddedToNonFinalClass",
         "new": "method boolean com.fasterxml.jackson.databind.DeserializationContext::isEnabled(com.fasterxml.jackson.databind.cfg.DatatypeFeature)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.JsonMappingException com.fasterxml.jackson.databind.DeserializationContext::mappingException(java.lang.Class<?>)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.JsonMappingException com.fasterxml.jackson.databind.DeserializationContext::mappingException(java.lang.Class<?>, com.fasterxml.jackson.core.JsonToken)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.JsonMappingException com.fasterxml.jackson.databind.DeserializationContext::mappingException(java.lang.String)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.JsonMappingException com.fasterxml.jackson.databind.DeserializationContext::mappingException(java.lang.String, java.lang.Object[])",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method <T> T com.fasterxml.jackson.databind.DeserializationContext::reportBadMerge(com.fasterxml.jackson.databind.JsonDeserializer<?>) throws com.fasterxml.jackson.databind.JsonMappingException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method void com.fasterxml.jackson.databind.DeserializationContext::reportMappingException(java.lang.String, java.lang.Object[]) throws com.fasterxml.jackson.databind.JsonMappingException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method void com.fasterxml.jackson.databind.DeserializationContext::reportMissingContent(java.lang.String, java.lang.Object[]) throws com.fasterxml.jackson.databind.JsonMappingException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method void com.fasterxml.jackson.databind.DeserializationContext::reportUnknownProperty(java.lang.Object, java.lang.String, com.fasterxml.jackson.databind.JsonDeserializer<?>) throws com.fasterxml.jackson.databind.JsonMappingException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method void com.fasterxml.jackson.databind.DeserializationContext::reportWrongTokenException(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.JsonToken, java.lang.String, java.lang.Object[]) throws com.fasterxml.jackson.databind.JsonMappingException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.JsonMappingException com.fasterxml.jackson.databind.DeserializationContext::unknownTypeException(com.fasterxml.jackson.databind.JavaType, java.lang.String, java.lang.String)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.JsonMappingException com.fasterxml.jackson.databind.DeserializationContext::wrongTokenException(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.core.JsonToken, java.lang.String)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT",
         "new": "field com.fasterxml.jackson.databind.DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT",
         "new": "field com.fasterxml.jackson.databind.DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.DeserializationFeature.ACCEPT_FLOAT_AS_INT",
         "new": "field com.fasterxml.jackson.databind.DeserializationFeature.ACCEPT_FLOAT_AS_INT",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY",
         "new": "field com.fasterxml.jackson.databind.DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE",
         "new": "field com.fasterxml.jackson.databind.DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.DeserializationFeature.EAGER_DESERIALIZER_FETCH",
         "new": "field com.fasterxml.jackson.databind.DeserializationFeature.EAGER_DESERIALIZER_FETCH",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS",
         "new": "field com.fasterxml.jackson.databind.DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.DeserializationFeature.READ_ENUMS_USING_TO_STRING",
         "new": "field com.fasterxml.jackson.databind.DeserializationFeature.READ_ENUMS_USING_TO_STRING",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL",
         "new": "field com.fasterxml.jackson.databind.DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE",
         "new": "field com.fasterxml.jackson.databind.DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.DeserializationFeature.UNWRAP_ROOT_VALUE",
         "new": "field com.fasterxml.jackson.databind.DeserializationFeature.UNWRAP_ROOT_VALUE",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS",
         "new": "field com.fasterxml.jackson.databind.DeserializationFeature.UNWRAP_SINGLE_VALUE_ARRAYS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.DeserializationFeature.WRAP_EXCEPTIONS",
         "new": "field com.fasterxml.jackson.databind.DeserializationFeature.WRAP_EXCEPTIONS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.finalMethodAddedToNonFinalClass",
         "new": "method com.fasterxml.jackson.databind.node.ArrayNode com.fasterxml.jackson.databind.JsonNode::withArray(com.fasterxml.jackson.core.JsonPointer)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.finalMethodAddedToNonFinalClass",
         "new": "method com.fasterxml.jackson.databind.node.ObjectNode com.fasterxml.jackson.databind.JsonNode::withObject(com.fasterxml.jackson.core.JsonPointer)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.finalMethodAddedToNonFinalClass",
         "new": "method com.fasterxml.jackson.databind.node.ObjectNode com.fasterxml.jackson.databind.JsonNode::withObject(java.lang.String, com.fasterxml.jackson.databind.JsonNode.OverwriteMode, boolean)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_VALUES",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_VALUES",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.ALLOW_COERCION_OF_SCALARS",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.ALLOW_COERCION_OF_SCALARS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.ALLOW_EXPLICIT_PROPERTY_RENAMING",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.ALLOW_EXPLICIT_PROPERTY_RENAMING",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.ALLOW_VOID_VALUED_PROPERTIES",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.ALLOW_VOID_VALUED_PROPERTIES",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.APPLY_DEFAULT_VALUES",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.APPLY_DEFAULT_VALUES",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.BLOCK_UNSAFE_POLYMORPHIC_BASE_TYPES",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.BLOCK_UNSAFE_POLYMORPHIC_BASE_TYPES",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.CAN_OVERRIDE_ACCESS_MODIFIERS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.DEFAULT_VIEW_INCLUSION",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.DEFAULT_VIEW_INCLUSION",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.IGNORE_DUPLICATE_MODULE_REGISTRATIONS",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.IGNORE_DUPLICATE_MODULE_REGISTRATIONS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.IGNORE_MERGE_FOR_UNMERGEABLE",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.IGNORE_MERGE_FOR_UNMERGEABLE",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.INFER_BUILDER_TYPE_BINDINGS",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.INFER_BUILDER_TYPE_BINDINGS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.OVERRIDE_PUBLIC_ACCESS_MODIFIERS",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.OVERRIDE_PUBLIC_ACCESS_MODIFIERS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.SORT_CREATOR_PROPERTIES_FIRST",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.SORT_CREATOR_PROPERTIES_FIRST",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.SORT_PROPERTIES_ALPHABETICALLY",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.SORT_PROPERTIES_ALPHABETICALLY",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.USE_BASE_TYPE_AS_DEFAULT_IMPL",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.USE_STATIC_TYPING",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.USE_STATIC_TYPING",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.USE_STD_BEAN_NAMING",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.USE_STD_BEAN_NAMING",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME",
         "new": "field com.fasterxml.jackson.databind.MapperFeature.USE_WRAPPER_NAME_AS_PROPERTY_NAME",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping.EVERYTHING",
         "new": "field com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping.EVERYTHING",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.removed",
         "old": "field com.fasterxml.jackson.databind.PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.removed",
         "old": "field com.fasterxml.jackson.databind.PropertyNamingStrategy.KEBAB_CASE",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.removed",
         "old": "field com.fasterxml.jackson.databind.PropertyNamingStrategy.LOWER_CAMEL_CASE",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.removed",
         "old": "field com.fasterxml.jackson.databind.PropertyNamingStrategy.LOWER_CASE",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.removed",
         "old": "field com.fasterxml.jackson.databind.PropertyNamingStrategy.LOWER_DOT_CASE",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.removed",
         "old": "field com.fasterxml.jackson.databind.PropertyNamingStrategy.PASCAL_CASE_TO_CAMEL_CASE",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.removed",
         "old": "field com.fasterxml.jackson.databind.PropertyNamingStrategy.SNAKE_CASE",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.removed",
         "old": "field com.fasterxml.jackson.databind.PropertyNamingStrategy.UPPER_CAMEL_CASE",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -1246,40 +1246,40 @@
         "old": "field com.fasterxml.jackson.databind.SerializationConfig.serialVersionUID",
         "new": "field com.fasterxml.jackson.databind.SerializationConfig.serialVersionUID",
         "serialVersionUID": "1",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.numberOfParametersChanged",
         "old": "method void com.fasterxml.jackson.databind.SerializationConfig::<init>(com.fasterxml.jackson.databind.SerializationConfig, com.fasterxml.jackson.databind.introspect.SimpleMixInResolver, com.fasterxml.jackson.databind.util.RootNameLookup, com.fasterxml.jackson.databind.cfg.ConfigOverrides)",
         "new": "method void com.fasterxml.jackson.databind.SerializationConfig::<init>(com.fasterxml.jackson.databind.SerializationConfig, com.fasterxml.jackson.databind.cfg.ConstructorDetector)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.SerializationFeature.EAGER_SERIALIZER_FETCH",
         "new": "field com.fasterxml.jackson.databind.SerializationFeature.EAGER_SERIALIZER_FETCH",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.enumConstantOrderChanged",
         "old": "field com.fasterxml.jackson.databind.SerializationFeature.USE_EQUALITY_FOR_OBJECT_ID",
         "new": "field com.fasterxml.jackson.databind.SerializationFeature.USE_EQUALITY_FOR_OBJECT_ID",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.finalMethodAddedToNonFinalClass",
         "new": "method com.fasterxml.jackson.databind.cfg.DatatypeFeatures com.fasterxml.jackson.databind.SerializerProvider::getDatatypeFeatures()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.finalMethodAddedToNonFinalClass",
         "new": "method boolean com.fasterxml.jackson.databind.SerializerProvider::isEnabled(com.fasterxml.jackson.databind.cfg.DatatypeFeature)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -1287,51 +1287,51 @@
         "old": "field com.fasterxml.jackson.databind.cfg.BaseSettings.serialVersionUID",
         "new": "field com.fasterxml.jackson.databind.cfg.BaseSettings.serialVersionUID",
         "serialVersionUID": "1",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.numberOfParametersChanged",
         "old": "method void com.fasterxml.jackson.databind.cfg.BaseSettings::<init>(com.fasterxml.jackson.databind.introspect.ClassIntrospector, com.fasterxml.jackson.databind.AnnotationIntrospector, com.fasterxml.jackson.databind.PropertyNamingStrategy, com.fasterxml.jackson.databind.type.TypeFactory, com.fasterxml.jackson.databind.jsontype.TypeResolverBuilder<?>, java.text.DateFormat, com.fasterxml.jackson.databind.cfg.HandlerInstantiator, java.util.Locale, java.util.TimeZone, com.fasterxml.jackson.core.Base64Variant, com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator)",
         "new": "method void com.fasterxml.jackson.databind.cfg.BaseSettings::<init>(com.fasterxml.jackson.databind.introspect.ClassIntrospector, com.fasterxml.jackson.databind.AnnotationIntrospector, com.fasterxml.jackson.databind.PropertyNamingStrategy, com.fasterxml.jackson.databind.type.TypeFactory, com.fasterxml.jackson.databind.jsontype.TypeResolverBuilder<?>, java.text.DateFormat, com.fasterxml.jackson.databind.cfg.HandlerInstantiator, java.util.Locale, java.util.TimeZone, com.fasterxml.jackson.core.Base64Variant, com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator, com.fasterxml.jackson.databind.introspect.AccessorNamingStrategy.Provider, com.fasterxml.jackson.databind.cfg.CacheProvider)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.abstractMethodAdded",
         "new": "method com.fasterxml.jackson.databind.cfg.ConstructorDetector com.fasterxml.jackson.databind.cfg.MapperConfig<T extends com.fasterxml.jackson.databind.cfg.MapperConfig<T>>::getConstructorDetector()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.abstractMethodAdded",
         "new": "method com.fasterxml.jackson.databind.cfg.DatatypeFeatures com.fasterxml.jackson.databind.cfg.MapperConfig<T extends com.fasterxml.jackson.databind.cfg.MapperConfig<T>>::getDatatypeFeatures()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.finalMethodAddedToNonFinalClass",
         "new": "method com.fasterxml.jackson.databind.EnumNamingStrategy com.fasterxml.jackson.databind.cfg.MapperConfig<T extends com.fasterxml.jackson.databind.cfg.MapperConfig<T>>::getEnumNamingStrategy()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.abstractMethodAdded",
         "new": "method boolean com.fasterxml.jackson.databind.cfg.MapperConfig<T extends com.fasterxml.jackson.databind.cfg.MapperConfig<T>>::isEnabled(com.fasterxml.jackson.databind.cfg.DatatypeFeature)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.abstractMethodAdded",
         "new": "method com.fasterxml.jackson.databind.deser.DefaultDeserializationContext com.fasterxml.jackson.databind.deser.DefaultDeserializationContext::withCaches(com.fasterxml.jackson.databind.cfg.CacheProvider)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.typeChanged",
         "old": "field com.fasterxml.jackson.databind.deser.DeserializerCache._cachedDeserializers",
         "new": "field com.fasterxml.jackson.databind.deser.DeserializerCache._cachedDeserializers",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -1339,59 +1339,59 @@
         "old": "field com.fasterxml.jackson.databind.deser.DeserializerCache.serialVersionUID",
         "new": "field com.fasterxml.jackson.databind.deser.DeserializerCache.serialVersionUID",
         "serialVersionUID": "1",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method void com.fasterxml.jackson.databind.deser.SettableAnyProperty::<init>(com.fasterxml.jackson.databind.BeanProperty, com.fasterxml.jackson.databind.introspect.AnnotatedMember, com.fasterxml.jackson.databind.JavaType, com.fasterxml.jackson.databind.JsonDeserializer<java.lang.Object>, com.fasterxml.jackson.databind.jsontype.TypeDeserializer)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.abstractMethodAdded",
         "new": "method void com.fasterxml.jackson.databind.deser.SettableAnyProperty::_set(java.lang.Object, java.lang.Object, java.lang.Object) throws java.lang.Exception",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.nowAbstract",
         "old": "method com.fasterxml.jackson.databind.deser.SettableAnyProperty com.fasterxml.jackson.databind.deser.SettableAnyProperty::withValueDeserializer(com.fasterxml.jackson.databind.JsonDeserializer<java.lang.Object>)",
         "new": "method com.fasterxml.jackson.databind.deser.SettableAnyProperty com.fasterxml.jackson.databind.deser.SettableAnyProperty::withValueDeserializer(com.fasterxml.jackson.databind.JsonDeserializer<java.lang.Object>)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.class.nowAbstract",
         "old": "class com.fasterxml.jackson.databind.deser.SettableAnyProperty",
         "new": "class com.fasterxml.jackson.databind.deser.SettableAnyProperty",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.class.defaultSerializationChanged",
         "old": "class com.fasterxml.jackson.databind.deser.SettableBeanProperty",
         "new": "class com.fasterxml.jackson.databind.deser.SettableBeanProperty",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method void com.fasterxml.jackson.databind.deser.UnresolvedForwardReference::<init>(java.lang.String)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method void com.fasterxml.jackson.databind.deser.UnresolvedForwardReference::<init>(java.lang.String, com.fasterxml.jackson.core.JsonLocation, com.fasterxml.jackson.databind.deser.impl.ReadableObjectId)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.nowFinal",
         "old": "method void com.fasterxml.jackson.databind.deser.impl.PropertyValue::assign(java.lang.Object) throws java.io.IOException",
         "new": "method void com.fasterxml.jackson.databind.deser.impl.PropertyValue::assign(java.lang.Object) throws java.io.IOException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -1399,57 +1399,57 @@
         "old": "method java.lang.Object[] com.fasterxml.jackson.databind.deser.impl.PropertyValueBuffer::getParameters(com.fasterxml.jackson.databind.deser.SettableBeanProperty[]) throws com.fasterxml.jackson.databind.JsonMappingException",
         "new": "method java.lang.Object[] com.fasterxml.jackson.databind.deser.impl.PropertyValueBuffer::getParameters(com.fasterxml.jackson.databind.deser.SettableBeanProperty[]) throws com.fasterxml.jackson.databind.JsonMappingException, java.io.IOException",
         "exception": "java.io.IOException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.numberOfParametersChanged",
         "old": "method void com.fasterxml.jackson.databind.deser.impl.ValueInjector::<init>(com.fasterxml.jackson.databind.PropertyName, com.fasterxml.jackson.databind.JavaType, com.fasterxml.jackson.databind.util.Annotations, com.fasterxml.jackson.databind.introspect.AnnotatedMember, java.lang.Object)",
         "new": "method void com.fasterxml.jackson.databind.deser.impl.ValueInjector::<init>(com.fasterxml.jackson.databind.PropertyName, com.fasterxml.jackson.databind.JavaType, com.fasterxml.jackson.databind.introspect.AnnotatedMember, java.lang.Object, java.lang.Boolean, java.lang.Boolean)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.introspect.AnnotatedClass com.fasterxml.jackson.databind.introspect.AnnotatedClass::construct(com.fasterxml.jackson.databind.JavaType, com.fasterxml.jackson.databind.cfg.MapperConfig<?>)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.introspect.AnnotatedClass com.fasterxml.jackson.databind.introspect.AnnotatedClass::construct(com.fasterxml.jackson.databind.JavaType, com.fasterxml.jackson.databind.cfg.MapperConfig<?>, com.fasterxml.jackson.databind.introspect.ClassIntrospector.MixInResolver)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.introspect.AnnotatedClass com.fasterxml.jackson.databind.introspect.AnnotatedClass::constructWithoutSuperTypes(java.lang.Class<?>, com.fasterxml.jackson.databind.cfg.MapperConfig<?>)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.introspect.AnnotatedClass com.fasterxml.jackson.databind.introspect.AnnotatedClass::constructWithoutSuperTypes(java.lang.Class<?>, com.fasterxml.jackson.databind.cfg.MapperConfig<?>, com.fasterxml.jackson.databind.introspect.ClassIntrospector.MixInResolver)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method java.util.List<com.fasterxml.jackson.databind.introspect.AnnotatedMethod> com.fasterxml.jackson.databind.introspect.AnnotatedClass::getStaticMethods()",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method com.fasterxml.jackson.databind.BeanDescription com.fasterxml.jackson.databind.introspect.ClassIntrospector::forDeserializationWithBuilder(com.fasterxml.jackson.databind.DeserializationConfig, com.fasterxml.jackson.databind.JavaType, com.fasterxml.jackson.databind.introspect.ClassIntrospector.MixInResolver)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.returnTypeChangedCovariantly",
         "old": "method <T extends com.fasterxml.jackson.databind.JsonNode> T com.fasterxml.jackson.databind.JsonNode::with(java.lang.String) @ com.fasterxml.jackson.databind.node.ArrayNode",
         "new": "method com.fasterxml.jackson.databind.node.ObjectNode com.fasterxml.jackson.databind.node.ArrayNode::with(java.lang.String)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -1457,13 +1457,13 @@
         "old": "method <T extends com.fasterxml.jackson.databind.JsonNode> T com.fasterxml.jackson.databind.JsonNode::with(java.lang.String) @ com.fasterxml.jackson.databind.node.ArrayNode",
         "new": "method com.fasterxml.jackson.databind.node.ObjectNode com.fasterxml.jackson.databind.node.ArrayNode::with(java.lang.String)",
         "typeParameter": "T extends com.fasterxml.jackson.databind.JsonNode",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.finalMethodAddedToNonFinalClass",
         "new": "method com.fasterxml.jackson.annotation.JsonFormat.Value com.fasterxml.jackson.databind.introspect.ConcreteBeanPropertyBase::findFormatOverrides(com.fasterxml.jackson.databind.AnnotationIntrospector) @ com.fasterxml.jackson.databind.ser.AnyGetterWriter",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -1471,13 +1471,13 @@
         "old": "class com.fasterxml.jackson.databind.ser.AnyGetterWriter",
         "new": "class com.fasterxml.jackson.databind.ser.AnyGetterWriter",
         "superClass": "com.fasterxml.jackson.databind.introspect.ConcreteBeanPropertyBase",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.abstractMethodAdded",
         "new": "method com.fasterxml.jackson.databind.ser.DefaultSerializerProvider com.fasterxml.jackson.databind.ser.DefaultSerializerProvider::withCaches(com.fasterxml.jackson.databind.cfg.CacheProvider)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -1485,7 +1485,7 @@
         "old": "parameter void com.fasterxml.jackson.databind.ser.impl.ReadOnlyClassToSerializerMap::<init>(===java.util.Map<com.fasterxml.jackson.databind.util.TypeKey, com.fasterxml.jackson.databind.JsonSerializer<java.lang.Object>>===)",
         "new": "parameter void com.fasterxml.jackson.databind.ser.impl.ReadOnlyClassToSerializerMap::<init>(===com.fasterxml.jackson.databind.util.LookupCache<com.fasterxml.jackson.databind.util.TypeKey, com.fasterxml.jackson.databind.JsonSerializer<java.lang.Object>>===)",
         "parameterIndex": "0",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -1493,13 +1493,13 @@
         "old": "parameter com.fasterxml.jackson.databind.ser.impl.ReadOnlyClassToSerializerMap com.fasterxml.jackson.databind.ser.impl.ReadOnlyClassToSerializerMap::from(===java.util.HashMap<com.fasterxml.jackson.databind.util.TypeKey, com.fasterxml.jackson.databind.JsonSerializer<java.lang.Object>>===)",
         "new": "parameter com.fasterxml.jackson.databind.ser.impl.ReadOnlyClassToSerializerMap com.fasterxml.jackson.databind.ser.impl.ReadOnlyClassToSerializerMap::from(===com.fasterxml.jackson.databind.util.LookupCache<com.fasterxml.jackson.databind.util.TypeKey, com.fasterxml.jackson.databind.JsonSerializer<java.lang.Object>>===)",
         "parameterIndex": "0",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.removed",
         "old": "field com.fasterxml.jackson.databind.ser.std.BeanSerializerBase._anyGetterWriter",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
@@ -1507,52 +1507,52 @@
         "old": "class com.fasterxml.jackson.databind.type.ResolvedRecursiveType",
         "new": "class com.fasterxml.jackson.databind.type.ResolvedRecursiveType",
         "superClass": "com.fasterxml.jackson.databind.type.IdentityEqualityType",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.removed",
         "old": "field com.fasterxml.jackson.databind.type.TypeFactory.CORE_TYPE_CLASS",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method void com.fasterxml.jackson.databind.type.TypeFactory::<init>(com.fasterxml.jackson.databind.util.LRUMap<java.lang.Object, com.fasterxml.jackson.databind.JavaType>, com.fasterxml.jackson.databind.type.TypeParser, com.fasterxml.jackson.databind.type.TypeModifier[], java.lang.ClassLoader)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.removed",
         "old": "method void com.fasterxml.jackson.databind.type.TypeFactory::<init>(com.fasterxml.jackson.databind.util.LRUMap<java.lang.Object, com.fasterxml.jackson.databind.JavaType>)",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.numberOfParametersChanged",
         "old": "method com.fasterxml.jackson.databind.JavaType com.fasterxml.jackson.databind.type.TypeParser::parseType(com.fasterxml.jackson.databind.type.TypeParser.MyTokenizer) throws java.lang.IllegalArgumentException",
         "new": "method com.fasterxml.jackson.databind.JavaType com.fasterxml.jackson.databind.type.TypeParser::parseType(com.fasterxml.jackson.databind.type.TypeParser.MyTokenizer, int) throws java.lang.IllegalArgumentException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.method.numberOfParametersChanged",
         "old": "method java.util.List<com.fasterxml.jackson.databind.JavaType> com.fasterxml.jackson.databind.type.TypeParser::parseTypes(com.fasterxml.jackson.databind.type.TypeParser.MyTokenizer) throws java.lang.IllegalArgumentException",
         "new": "method java.util.List<com.fasterxml.jackson.databind.JavaType> com.fasterxml.jackson.databind.type.TypeParser::parseTypes(com.fasterxml.jackson.databind.type.TypeParser.MyTokenizer, int) throws java.lang.IllegalArgumentException",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.removed",
         "old": "field com.fasterxml.jackson.databind.util.LRUMap<K, V>._jdkSerializeMaxEntries",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "ignore": true,
         "code": "java.field.typeChanged",
         "old": "field com.fasterxml.jackson.databind.util.LRUMap<K, V>._map",
         "new": "field com.fasterxml.jackson.databind.util.LRUMap<K, V>._map",
-        "justification": "CASSJAVA-73: Remove Insights support"
+        "justification": "Bump Jackson to 2.20.1"
       },
       {
         "code": "java.field.enumConstantOrderChanged",
