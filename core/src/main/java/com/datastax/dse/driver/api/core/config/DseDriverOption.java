@@ -22,19 +22,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 
 public enum DseDriverOption implements DriverOption {
   /**
-   * The name of the application using the session.
-   *
-   * <p>Value type: {@link String}
-   */
-  APPLICATION_NAME("basic.application.name"),
-  /**
-   * The version of the application using the session.
-   *
-   * <p>Value type: {@link String}
-   */
-  APPLICATION_VERSION("basic.application.version"),
-
-  /**
    * Proxy authentication for GSSAPI authentication: allows to login as another user or role.
    *
    * <p>Value type: {@link String}
