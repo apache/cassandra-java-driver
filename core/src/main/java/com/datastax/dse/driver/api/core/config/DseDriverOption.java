@@ -22,19 +22,6 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 
 public enum DseDriverOption implements DriverOption {
   /**
-   * The name of the application using the session.
-   *
-   * <p>Value type: {@link String}
-   */
-  APPLICATION_NAME("basic.application.name"),
-  /**
-   * The version of the application using the session.
-   *
-   * <p>Value type: {@link String}
-   */
-  APPLICATION_VERSION("basic.application.version"),
-
-  /**
    * Proxy authentication for GSSAPI authentication: allows to login as another user or role.
    *
    * <p>Value type: {@link String}
@@ -168,13 +155,6 @@ public enum DseDriverOption implements DriverOption {
    * <p>Value-type: {@link java.time.Duration Duration}
    */
   GRAPH_TIMEOUT("basic.graph.timeout"),
-
-  /**
-   * Whether to send events for Insights monitoring.
-   *
-   * <p>Value type: boolean
-   */
-  MONITOR_REPORTING_ENABLED("advanced.monitor-reporting.enabled"),
 
   /**
    * Whether to enable paging for Graph queries.

@@ -248,16 +248,6 @@ detectors. If that is the case, it is advised to disable hot-reloading by settin
 [`DriverConfigLoader`]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html
 [hot-reloading]: https://docs.datastax.com/en/drivers/java/4.17/com/datastax/oss/driver/api/core/config/DriverConfigLoader.html#supportsReloading--
 
-#### Driver lock-free guarantees when connecting to DSE
-
-When connecting to clusters running recent DSE versions, the driver automatically enables periodic 
-status reporting. When preparing the status report, the driver has to hit the local filesystem, and
-because of that, the status reporting process does not qualify as lock-free.
-
-If lock-freedom is being enforced, then automatic status reporting must be disabled by setting the
-`datastax-java-driver.advanced.monitor-reporting.enabled` property to false in the driver 
-configuration.
-
 ### Driver mechanism for detection of blocking calls
 
 The driver has its own mechanism for detecting blocking calls happening on an internal driver 
@@ -297,7 +287,6 @@ The following items are NOT declared to be allowed and are likely to be reported
 used:
 
 * Request throttlers;
-* Automatic status reporting;
 * `SafeInitNodeStateListener`.
 
 Note that other blocking startup steps, e.g. loading of configuration files, are also not declared 
