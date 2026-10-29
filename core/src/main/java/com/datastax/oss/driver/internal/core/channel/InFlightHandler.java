@@ -32,7 +32,9 @@ import com.datastax.oss.driver.shaded.guava.common.collect.HashBiMap;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
+import com.datastax.oss.protocol.internal.ProtocolConstants;
 import com.datastax.oss.protocol.internal.request.Query;
+import com.datastax.oss.protocol.internal.response.Event;
 import com.datastax.oss.protocol.internal.response.result.SetKeyspace;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
@@ -218,6 +220,12 @@ public class InFlightHandler extends ChannelDuplexHandler {
 
     if (streamId < 0) {
       Message event = responseFrame.message;
+      if (event instanceof Event
+          && ProtocolConstants.EventType.GRACEFUL_DISCONNECT.equals(((Event) event).type)) {
+        // Start draining this channel first, so that the drain is not compromised if the
+        // callback below misbehaves.
+        startGracefulShutdown(ctx);
+      }
       if (eventCallback == null) {
         LOG.debug("[{}] Received event {} but no callback was registered", logPrefix, event);
       } else {

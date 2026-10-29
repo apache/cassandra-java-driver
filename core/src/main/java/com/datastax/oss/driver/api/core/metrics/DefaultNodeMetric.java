@@ -51,6 +51,7 @@ public enum DefaultNodeMetric implements NodeMetric {
   SPECULATIVE_EXECUTIONS("speculative-executions"),
   CONNECTION_INIT_ERRORS("errors.connection.init"),
   AUTHENTICATION_ERRORS("errors.connection.auth"),
+  GRACEFUL_DISCONNECTS("pool.graceful-disconnects"),
   ;
 
   private static final Map<String, DefaultNodeMetric> BY_PATH = sortByPath();

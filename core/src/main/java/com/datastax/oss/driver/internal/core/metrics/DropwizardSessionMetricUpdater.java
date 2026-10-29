@@ -45,6 +45,7 @@ public class DropwizardSessionMetricUpdater extends DropwizardMetricUpdater<Sess
 
     initializeCounter(DefaultSessionMetric.CQL_CLIENT_TIMEOUTS, profile);
     initializeCounter(DefaultSessionMetric.THROTTLING_ERRORS, profile);
+    initializeCounter(DefaultSessionMetric.GRACEFUL_DISCONNECTS, profile);
     initializeCounter(DseSessionMetric.GRAPH_CLIENT_TIMEOUTS, profile);
 
     initializeHdrTimer(

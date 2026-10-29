@@ -37,6 +37,7 @@ import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.TestNodeFactory;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
 import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
+import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import io.netty.channel.Channel;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.DefaultEventLoopGroup;
@@ -63,6 +64,7 @@ abstract class ChannelPoolTestBase {
   @Mock protected ChannelFactory channelFactory;
   @Mock protected MetricsFactory metricsFactory;
   @Mock protected NodeMetricUpdater nodeMetricUpdater;
+  @Mock protected SessionMetricUpdater sessionMetricUpdater;
   protected DefaultNode node;
   protected EventBus eventBus;
   private DefaultEventLoopGroup adminEventLoopGroup;
@@ -89,6 +91,7 @@ abstract class ChannelPoolTestBase {
 
     when(context.getMetricsFactory()).thenReturn(metricsFactory);
     when(metricsFactory.newNodeUpdater(any(Node.class))).thenReturn(nodeMetricUpdater);
+    when(metricsFactory.getSessionUpdater()).thenReturn(sessionMetricUpdater);
 
     node = TestNodeFactory.newNode(1, context);
   }
