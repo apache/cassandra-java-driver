@@ -31,6 +31,7 @@ import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.DriverChannelOptions;
 import com.datastax.oss.driver.internal.core.channel.MockChannelFactoryHelper;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import com.datastax.oss.protocol.internal.response.event.GracefulDisconnectEvent;
 import java.util.concurrent.CompletionStage;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -95,10 +96,7 @@ public class ChannelPoolGracefulDisconnectTest extends ChannelPoolTestBase {
     // event stays local to the connection (the draining is handled by InFlightHandler, covered in
     // InFlightHandlerTest); the pool callback only records the metrics and does not touch the other
     // channels of the node.
-    optionsCaptor
-        .getValue()
-        .eventCallback
-        .onEvent(new com.datastax.oss.protocol.internal.response.event.GracefulDisconnectEvent());
+    optionsCaptor.getValue().eventCallback.onEvent(new GracefulDisconnectEvent());
 
     verify(nodeMetricUpdater, VERIFY_TIMEOUT)
         .incrementCounter(DefaultNodeMetric.GRACEFUL_DISCONNECTS, null);

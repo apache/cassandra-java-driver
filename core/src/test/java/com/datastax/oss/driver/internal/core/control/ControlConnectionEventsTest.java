@@ -34,6 +34,7 @@ import com.datastax.oss.driver.internal.core.channel.EventCallback;
 import com.datastax.oss.driver.internal.core.metadata.TopologyEvent;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableList;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
+import com.datastax.oss.protocol.internal.response.event.GracefulDisconnectEvent;
 import com.datastax.oss.protocol.internal.response.event.SchemaChangeEvent;
 import com.datastax.oss.protocol.internal.response.event.StatusChangeEvent;
 import com.datastax.oss.protocol.internal.response.event.TopologyChangeEvent;
@@ -140,8 +141,7 @@ public class ControlConnectionEventsTest extends ControlConnectionTestBase {
     EventCallback callback = optionsCaptor.getValue().eventCallback;
 
     // When
-    callback.onEvent(
-        new com.datastax.oss.protocol.internal.response.event.GracefulDisconnectEvent());
+    callback.onEvent(new GracefulDisconnectEvent());
 
     // Then (per CEP-59 the event stays local to the connection; only metrics are recorded, and no
     // internal event is propagated to the rest of the driver)

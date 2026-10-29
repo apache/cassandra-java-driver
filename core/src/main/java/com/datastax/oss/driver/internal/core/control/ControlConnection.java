@@ -249,10 +249,6 @@ public class ControlConnection implements EventCallback, AsyncAutoCloseable {
   }
 
   private void processGracefulDisconnect() {
-    LOG.info(
-        "[{}] Received GRACEFUL_DISCONNECT event on control connection, "
-            + "the server is shutting down gracefully",
-        logPrefix);
     // Per CEP-59 the event stays local to the connection that received it: the control channel
     // drains itself (handled by InFlightHandler) and the control connection reconnects to another
     // node. We only record the metrics here; the event is not propagated to other connections.
