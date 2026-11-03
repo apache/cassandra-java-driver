@@ -109,35 +109,37 @@ public class ArrayUtilsTest {
   }
 
   @Test
-  public void should_rotate() {
-    String[] array = {"a", "b", "c", "d", "e"};
+  public void should_bubble_up_and_down_same_as_old_implementation() {
+    String[] source = {"a", "b", "c", "d", "e", "f", "g", "h"};
 
-    ArrayUtils.rotate(array, 1, 3, 1);
-    assertThat(array).containsExactly("a", "c", "d", "b", "e");
+    for (int sourceIndex = 0; sourceIndex < source.length; sourceIndex++) {
+      for (int targetIndex = 0; targetIndex < source.length; targetIndex++) {
+        String[] up = source.clone();
+        String[] expectedUp = source.clone();
+        ArrayUtils.bubbleUp(up, sourceIndex, targetIndex);
+        oldBubbleUp(expectedUp, sourceIndex, targetIndex);
+        assertThat(up).containsExactly(expectedUp);
 
-    ArrayUtils.rotate(array, 0, 4, 2);
-    assertThat(array).containsExactly("d", "b", "a", "c", "e");
-
-    ArrayUtils.rotate(array, 2, 3, 10);
-    assertThat(array).containsExactly("d", "b", "c", "e", "a");
+        String[] down = source.clone();
+        String[] expectedDown = source.clone();
+        ArrayUtils.bubbleDown(down, sourceIndex, targetIndex);
+        oldBubbleDown(expectedDown, sourceIndex, targetIndex);
+        assertThat(down).containsExactly(expectedDown);
+      }
+    }
   }
 
-  @Test
-  public void should_not_rotate_when_amount_multiple_of_range_size() {
-    String[] array = {"a", "b", "c", "d", "e"};
-
-    ArrayUtils.rotate(array, 1, 3, 9);
-    assertThat(array).containsExactly("a", "b", "c", "d", "e");
+  private static <ElementT> void oldBubbleUp(
+      ElementT[] elements, int sourceIndex, int targetIndex) {
+    for (int i = sourceIndex; i > targetIndex; i--) {
+      ArrayUtils.swap(elements, i, i - 1);
+    }
   }
 
-  @Test
-  public void should_not_rotate_when_range_is_singleton_or_empty() {
-    String[] array = {"a", "b", "c", "d", "e"};
-
-    ArrayUtils.rotate(array, 1, 1, 3);
-    assertThat(array).containsExactly("a", "b", "c", "d", "e");
-
-    ArrayUtils.rotate(array, 1, 0, 3);
-    assertThat(array).containsExactly("a", "b", "c", "d", "e");
+  private static <ElementT> void oldBubbleDown(
+      ElementT[] elements, int sourceIndex, int targetIndex) {
+    for (int i = sourceIndex; i < targetIndex; i++) {
+      ArrayUtils.swap(elements, i, i + 1);
+    }
   }
 }

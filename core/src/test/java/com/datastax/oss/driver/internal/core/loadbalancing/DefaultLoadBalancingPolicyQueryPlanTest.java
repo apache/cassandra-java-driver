@@ -225,6 +225,55 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends BasicLoadBalancingP
 
   @Test
   public void
+      should_only_check_in_flight_for_first_two_replicas_when_response_rates_are_sufficient() {
+    // Given
+    given(request.getRoutingKeyspace()).willReturn(KEYSPACE);
+    given(request.getRoutingKey()).willReturn(ROUTING_KEY);
+    given(tokenMap.getReplicas(KEYSPACE, ROUTING_KEY))
+        .willReturn(ImmutableSet.of(node1, node3, node5));
+    given(pool1.getInFlight()).willReturn(10);
+    given(pool3.getInFlight()).willReturn(10);
+    given(pool5.getInFlight()).willReturn(10);
+    dsePolicy.responseTimes.put(
+        node1, dsePolicy.new NodeResponseRateSample(new AtomicLongArray(new long[] {T1, T1})));
+    dsePolicy.responseTimes.put(
+        node3, dsePolicy.new NodeResponseRateSample(new AtomicLongArray(new long[] {T1, T1})));
+    dsePolicy.responseTimes.put(
+        node5, dsePolicy.new NodeResponseRateSample(new AtomicLongArray(new long[] {T1, T1})));
+
+    // When
+    dsePolicy.newQueryPlan(request, session);
+
+    // Then
+    then(dsePolicy).should(times(2)).getInFlight(any(), any());
+  }
+
+  @Test
+  public void should_check_in_flight_for_all_replicas_when_response_rates_are_insufficient() {
+    // Given
+    given(request.getRoutingKeyspace()).willReturn(KEYSPACE);
+    given(request.getRoutingKey()).willReturn(ROUTING_KEY);
+    given(tokenMap.getReplicas(KEYSPACE, ROUTING_KEY))
+        .willReturn(ImmutableSet.of(node1, node3, node5));
+    given(pool1.getInFlight()).willReturn(10);
+    given(pool3.getInFlight()).willReturn(10);
+    given(pool5.getInFlight()).willReturn(10);
+    dsePolicy.responseTimes.put(
+        node1, dsePolicy.new NodeResponseRateSample(new AtomicLongArray(new long[] {T0, T0})));
+    dsePolicy.responseTimes.put(
+        node3, dsePolicy.new NodeResponseRateSample(new AtomicLongArray(new long[] {T0, T0})));
+    dsePolicy.responseTimes.put(
+        node5, dsePolicy.new NodeResponseRateSample(new AtomicLongArray(new long[] {T0, T0})));
+
+    // When
+    dsePolicy.newQueryPlan(request, session);
+
+    // Then
+    then(dsePolicy).should(times(5)).getInFlight(any(), any());
+  }
+
+  @Test
+  public void
       should_not_treat_node_as_unhealthy_if_has_in_flight_exceeded_but_response_times_normal() {
     // Given
     given(request.getRoutingKeyspace()).willReturn(KEYSPACE);
