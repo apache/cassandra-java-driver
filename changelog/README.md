@@ -21,6 +21,10 @@ under the License.
 
 <!-- Note: contrary to 3.x, insert new entries *first* in their section -->
 
+### 4.19.5 (in progress)
+
+- [improvement] CASSJAVA-145: Reduce CPU cost of DefaultLoadBalancingPolicy query plans while preserving plan ordering
+
 ### 4.19.4
 
 - [improvement] CASSJAVA-137: Bump Netty to 4.1.138
