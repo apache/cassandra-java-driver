@@ -24,7 +24,7 @@ runs:
         git clone --depth 1 --single-branch -b cassandra-test https://github.com/apache/cassandra-ccm.git
         cd cassandra-ccm
         pip install -r requirements.txt
-        pip install ..
+        pip install .
 
     # ---- Install required Zulu JDKs (8/11/17) and capture their homes ----
     - name: Install Zulu 11
