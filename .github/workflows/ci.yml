@@ -23,6 +23,9 @@ on:
   push:
   pull_request:
   workflow_dispatch: # allow manual trigger from the Actions page
+  schedule:
+    # Saturday 23:00 PST / Sunday 00:00 PDT; cron is in UTC and runs on the default branch only
+    - cron: "0 7 * * 0"
 
 permissions:
   contents: read

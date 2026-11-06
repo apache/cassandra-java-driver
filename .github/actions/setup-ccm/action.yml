@@ -20,7 +20,7 @@ runs:
     - name: Install ccm
       shell: bash
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools
         git clone --depth 1 --single-branch -b cassandra-test https://github.com/apache/cassandra-ccm.git
         cd cassandra-ccm
         pip install -r requirements.txt
