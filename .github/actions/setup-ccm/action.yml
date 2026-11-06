@@ -1,0 +1,139 @@
+name: Set up CCM for integration tests
+description: >
+  Install ccm and its Python toolchain, the Zulu JDKs Cassandra needs,
+  SSL certificates, Simulacron, and pre-download the Cassandra distribution.
+
+inputs:
+  server-version:
+    description: 'Cassandra minor version (e.g. "4.1"); resolved to the latest patch release.'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # ---- Python for ccm ----
+    - name: Set up Python 3.15.2
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.15.2"
+
+    - name: Install ccm
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip setuptools
+        git clone --depth 1 --single-branch -b cassandra-test https://github.com/apache/cassandra-ccm.git
+        cd cassandra-ccm
+        pip install -r requirements.txt
+        pip install .
+
+    # ---- Install required Zulu JDKs (8/11/17) and capture their homes ----
+    - name: Install Zulu 11
+      id: z11
+      uses: actions/setup-java@v5
+      with:
+        distribution: zulu
+        java-version: "11"
+
+    - name: Install Zulu 17
+      id: z17
+      uses: actions/setup-java@v5
+      with:
+        distribution: zulu
+        java-version: "17"
+
+    - name: Install Zulu 8
+      id: z8
+      uses: actions/setup-java@v5
+      with:
+        distribution: zulu
+        java-version: "8"
+
+    - name: Export JAVA*_HOME variables
+      shell: bash
+      run: |
+        echo "JAVA8_HOME=${{ steps.z8.outputs.path }}"  >> "$GITHUB_ENV"
+        echo "JAVA11_HOME=${{ steps.z11.outputs.path }}" >> "$GITHUB_ENV"
+        echo "JAVA17_HOME=${{ steps.z17.outputs.path }}" >> "$GITHUB_ENV"
+        echo "JAVA_HOME=${{ steps.z8.outputs.path }}"    >> "$GITHUB_ENV"
+        echo "CCM_UPDATE_PID_DEFAULT_TIMEOUT=120"        >> "$GITHUB_ENV"
+        # "-" tells bin/cassandra not to use jemalloc, skipping its unbounded `find` over the
+        # library dirs, which can exceed the pid timeout on a cold cache under parallel tests.
+        echo "CASSANDRA_LIBJEMALLOC=-"                   >> "$GITHUB_ENV"
+
+    - name: Generate SSL certificates
+      shell: bash
+      run: |
+        mkdir -p /home/runner/workspace/tools/ccm/ssl/
+        cd /home/runner/workspace/tools/ccm/ssl/
+        keytool -genkey \
+          -keyalg RSA \
+          -alias cassandra \
+          -keystore keystore.jks \
+          -storepass cassandra \
+          -keypass cassandra \
+          -validity 364635 \
+          -dname "CN=Jane He, OU=TE, O=ASF, L=Santa Clara, ST=CA, C=TE"
+        keytool -export \
+          -alias cassandra \
+          -file cassandra.crt \
+          -keystore keystore.jks \
+          -storepass cassandra
+        openssl x509 \
+          -inform der \
+          -in cassandra.crt \
+          -out cassandra.pem
+        keytool -genkeypair \
+          -keyalg RSA \
+          -alias client \
+          -keystore truststore.jks \
+          -storepass cassandra \
+          -keypass cassandra \
+          -validity 364635 \
+          -dname "CN=Philip Thompson, OU=TE, O=DataStax, L=Santa Clara, ST=CA, C=TE"
+        keytool -importkeystore \
+          -srckeystore truststore.jks \
+          -destkeystore client.p12 \
+          -srcstorepass cassandra \
+          -deststorepass cassandra \
+          -deststoretype PKCS12
+        openssl pkcs12 \
+          -in client.p12 \
+          -passin pass:cassandra \
+          -nokeys \
+          -out client_cert.pem -legacy
+        openssl pkcs12 \
+          -in client.p12 \
+          -passin pass:cassandra \
+          -nodes \
+          -nocerts \
+          -out client_key.pem -legacy
+
+    - name: Install Simulacron
+      shell: bash
+      run: |
+        wget https://github.com/datastax/simulacron/releases/download/0.12.0/simulacron-standalone-0.12.0.jar -O /home/runner/simulacron.jar
+
+    - name: Resolve Cassandra latest patch version
+      shell: bash
+      env:
+        SERVER_VERSION: ${{ inputs.server-version }}
+      run: |
+        PATCH_SERVER_VERSION=$(
+          curl -s https://downloads.apache.org/cassandra/ \
+          | grep -oP '(?<=href=")[0-9]+\.[0-9]+\.[0-9]+(?=)' \
+          | sort -rV \
+          | uniq -w 3 \
+          | grep "^${SERVER_VERSION}\."
+        )
+        echo "Resolved Cassandra ${SERVER_VERSION}.x -> ${PATCH_SERVER_VERSION}"
+        echo "CCM_VERSION=$PATCH_SERVER_VERSION" >> "$GITHUB_ENV"
+
+    - name: Print environment
+      shell: bash
+      run: printenv | sort
+
+    - name: Pre-download Cassandra distribution
+      shell: bash
+      run: |
+        ccm create predownload -v $CCM_VERSION
+        ccm remove

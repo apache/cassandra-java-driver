@@ -1,0 +1,119 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+name: Unit and Integration Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch: # allow manual trigger from the Actions page
+  schedule:
+    # Saturday 23:00 PST / Sunday 00:00 PDT; cron is in UTC and runs on the default branch only
+    - cron: "0 7 * * 0"
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+jobs:
+  unit-integration-tests:
+    name: Unit and Integration Tests (JDK ${{ matrix.TEST_JAVA_VERSION }}, C* ${{ matrix.SERVER_VERSION }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        TEST_JAVA_VERSION: ["17", "21"]
+        SERVER_VERSION: ["3.11", "4.0", "4.1", "5.0"] # Cassandra minor versions
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up CCM
+        uses: ./.github/actions/setup-ccm
+        with:
+          server-version: ${{ matrix.SERVER_VERSION }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 17
+          cache: maven
+
+      - name: Build (skip tests)
+        run: mvn -B -V install -DskipTests -Dmaven.javadoc.skip=true
+
+      - name: Set up JDK ${{ matrix.TEST_JAVA_VERSION }}
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: ${{ matrix.TEST_JAVA_VERSION }}
+          cache: maven
+
+      - name: Run unit and integration tests
+        run: |
+          mvn -B -V verify -T 1 \
+            -DtestJavaHome="$JAVA_HOME" \
+            -Dccm.version="$CCM_VERSION" \
+            -Dccm.dse=false \
+            -Dmaven.test.failure.ignore=true \
+            -Dmaven.javadoc.skip=true
+
+      - name: Check test results
+        run: |
+          failed=$(find . -path '*/target/*-reports/TEST-*.xml' \
+            -exec grep -lE '<testsuite[^>]* (failures|errors)="[1-9]' {} + || true)
+          if [ -n "$failed" ]; then
+            echo "Test failures or errors in:"
+            echo "$failed"
+            exit 1
+          fi
+
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: it-results-jdk${{ matrix.TEST_JAVA_VERSION }}-cassandra${{ matrix.SERVER_VERSION }}
+          path: |
+            **/target/surefire-reports/TEST-*.xml
+            **/target/failsafe-reports/TEST-*.xml
+            **/hs_err_pid*.log
+          if-no-files-found: ignore
+
+  publish-test-results:
+    name: Publish test results
+    needs: [unit-integration-tests]
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+    if: ${{ !cancelled() }}
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: artifacts/**/TEST-*.xml
