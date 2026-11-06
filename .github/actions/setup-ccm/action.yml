@@ -12,10 +12,10 @@ runs:
   using: composite
   steps:
     # ---- Python for ccm ----
-    - name: Set up Python 3.9.16
+    - name: Set up Python 3.15.2
       uses: actions/setup-python@v5
       with:
-        python-version: "3.9.16"
+        python-version: "3.15.2"
 
     - name: Install ccm
       shell: bash

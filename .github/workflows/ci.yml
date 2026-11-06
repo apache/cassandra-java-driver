@@ -76,8 +76,8 @@ jobs:
 
       - name: Check test results
         run: |
-          failed=$(grep -lE '<testsuite[^>]* (failures|errors)="[1-9]' \
-            $(find . -path '*/target/*-reports/TEST-*.xml') /dev/null || true)
+          failed=$(find . -path '*/target/*-reports/TEST-*.xml' \
+            -exec grep -lE '<testsuite[^>]* (failures|errors)="[1-9]' {} + || true)
           if [ -n "$failed" ]; then
             echo "Test failures or errors in:"
             echo "$failed"
