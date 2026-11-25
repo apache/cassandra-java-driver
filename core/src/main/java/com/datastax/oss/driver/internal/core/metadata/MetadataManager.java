@@ -36,6 +36,7 @@ import com.datastax.oss.driver.internal.core.util.NanoTime;
 import com.datastax.oss.driver.internal.core.util.concurrent.CompletableFutures;
 import com.datastax.oss.driver.internal.core.util.concurrent.Debouncer;
 import com.datastax.oss.driver.internal.core.util.concurrent.RunOrSchedule;
+import com.datastax.oss.driver.internal.core.util.concurrent.UncaughtExceptions;
 import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.driver.shaded.guava.common.collect.ImmutableSet;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -436,6 +437,9 @@ public class MetadataManager implements AsyncAutoCloseable {
                 (schemaInAgreement, agreementError) -> {
                   if (agreementError != null) {
                     refreshFuture.completeExceptionally(agreementError);
+                    adminExecutor
+                        .submit(this::finishSchemaRequest)
+                        .addListener(UncaughtExceptions::log);
                   } else {
                     try {
                       schemaQueriesFactory
@@ -453,18 +457,16 @@ public class MetadataManager implements AsyncAutoCloseable {
 
                                 firstSchemaRefreshFuture.complete(null);
 
-                                currentSchemaRefresh = null;
-                                // If another refresh was enqueued during this one, run it now
-                                if (queuedSchemaRefresh != null) {
-                                  CompletableFuture<RefreshSchemaResult> tmp =
-                                      this.queuedSchemaRefresh;
-                                  this.queuedSchemaRefresh = null;
-                                  startSchemaRequest(tmp);
-                                }
+                                adminExecutor
+                                    .submit(this::finishSchemaRequest)
+                                    .addListener(UncaughtExceptions::log);
                               });
                     } catch (Throwable t) {
                       LOG.debug("[{}] Exception getting new metadata", logPrefix, t);
                       refreshFuture.completeExceptionally(t);
+                      adminExecutor
+                          .submit(this::finishSchemaRequest)
+                          .addListener(UncaughtExceptions::log);
                     }
                   }
                 });
@@ -473,6 +475,17 @@ public class MetadataManager implements AsyncAutoCloseable {
       } else {
         CompletableFutures.completeFrom(
             queuedSchemaRefresh, refreshFuture); // join the queued request
+      }
+    }
+
+    private void finishSchemaRequest() {
+      assert adminExecutor.inEventLoop();
+      currentSchemaRefresh = null;
+      // If another refresh was enqueued during this one, run it now
+      if (queuedSchemaRefresh != null) {
+        CompletableFuture<RefreshSchemaResult> tmp = this.queuedSchemaRefresh;
+        this.queuedSchemaRefresh = null;
+        startSchemaRequest(tmp);
       }
     }
 
