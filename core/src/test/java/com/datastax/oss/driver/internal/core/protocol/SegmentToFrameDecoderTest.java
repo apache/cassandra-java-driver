@@ -34,7 +34,9 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.embedded.EmbeddedChannel;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -48,11 +50,13 @@ public class SegmentToFrameDecoderTest {
           new ProtocolV5ServerCodecs());
 
   private EmbeddedChannel channel;
+  private SegmentToFrameDecoder segmentToFrameDecoder =
+      new SegmentToFrameDecoder(FRAME_CODEC, "test");
 
   @Before
   public void setup() {
     channel = new EmbeddedChannel();
-    channel.pipeline().addLast(new SegmentToFrameDecoder(FRAME_CODEC, "test"));
+    channel.pipeline().addLast(segmentToFrameDecoder);
   }
 
   @Test
@@ -67,6 +71,11 @@ public class SegmentToFrameDecoderTest {
     assertThat(frame1.message).isInstanceOf(Void.class);
     Frame frame2 = channel.readInbound();
     assertThat(frame2.message).isInstanceOf(AuthResponse.class);
+
+    // check decoder is not holding onto any segments
+    assertThat(segmentToFrameDecoder.getAccumulatedSlices())
+        .withFailMessage("Expected decoded to have no more partial frame segments")
+        .isEmpty();
   }
 
   @Test
@@ -82,6 +91,61 @@ public class SegmentToFrameDecoderTest {
 
     Frame frame = channel.readInbound();
     assertThat(frame.message).isInstanceOf(AuthResponse.class);
+
+    // check decoder is not holding onto any segments
+    assertThat(segmentToFrameDecoder.getAccumulatedSlices())
+        .withFailMessage("Expected decoded to have no more partial frame segments")
+        .isEmpty();
+  }
+
+  @Test
+  public void should_release_partial_frame_segments_on_channel_close() {
+    ByteBuf encodedFrame =
+        encodeFrame(new AuthResponse(Bytes.fromHexString("0x" + Strings.repeat("aa", 1011))));
+    int sliceLength = 100;
+    for (int i = 0; i < 5; i++) {
+      // intentionally make copies of the original frame so we can check reference counts later
+      ByteBuf payload = encodedFrame.readBytes(Math.min(sliceLength, encodedFrame.readableBytes()));
+      channel.writeInbound(new Segment<>(payload, false));
+    }
+
+    assertThat(encodedFrame.isReadable())
+        .withFailMessage("Expected remaining content in encoded frame")
+        .isTrue();
+
+    // read the segments that have been written so far (will give null response)
+    assertThat(channel.<Frame>readInbound())
+        .withFailMessage("Expected no frame to be decoded")
+        .isNull();
+
+    // make a copy of the segments we accumulated so we can check they are released later
+    // check correct number of partial frame segments have been accumulated
+    List<ByteBuf> segments = new ArrayList<>(segmentToFrameDecoder.getAccumulatedSlices());
+    assertThat(segments)
+        .withFailMessage("Expected correct number partial frame segments accumulated")
+        .hasSize(5);
+
+    // check segments have been released
+    for (ByteBuf segment : segments) {
+      assertThat(segment.refCnt())
+          .withFailMessage("Expected all partial frame segments to be live (not released)")
+          .isEqualTo(1);
+    }
+
+    // call channel close which will destroy the pipeline and call handlerRemoved on the decoder
+    channel.close();
+
+    // check decoder is not holding onto any segments
+    assertThat(segmentToFrameDecoder.getAccumulatedSlices())
+        .withFailMessage("Expected decoded to have no more partial frame segments")
+        .isEmpty();
+
+    // check segments we got from the decoder earlier have been released
+    for (ByteBuf segment : segments) {
+      assertThat(segment.refCnt())
+          .withFailMessage("Expected all partial frame segments to be released")
+          .isZero();
+    }
   }
 
   private static ByteBuf encodeFrame(Message message) {

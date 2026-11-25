@@ -17,6 +17,7 @@
  */
 package com.datastax.oss.driver.internal.core.protocol;
 
+import com.datastax.oss.driver.shaded.guava.common.annotations.VisibleForTesting;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.FrameCodec;
 import com.datastax.oss.protocol.internal.Segment;
@@ -114,9 +115,7 @@ public class SegmentToFrameDecoder extends MessageToMessageDecoder<Segment<ByteB
       } finally {
         encodedFrame.release();
         // Reset our state
-        targetLength = UNKNOWN_LENGTH;
-        accumulatedSlices.clear();
-        accumulatedLength = 0;
+        resetState();
       }
       LOG.trace(
           "[{}] Decoded response frame {} from {} slices",
@@ -125,5 +124,23 @@ public class SegmentToFrameDecoder extends MessageToMessageDecoder<Segment<ByteB
           accumulatedSlicesSize);
       out.add(frame);
     }
+  }
+
+  private void resetState() {
+    targetLength = UNKNOWN_LENGTH;
+    accumulatedSlices.clear();
+    accumulatedLength = 0;
+  }
+
+  @Override
+  public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+    // release any accumulated segments and reset state
+    accumulatedSlices.forEach(ByteBuf::release);
+    resetState();
+  }
+
+  @VisibleForTesting
+  List<ByteBuf> getAccumulatedSlices() {
+    return accumulatedSlices;
   }
 }
