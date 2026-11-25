@@ -22,6 +22,7 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.deleteFrom;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.function;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
+import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.subCondition;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.tuple;
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.update;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +48,37 @@ public class BuildableQueryTest {
         selectFrom("foo").all().whereColumn("k").isEqualTo(bindMarker("k")),
         ImmutableMap.of("k", 1),
         "SELECT * FROM foo WHERE k=:k",
+        true
+      },
+      {
+        selectFrom("foo")
+            .all()
+            .whereColumn("k")
+            .isEqualTo(bindMarker("k"))
+            .or()
+            .whereColumn("l")
+            .isEqualTo(bindMarker("l")),
+        ImmutableMap.of("k", 1, "l", 2),
+        "SELECT * FROM foo WHERE k=:k OR l=:l",
+        true
+      },
+      {
+        selectFrom("foo")
+            .all()
+            .whereColumn("k")
+            .isEqualTo(bindMarker("k"))
+            .and()
+            .where(
+                subCondition()
+                    .whereColumn("l")
+                    .isEqualTo(bindMarker("l"))
+                    .or()
+                    .whereColumn("m")
+                    .isEqualTo(bindMarker("m")))
+            .whereColumn("n")
+            .isEqualTo(bindMarker("n")),
+        ImmutableMap.of("k", 1, "l", 2, "m", 3, "n", 4),
+        "SELECT * FROM foo WHERE k=:k AND (l=:l OR m=:m) AND n=:n",
         true
       },
       {
