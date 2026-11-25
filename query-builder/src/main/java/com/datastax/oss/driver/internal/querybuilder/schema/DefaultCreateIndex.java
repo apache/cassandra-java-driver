@@ -164,9 +164,9 @@ public class DefaultCreateIndex implements CreateIndexStart, CreateIndexOnTable,
         builder.append(",");
       }
       if (entry.getValue().equals(NO_INDEX_TYPE)) {
-        builder.append(entry.getKey());
+        builder.append(entry.getKey().asCql(true));
       } else {
-        builder.append(entry.getValue()).append("(").append(entry.getKey()).append(")");
+        builder.append(entry.getValue()).append("(").append(entry.getKey().asCql(true)).append(")");
       }
     }
     builder.append(")");
