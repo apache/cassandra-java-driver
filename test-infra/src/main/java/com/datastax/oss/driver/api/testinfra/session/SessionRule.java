@@ -28,6 +28,7 @@ import com.datastax.oss.driver.api.core.metadata.NodeStateListener;
 import com.datastax.oss.driver.api.core.metadata.schema.SchemaChangeListener;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.api.testinfra.CassandraResourceRule;
+import com.datastax.oss.driver.api.testinfra.astra.BaseAstraRule;
 import com.datastax.oss.driver.api.testinfra.ccm.BaseCcmRule;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmBridge;
 import com.datastax.oss.driver.api.testinfra.ccm.SchemaChangeSynchronizer;
@@ -35,6 +36,8 @@ import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.simulacron.SimulacronRule;
 import java.util.Objects;
 import org.junit.rules.ExternalResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Creates and manages a {@link Session} instance for a test.
@@ -63,6 +66,7 @@ import org.junit.rules.ExternalResource;
  */
 public class SessionRule<SessionT extends Session> extends ExternalResource {
 
+  private static final Logger LOG = LoggerFactory.getLogger(SessionRule.class);
   private static final Version V6_8_0 = Objects.requireNonNull(Version.parse("6.8.0"));
 
   // the CCM or Simulacron rule to depend on
@@ -100,10 +104,22 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
     this.cassandraResource = cassandraResource;
     this.nodeStateListener = nodeStateListener;
     this.schemaChangeListener = schemaChangeListener;
-    this.keyspace =
-        (cassandraResource instanceof SimulacronRule || !createKeyspace)
-            ? null
-            : SessionUtils.uniqueKeyspaceId();
+    // Determine keyspace based on backend type:
+    // - Simulacron: no keyspace (null)
+    // - Astra: use shared keyspace from AstraBridge (when createKeyspace is true)
+    // - CCM/other: generate unique keyspace (when createKeyspace is true)
+    // - When createKeyspace is false: no keyspace (null)
+    if (!createKeyspace || cassandraResource instanceof SimulacronRule) {
+      this.keyspace = null;
+    } else if (cassandraResource instanceof BaseAstraRule) {
+      // For Astra, use the shared keyspace from AstraBridge
+      BaseAstraRule astraRule = (BaseAstraRule) cassandraResource;
+      String sharedKeyspace = astraRule.getAstraBridge().getKeyspace();
+      this.keyspace = sharedKeyspace != null ? CqlIdentifier.fromCql(sharedKeyspace) : null;
+    } else {
+      // For CCM and other backends, generate a unique keyspace
+      this.keyspace = SessionUtils.uniqueKeyspaceId();
+    }
     this.configLoader = configLoader;
     this.graphName = graphName;
     this.isCoreGraph = isCoreGraph;
@@ -144,12 +160,32 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
 
   @Override
   protected void before() {
+    // Create session without keyspace first
     session =
         SessionUtils.newSession(
             cassandraResource, null, nodeStateListener, schemaChangeListener, null, configLoader);
+
     slowProfile = SessionUtils.slowProfile(session);
+
+    // Create keyspace if needed
     if (keyspace != null) {
-      SessionUtils.createKeyspace(session, keyspace, slowProfile);
+      if (cassandraResource instanceof BaseAstraRule) {
+        // For Astra, the shared keyspace already exists - just switch to it
+        BaseAstraRule astraRule = (BaseAstraRule) cassandraResource;
+        String sharedKeyspace = astraRule.getAstraBridge().getKeyspace();
+        LOG.warn(
+            "Using shared Astra keyspace: {} with CassandraResource: {}",
+            sharedKeyspace,
+            cassandraResource.getClass().getSimpleName());
+      } else {
+        // For CCM and other backends, create a unique keyspace using CQL
+        LOG.warn(
+            "Creating keyspace: {} with CassandraResource: {}",
+            keyspace,
+            cassandraResource.getClass().getSimpleName());
+        SessionUtils.createKeyspace(session, keyspace, slowProfile);
+      }
+      // Switch to the keyspace
       session.execute(
           SimpleStatement.newInstance(String.format("USE %s", keyspace.asCql(false))),
           Statement.SYNC);
@@ -194,7 +230,10 @@ public class SessionRule<SessionT extends Session> extends ExternalResource {
                   .setSystemQuery(true),
               ScriptGraphStatement.SYNC);
     }
-    if (keyspace != null) {
+    // Only drop keyspace for non-Astra resources (Astra keyspaces are managed by Astra)
+    if (keyspace != null
+        && !(cassandraResource
+            instanceof com.datastax.oss.driver.api.testinfra.astra.BaseAstraRule)) {
       SchemaChangeSynchronizer.withLock(
           () -> {
             SessionUtils.dropKeyspace(session, keyspace, slowProfile);

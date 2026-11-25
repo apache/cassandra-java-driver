@@ -26,6 +26,7 @@ import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -55,12 +56,22 @@ public class ReloadingKeyManagerFactoryTest {
   private static final Logger logger =
       LoggerFactory.getLogger(ReloadingKeyManagerFactoryTest.class);
 
-  static final Path CERT_BASE =
-      Paths.get(
-          ReloadingKeyManagerFactoryTest.class
-              .getResource(
-                  String.format("/%s/certs/", ReloadingKeyManagerFactoryTest.class.getSimpleName()))
-              .getPath());
+  static final Path CERT_BASE;
+
+  static {
+    try {
+      CERT_BASE =
+          Paths.get(
+              ReloadingKeyManagerFactoryTest.class
+                  .getResource(
+                      String.format(
+                          "/%s/certs/", ReloadingKeyManagerFactoryTest.class.getSimpleName()))
+                  .toURI());
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   static final Path SERVER_KEYSTORE_PATH = CERT_BASE.resolve("server.keystore");
   static final Path SERVER_TRUSTSTORE_PATH = CERT_BASE.resolve("server.truststore");
 

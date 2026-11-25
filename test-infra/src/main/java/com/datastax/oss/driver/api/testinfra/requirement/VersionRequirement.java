@@ -36,15 +36,26 @@ public class VersionRequirement {
   final Optional<Version> minInclusive;
   final Optional<Version> maxExclusive;
   final String description;
+  final boolean include;
 
   public VersionRequirement(
       BackendType backendType, String minInclusive, String maxExclusive, String description) {
+    this(backendType, minInclusive, maxExclusive, description, true);
+  }
+
+  public VersionRequirement(
+      BackendType backendType,
+      String minInclusive,
+      String maxExclusive,
+      String description,
+      boolean include) {
     this.backendType = backendType;
     this.minInclusive =
         minInclusive.isEmpty() ? Optional.empty() : Optional.of(Version.parse(minInclusive));
     this.maxExclusive =
         maxExclusive.isEmpty() ? Optional.empty() : Optional.of(Version.parse(maxExclusive));
     this.description = description;
+    this.include = include;
   }
 
   public BackendType getBackendType() {
@@ -60,6 +71,16 @@ public class VersionRequirement {
   }
 
   public String readableString() {
+    // For exclusions, just show "NOT <backend>"
+    if (!include) {
+      if (!description.isEmpty()) {
+        return String.format("NOT %s [%s]", backendType.getFriendlyName(), description);
+      } else {
+        return String.format("NOT %s", backendType.getFriendlyName());
+      }
+    }
+
+    // For inclusions, show version range
     final String versionRange;
     if (minInclusive.isPresent() && maxExclusive.isPresent()) {
       versionRange =
@@ -84,7 +105,8 @@ public class VersionRequirement {
         requirement.type(),
         requirement.minInclusive(),
         requirement.maxExclusive(),
-        requirement.description());
+        requirement.description(),
+        requirement.include());
   }
 
   public static VersionRequirement fromCassandraRequirement(CassandraRequirement requirement) {
@@ -98,7 +120,8 @@ public class VersionRequirement {
   }
 
   public static Collection<VersionRequirement> fromAnnotations(Description description) {
-    // collect all requirement annotation types
+    // collect all requirement annotation types from both the method and the class
+    // (description.getAnnotation() only checks the method when using @Rule)
     CassandraRequirement cassandraRequirement =
         description.getAnnotation(CassandraRequirement.class);
     DseRequirement dseRequirement = description.getAnnotation(DseRequirement.class);
@@ -106,6 +129,23 @@ public class VersionRequirement {
     BackendRequirement backendRequirement = description.getAnnotation(BackendRequirement.class);
     // matches methods/classes with two or more @BackendRequirement annotations
     BackendRequirements backendRequirements = description.getAnnotation(BackendRequirements.class);
+
+    // Also check the test class for annotations (needed when using @Rule instead of @ClassRule)
+    Class<?> testClass = description.getTestClass();
+    if (testClass != null) {
+      if (cassandraRequirement == null) {
+        cassandraRequirement = testClass.getAnnotation(CassandraRequirement.class);
+      }
+      if (dseRequirement == null) {
+        dseRequirement = testClass.getAnnotation(DseRequirement.class);
+      }
+      if (backendRequirement == null) {
+        backendRequirement = testClass.getAnnotation(BackendRequirement.class);
+      }
+      if (backendRequirements == null) {
+        backendRequirements = testClass.getAnnotation(BackendRequirements.class);
+      }
+    }
 
     // build list of required versions
     Collection<VersionRequirement> requirements = new ArrayList<>();
@@ -134,9 +174,36 @@ public class VersionRequirement {
       return true;
     }
 
+    // First check for exclusions (include=false)
+    // If any requirement explicitly excludes the current backend, skip the test
+    boolean isExcluded =
+        requirements.stream()
+            .anyMatch(
+                requirement ->
+                    !requirement.include && requirement.getBackendType() == configuredBackend);
+    if (isExcluded) {
+      return false;
+    }
+
+    // Check if there are any inclusion requirements
+    boolean hasInclusionRequirements =
+        requirements.stream().anyMatch(requirement -> requirement.include);
+
+    // If there are no inclusion requirements (only exclusions), and we're not excluded, pass
+    if (!hasInclusionRequirements) {
+      return true;
+    }
+
+    // Then check for inclusions (include=true)
+    // At least one requirement must match the backend type and version
     return requirements.stream()
         .anyMatch(
             requirement -> {
+              // Skip exclusion requirements
+              if (!requirement.include) {
+                return false;
+              }
+
               // requirement is different db type
               if (requirement.getBackendType() != configuredBackend) {
                 return false;

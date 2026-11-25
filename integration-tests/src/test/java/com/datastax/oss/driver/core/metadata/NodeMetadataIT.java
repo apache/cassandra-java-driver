@@ -43,6 +43,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category(ParallelizableTests.class)
+@BackendRequirement(type = BackendType.ASTRA, include = false)
 public class NodeMetadataIT {
 
   @Rule public CcmRule ccmRule = CcmRule.getInstance();

@@ -17,6 +17,8 @@
  */
 package com.datastax.oss.driver.api.testinfra.ccm;
 
+import com.datastax.oss.driver.api.testinfra.astra.AstraRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.lang.reflect.Method;
 import org.junit.AssumptionViolatedException;
@@ -32,15 +34,29 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Note that this rule should be considered mutually exclusive with {@link CustomCcmRule}.
  * Creating instances of these rules can create resource issues.
+ *
+ * <p>When {@code ccm.distribution} system property is set to {@code ASTRA}, this rule will delegate
+ * to {@link AstraRule} instead of creating a CCM cluster.
  */
 public class CcmRule extends BaseCcmRule {
 
-  private static final CcmRule INSTANCE = new CcmRule();
+  private static volatile CcmRule CCM_INSTANCE;
+  private static final BackendType DISTRIBUTION =
+      BackendType.valueOf(
+          System.getProperty("ccm.distribution", BackendType.CASSANDRA.name()).toUpperCase());
 
   private volatile boolean started = false;
 
-  private CcmRule() {
+  protected CcmRule() {
     super(configureCcmBridge(CcmBridge.builder()).build());
+  }
+
+  /**
+   * Protected constructor for subclasses (like AstraRule) that want to provide their own bridge
+   * implementation.
+   */
+  protected CcmRule(CcmBridge bridge) {
+    super(bridge);
   }
 
   public static CcmBridge.Builder configureCcmBridge(CcmBridge.Builder builder) {
@@ -99,7 +115,30 @@ public class CcmRule extends BaseCcmRule {
     return super.apply(base, description);
   }
 
+  /**
+   * Returns a singleton instance of a CCM rule.
+   *
+   * <p>The actual implementation returned depends on the {@code ccm.distribution} system property:
+   *
+   * <ul>
+   *   <li>If set to {@code ASTRA}, returns {@link AstraRule#getInstance()} (which extends CcmRule)
+   *   <li>Otherwise, returns a {@link CcmRule} instance
+   * </ul>
+   *
+   * @return a singleton CCM rule
+   */
   public static CcmRule getInstance() {
-    return INSTANCE;
+    if (DISTRIBUTION == BackendType.ASTRA) {
+      return AstraRule.getInstance();
+    }
+    // Lazy initialization to avoid creating CcmBridge when using Astra
+    if (CCM_INSTANCE == null) {
+      synchronized (CcmRule.class) {
+        if (CCM_INSTANCE == null) {
+          CCM_INSTANCE = new CcmRule();
+        }
+      }
+    }
+    return CCM_INSTANCE;
   }
 }

@@ -42,6 +42,8 @@ import com.datastax.oss.driver.api.mapper.annotations.SetEntity;
 import com.datastax.oss.driver.api.mapper.annotations.Update;
 import com.datastax.oss.driver.api.mapper.entity.saving.NullSavingStrategy;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import java.util.Objects;
@@ -54,6 +56,7 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 
 @Category(ParallelizableTests.class)
+@BackendRequirement(type = BackendType.ASTRA, include = false)
 public class DefaultKeyspaceIT {
   private static final String DEFAULT_KEYSPACE = "default_keyspace";
   private static final CcmRule CCM_RULE = CcmRule.getInstance();

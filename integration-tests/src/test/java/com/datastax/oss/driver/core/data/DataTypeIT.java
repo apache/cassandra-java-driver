@@ -47,6 +47,8 @@ import com.datastax.oss.driver.api.core.type.TupleType;
 import com.datastax.oss.driver.api.core.type.UserDefinedType;
 import com.datastax.oss.driver.api.core.type.codec.TypeCodec;
 import com.datastax.oss.driver.api.testinfra.ccm.CcmRule;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendRequirement;
+import com.datastax.oss.driver.api.testinfra.requirement.BackendType;
 import com.datastax.oss.driver.api.testinfra.session.SessionRule;
 import com.datastax.oss.driver.categories.ParallelizableTests;
 import com.datastax.oss.driver.internal.core.type.DefaultListType;
@@ -89,6 +91,7 @@ import org.junit.runner.RunWith;
 
 @Category(ParallelizableTests.class)
 @RunWith(DataProviderRunner.class)
+@BackendRequirement(type = BackendType.ASTRA, include = false)
 public class DataTypeIT {
   private static final CcmRule CCM_RULE = CcmRule.getInstance();
 
