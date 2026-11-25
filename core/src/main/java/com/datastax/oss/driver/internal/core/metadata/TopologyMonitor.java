@@ -21,6 +21,7 @@ import com.datastax.oss.driver.api.core.AsyncAutoCloseable;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Session;
+import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import java.net.InetSocketAddress;
@@ -119,4 +120,8 @@ public interface TopologyMonitor extends AsyncAutoCloseable {
    * take a while to replicate across nodes.
    */
   CompletionStage<Boolean> checkSchemaAgreement();
+
+  default CompletionStage<Boolean> checkSchemaAgreement(DriverChannel channel) {
+    return checkSchemaAgreement();
+  }
 }

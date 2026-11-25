@@ -130,7 +130,7 @@ public class DefaultSessionPoolsTest {
 
     // Init sequence:
     when(metadataManager.refreshNodes()).thenReturn(CompletableFuture.completedFuture(null));
-    when(metadataManager.refreshSchema(null, false, true))
+    when(metadataManager.refreshSchema(null, false, true, null))
         .thenReturn(CompletableFuture.completedFuture(null));
     when(context.getMetadataManager()).thenReturn(metadataManager);
 

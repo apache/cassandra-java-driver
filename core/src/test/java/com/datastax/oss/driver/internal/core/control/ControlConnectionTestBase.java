@@ -20,6 +20,7 @@ package com.datastax.oss.driver.internal.core.control;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
@@ -123,7 +124,8 @@ abstract class ControlConnectionTestBase {
     mockQueryPlan(node1, node2);
 
     when(metadataManager.refreshNodes()).thenReturn(CompletableFuture.completedFuture(null));
-    when(metadataManager.refreshSchema(anyString(), anyBoolean(), anyBoolean()))
+    when(metadataManager.refreshSchema(
+            anyString(), anyBoolean(), anyBoolean(), nullable(DriverChannel.class)))
         .thenReturn(CompletableFuture.completedFuture(null));
     when(context.getMetadataManager()).thenReturn(metadataManager);
 

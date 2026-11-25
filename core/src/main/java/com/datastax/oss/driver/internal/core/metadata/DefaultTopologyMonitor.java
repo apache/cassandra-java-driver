@@ -228,11 +228,17 @@ public class DefaultTopologyMonitor implements TopologyMonitor {
 
   @Override
   public CompletionStage<Boolean> checkSchemaAgreement() {
+    return checkSchemaAgreement(null);
+  }
+
+  @Override
+  public CompletionStage<Boolean> checkSchemaAgreement(DriverChannel channel) {
     if (closeFuture.isDone()) {
       return CompletableFuture.completedFuture(true);
     }
-    DriverChannel channel = controlConnection.channel();
-    return new SchemaAgreementChecker(channel, context, logPrefix).run();
+    return new SchemaAgreementChecker(
+            channel == null ? controlConnection.channel() : channel, context, logPrefix)
+        .run();
   }
 
   @NonNull

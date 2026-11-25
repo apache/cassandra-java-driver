@@ -21,6 +21,7 @@ import static com.datastax.oss.driver.Assertions.assertThat;
 import static com.datastax.oss.driver.Assertions.assertThatStage;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -31,6 +32,7 @@ import com.datastax.oss.driver.api.core.config.DriverConfig;
 import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.metadata.EndPoint;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.context.EventBus;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.datastax.oss.driver.internal.core.context.NettyOptions;
@@ -297,7 +299,7 @@ public class MetadataManagerTest {
     when(schemaQueriesFactory.newInstance()).thenThrow(expectedException);
     when(topologyMonitor.refreshNodeList())
         .thenReturn(CompletableFuture.completedFuture(ImmutableList.of(mock(NodeInfo.class))));
-    when(topologyMonitor.checkSchemaAgreement())
+    when(topologyMonitor.checkSchemaAgreement(nullable(DriverChannel.class)))
         .thenReturn(CompletableFuture.completedFuture(Boolean.TRUE));
     when(controlConnection.init(anyBoolean(), anyBoolean(), anyBoolean()))
         .thenReturn(CompletableFuture.completedFuture(null));
@@ -306,7 +308,7 @@ public class MetadataManagerTest {
 
     // When
     CompletionStage<MetadataManager.RefreshSchemaResult> result =
-        metadataManager.refreshSchema("foo", true, true);
+        metadataManager.refreshSchema("foo", true, true, null);
 
     // Then
     waitForPendingAdminTasks(() -> result.toCompletableFuture().isDone());
