@@ -854,6 +854,41 @@ public enum DefaultDriverOption implements DriverOption {
       "advanced.load-balancing-policy.dc-failover.allow-for-local-consistency-levels"),
 
   /**
+   * How many items in the plan to score.
+   *
+   * <p>Value-Type: int
+   */
+  LOAD_BALANCING_SCORED_PLAN_SIZE("advanced.load-balancing-policy.weighted.scored-plan-size"),
+
+  /**
+   * Weight to apply when load balancing for a non-rack node.
+   *
+   * <p>Value-Type: double
+   */
+  LOAD_BALANCING_WEIGHT_NON_RACK("advanced.load-balancing-policy.weighted.non-rack"),
+
+  /**
+   * Weight to apply when load balancing for a non-replica node.
+   *
+   * <p>Value-Type: double
+   */
+  LOAD_BALANCING_WEIGHT_NON_REPLICA("advanced.load-balancing-policy.weighted.non-replica"),
+
+  /**
+   * Weight to apply when load balancing for a node that is still starting up.
+   *
+   * <p>Value-Type: double
+   */
+  LOAD_BALANCING_WEIGHT_STARTING("advanced.load-balancing-policy.weighted.starting"),
+
+  /**
+   * Weight to apply when load balancing for an unhealthy node.
+   *
+   * <p>Value-Type: double
+   */
+  LOAD_BALANCING_WEIGHT_UNHEALTHY("advanced.load-balancing-policy.weighted.unhealthy"),
+
+  /**
    * The classname of the desired {@code MetricIdGenerator} implementation.
    *
    * <p>Value-type: {@link String}
