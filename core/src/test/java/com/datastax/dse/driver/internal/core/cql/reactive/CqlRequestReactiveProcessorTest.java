@@ -152,7 +152,8 @@ public class CqlRequestReactiveProcessorTest extends CqlRequestHandlerTestBase {
               DseTestFixtures.tenDseRows(2, true),
               mockInfo,
               harness.getSession(),
-              harness.getContext()));
+              harness.getContext(),
+              null));
 
       List<ReactiveRow> rows = rowsPublisher.toList().blockingGet();
       assertThat(rows).hasSize(20);
