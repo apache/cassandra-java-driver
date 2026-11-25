@@ -20,6 +20,7 @@ package com.datastax.oss.driver.internal.core.control;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
@@ -42,6 +43,8 @@ import com.datastax.oss.driver.internal.core.metadata.LoadBalancingPolicyWrapper
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.metadata.TestNodeFactory;
 import com.datastax.oss.driver.internal.core.metrics.MetricsFactory;
+import com.datastax.oss.driver.internal.core.metrics.NodeMetricUpdater;
+import com.datastax.oss.driver.internal.core.metrics.SessionMetricUpdater;
 import io.netty.channel.Channel;
 import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.DefaultEventLoopGroup;
@@ -77,6 +80,8 @@ abstract class ControlConnectionTestBase {
   @Mock protected LoadBalancingPolicyWrapper loadBalancingPolicyWrapper;
   @Mock protected MetadataManager metadataManager;
   @Mock protected MetricsFactory metricsFactory;
+  @Mock protected SessionMetricUpdater sessionMetricUpdater;
+  @Mock protected NodeMetricUpdater nodeMetricUpdater;
 
   protected DefaultNode node1;
   protected DefaultNode node2;
@@ -118,6 +123,8 @@ abstract class ControlConnectionTestBase {
     when(context.getLoadBalancingPolicyWrapper()).thenReturn(loadBalancingPolicyWrapper);
 
     when(context.getMetricsFactory()).thenReturn(metricsFactory);
+    when(metricsFactory.getSessionUpdater()).thenReturn(sessionMetricUpdater);
+    when(metricsFactory.newNodeUpdater(any(Node.class))).thenReturn(nodeMetricUpdater);
     node1 = TestNodeFactory.newNode(1, context);
     node2 = TestNodeFactory.newNode(2, context);
     mockQueryPlan(node1, node2);
@@ -131,6 +138,12 @@ abstract class ControlConnectionTestBase {
     when(config.getDefaultProfile()).thenReturn(defaultProfile);
     when(defaultProfile.getBoolean(DefaultDriverOption.CONNECTION_WARN_INIT_ERROR))
         .thenReturn(false);
+    // Simulate the real config behavior for options that are read with a call-site default (the
+    // mock would otherwise always return false): return the provided default unless a test
+    // overrides the stub.
+    when(defaultProfile.getBoolean(
+            eq(DefaultDriverOption.GRACEFUL_DISCONNECT_ENABLED), anyBoolean()))
+        .thenAnswer(invocation -> invocation.getArgument(1));
 
     controlConnection = new ControlConnection(context);
   }

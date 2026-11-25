@@ -272,6 +272,7 @@ public class OptionsMap implements Serializable {
     map.put(TypedDriverOption.CONNECTION_MAX_REQUESTS, 1024);
     map.put(TypedDriverOption.CONNECTION_MAX_ORPHAN_REQUESTS, 256);
     map.put(TypedDriverOption.CONNECTION_WARN_INIT_ERROR, true);
+    map.put(TypedDriverOption.GRACEFUL_DISCONNECT_ENABLED, true);
     map.put(TypedDriverOption.RECONNECT_ON_INIT, false);
     map.put(TypedDriverOption.RECONNECTION_POLICY_CLASS, "ExponentialReconnectionPolicy");
     map.put(TypedDriverOption.RECONNECTION_BASE_DELAY, Duration.ofSeconds(1));
