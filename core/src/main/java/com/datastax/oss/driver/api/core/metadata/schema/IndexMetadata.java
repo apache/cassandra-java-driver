@@ -93,6 +93,7 @@ public interface IndexMetadata extends Describable {
         }
         builder.decreaseIndent().append("}");
       }
+      builder.append(";");
     } else {
       builder
           .append("CREATE INDEX ")
