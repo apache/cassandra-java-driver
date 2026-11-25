@@ -17,10 +17,8 @@
  */
 package com.datastax.oss.driver.internal.core.tracker;
 
-import com.datastax.oss.driver.api.core.config.DriverExecutionProfile;
 import com.datastax.oss.driver.api.core.context.DriverContext;
-import com.datastax.oss.driver.api.core.metadata.Node;
-import com.datastax.oss.driver.api.core.session.Request;
+import com.datastax.oss.driver.api.core.cql.ExecutionInfo;
 import com.datastax.oss.driver.api.core.tracker.RequestTracker;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import net.jcip.annotations.ThreadSafe;
@@ -38,42 +36,32 @@ public class NoopRequestTracker implements RequestTracker {
 
   @Override
   public void onSuccess(
-      @NonNull Request request,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
+      @NonNull ExecutionInfo executionInfo,
       @NonNull String sessionRequestLogPrefix) {
     // nothing to do
   }
 
   @Override
   public void onError(
-      @NonNull Request request,
-      @NonNull Throwable error,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      Node node,
+      @NonNull ExecutionInfo executionInfo,
       @NonNull String sessionRequestLogPrefix) {
     // nothing to do
   }
 
   @Override
   public void onNodeError(
-      @NonNull Request request,
-      @NonNull Throwable error,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
+      @NonNull ExecutionInfo executionInfo,
       @NonNull String nodeRequestLogPrefix) {
     // nothing to do
   }
 
   @Override
   public void onNodeSuccess(
-      @NonNull Request request,
       long latencyNanos,
-      @NonNull DriverExecutionProfile executionProfile,
-      @NonNull Node node,
+      @NonNull ExecutionInfo executionInfo,
       @NonNull String nodeRequestLogPrefix) {
     // nothing to do
   }
