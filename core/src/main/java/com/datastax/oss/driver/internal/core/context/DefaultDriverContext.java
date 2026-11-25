@@ -17,10 +17,6 @@
  */
 package com.datastax.oss.driver.internal.core.context;
 
-import static com.datastax.oss.driver.internal.core.util.Dependency.JACKSON;
-
-import com.datastax.dse.driver.api.core.config.DseDriverOption;
-import com.datastax.dse.driver.internal.core.InsightsClientLifecycleListener;
 import com.datastax.dse.driver.internal.core.type.codec.DseTypeCodecsRegistrar;
 import com.datastax.dse.protocol.internal.DseProtocolV1ClientCodecs;
 import com.datastax.dse.protocol.internal.DseProtocolV2ClientCodecs;
@@ -91,7 +87,6 @@ import com.datastax.oss.driver.internal.core.tracker.MultiplexingRequestTracker;
 import com.datastax.oss.driver.internal.core.tracker.NoopRequestTracker;
 import com.datastax.oss.driver.internal.core.tracker.RequestLogFormatter;
 import com.datastax.oss.driver.internal.core.type.codec.registry.DefaultCodecRegistry;
-import com.datastax.oss.driver.internal.core.util.DefaultDependencyChecker;
 import com.datastax.oss.driver.internal.core.util.Reflection;
 import com.datastax.oss.driver.internal.core.util.concurrent.CycleDetector;
 import com.datastax.oss.driver.internal.core.util.concurrent.LazyReference;
@@ -111,7 +106,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import net.jcip.annotations.ThreadSafe;
@@ -242,13 +236,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   private final InetSocketAddress cloudProxyAddress;
   private final LazyReference<RequestLogFormatter> requestLogFormatterRef =
       new LazyReference<>("requestLogFormatter", this::buildRequestLogFormatter, cycleDetector);
-  private final UUID startupClientId;
-  private final String startupApplicationName;
-  private final String startupApplicationVersion;
   private final Object metricRegistry;
-  // A stack trace captured in the constructor. Used to extract information about the client
-  // application.
-  private final StackTraceElement[] initStackTrace;
 
   public DefaultDriverContext(
       DriverConfigLoader configLoader, ProgrammaticArguments programmaticArguments) {
@@ -300,17 +288,6 @@ public class DefaultDriverContext implements InternalDriverContext {
     this.nodeDistanceEvaluatorsFromBuilder = programmaticArguments.getNodeDistanceEvaluators();
     this.classLoader = programmaticArguments.getClassLoader();
     this.cloudProxyAddress = programmaticArguments.getCloudProxyAddress();
-    this.startupClientId = programmaticArguments.getStartupClientId();
-    this.startupApplicationName = programmaticArguments.getStartupApplicationName();
-    this.startupApplicationVersion = programmaticArguments.getStartupApplicationVersion();
-    StackTraceElement[] stackTrace;
-    try {
-      stackTrace = Thread.currentThread().getStackTrace();
-    } catch (Exception ex) {
-      // ignore and use empty
-      stackTrace = new StackTraceElement[] {};
-    }
-    this.initStackTrace = stackTrace;
     this.metricRegistry = programmaticArguments.getMetricRegistry();
   }
 
@@ -347,10 +324,7 @@ public class DefaultDriverContext implements InternalDriverContext {
    * @see #getStartupOptions()
    */
   protected StartupOptionsBuilder buildStartupOptionsFactory() {
-    return new StartupOptionsBuilder(this)
-        .withClientId(startupClientId)
-        .withApplicationName(startupApplicationName)
-        .withApplicationVersion(startupApplicationVersion);
+    return new StartupOptionsBuilder(this);
   }
 
   protected Map<String, LoadBalancingPolicy> buildLoadBalancingPolicies() {
@@ -738,16 +712,7 @@ public class DefaultDriverContext implements InternalDriverContext {
   }
 
   protected List<LifecycleListener> buildLifecycleListeners() {
-    if (DefaultDependencyChecker.isPresent(JACKSON)) {
-      return Collections.singletonList(new InsightsClientLifecycleListener(this, initStackTrace));
-    } else {
-      if (config.getDefaultProfile().getBoolean(DseDriverOption.MONITOR_REPORTING_ENABLED)) {
-        LOG.info(
-            "Could not initialize Insights monitoring; "
-                + "this is normal if Jackson was explicitly excluded from classpath");
-      }
-      return Collections.emptyList();
-    }
+    return Collections.emptyList();
   }
 
   @NonNull

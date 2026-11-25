@@ -670,13 +670,6 @@ public class TypedDriverOption<ValueT> {
   /** The maximum number of live sessions that are allowed to coexist in a given VM. */
   public static final TypedDriverOption<Integer> SESSION_LEAK_THRESHOLD =
       new TypedDriverOption<>(DefaultDriverOption.SESSION_LEAK_THRESHOLD, GenericType.INTEGER);
-
-  /** The name of the application using the session. */
-  public static final TypedDriverOption<String> APPLICATION_NAME =
-      new TypedDriverOption<>(DseDriverOption.APPLICATION_NAME, GenericType.STRING);
-  /** The version of the application using the session. */
-  public static final TypedDriverOption<String> APPLICATION_VERSION =
-      new TypedDriverOption<>(DseDriverOption.APPLICATION_VERSION, GenericType.STRING);
   /** Proxy authentication for GSSAPI authentication: allows to login as another user or role. */
   public static final TypedDriverOption<String> AUTH_PROVIDER_AUTHORIZATION_ID =
       new TypedDriverOption<>(DseDriverOption.AUTH_PROVIDER_AUTHORIZATION_ID, GenericType.STRING);
@@ -786,9 +779,6 @@ public class TypedDriverOption<ValueT> {
   /** How long the driver waits for a graph request to complete. */
   public static final TypedDriverOption<Duration> GRAPH_TIMEOUT =
       new TypedDriverOption<>(DseDriverOption.GRAPH_TIMEOUT, GenericType.DURATION);
-  /** Whether to send events for Insights monitoring. */
-  public static final TypedDriverOption<Boolean> MONITOR_REPORTING_ENABLED =
-      new TypedDriverOption<>(DseDriverOption.MONITOR_REPORTING_ENABLED, GenericType.BOOLEAN);
   /** Whether to enable paging for Graph queries. */
   public static final TypedDriverOption<String> GRAPH_PAGING_ENABLED =
       new TypedDriverOption<>(DseDriverOption.GRAPH_PAGING_ENABLED, GenericType.STRING);
