@@ -234,7 +234,7 @@ This product bundles ASM 9.2: a very small and fast Java bytecode manipulation f
 which is available under the 3-Clause BSD License.
 see licenses/asm.txt
 
-This product bundles HdrHistogram 2.1.12: A High Dynamic Range (HDR) Histogram,
+This product bundles HdrHistogram 2.2.2: A High Dynamic Range (HDR) Histogram,
 which is available under the 2-Clause BSD License.
 see licenses/HdrHistogram.txt
 
